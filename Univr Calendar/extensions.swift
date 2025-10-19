@@ -78,4 +78,22 @@ extension UIApplication {
         }
         return window.safeAreaInsets
     }
+    
+    var screenSize: CGRect {
+        guard let window = connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap({ $0.windows })
+            .first(where: \.isKeyWindow)
+        else {
+            return .init()
+        }
+        return window.screen.bounds
+    }
+}
+
+extension View {
+    func keyboardPadding(_ value: CGFloat) -> some View {
+        self.safeAreaPadding(.bottom, value)
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+    }
 }

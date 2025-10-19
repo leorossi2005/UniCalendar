@@ -101,10 +101,6 @@ internal func getCourses(year: String, completion: @escaping ([Corso]) -> Void) 
                 let corsi = try decoder.decode([Corso].self, from: Data(text.utf8))
                 
                 coursesData = corsi
-                
-                //for corso in corsi {
-                //    coursesData.append(Course(label: corso.label))
-                //}
             } catch {
                 print("Decoding failed:", error)
                 print("Cleaned JSON candidate:\n\(text)")

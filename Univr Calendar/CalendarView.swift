@@ -7,10 +7,10 @@
 
 import SwiftUI
 
-let screenHeight = UIScreen.main.bounds.height
-
 struct CalendarView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Namespace var transition
+    
     @State var lessons: [Lesson] = []
     @State var filteredLessons: [Lesson] = []
     @State var loading: Bool = true
@@ -25,7 +25,16 @@ struct CalendarView: View {
     @State var selectedLesson: Lesson? = nil
     
     @State var openSettings: Bool = false
-    @State var openCalendar: Bool = false
+    @State var oldOpenCalendar: Bool = false
+    @State var openCalendar: Bool = false {
+        didSet {
+            oldOpenCalendar = oldValue
+        }
+    }
+    
+    @Binding var years: [Year]
+    @Binding var courses: [Corso]
+    @Binding var academicYears: [Anno]
     
     @Binding var selectedTab: Int
     
@@ -40,8 +49,8 @@ struct CalendarView: View {
     @State var tempSelectedCourse: String = ""
     @State var tempSelectedAcademicYear: String = ""
     @State var tempMatricola: String = ""
-
-    @Namespace var transition
+    
+    private let screenSize: CGRect = UIApplication.shared.screenSize
     
     var body: some View {
         NavigationStack {
@@ -98,31 +107,39 @@ struct CalendarView: View {
                         }
                     }
                     Spacer()
-                        .frame(height: screenHeight * 0.15)
+                        .frame(height: screenSize.height * 0.15)
                 } else if loading {
                     if selectedCourse != "0" {
                         Text("Caricamento lezioni in corso...")
                             .bold()
                             .font(.title2)
-                            .frame(height: screenHeight)
+                            .frame(height: screenSize.height)
                     } else {
                         Text("Devi scegliere un corso")
                             .bold()
                             .font(.title2)
-                            .frame(height: screenHeight)
+                            .frame(height: screenSize.height)
                     }
                 } else if noLessons {
                     Text("Oggi non hai lezioni!")
                         .bold()
                         .font(.title2)
-                        .frame(height: screenHeight)
+                        .frame(height: screenSize.height)
                 }
             }
-            .onScrollPhaseChange({ oldPhase,newPhase in
-                if newPhase == .interacting {
-                    openCalendar = false
+            .onScrollGeometryChange(for: ScrollGeometry.self, of: { geometry in
+                geometry
+            }) { oldValue, newValue in
+                withAnimation {
+                    if (newValue.contentOffset.y + newValue.contentInsets.top) <= 0 {
+                        openCalendar = true
+                    } else {
+                        if selectedDetent != .large {
+                            openCalendar = false
+                        }
+                    }
                 }
-            })
+            }
             .if(loading || noLessons) { view in
                 view
                     .ignoresSafeArea()
@@ -145,10 +162,13 @@ struct CalendarView: View {
                                 selectedAcademicYear = tempSelectedAcademicYear
                                 matricola = tempMatricola
                                 
+                                openCalendar = true
                                 loading = true
                                 lessons = []
                                 filteredLessons = []
                                 if selectedCourse != "0" {
+                                    updateDate()
+                                    
                                     fetchOrario(corso: selectedCourse, anno: selectedAcademicYear, selyear: selectedYear) { result in
                                         switch result {
                                             case .success(let lessons):
@@ -164,10 +184,15 @@ struct CalendarView: View {
                             } else if tempMatricola != matricola {
                                 matricola = tempMatricola
                                 
+                                openCalendar = true
                                 loading = true
                                 organizeData()
                                 loading = false
+                            } else {
+                                openCalendar = oldOpenCalendar
                             }
+                        } else {
+                            openCalendar = oldOpenCalendar
                         }
                         
                         selectedLesson = nil
@@ -175,6 +200,17 @@ struct CalendarView: View {
                         
                         detents = [.fraction(0.15), .medium]
                     }
+                }
+                .onChange(of: selectedWeek) { oldDate, newDate in
+                    // aggiornare currentDay in base a newDate
+                    let comp = Foundation.Calendar.current.dateComponents([.day], from: newDate)
+                    if let d = comp.day {
+                        currentDay = d
+                    }
+                    // capire la “settimana” di newDate e aggiornare selectedWeek base
+                    selectedWeek = newDate
+                    
+                    selectedDetent = .fraction(0.15)
                 }
                 .navigationTransition(
                     .zoom(sourceID: "calendar", in: transition)
@@ -184,6 +220,8 @@ struct CalendarView: View {
                 organizeData()
             }
             .onAppear {
+                updateDate()
+                
                 tempSelectedYear = selectedYear
                 tempSelectedCourse = selectedCourse
                 tempSelectedAcademicYear = selectedAcademicYear
@@ -215,8 +253,14 @@ struct CalendarView: View {
                         
                         if value.predictedEndTranslation.width < -150 {
                             new = Foundation.Calendar.current.date(byAdding: .day, value: 1, to: current)!
+                            withAnimation {
+                                openCalendar = true
+                            }
                         } else if value.predictedEndTranslation.width > 150 {
                             new = Foundation.Calendar.current.date(byAdding: .day, value: -1, to: current)!
+                            withAnimation {
+                                openCalendar = true
+                            }
                         }
                         
                         if new != nil {
@@ -245,16 +289,22 @@ struct CalendarView: View {
                 ToolbarItem(placement: .bottomBar) {
                     Spacer()
                 }
-                .matchedTransitionSource(id: "settings", in: transition)
+                
                 ToolbarItem(placement: .bottomBar) {
                     Button(action: {
-                        selectedLesson = nil
-                        openCalendar = true
-                        
-                        detents = [.fraction(0.15), .medium]
+                        withAnimation {
+                            selectedLesson = nil
+                            openCalendar = true
+                            
+                            detents = [.fraction(0.15), .medium]
+                        }
                     }) {
-                        Image(systemName: "calendar")
+                        HStack {
+                            Image(systemName: "calendar")
+                            Text("Calendario")
+                        }
                     }
+                    .opacity(openCalendar ? 0 : 1)
                 }
                 .matchedTransitionSource(id: "calendar", in: transition)
             }
@@ -331,23 +381,14 @@ struct CalendarView: View {
                         displayedComponents: [.date]
                     )
                     .datePickerStyle(.graphical)
-                    .onChange(of: selectedWeek) { oldDate, newDate in
-                        // aggiornare currentDay in base a newDate
-                        let comp = Foundation.Calendar.current.dateComponents([.day], from: newDate)
-                        if let d = comp.day {
-                            currentDay = d
-                        }
-                        // capire la “settimana” di newDate e aggiornare selectedWeek base
-                        selectedWeek = newDate
-                        
-                        selectedDetent = .fraction(0.15)
-                    }
                     Spacer()
                 }
                 .padding()
             } else {
                 if openSettings {
-                    Settings(detents: $detents, openSettings: $openSettings, openCalendar: $openCalendar, selectedTab: $selectedTab, selectedDetent: $selectedDetent, selectedYear: $tempSelectedYear, selectedCourse: $tempSelectedCourse, selectedAcademicYear: $tempSelectedAcademicYear, matricola: $tempMatricola)
+                    Settings(years: $years, courses: $courses, academicYears: $academicYears, detents: $detents, openSettings: $openSettings, openCalendar: $openCalendar, selectedTab: $selectedTab, selectedDetent: $selectedDetent, selectedYear: $tempSelectedYear, selectedCourse: $tempSelectedCourse, selectedAcademicYear: $tempSelectedAcademicYear, matricola: $tempMatricola)
+                        .navigationTitle("Impostazioni")
+                        .navigationBarTitleDisplayMode(.inline)
                 } else {
                     VStack {
                         Text("Informazioni sulla lezione (WIP)")
@@ -415,14 +456,14 @@ struct CalendarView: View {
         let month = String(format: "%02d", Foundation.Calendar.current.component(.month, from: selectedWeek))
         let year = String(format: "%04d", Foundation.Calendar.current.component(.year, from: selectedWeek))
         
-        let filtered = lessons.filter { $0.data == "\(day)-\(month)-\(year)" && $0.nome_insegnamento.contains("Matricole \(matricola)")}
+        let filtered = lessons.filter { $0.data == "\(day)-\(month)-\(year)" && $0.type == "Lezione" && ($0.nome_insegnamento.contains("Matricole \(matricola)") || (!$0.nome_insegnamento.contains("Matricole pari") && !$0.nome_insegnamento.contains("Matricole dispari")))}
         filteredLessons = filtered.sorted(by: { $0.orario < $1.orario })
         
         if filteredLessons.count > 0 {
             for index in 0..<filteredLessons.count - 1 {
                 let end: String = String(filteredLessons[index].orario.split(separator: " - ").last!)
                 let start: String = String(filteredLessons[index + 1].orario.split(separator: " - ").first!)
-                
+            
                 if end != start {
                     filteredLessons.insert(.init(
                        nome_insegnamento: "",
@@ -442,8 +483,28 @@ struct CalendarView: View {
             noLessons = true
         }
     }
+    
+    private func updateDate() {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        let components = calendar.dateComponents([.month, .day], from: now)
+        var newComponents = DateComponents()
+        newComponents.year = Int(selectedYear)
+        newComponents.month = components.month
+        newComponents.day = components.day
+        
+        if let newDate = calendar.date(from: newComponents) {
+            selectedWeek = newDate
+        } else {
+            newComponents.month = 10
+            newComponents.day = 1
+            
+            selectedWeek = calendar.date(from: newComponents)!
+        }
+    }
 }
 
 #Preview {
-    CalendarView(selectedTab: .constant(0))
+    CalendarView(years: .constant([]), courses: .constant([]), academicYears: .constant([]), selectedTab: .constant(0))
 }

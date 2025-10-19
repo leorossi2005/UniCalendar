@@ -12,12 +12,16 @@ struct ContentView: View {
     
     @State var selectedTab: Int = 1
     
+    @State private var years: [Year] = []
+    @State private var courses: [Corso] = []
+    @State private var academicYears: [Anno] = []
+    
     var body: some View {
         TabView(selection: $selectedTab) {
-            Onboarding(selectedTab: $selectedTab)
+            Onboarding(years: $years, courses: $courses, academicYears: $academicYears, selectedTab: $selectedTab)
                 .toolbarVisibility(.hidden, for: .tabBar)
                 .tag(1)
-            CalendarView(selectedTab: $selectedTab)
+            CalendarView(years: $years, courses: $courses, academicYears: $academicYears, selectedTab: $selectedTab)
                 .toolbarVisibility(.hidden, for: .tabBar)
                 .tag(0)
         }
