@@ -57,8 +57,17 @@ struct Settings: View {
                         academicYears = []
                         selectedAcademicYear = "0"
                         
-                        getCourses(year: selectedYear) { result in
-                            courses = result
+                        Task {
+                            do {
+                                let fetchedCourses = try await getCourses(year: selectedYear)
+                                
+                                await MainActor.run {
+                                    courses = fetchedCourses
+                                }
+                            } catch {
+                                print("Failed to fetch courses in Settings: \(error)")
+                                throw error
+                            }
                         }
                     }
                 }
@@ -243,19 +252,37 @@ struct Settings: View {
         }
         .onAppear {
             if years.isEmpty {
-                getYears { result in
-                    years = result
+                Task {
+                    do {
+                        let fetchedYears = try await getYears()
+                        
+                        await MainActor.run {
+                            years = fetchedYears
+                        }
+                    } catch {
+                        print("Failed to fetch years in Settings: \(error)")
+                        throw error
+                    }
                 }
             }
             
             if courses.isEmpty {
-                getCourses(year: selectedYear) { result in
-                    courses = result
-                    
-                    if selectedCourse != "0" {
-                        academicYears = courses.filter { $0.valore == selectedCourse }.first!.elenco_anni
-                    } else if openSettings {
-                        detents = [.large]
+                Task {
+                    do {
+                        let fetchedCourses = try await getCourses(year: selectedYear)
+                        
+                        await MainActor.run {
+                            courses = fetchedCourses
+                            
+                            if selectedCourse != "0" {
+                                academicYears = courses.filter { $0.valore == selectedCourse }.first!.elenco_anni
+                            } else if openSettings {
+                                detents = [.large]
+                            }
+                        }
+                    } catch {
+                        print("Failed to fetch courses in Settings: \(error)")
+                        throw error
                     }
                 }
             }

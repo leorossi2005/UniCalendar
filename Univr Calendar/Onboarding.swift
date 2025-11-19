@@ -38,7 +38,7 @@ struct Onboarding: View {
     @AppStorage("selectedCourse") var selectedCourse: String = "0"
     @AppStorage("selectedAcademicYear") var selectedAcademicYear: String = "0"
     @AppStorage("foundMatricola") var foundMatricola: Bool = false
-    @AppStorage("matricola") var matricola: String = "Pari"
+    @AppStorage("matricola") var matricola: String = "pari"
     
     @AppStorage("onboardingCompleted") var onboardingCompleted: Bool = false
     
@@ -79,11 +79,20 @@ struct Onboarding: View {
                             selectedCourse = "0"
 
                             nextIndex = 1
-                            getCourses(year: selectedYear) { result in
-                                courses = result
-                                
-                                withAnimation {
-                                    index = nextIndex
+                            Task {
+                                do {
+                                    let fetchedCourses = try await getCourses(year: selectedYear)
+                                    
+                                    await MainActor.run {
+                                        courses = fetchedCourses
+                                        
+                                        withAnimation {
+                                            index = nextIndex
+                                        }
+                                    }
+                                } catch {
+                                    print("Failed to fetch courses in Onboarding: \(error)")
+                                    throw error
                                 }
                             }
                         }
@@ -104,8 +113,21 @@ struct Onboarding: View {
             .multilineTextAlignment(.center)
             .tag(0)
             .onAppear {
-                getYears { result in
-                    years = result
+                Task {
+                    do {
+                        let fetchedYears = try await getYears()
+                        
+                        await MainActor.run {
+                            years = fetchedYears
+                            
+                            withAnimation {
+                                index = nextIndex
+                            }
+                        }
+                    } catch {
+                        print("Failed to fetch years in Onboarding: \(error)")
+                        throw error
+                    }
                 }
             }
             VStack {

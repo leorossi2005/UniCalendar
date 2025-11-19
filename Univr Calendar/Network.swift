@@ -7,118 +7,103 @@
 
 import Foundation
 
-enum OperationResult<T> {
-    case success(T)
-    case failure
-}
+//enum OperationResult<T> {
+//    case success(T)
+//    case failure
+//}
 
-internal func fetch(url: String, completion: @escaping (OperationResult<String>) -> Void) {
-    guard let url = URL(string: url) else {
+internal func fetchText(from urlString: String) async throws -> String {
+    guard let url = URL(string: urlString) else {
         print("Invalid URL")
-        completion(.failure)
-        return
+        throw URLError(.badURL)
     }
-
-    let task = URLSession.shared.dataTask(with: url) { data, response, error in
-        if error != nil {
-            print("Request error")
-            DispatchQueue.main.async { completion(.failure) }
-            return
-        }
-
-        guard let data = data else {
-            print("No data returned")
-            DispatchQueue.main.async { completion(.failure) }
-            return
-        }
-
-        // Convert to text to remove JS prefix/suffix
-        guard let text = String(data: data, encoding: .utf8) else {
-            print("Failed to decode body as UTF-8 text")
-            DispatchQueue.main.async { completion(.failure) }
-            return
-        }
-
-        DispatchQueue.main.async { completion(.success(text)) }
+    
+    let (data, response) = try await URLSession.shared.data(from: url)
+    
+    guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+        print("Invalid response")
+        throw URLError(.badServerResponse)
     }
-    task.resume()
+    
+    guard let text = String(data: data, encoding: .utf8) else {
+        print("Failed to decode body as UTF-8 text")
+        throw URLError(.cannotDecodeContentData)
+    }
+    
+    return text
 }
 
-internal func getYears(completion: @escaping ([Year]) -> Void) {
+internal func getYears() async throws -> [Year] {
     var yearsData: [Year] = []
     
-    fetch(url: "https://logistica.univr.it/PortaleStudentiUnivr/combo.php?aa=1") { result in
-        switch result {
-        case .success(var text):
-            if let startRange = text.firstIndex(of: "{") {
-                text = String(text[startRange...])
-                if let semicolonIndex = text.lastIndex(of: ";") {
-                    text.removeSubrange(semicolonIndex..<(text.endIndex))
-                }
-            } else {
-                print("No JSON object found in body")
-                print("Raw body:\n\(text)")
-                return
+    do {
+        var text = try await fetchText(from: "https://logistica.univr.it/PortaleStudentiUnivr/combo.php?aa=1")
+        
+        if let startRange = text.firstIndex(of: "{") {
+            text = String(text[startRange...])
+            if let semicolonIndex = text.lastIndex(of: ";") {
+                text.removeSubrange(semicolonIndex..<(text.endIndex))
             }
-            
-            do {
-                let decoder = JSONDecoder()
-                let anni = try decoder.decode([String: Year].self, from: Data(text.utf8))
-                
-                for (_, obj) in anni.sorted(by: { $0.key < $1.key }) {
-                    yearsData.append(Year(label: obj.label, valore: obj.valore))
-                }
-            } catch {
-                print("Decoding failed:", error)
-                print("Cleaned JSON candidate:\n\(text)")
-            }
-            
-            completion(yearsData.sorted(by: { $0.valore < $1.valore }))
-        case .failure:
-            print("Completion error")
-            return
+        } else {
+            print("No JSON object found in body")
+            print("Raw body:\n\(text)")
         }
+        
+        
+        do {
+            let decoder = JSONDecoder()
+            let anni = try decoder.decode([String: Year].self, from: Data(text.utf8))
+            
+            for (_, obj) in anni.sorted(by: { $0.key < $1.key }) {
+                yearsData.append(Year(label: obj.label, valore: obj.valore))
+            }
+        } catch {
+            print("Decoding failed:", error)
+            print("Cleaned JSON candidate:\n\(text)")
+            throw error
+        }
+        
+        return yearsData.sorted(by: { $0.valore < $1.valore })
+    } catch {
+        print("Fetch error in getYears: ", error)
+        throw error
     }
 }
 
-internal func getCourses(year: String, completion: @escaping ([Corso]) -> Void) {
+internal func getCourses(year: String) async throws -> [Corso] {
     var coursesData: [Corso] = []
     
-    fetch(url: "https://logistica.univr.it/PortaleStudentiUnivr/combo.php?aa=" + year + "&page=corsi") { result in
-        switch result {
-        case .success(var text):
-            // Keep only the JSON portion between the first '{' and the matching closing '}'
-            if let startRange = text.firstIndex(of: "["), let endRange = text.lastIndex(of: "}") {
-                text = String(text[startRange...endRange] + "]")
-            } else {
-                print("No JSON object found in body")
-                print("Raw body:\n\(text)")
-                return
-            }
-            
-            do {
-                let decoder = JSONDecoder()
-                let corsi = try decoder.decode([Corso].self, from: Data(text.utf8))
-                
-                coursesData = corsi
-            } catch {
-                print("Decoding failed:", error)
-                print("Cleaned JSON candidate:\n\(text)")
-            }
-            
-            //completion(yearsData.sorted(by: { $0.valore > $1.valore }))
-            completion(coursesData)
-        case .failure:
-            print("Completion error")
-            return
+    do {
+        var text = try await fetchText(from: "https://logistica.univr.it/PortaleStudentiUnivr/combo.php?aa=" + year + "&page=corsi")
+        
+        if let startRange = text.firstIndex(of: "["), let endRange = text.lastIndex(of: "}") {
+            text = String(text[startRange...endRange] + "]")
+        } else {
+            print("No JSON object found in body")
+            print("Raw body:\n\(text)")
         }
+        
+        do {
+            let decoder = JSONDecoder()
+            let corsi = try decoder.decode([Corso].self, from: Data(text.utf8))
+            
+            coursesData = corsi
+        } catch {
+            print("Decoding failed:", error)
+            print("Cleaned JSON candidate:\n\(text)")
+            throw error
+        }
+        
+        return coursesData
+    } catch {
+        print("Fetch error in getCourses: ", error)
+        throw error
     }
 }
 
-func fetchOrario(corso: String, anno: String, selyear: String, completion: @escaping (OperationResult<[Lesson]>) -> Void) {
+func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [Lesson] {
     guard let url = URL(string: "https://logistica.univr.it/PortaleStudentiUnivr/grid_call.php") else {
-        completion(.failure)
-        return
+        throw URLError(.badURL)
     }
 
     var request = URLRequest(url: url)
@@ -149,62 +134,49 @@ func fetchOrario(corso: String, anno: String, selyear: String, completion: @esca
                            .replacingOccurrences(of: "+", with: "%20") ?? ""
 
     request.httpBody = bodyString.data(using: .utf8)
+    
+    let (data, response) = try await URLSession.shared.data(for: request)
+        
+    guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+        print("Invalid response in fetchOrario")
+        throw URLError(.badServerResponse)
+    }
 
-    // 🔥 Fai la richiesta
-    URLSession.shared.dataTask(with: request) { data, response, error in
-        guard let data, error == nil else {
-            print("Errore rete:", error ?? "")
-            completion(.failure)
-            return
-        }
-
-        do {
-            // Decodifica il JSON generico
-            let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+    do {
+        let decoder = JSONDecoder()
+        var lessons: ResponseAPI = try decoder.decode(ResponseAPI.self, from: data)
+        
+        var colors: [String: String] = [:]
+        var colorsIndex: Int = 0
+    
+        for i in lessons.celle.indices {
+            var color: String = ""
             
-            var lessons: [Lesson] = []
-            var colors: [String: String] = [:]
-            if let events = json["celle"] as? [[String: Any]], let allColors = json["colori"] as? [String] {
-                var colorsIndex: Int = 0
+            if lessons.celle[i].Annullato == "1" {
+                color = "#FFFFFF"
+            } else if lessons.celle[i].tipo == "chiusura_type" {
+                color = "#BDF2F2"
+            } else if !lessons.celle[i].color_index.isEmpty {
+                print("Trovato uno")
+            } else if colors[lessons.celle[i].codice_insegnamento] != nil {
+                color = colors[lessons.celle[i].codice_insegnamento]!
+            } else {
+                color = lessons.colori[colorsIndex]
                 
-                for evento in events {
-                    var color: String = ""
-                    
-                    if evento["Annullato"] as? String == "1" {
-                        color = "#FFFFFF"
-                    } else if evento["tipo"] as? String == "chiusura_type" {
-                        color = "#BDF2F2"
-                    } else if evento["color_index"] != nil {
-                        print("Trovato uno")
-                    } else if colors[evento["codice_insegnamento"] as? String ?? ""] != nil {
-                        color = colors[evento["codice_insegnamento"] as? String ?? ""]!
-                    } else {
-                        color = allColors[colorsIndex]
-                        
-                        colors[evento["codice_insegnamento"] as? String ?? ""] = allColors[colorsIndex]
-                        colorsIndex += 1
-                    }
-                    
-                    lessons.append(.init(
-                        nome_insegnamento: evento["nome_insegnamento"] as? String ?? "",
-                        name_original: evento["name_original"] as? String ?? "",
-                        orario: evento["orario"] as? String ?? "",
-                        data: evento["data"] as? String ?? "",
-                        aula: evento["aula"] as? String ?? "",
-                        docente: evento["docente"] as? String ?? "",
-                        color: color,
-                        type: evento["tipo"] as? String ?? ""
-                    ))
-                }
+                colors[lessons.celle[i].codice_insegnamento] = color
+                colorsIndex += 1
             }
-            
-            completion(.success(lessons))
-        } catch {
-            print("Errore parsing JSON:", error)
-            if let text = String(data: data, encoding: .utf8) {
-                print("Risposta testuale:\n", text)
-            }
-            completion(.failure)
+    
+            lessons.celle[i].color = color
         }
-    }.resume()
+        
+        return lessons.celle
+    } catch {
+        print("Errore parsing JSON:", error)
+        if let text = String(data: data, encoding: .utf8) {
+            print("Risposta testuale:\n", text)
+        }
+        
+        throw error
+    }
 }
