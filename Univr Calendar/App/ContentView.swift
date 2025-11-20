@@ -18,14 +18,14 @@ struct ContentView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            Onboarding(years: $years, courses: $courses, academicYears: $academicYears, selectedTab: $selectedTab)
-                .toolbarVisibility(.hidden, for: .tabBar)
+            Onboarding(selectedTab: $selectedTab)
+                .hideTabBarCompatible()
                 .tag(1)
             CalendarView(years: $years, courses: $courses, academicYears: $academicYears, selectedTab: $selectedTab)
-                .toolbarVisibility(.hidden, for: .tabBar)
+                .hideTabBarCompatible()
                 .tag(0)
         }
-        .tabViewStyle(.tabBarOnly)
+        .hideTabBarCompatible()
         .onAppear {
             selectedTab = onboardingCompleted ? 0 : 1
         }

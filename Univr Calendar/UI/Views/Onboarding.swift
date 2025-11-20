@@ -42,15 +42,14 @@ struct Onboarding: View {
     
     @AppStorage("onboardingCompleted") var onboardingCompleted: Bool = false
     
+    @State private var viewModel = OnboardingViewModel()
+    
     @State private var index: Int = 0
     @State private var nextIndex: Int = 0
     
     @State private var searchText: String = ""
     @FocusState private var searchTextFieldFocus: Bool
     
-    @Binding var years: [Year]
-    @Binding var courses: [Corso]
-    @Binding var academicYears: [Anno]
     @Binding var selectedTab: Int
     
     private let safeAreas = UIApplication.shared.safeAreas
@@ -58,84 +57,96 @@ struct Onboarding: View {
     var body: some View {
         TabView(selection: $index) {
             VStack {
-                if !years.isEmpty {
-                    Spacer()
-                    Text("Benvenuto!")
-                        .font(.title)
-                        .bold()
-                    Text("Cambia anno se desideri o procedi alla scelta del corso")
-                    
-                    Picker(selection: $selectedYear, content: {
-                        ForEach(years, id: \.valore) { year in
-                            Text(year.label).tag(year.valore)
-                        }
-                    }) {}
-                        .pickerStyle(.segmented)
-                        .padding()
-                    Spacer()
-                    Button(action: {
-                        withAnimation {
-                            courses = []
-                            selectedCourse = "0"
-
-                            nextIndex = 1
-                            Task {
-                                do {
-                                    let fetchedCourses = try await getCourses(year: selectedYear)
-                                    
-                                    await MainActor.run {
-                                        courses = fetchedCourses
-                                        
-                                        withAnimation {
-                                            index = nextIndex
-                                        }
-                                    }
-                                } catch {
-                                    print("Failed to fetch courses in Onboarding: \(error)")
-                                    throw error
+                Spacer()
+                // Logo app
+                Text("Benvenuto!")
+                    .font(.title)
+                    .bold()
+                Text("Non capisci mai che lezioni hai? Non hai voglia di aprire il sito ogni volta o usare app obsolete? Ora puoi fare tutto qui!")
+                    .padding(.horizontal)
+                Spacer()
+                Button(action: {
+                    withAnimation {
+                        nextIndex = 1
+                        Task {
+                            await viewModel.loadYears()
+                            
+                            await MainActor.run {
+                                withAnimation {
+                                    index = nextIndex
                                 }
                             }
                         }
-                    }) {
-                        if nextIndex != 1 {
-                            Text("Continua")
-                                .frame(maxWidth: .infinity)
-                        } else {
-                            RotatingSemicircleLoader()
-                        }
                     }
-                    .padding(.horizontal, safeAreas.bottom)
-                    .controlSize(.large)
-                    .buttonStyle(.glassProminent)
-                    .disabled(nextIndex == 1)
+                }) {
+                    if nextIndex < 1 {
+                        Text("Continua")
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        RotatingSemicircleLoader()
+                    }
                 }
+                .padding(.horizontal, safeAreas.bottom)
+                .controlSize(.large)
+                .glassProminentIfAvailable()
+                .disabled(nextIndex == 1)
             }
             .multilineTextAlignment(.center)
             .tag(0)
-            .onAppear {
-                Task {
-                    do {
-                        let fetchedYears = try await getYears()
-                        
-                        await MainActor.run {
-                            years = fetchedYears
+            VStack {
+                Spacer()
+                Text("Scegli un anno")
+                    .font(.title)
+                    .bold()
+                Text("Seleziona un anno precedente per vedere l'archivio, sennò procedi pure con l'ultimo ;)")
+                    .padding(.horizontal)
+                
+                Picker(selection: $selectedYear, content: {
+                    ForEach(viewModel.years, id: \.valore) { year in
+                        Text(year.label).tag(year.valore)
+                    }
+                }) {}
+                    .pickerStyle(.segmented)
+                    .padding()
+                Spacer()
+                Button(action: {
+                    withAnimation {
+                        viewModel.courses = []
+                        selectedCourse = "0"
+
+                        nextIndex = 2
+                        Task {
+                            await viewModel.loadCourses(year: selectedYear)
                             
-                            withAnimation {
-                                index = nextIndex
+                            await MainActor.run {
+                                withAnimation {
+                                    index = nextIndex
+                                }
                             }
                         }
-                    } catch {
-                        print("Failed to fetch years in Onboarding: \(error)")
-                        throw error
+                    }
+                }) {
+                    if nextIndex < 2 {
+                        Text("Continua")
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        RotatingSemicircleLoader()
                     }
                 }
+                .padding(.horizontal, safeAreas.bottom)
+                .controlSize(.large)
+                .glassProminentIfAvailable()
+                .disabled(nextIndex == 2)
             }
+            .multilineTextAlignment(.center)
+            .tag(1)
             VStack {
                 Spacer()
                 Text("Bene! Ora scegli un corso")
                     .font(.title)
                     .bold()
-                Text("Sono mostrati i corsi per l'anno \(years.filter{$0.valore == selectedYear}.first?.label ?? "")")
+                Text("Sono mostrati i corsi per l'anno \(viewModel.years.filter{$0.valore == selectedYear}.first?.label ?? "")")
+                    .padding(.horizontal)
                 
                 TextField("Cerca un corso", text: $searchText)
                     .focused($searchTextFieldFocus)
@@ -157,7 +168,7 @@ struct Onboarding: View {
                                 Text("Scegli un corso")
                             }
                         }
-                        ForEach(courses, id: \.valore) { course in
+                        ForEach(viewModel.courses, id: \.valore) { course in
                             Button(action: {
                                 selectedCourse = course.valore
                             }) {
@@ -171,7 +182,7 @@ struct Onboarding: View {
                             }
                         }
                     }) {
-                        Text(courses.filter{$0.valore == selectedCourse}.first?.label ?? "Scegli un corso")
+                        Text(viewModel.courses.filter{$0.valore == selectedCourse}.first?.label ?? "Scegli un corso")
                             .foregroundStyle(colorScheme == .light ? .black : .white)
                             .padding()
                             .frame(height: 100)
@@ -180,10 +191,10 @@ struct Onboarding: View {
                             .cornerRadius(30)
                             .padding(.horizontal)
                     }
-                    .disabled(courses.isEmpty)
+                    .disabled(viewModel.courses.isEmpty)
                 } else {
                     List {
-                        let filteredCourses = courses.filter { (searchText != "" ? $0.label.localizedCaseInsensitiveContains(searchText) : true) }
+                        let filteredCourses = viewModel.courses.filter { (searchText != "" ? $0.label.localizedCaseInsensitiveContains(searchText) : true) }
                         if !filteredCourses.isEmpty {
                             ForEach(filteredCourses, id: \.valore) { course in
                                 Button(action: {
@@ -216,30 +227,24 @@ struct Onboarding: View {
                 Spacer()
                 Button(action: {
                     searchTextFieldFocus = false
-                    nextIndex = 2
+                    nextIndex = 3
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                         withAnimation {
-                            academicYears = []
+                            viewModel.academicYears = []
                             foundMatricola = false
                             
-                            academicYears = courses.first(where: { $0.valore == selectedCourse })!.elenco_anni
+                            viewModel.updateAcademicYears(for: selectedCourse)
                             
-                            selectedAcademicYear = academicYears.first!.valore
+                            selectedAcademicYear = viewModel.academicYears.first!.valore
                             
-                            let filtered: Anno = academicYears.first(where: { $0.valore == selectedAcademicYear })!
+                            foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                             
-                            for insegnamento in filtered.elenco_insegnamenti {
-                                if insegnamento.label.contains("Matricole dispari") || insegnamento.label.contains("Matricole pari") {
-                                    foundMatricola = true
-                                }
-                            }
-                            
-                            index = 2
+                            index = nextIndex
                         }
                     }
                 }) {
-                    if nextIndex < 2 {
+                    if nextIndex < 3 {
                         Text("Continua")
                             .frame(maxWidth: .infinity)
                     } else {
@@ -248,46 +253,37 @@ struct Onboarding: View {
                 }
                 .padding(.horizontal, safeAreas.bottom)
                 .controlSize(.large)
-                .buttonStyle(.glassProminent)
-                .disabled(selectedCourse == "0" || nextIndex == 2)
+                .glassProminentIfAvailable()
+                .disabled(selectedCourse == "0" || nextIndex == 3)
                 .keyboardPadding(10)
             }
             .multilineTextAlignment(.center)
-            .tag(1)
+            .tag(2)
             VStack {
                 Spacer()
                 Text("Che anno frequenti?")
                     .font(.title)
                     .bold()
                 Text("Se vedi solo un anno allora lascia così, non puoi sbagliare!")
+                    .padding(.horizontal)
                 
                 Picker(selection: $selectedAcademicYear, content: {
-                    ForEach(academicYears, id: \.valore) { year in
+                    ForEach(viewModel.academicYears, id: \.valore) { year in
                         Text(year.label).tag(year.valore)
                     }
                 }) {}
                     .pickerStyle(.segmented)
                     .padding()
-                    .disabled(courses.isEmpty)
+                    .disabled(viewModel.courses.isEmpty)
                     .onChange(of: selectedAcademicYear) { oldValue, newValue in
-                        foundMatricola = false
-                        
-                        if !academicYears.isEmpty {
-                            let filtered: Anno = academicYears.first(where: { $0.valore == newValue })!
-                            
-                            for insegnamento in filtered.elenco_insegnamenti {
-                                if insegnamento.label.contains("Matricole dispari") || insegnamento.label.contains("Matricole pari") {
-                                    foundMatricola = true
-                                }
-                            }
-                        }
+                        foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                     }
                 Spacer()
                 Button(action: {
                     if foundMatricola {
-                        nextIndex = 3
+                        nextIndex = 4
                         withAnimation {
-                            index = 3
+                            index = nextIndex
                         }
                     } else {
                         onboardingCompleted = true
@@ -300,16 +296,17 @@ struct Onboarding: View {
                 }
                 .padding(.horizontal, safeAreas.bottom)
                 .controlSize(.large)
-                .buttonStyle(.glassProminent)
+                .glassProminentIfAvailable()
             }
             .multilineTextAlignment(.center)
-            .tag(2)
+            .tag(3)
             VStack {
                 Spacer()
                 Text("Sei matricola pari o dispari?")
                     .font(.title)
                     .bold()
                 Text("O il tuo amico, ovvio")
+                    .padding(.horizontal)
                 
                 Picker(selection: $matricola, content: {
                     Text("Pari").tag("pari")
@@ -330,10 +327,10 @@ struct Onboarding: View {
                 }
                 .padding(.horizontal, safeAreas.bottom)
                 .controlSize(.large)
-                .buttonStyle(.glassProminent)
+                .glassProminentIfAvailable()
             }
             .multilineTextAlignment(.center)
-            .tag(3)
+            .tag(4)
         }
         .onAppear {
             index = 0
@@ -345,5 +342,5 @@ struct Onboarding: View {
 }
 
 #Preview {
-    Onboarding(years: .constant([]), courses: .constant([]), academicYears: .constant([]), selectedTab: .constant(0))
+    Onboarding(selectedTab: .constant(0))
 }

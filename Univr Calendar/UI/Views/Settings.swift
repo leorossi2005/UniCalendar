@@ -18,9 +18,7 @@ struct Settings: View {
     @AppStorage("foundMatricola") var foundMatricola: Bool = false
     @AppStorage("matricola") var matricolaStorage: String = "pari"
     
-    @Binding var years: [Year]
-    @Binding var courses: [Corso]
-    @Binding var academicYears: [Anno]
+    @State private var viewModel = SettingsViewModel()
     
     @Binding var detents: Set<PresentationDetent>
     @Binding var openSettings: Bool
@@ -43,7 +41,7 @@ struct Settings: View {
                     Text("Anno")
                         .padding(.trailing)
                     Picker("Anno", selection: $selectedYear) {
-                        ForEach(years, id: \.valore) { year in
+                        ForEach(viewModel.years, id: \.valore) { year in
                             Text(year.label).tag(year.valore)
                         }
                     }
@@ -51,23 +49,14 @@ struct Settings: View {
                     .onChange(of: selectedYear) {
                         detents = [.large]
                         
-                        courses = []
+                        viewModel.courses = []
                         selectedCourse = "0"
                         
-                        academicYears = []
+                        viewModel.academicYears = []
                         selectedAcademicYear = "0"
                         
                         Task {
-                            do {
-                                let fetchedCourses = try await getCourses(year: selectedYear)
-                                
-                                await MainActor.run {
-                                    courses = fetchedCourses
-                                }
-                            } catch {
-                                print("Failed to fetch courses in Settings: \(error)")
-                                throw error
-                            }
+                            await viewModel.loadCourses(year: selectedYear)
                         }
                     }
                 }
@@ -94,7 +83,7 @@ struct Settings: View {
                                     Text("Scegli un corso")
                                 }
                             }
-                            ForEach(courses, id: \.valore) { course in
+                            ForEach(viewModel.courses, id: \.valore) { course in
                                 Button(action: {
                                     selectedCourse = course.valore
                                 }) {
@@ -108,7 +97,7 @@ struct Settings: View {
                                 }
                             }
                         }) {
-                            Text(courses.filter{$0.valore == selectedCourse}.first?.label ?? "Scegli un corso")
+                            Text(viewModel.courses.filter{$0.valore == selectedCourse}.first?.label ?? "Scegli un corso")
                                 .foregroundStyle(colorScheme == .light ? .black : .white)
                                 .padding()
                                 .frame(height: 100)
@@ -118,9 +107,9 @@ struct Settings: View {
                                 .padding(.horizontal)
                                 .padding(.bottom)
                         }
-                        .disabled(courses.isEmpty)
+                        .disabled(viewModel.courses.isEmpty)
                     } else {
-                        let filteredCourses = courses.filter { (searchText != "" ? $0.label.localizedCaseInsensitiveContains(searchText) : true) }
+                        let filteredCourses = viewModel.courses.filter { (searchText != "" ? $0.label.localizedCaseInsensitiveContains(searchText) : true) }
                         
                         if !filteredCourses.isEmpty {
                             VStack {
@@ -172,48 +161,32 @@ struct Settings: View {
                         
                         detents = [.fraction(0.15), .medium, .large]
                         
-                        academicYears = []
+                        viewModel.academicYears = []
                         
-                        academicYears = courses.filter { $0.valore == selectedCourse }.first!.elenco_anni
+                        viewModel.updateAcademicYears(for: selectedCourse)
                         
-                        selectedAcademicYear = academicYears.first!.valore
+                        selectedAcademicYear = viewModel.academicYears.first!.valore
                         
-                        let filtered: Anno = academicYears.first(where: { $0.valore == selectedAcademicYear })!
-                        
-                        for insegnamento in filtered.elenco_insegnamenti {
-                            if insegnamento.label.contains("Matricole dispari") || insegnamento.label.contains("Matricole pari") {
-                                foundMatricola = true
-                            }
-                        }
+                        foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                     } else {
                         detents = [.large]
                         
-                        academicYears = []
+                        viewModel.academicYears = []
                     }
                 }
                 HStack {
                     Text("Anno")
                         .padding(.trailing)
                     Picker(selection: $selectedAcademicYear, content: {
-                        ForEach(academicYears, id: \.valore) { year in
+                        ForEach(viewModel.academicYears, id: \.valore) { year in
                             Text(year.label).tag(year.valore)
                         }
                     }) {}
                         .pickerStyle(.segmented)
                         .padding()
-                        .disabled(courses.isEmpty)
+                        .disabled(viewModel.courses.isEmpty)
                         .onChange(of: selectedAcademicYear) {
-                            foundMatricola = false
-                            
-                            if selectedAcademicYear != "0" {
-                                let filtered: Anno = academicYears.first(where: { $0.valore == selectedAcademicYear })!
-                                
-                                for insegnamento in filtered.elenco_insegnamenti {
-                                    if insegnamento.label.contains("Matricole dispari") || insegnamento.label.contains("Matricole pari") {
-                                        foundMatricola = true
-                                    }
-                                }
-                            }
+                            foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                         }
                 }
                 if foundMatricola {
@@ -240,9 +213,9 @@ struct Settings: View {
                     foundMatricola = false
                     matricolaStorage = "pari"
                     
-                    years = []
-                    courses = []
-                    academicYears = []
+                    viewModel.years = []
+                    viewModel.courses = []
+                    viewModel.academicYears = []
                     
                     selectedTab = 1
                     openCalendar = false
@@ -251,38 +224,22 @@ struct Settings: View {
             }
         }
         .onAppear {
-            if years.isEmpty {
+            if viewModel.years.isEmpty {
                 Task {
-                    do {
-                        let fetchedYears = try await getYears()
-                        
-                        await MainActor.run {
-                            years = fetchedYears
-                        }
-                    } catch {
-                        print("Failed to fetch years in Settings: \(error)")
-                        throw error
-                    }
+                    await viewModel.loadYears()
                 }
             }
             
-            if courses.isEmpty {
+            if viewModel.courses.isEmpty {
                 Task {
-                    do {
-                        let fetchedCourses = try await getCourses(year: selectedYear)
-                        
-                        await MainActor.run {
-                            courses = fetchedCourses
-                            
-                            if selectedCourse != "0" {
-                                academicYears = courses.filter { $0.valore == selectedCourse }.first!.elenco_anni
-                            } else if openSettings {
-                                detents = [.large]
-                            }
+                    await viewModel.loadCourses(year: selectedYear)
+                    
+                    await MainActor.run {
+                        if selectedCourse != "0" {
+                            viewModel.academicYears = viewModel.courses.filter { $0.valore == selectedCourse }.first!.elenco_anni
+                        } else if openSettings {
+                            detents = [.large]
                         }
-                    } catch {
-                        print("Failed to fetch courses in Settings: \(error)")
-                        throw error
                     }
                 }
             }
@@ -291,5 +248,5 @@ struct Settings: View {
 }
 
 #Preview {
-    Settings(years: .constant([]), courses: .constant([]), academicYears: .constant([]), detents: .constant([]), openSettings: .constant(true), openCalendar: .constant(true), selectedTab: .constant(0), selectedDetent: .constant(.large), selectedYear: .constant(""), selectedCourse: .constant(""), selectedAcademicYear: .constant(""), matricola: .constant(""))
+    Settings(detents: .constant([]), openSettings: .constant(true), openCalendar: .constant(true), selectedTab: .constant(0), selectedDetent: .constant(.large), selectedYear: .constant(""), selectedCourse: .constant(""), selectedAcademicYear: .constant(""), matricola: .constant(""))
 }

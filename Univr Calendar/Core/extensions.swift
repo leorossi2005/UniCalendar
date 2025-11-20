@@ -5,7 +5,7 @@
 //  Created by Leonardo Rossi on 10/10/25.
 //
 
-import SwiftUI
+import Foundation
 
 enum CalendarSymbolLength: String {
     case full
@@ -17,38 +17,6 @@ enum NewDateComponents: String {
     case day
     case month
     case year
-}
-
-extension Color {
-    init?(hex: String) {
-        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
-
-        var rgb: UInt64 = 0
-        guard Scanner(string: hexSanitized).scanHexInt64(&rgb) else { return nil }
-
-        let r, g, b, a: Double
-        switch hexSanitized.count {
-        case 6: // RGB (es. "FF5733")
-            (r, g, b, a) = (
-                Double((rgb >> 16) & 0xFF) / 255.0,
-                Double((rgb >> 8) & 0xFF) / 255.0,
-                Double(rgb & 0xFF) / 255.0,
-                1.0
-            )
-        case 8: // RGBA (es. "FF5733FF")
-            (r, g, b, a) = (
-                Double((rgb >> 24) & 0xFF) / 255.0,
-                Double((rgb >> 16) & 0xFF) / 255.0,
-                Double((rgb >> 8) & 0xFF) / 255.0,
-                Double(rgb & 0xFF) / 255.0
-            )
-        default:
-            return nil
-        }
-
-        self.init(red: r, green: g, blue: b, opacity: a)
-    }
 }
 
 extension Date {
@@ -77,6 +45,12 @@ extension Date {
     }
     
     func getString(format: String) -> String {
+        if format == "dd-MM-yyyy" {
+            return Formatters.displayDate.string(from: self)
+        } else if format == "HH:mm" {
+            return Formatters.hourMinute.string(from: self)
+        }
+        
         let formatter = DateFormatter()
         formatter.dateFormat = format // Formato richiesto
         formatter.locale = Locale(identifier: "it_IT") // Opzionale: forza locale italiano
@@ -173,54 +147,16 @@ extension Date {
 
 extension String {
     func date(format: String) -> Date? {
+        if format == "dd-MM-yyyy" {
+            return Formatters.displayDate.date(from: self)
+        } else if format == "HH:mm" {
+            return Formatters.hourMinute.date(from: self)
+        }
+        
+        // Fallback
         let formatter = DateFormatter()
-        formatter.dateFormat = format // dd = giorno, MM = mese, yyyy = anno
-        formatter.locale = Locale(identifier: "en_US_POSIX") // Importante per evitare bug con le impostazioni utente
-        formatter.timeZone = .current // O TimeZone(secondsFromGMT: 0) se preferisci UTC
-
+        formatter.dateFormat = format
+        formatter.locale = Locale(identifier: "it_IT")
         return formatter.date(from: self)
-    }
-}
-
-extension View {
-    @ViewBuilder
-    func `if`(_ condition: Bool, transform: (Self) -> some View) -> some View {
-        if condition {
-            transform(self)
-        } else {
-            self
-        }
-    }
-}
-
-extension UIApplication {
-    /// Ritorna le dimensioni della safe area attuale (se disponibili)
-    var safeAreas: UIEdgeInsets {
-        guard let window = connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .flatMap({ $0.windows })
-            .first(where: \.isKeyWindow)
-        else {
-            return .zero
-        }
-        return window.safeAreaInsets
-    }
-    
-    var screenSize: CGRect {
-        guard let window = connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .flatMap({ $0.windows })
-            .first(where: \.isKeyWindow)
-        else {
-            return .init()
-        }
-        return window.screen.bounds
-    }
-}
-
-extension View {
-    func keyboardPadding(_ value: CGFloat) -> some View {
-        self.safeAreaPadding(.bottom, value)
-            .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 }

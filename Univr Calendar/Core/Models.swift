@@ -21,47 +21,42 @@ struct ResponseAPI: Codable, Sendable {
 
 struct Lesson: Codable, Sendable, Hashable, Identifiable {
     let id: UUID
-    let nome_insegnamento: String
-    let name_original: String
+    let nomeInsegnamento: String
+    let nameOriginal: String
     let data: String
     let aula: String
     let orario: String
     let tipo: String
     let docente: String
-    let Annullato: String
-    let color_index: String
-    let codice_insegnamento: String
-    var color: String
+    let annullato: String
+    let colorIndex: String
+    let codiceInsegnamento: String
+    var color: String = ""
     
     private enum CodingKeys: String, CodingKey {
-        case nome_insegnamento
-        case name_original
-        case data
-        case aula
-        case orario
-        case tipo
-        case docente
-        case Annullato
-        case color_index
-        case codice_insegnamento
-        case color
+        case nomeInsegnamento = "nome_insegnamento"
+        case nameOriginal = "name_original"
+        case data, aula, orario, tipo, docente
+        case annullato = "Annullato"
+        case colorIndex = "color_index"
+        case codiceInsegnamento = "codice_insegnamento"
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        self.id = UUID()
-        
-        self.nome_insegnamento = try container.decodeIfPresent(String.self, forKey: .nome_insegnamento) ?? ""
-        self.name_original = try container.decodeIfPresent(String.self, forKey: .name_original) ?? ""
+        self.nomeInsegnamento = try container.decodeIfPresent(String.self, forKey: .nomeInsegnamento) ?? ""
+        self.nameOriginal = try container.decodeIfPresent(String.self, forKey: .nameOriginal) ?? ""
         self.data = try container.decodeIfPresent(String.self, forKey: .data) ?? ""
         self.aula = try container.decodeIfPresent(String.self, forKey: .aula) ?? ""
         self.orario = try container.decodeIfPresent(String.self, forKey: .orario) ?? ""
         self.tipo = try container.decodeIfPresent(String.self, forKey: .tipo) ?? ""
         self.docente = try container.decodeIfPresent(String.self, forKey: .docente) ?? ""
-        self.Annullato = try container.decodeIfPresent(String.self, forKey: .Annullato) ?? ""
-        self.color_index = try container.decodeIfPresent(String.self, forKey: .color_index) ?? ""
-        self.codice_insegnamento = try container.decodeIfPresent(String.self, forKey: .codice_insegnamento) ?? ""
+        self.annullato = try container.decodeIfPresent(String.self, forKey: .annullato) ?? ""
+        self.colorIndex = try container.decodeIfPresent(String.self, forKey: .colorIndex) ?? ""
+        self.codiceInsegnamento = try container.decodeIfPresent(String.self, forKey: .codiceInsegnamento) ?? ""
+        
+        self.id = UUID()
         self.color = ""
     }
     
@@ -80,16 +75,16 @@ struct Lesson: Codable, Sendable, Hashable, Identifiable {
         color: String = ""
     ) {
         self.id = id
-        self.nome_insegnamento = nome_insegnamento
-        self.name_original = name_original
+        self.nomeInsegnamento = nome_insegnamento
+        self.nameOriginal = name_original
         self.data = data
         self.aula = aula
         self.orario = orario
         self.tipo = tipo
         self.docente = docente
-        self.Annullato = Annullato
-        self.color_index = color_index
-        self.codice_insegnamento = codice_insegnamento
+        self.annullato = Annullato
+        self.colorIndex = color_index
+        self.codiceInsegnamento = codice_insegnamento
         self.color = color
     }
 }
@@ -109,4 +104,21 @@ struct Anno: Codable, Sendable {
 
 struct Insegnamento: Codable, Sendable {
     let label: String
+}
+
+extension Lesson {
+    static let sample = Lesson(
+        id: UUID(),
+        nome_insegnamento: "Insegnamento di prova molto lungo",
+        name_original: "",
+        data: "01-01-2025",
+        aula: "Aula Gino Tessari",
+        orario: "08:30 - 10:30",
+        tipo: "Lezione",
+        docente: "Prof. Rossi",
+        Annullato: "0",
+        color_index: "",
+        codice_insegnamento: "XYZ",
+        color: "#A0A0A0"
+    )
 }
