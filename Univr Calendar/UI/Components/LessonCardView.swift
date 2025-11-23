@@ -93,5 +93,6 @@ struct LessonCardView: View {
 }
 
 #Preview {
-    //LessonCardView()
+    //LessonCardView(lesson: <#Lesson#>)
+    //    .environment(UserSettings.shared)
 }

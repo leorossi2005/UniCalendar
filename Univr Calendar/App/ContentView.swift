@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @AppStorage("onboardingCompleted") var onboardingCompleted: Bool = false
+    @Environment(UserSettings.self) var settings
     
     @State var selectedTab: Int = 1
     
@@ -27,11 +27,12 @@ struct ContentView: View {
         }
         .hideTabBarCompatible()
         .onAppear {
-            selectedTab = onboardingCompleted ? 0 : 1
+            selectedTab = settings.onboardingCompleted ? 0 : 1
         }
     }
 }
 
 #Preview {
     ContentView()
+        .environment(UserSettings.shared)
 }

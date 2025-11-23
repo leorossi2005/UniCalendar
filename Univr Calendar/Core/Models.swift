@@ -8,18 +8,18 @@
 import Foundation
 
 // MARK: Year struct
-struct Year: Decodable, Sendable {
+struct Year: Decodable, Sendable, Equatable {
     let label: String
     let valore: String
 }
 
 // MARK: Lesson struct
-struct ResponseAPI: Codable, Sendable {
+struct ResponseAPI: Codable, Sendable, Equatable {
     var celle: [Lesson]
     let colori: [String]
 }
 
-struct Lesson: Codable, Sendable, Hashable, Identifiable {
+struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
     let id: UUID
     let nomeInsegnamento: String
     let nameOriginal: String
@@ -40,6 +40,7 @@ struct Lesson: Codable, Sendable, Hashable, Identifiable {
         case annullato = "Annullato"
         case colorIndex = "color_index"
         case codiceInsegnamento = "codice_insegnamento"
+        case color
     }
 
     init(from decoder: Decoder) throws {
@@ -57,7 +58,8 @@ struct Lesson: Codable, Sendable, Hashable, Identifiable {
         self.codiceInsegnamento = try container.decodeIfPresent(String.self, forKey: .codiceInsegnamento) ?? ""
         
         self.id = UUID()
-        self.color = ""
+        
+        self.color = try container.decodeIfPresent(String.self, forKey: .color) ?? ""
     }
     
     init(

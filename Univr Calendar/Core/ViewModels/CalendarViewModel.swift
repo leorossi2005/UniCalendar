@@ -12,8 +12,16 @@ class CalendarViewModel {
     var lessons: [Lesson] = []
     var days: [[Lesson]] = []
     var daysString: [String] = []
-    var loading: Bool = false
+    
+    var loading: Bool = true
+    var checkingUpdates: Bool = false
+    var showUpdateAlert: Bool = false
     var errorMessage: String? = nil
+    var noLessonsFound: Bool = false
+    
+    private var pendingNewLessons: [Lesson]? = nil
+    private var currentPalette: [String] = []
+    private let cacheKey = "calendar_cache.json"
     
     private let networkService: NetworkServiceProtocol
     
@@ -21,29 +29,102 @@ class CalendarViewModel {
         self.networkService = service
     }
     
+    func loadFromCache(selYear: String, matricola: String) {
+        if let cacheResponse = CacheManager.shared.load(fileName: cacheKey, type: ResponseAPI.self) {
+            self.lessons = cacheResponse.celle
+            self.organizeData(selectedYear: selYear, matricola: matricola)
+            
+            DispatchQueue.main.async {
+                self.loading = false
+                if self.lessons.isEmpty {
+                    self.noLessonsFound = true
+                }
+            }
+        }
+    }
+    
     @MainActor
     func loadLessons(corso: String, anno: String, selYear: String, matricola: String) async {
         guard corso != "0" else { return }
         
-        self.loading = true
+        if !lessons.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                self.checkingUpdates = true
+            }
+        }
         self.errorMessage = nil
         
         do {
             let response = try await networkService.fetchOrario(corso: corso, anno: anno, selyear: selYear)
             
             var fetchedLessons = response.celle
-            let palette = response.colori
+            self.currentPalette = response.colori
             
-            assignColors(to: &fetchedLessons, palette: palette)
-            
-            self.lessons = fetchedLessons
-            self.organizeData(selectedYear: selYear, matricola: matricola)
+            if fetchedLessons.isEmpty {
+                noLessonsFound = true
+                self.applyNewData(fetchedLessons, palette: self.currentPalette, selectedYear: selYear, matricola: matricola)
+            } else {
+                assignColors(to: &fetchedLessons, palette: self.currentPalette)
+                
+                noLessonsFound = false
+                if self.lessons.isEmpty {
+                    self.applyNewData(fetchedLessons, palette: self.currentPalette, selectedYear: selYear, matricola: matricola)
+                } else {
+                    if !self.lessons.elementsEqual(fetchedLessons, by: {
+                        $0.orario == $1.orario &&
+                        $0.tipo == $1.tipo &&
+                        $0.color == $1.color &&
+                        $0.aula == $1.aula &&
+                        $0.nomeInsegnamento == $1.nomeInsegnamento &&
+                        $0.data == $1.data &&
+                        $0.docente == $1.docente &&
+                        $0.codiceInsegnamento == $1.codiceInsegnamento &&
+                        $0.annullato == $1.annullato &&
+                        $0.colorIndex == $1.colorIndex &&
+                        $0.nameOriginal == $1.nameOriginal
+                    }) {
+                        self.pendingNewLessons = fetchedLessons
+                        self.showUpdateAlert = true
+                    }
+                }
+            }
         } catch {
-            self.errorMessage = "Errore: \(error.localizedDescription)"
-            print("Errore fetch: \(error)")
+            if let netError = error as? NetworkError {
+                self.errorMessage = netError.localizedDescription
+            } else {
+                self.errorMessage = "Errore Generico: \(error.localizedDescription)"
+            }
+            print("Debug Error: \(error)")
         }
         
-        self.loading = false
+        if self.loading {
+            self.loading = false
+        }
+        self.checkingUpdates = false
+    }
+    
+    func clearPendingUpdate() {
+        pendingNewLessons = nil
+        checkingUpdates = false
+        showUpdateAlert = false
+    }
+    
+    func confirmUpdate(selectedYear: String, matricola: String) {
+        guard let newLessons = pendingNewLessons else { return }
+        
+        applyNewData(newLessons, palette: self.currentPalette, selectedYear: selectedYear, matricola: matricola)
+        
+        noLessonsFound = false
+        pendingNewLessons = nil
+        showUpdateAlert = false
+    }
+    
+    private func applyNewData(_ newLessons: [Lesson], palette: [String], selectedYear: String, matricola: String) {
+        self.lessons = newLessons
+        self.organizeData(selectedYear: selectedYear, matricola: matricola)
+        
+        let cacheObject = ResponseAPI(celle: newLessons, colori: palette)
+        CacheManager.shared.save(cacheObject, fileName: cacheKey)
     }
     
     private func assignColors(to lessons: inout [Lesson], palette: [String]) {
@@ -127,43 +208,33 @@ class CalendarViewModel {
     
     func generaDateAnnoAccademico(annoInizio: Int) -> [String] {
         var dateStringhe: [String] = []
-        
-        // Setup Calendario e Formatter
         let calendar = Calendar.current
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd-MM-yyyy" // Formato richiesto
-        formatter.locale = Locale(identifier: "it_IT") // Opzionale: forza locale italiano
         
-        // Data Inizio: 1 Ottobre [annoInizio]
+        let formatter = Formatters.displayDate
+        
         var startComponents = DateComponents()
         startComponents.year = annoInizio
         startComponents.month = 10
         startComponents.day = 1
         
-        // Data Fine: 30 Settembre [annoInizio + 1]
         var endComponents = DateComponents()
         endComponents.year = annoInizio + 1
         endComponents.month = 9
         endComponents.day = 30
         
-        // Controllo validità date
         guard let startDate = calendar.date(from: startComponents),
               let endDate = calendar.date(from: endComponents) else {
             return []
         }
         
-        // Ciclo per generare le date
         var currentDate = startDate
         
         while currentDate <= endDate {
-            // 1. Aggiungi la stringa formattata all'array
             dateStringhe.append(formatter.string(from: currentDate))
-            
-            // 2. Incrementa di 1 giorno
             if let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) {
                 currentDate = nextDate
             } else {
-                break // Sicurezza per evitare loop infiniti in caso di errore
+                break
             }
         }
         

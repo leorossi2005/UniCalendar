@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct Univr_CalendarApp: App {
+    @State private var settings: UserSettings = .shared
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(settings)
         }
     }
 }

@@ -9,20 +9,12 @@ import SwiftUI
 
 struct Settings: View {
     @Environment(\.colorScheme) var colorScheme
-    
-    @AppStorage("onboardingCompleted") var onboardingCompleted: Bool = false
-    
-    @AppStorage("selectedYear") var selectedYearStorage: String = "2025"
-    @AppStorage("selectedCourse") var selectedCourseStorage: String = "0"
-    @AppStorage("selectedAcademicYear") var selectedAcademicYearStorage: String = "0"
-    @AppStorage("foundMatricola") var foundMatricola: Bool = false
-    @AppStorage("matricola") var matricolaStorage: String = "pari"
+    @Environment(UserSettings.self) var settings
     
     @State private var viewModel = SettingsViewModel()
     
     @Binding var detents: Set<PresentationDetent>
     @Binding var openSettings: Bool
-    @Binding var openCalendar: Bool
     @Binding var selectedTab: Int
     @Binding var selectedDetent: PresentationDetent
     
@@ -157,7 +149,7 @@ struct Settings: View {
                 }
                 .onChange(of: selectedCourse) {
                     if selectedCourse != "0" {
-                        foundMatricola = false
+                        settings.foundMatricola = false
                         
                         detents = [.fraction(0.15), .medium, .large]
                         
@@ -167,7 +159,7 @@ struct Settings: View {
                         
                         selectedAcademicYear = viewModel.academicYears.first!.valore
                         
-                        foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
+                        settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                     } else {
                         detents = [.large]
                         
@@ -186,10 +178,10 @@ struct Settings: View {
                         .padding()
                         .disabled(viewModel.courses.isEmpty)
                         .onChange(of: selectedAcademicYear) {
-                            foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
+                            settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                         }
                 }
-                if foundMatricola {
+                if settings.foundMatricola {
                     HStack {
                         Text("Matricola")
                             .padding(.trailing)
@@ -206,19 +198,18 @@ struct Settings: View {
                     selectedDetent = .fraction(0.15)
                     detents = [.fraction(0.15), .medium]
                     
-                    onboardingCompleted = false
-                    selectedYearStorage = "2025"
-                    selectedCourseStorage = "0"
-                    selectedAcademicYearStorage = "0"
-                    foundMatricola = false
-                    matricolaStorage = "pari"
+                    settings.reset()
+                    
+                    selectedYear = settings.selectedYear
+                    selectedCourse = settings.selectedCourse
+                    selectedAcademicYear = settings.selectedAcademicYear
+                    matricola = settings.matricola
                     
                     viewModel.years = []
                     viewModel.courses = []
                     viewModel.academicYears = []
                     
                     selectedTab = 1
-                    openCalendar = false
                     openSettings = false
                 }
             }
@@ -248,5 +239,6 @@ struct Settings: View {
 }
 
 #Preview {
-    Settings(detents: .constant([]), openSettings: .constant(true), openCalendar: .constant(true), selectedTab: .constant(0), selectedDetent: .constant(.large), selectedYear: .constant(""), selectedCourse: .constant(""), selectedAcademicYear: .constant(""), matricola: .constant(""))
+    Settings(detents: .constant([]), openSettings: .constant(true), selectedTab: .constant(0), selectedDetent: .constant(.large), selectedYear: .constant(""), selectedCourse: .constant(""), selectedAcademicYear: .constant(""), matricola: .constant(""))
+        .environment(UserSettings.shared)
 }

@@ -8,23 +8,24 @@
 import SwiftUI
 
 struct DatePickerView: View {
+    @Environment(UserSettings.self) var settings
+    @Environment(\.isEnabled) var isEnabled
+    
     @Binding var selection: Date
+    @Binding var selectedMonth: Int
     
     @State var date: Date
     @State var actual: Bool
-    
-    @AppStorage("selectedYear") var selectedYear: String = "2025"
+    @State var currentDay: Int = 1
     
     var daysString: [String] {
-        generaDateAnnoAccademico(annoInizio: Int(selectedYear)!)
+        if let year = Int(settings.selectedYear) {
+            return generaDateAnnoAccademico(annoInizio: year)
+        } else { return [] }
     }
     
     var days: [String] {
         Date().getWeekdaySymbols(length: .short)
-    }
-    
-    var currentDay: Int {
-        date.day
     }
     
     var lastDayN: Int {
@@ -76,15 +77,10 @@ struct DatePickerView: View {
                         Text("•")
                         Text(year)
                     }
+                    .opacity(isEnabled ? 1 : 0.3)
                     Spacer()
                     if daysString.contains(Date().getString(format: "dd-MM-yyyy")) {
                         Button("Oggi") {
-                            if date.month != Date().month {
-                                actual = false
-                            } else {
-                                date = date.set(type: .day, value: Date().day)
-                            }
-                            
                             selection = Date()
                         }
                         .glassIfAvailable()
@@ -99,6 +95,7 @@ struct DatePickerView: View {
                         }
                     }
                 }
+                .opacity(isEnabled ? 1 : 0.3)
                 let startOffset = days.firstIndex(of: firstDayName) ?? 0
 
                 ForEach(0..<rows, id: \.self) { row in
@@ -112,13 +109,11 @@ struct DatePickerView: View {
                                         .frame(width: 40, height: 40)
                                     let calendar = Calendar.current
                                     let range = calendar.range(of: .day, in: .month, for: date.remove(type: .month, value: 1))
-                                    let final = range?.count ?? 30 // Fallback a 30 se fallisce
+                                    let final = range?.count ?? 30
                                     Text("\(final + dayIndex)")
-                                        .opacity(0.3)
+                                        .opacity(isEnabled ? 0.3 : 0.1)
                                         .onTapGesture {
                                             if date.month - 1 != 9 {
-                                                actual = false
-                                                date = date.set(type: .day, value: 1)
                                                 var newDate = date.remove(type: .month, value: 1)
                                                 newDate = newDate.set(type: .day, value: final + dayIndex)
                                                 selection = newDate
@@ -134,11 +129,9 @@ struct DatePickerView: View {
                                         .fill(.clear)
                                         .frame(width: 40, height: 40)
                                     Text("\(dayIndex - lastDayN)")
-                                        .opacity(0.3)
+                                        .opacity(isEnabled ? 0.3 : 0.1)
                                         .onTapGesture {
                                             if date.month + 1 != 10 {
-                                                actual = false
-                                                date = date.set(type: .day, value: 1)
                                                 var newDate = date.add(type: .month, value: 1)
                                                 newDate = newDate.set(type: .day, value: dayIndex - lastDayN)
                                                 selection = newDate
@@ -153,17 +146,16 @@ struct DatePickerView: View {
                                     Circle()
                                         .fill(dayIndex == currentDay && actual ? .blue : .clear)
                                         .frame(width: 40, height: 40)
-                                        .opacity(0.3)
+                                        .opacity(isEnabled ? 0.3 : 0.1)
                                     Text("\(dayIndex)")
+                                        .opacity(isEnabled ? 1 : 0.3)
                                         .if((dayIndex != currentDay || !actual) && Date().day == dayIndex && Date().getCurrentMonthSymbol(length: .full) == monthName  && Date().yearSymbol == year) { view in
                                             view
                                                 .foregroundStyle(.blue)
                                                 .fontWeight(.bold)
                                         }
                                         .onTapGesture {
-                                            actual = true
-                                            date = date.set(type: .day, value: dayIndex)
-                                            selection = date
+                                            selection = date.set(type: .day, value: dayIndex)
                                         }
                                 }
                                 if col < days.count - 1 {
@@ -185,6 +177,21 @@ struct DatePickerView: View {
             }
         }
         .padding(.horizontal, (screenSize.width / 100) * 8)
+        .onAppear {
+            currentDay = date.day
+        }
+        .onChange(of: selection) {
+            if selection.month == date.month {
+                actual = true
+                selectedMonth = selection.month
+                date = date.set(type: .day, value: selection.day)
+            } else {
+                actual = false
+                date = date.set(type: .day, value: 1)
+            }
+            
+            currentDay = date.day
+        }
     }
     
     func generaDateAnnoAccademico(annoInizio: Int) -> [String] {
@@ -234,29 +241,48 @@ struct DatePickerView: View {
 }
 
 struct DatePickerContainer: View {
-    @Binding var  selectedMonth: Int
+    @Environment(UserSettings.self) var settings
+    
+    @Binding var selectedDetent: PresentationDetent
+    @Binding var selectedMonth: Int
     @Binding var selectedWeek: Date
     
-    @AppStorage("selectedYear") var selectedYear: String = "2025"
-    
     var body: some View {
-        TabView(selection: $selectedMonth) {
-            ForEach(0..<12) { n in
-                let date = Date(year: Int(selectedYear)!, month: 10, day: 1).add(type: .month, value: n)
-                if selectedWeek.month == date.month {
-                    DatePickerView(selection: $selectedWeek, date: selectedWeek, actual: true).tag(date.month)
-                } else {
-                    DatePickerView(selection: $selectedWeek, date: date, actual: false).tag(date.month)
+        GeometryReader { proxy in
+            let currentHeight = proxy.size.height
+            let screenHeight = UIScreen.main.bounds.height
+            
+            let BigHeight = screenHeight * 0.45
+            let smallHeight = screenHeight * 0.55
+            
+            let fadeRange: CGFloat = screenHeight * 0.05
+            
+            let dynamicOpacity = 1.0 - ((currentHeight < smallHeight ? Double(BigHeight - currentHeight) : Double(currentHeight - smallHeight)) / Double(fadeRange))
+            
+            TabView(selection: $selectedMonth) {
+                ForEach(0..<12) { n in
+                    if let year = Int(settings.selectedYear) {
+                        let date = Date(year: year, month: 10, day: 1).add(type: .month, value: n)
+                        if selectedWeek.month == date.month {
+                            DatePickerView(selection: $selectedWeek, selectedMonth: $selectedMonth, date: selectedWeek, actual: true).tag(date.month)
+                        } else {
+                            DatePickerView(selection: $selectedWeek, selectedMonth: $selectedMonth, date: date, actual: false).tag(date.month)
+                        }
+                    }
                 }
             }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .opacity(min(max(dynamicOpacity, 0), 1))
+            .allowsHitTesting(selectedDetent == (isIpad ? .fraction(0.75) : .medium))
         }
-        .tabViewStyle(.page(indexDisplayMode: .never))
     }
 }
 
 #Preview {
+    @Previewable @State var selectedDetent: PresentationDetent = .medium
     @Previewable @State var selectedMonth: Int = 11
     @Previewable @State var selectedWeek: Date = Date()
     
-    DatePickerContainer(selectedMonth: $selectedMonth, selectedWeek: $selectedWeek)
+    DatePickerContainer(selectedDetent: $selectedDetent, selectedMonth: $selectedMonth, selectedWeek: $selectedWeek)
+        .environment(UserSettings.shared)
 }

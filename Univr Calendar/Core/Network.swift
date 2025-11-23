@@ -9,9 +9,20 @@ import Foundation
 
 enum NetworkError: Error {
     case badURL
-    case badServerResponse
-    case cannotDecodeContentData
-    case jsonNotFound
+    case badServerResponse(statusCode: Int)
+    case emptyData
+    case dataNotFound(variable: String)
+    case decodingError(Error)
+    
+    var errorDescription: String? {
+        switch self {
+            case .badURL: return "URL non valido"
+            case .badServerResponse(let code): return "Errore server: \(code)."
+            case .emptyData: return "Dati vuoti ricevuti dal server."
+            case .dataNotFound(let variable): return "Impossibile trovare i dati per: \(variable)."
+            case .decodingError(let err): return "Errore decodifica: \(err.localizedDescription)"
+        }
+    }
 }
 
 protocol NetworkServiceProtocol {
@@ -21,66 +32,37 @@ protocol NetworkServiceProtocol {
 }
 
 struct NetworkService: NetworkServiceProtocol {
-    private func extractJSON(from text: String, isArray: Bool = true) -> Data? {
-        // Cerca tutto ciò che è racchiuso tra [ ... ] o { ... }
-        let pattern = isArray ? "\\[.*\\]" : "\\{.*\\}"
+    private func extractJSONVariable(name variableName: String, from text: String) -> Data? {
+        let searchString = "var \(variableName) ="
         
-        do {
-            let regex = try NSRegularExpression(pattern: pattern, options: [.dotMatchesLineSeparators])
-            let range = NSRange(location: 0, length: text.utf16.count)
-            
-            if let match = regex.firstMatch(in: text, options: [], range: range),
-               let swiftRange = Range(match.range, in: text) {
-                let jsonString = String(text[swiftRange])
-                return jsonString.data(using: .utf8)
-            }
-        } catch {
-            print("Errore Regex: \(error)")
-        }
-        return nil
-    }
-    
-    func extractElencoCorsiJSON(from text: String) -> Data? {
-        // 1. Definiamo i marcatori di inizio e fine specifici per quel testo
-        let startMarker = "var elenco_corsi ="
-        let endMarker = "var elenco_cdl =" // La variabile successiva nel testo
+        guard let rangeStart = text.range(of: searchString) else { return nil }
         
-        // 2. Troviamo l'inizio
-        guard let startRange = text.range(of: startMarker) else { return nil }
-        let searchStartIndex = startRange.upperBound
+        let jsonStartIndex = rangeStart.upperBound
         
-        // 3. Troviamo la fine (cerchiamo la prossima variabile definita)
-        guard let endRange = text.range(of: endMarker, range: searchStartIndex..<text.endIndex) else {
-            // Se non trova la variabile successiva, proviamo a cercare l'ultimo punto e virgola
-            return nil
-        }
+        guard let rangeEnd = text.range(of: ";", range: jsonStartIndex..<text.endIndex) else { return nil }
         
-        // 4. Estraiamo la sottostringa
-        var jsonString = String(text[searchStartIndex..<endRange.lowerBound])
+        let jsonString = String(text[jsonStartIndex..<rangeEnd.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // 5. Pulizia: Rimuoviamo spazi bianchi e il punto e virgola finale
-        jsonString = jsonString.trimmingCharacters(in: .whitespacesAndNewlines)
-        if jsonString.hasSuffix(";") {
-            jsonString.removeLast()
-        }
-        
-        // 6. Convertiamo in Data
         return jsonString.data(using: .utf8)
     }
     
     private func fetchText(from urlString: String) async throws -> String {
         guard let url = URL(string: urlString) else {
-            throw URLError(.badURL)
+            throw NetworkError.badURL
         }
         
         let (data, response) = try await URLSession.shared.data(from: url)
         
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw URLError(.badServerResponse)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.badServerResponse(statusCode: 0)
+        }
+            
+        guard httpResponse.statusCode == 200 else {
+            throw NetworkError.badServerResponse(statusCode: httpResponse.statusCode)
         }
         
         guard let text = String(data: data, encoding: .utf8) else {
-            throw URLError(.cannotDecodeContentData)
+            throw NetworkError.emptyData
         }
         
         return text
@@ -92,18 +74,25 @@ struct NetworkService: NetworkServiceProtocol {
             URLQueryItem(name: "aa", value: "1")
         ]
         
-        guard let urlString = components?.url?.absoluteString else { throw NetworkError.badURL }
+        guard let urlString = components?.url?.absoluteString else {
+            throw NetworkError.badURL
+        }
+        
         let text = try await fetchText(from: urlString)
         
-        guard let jsonData = extractJSON(from: text, isArray: false) else {
-            throw NetworkError.jsonNotFound
+        guard let jsonData = extractJSONVariable(name: "anni_accademici_ec", from: text) else {
+            throw NetworkError.dataNotFound(variable: "anni_accademici_ec")
         }
         
         let decoder = JSONDecoder()
-        let anniDict = try decoder.decode([String: Year].self, from: jsonData)
-        let yearsData = anniDict.values.map { $0 }
-        
-        return yearsData.sorted(by: { $0.valore < $1.valore })
+        do {
+            let anniDict = try decoder.decode([String: Year].self, from: jsonData)
+            let yearsData = anniDict.values.sorted(by: { $0.valore < $1.valore })
+            
+            return yearsData
+        } catch {
+            throw NetworkError.decodingError(error)
+        }
     }
     
     func getCourses(year: String) async throws -> [Corso] {
@@ -113,25 +102,34 @@ struct NetworkService: NetworkServiceProtocol {
             URLQueryItem(name: "page", value: "corsi")
         ]
         
-        guard let urlString = components?.url?.absoluteString else { throw NetworkError.badURL }
+        guard let urlString = components?.url?.absoluteString else {
+            throw NetworkError.badURL
+        }
+        
         let text = try await fetchText(from: urlString)
         
-        guard let jsonData = extractElencoCorsiJSON(from: text) else {
-            throw NetworkError.jsonNotFound
+        guard let jsonData = extractJSONVariable(name: "elenco_corsi", from: text) else {
+            throw NetworkError.dataNotFound(variable: "elenco_corsi")
         }
         
         let decoder = JSONDecoder()
-        return try decoder.decode([Corso].self, from: jsonData)
+        do {
+            return try decoder.decode([Corso].self, from: jsonData)
+        } catch {
+            throw NetworkError.decodingError(error)
+        }
     }
     
     func fetchOrario(corso: String, anno: String, selyear: String) async throws -> ResponseAPI {
         guard let url = URL(string: "https://logistica.univr.it/PortaleStudentiUnivr/grid_call.php") else {
-            throw URLError(.badURL)
+            throw NetworkError.badURL
         }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/x-www-form-urlencoded; charset=UTF-8", forHTTPHeaderField: "Content-Type")
+        
+        let dateString = Formatters.displayDate.string(from: Date())
         
         var components = URLComponents()
         components.queryItems = [
@@ -141,7 +139,7 @@ struct NetworkService: NetworkServiceProtocol {
             URLQueryItem(name: "cdl", value: corso),
             URLQueryItem(name: "anno2", value: anno),
             URLQueryItem(name: "_lang", value: "it"),
-            URLQueryItem(name: "date", value: Formatters.displayDate.string(from: Date())),
+            URLQueryItem(name: "date", value: dateString),
             URLQueryItem(name: "all_events", value: "1")
         ]
 
@@ -149,12 +147,20 @@ struct NetworkService: NetworkServiceProtocol {
         
         let (data, response) = try await URLSession.shared.data(for: request)
             
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw URLError(.badServerResponse)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkError.badServerResponse(statusCode: 0)
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw NetworkError.badServerResponse(statusCode: httpResponse.statusCode)
         }
         
         let decoder = JSONDecoder()
-        return try decoder.decode(ResponseAPI.self, from: data)
+        do {
+            return try decoder.decode(ResponseAPI.self, from: data)
+        } catch {
+            throw NetworkError.decodingError(error)
+        }
     }
 
 }
