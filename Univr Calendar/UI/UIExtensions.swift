@@ -7,35 +7,48 @@
 
 import SwiftUI
 
-extension Color {
-    init?(hex: String) {
-        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
+class ColorCache {
+    static let shared = ColorCache()
+    private var cache: [String: Color] = [:]
+    
+    func color(for hex: String) -> Color? {
+        if let cached = cache[hex] { return cached }
+        let color = Color.parseHex(hex)
+        if let color { cache[hex] = color }
+        return color
+    }
+}
 
-        var rgb: UInt64 = 0
-        guard Scanner(string: hexSanitized).scanHexInt64(&rgb) else { return nil }
+extension Color {
+    static func parseHex(_ hex: String) -> Color? {
+        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        if hexSanitized.hasPrefix("#") {
+            hexSanitized.removeFirst()
+        }
+        
+        guard hexSanitized.count == 6 || hexSanitized.count == 8 else { return nil }
+        
+        guard let rgb = UInt64(hexSanitized, radix: 16) else { return nil }
 
         let r, g, b, a: Double
-        switch hexSanitized.count {
-        case 6: // RGB (es. "FF5733")
-            (r, g, b, a) = (
-                Double((rgb >> 16) & 0xFF) / 255.0,
-                Double((rgb >> 8) & 0xFF) / 255.0,
-                Double(rgb & 0xFF) / 255.0,
-                1.0
-            )
-        case 8: // RGBA (es. "FF5733FF")
-            (r, g, b, a) = (
-                Double((rgb >> 24) & 0xFF) / 255.0,
-                Double((rgb >> 16) & 0xFF) / 255.0,
-                Double((rgb >> 8) & 0xFF) / 255.0,
-                Double(rgb & 0xFF) / 255.0
-            )
-        default:
-            return nil
+        if hexSanitized.count == 6 {
+            r = Double((rgb >> 16) & 0xFF) / 255.0
+            g = Double((rgb >> 8) & 0xFF) / 255.0
+            b = Double(rgb & 0xFF) / 255.0
+            a = 1.0
+        } else {
+            r = Double((rgb >> 24) & 0xFF) / 255.0
+            g = Double((rgb >> 16) & 0xFF) / 255.0
+            b = Double((rgb >> 8) & 0xFF) / 255.0
+            a = Double(rgb & 0xFF) / 255.0
         }
 
-        self.init(red: r, green: g, blue: b, opacity: a)
+        return Color(red: r, green: g, blue: b, opacity: a)
+    }
+    
+    init?(hex: String) {
+        guard let c = ColorCache.shared.color(for: hex) else { return nil }
+        self = c
     }
 }
 
@@ -111,13 +124,14 @@ extension View {
     }
     
     @ViewBuilder
-    func sheetDesign(_ namespace: Namespace.ID) -> some View {
+    func sheetDesign(_ namespace: Namespace.ID, detent: Binding<PresentationDetent>) -> some View {
         if #available(iOS 26, *) {
             self
                 .navigationTransition(
                     .zoom(sourceID: "calendar", in: namespace)
                 )
-                .presentationCornerRadius(.deviceCornerRadius)
+                .presentationCornerRadius(detent.wrappedValue != .large ? .deviceCornerRadius - 8 : .deviceCornerRadius)
+                .animation(.easeInOut, value: detent.wrappedValue)
         } else {
             self
                 .presentationCornerRadius(.deviceCornerRadius)
@@ -139,24 +153,45 @@ extension View {
     }
     
     @ViewBuilder
-    func onScrollGeometry(openCalendar: Binding<Bool>, selectedDetent: Binding<PresentationDetent>) -> some View {
+    func onScrollGeometry(openCalendar: Binding<Bool>, selectedDetent: Binding<PresentationDetent>, firstLoading: Binding<Bool>) -> some View {
         if #available(iOS 26, *) {
             self
                 .onScrollGeometryChange(for: ScrollGeometry.self, of: { geometry in
                     geometry
                 }) { oldValue, newValue in
-                    withAnimation {
-                        if (newValue.contentOffset.y + newValue.contentInsets.top) <= 0 {
-                            openCalendar.wrappedValue = true
-                        } else {
-                            if selectedDetent.wrappedValue != .large {
-                                openCalendar.wrappedValue = false
+                    if !firstLoading.wrappedValue {
+                        let offset = newValue.contentOffset.y + newValue.contentInsets.top
+                        let isLarge = selectedDetent.wrappedValue == .large
+                        
+                        if offset <= 0 && !openCalendar.wrappedValue {
+                            DispatchQueue.main.async {
+                                withAnimation {
+                                    openCalendar.wrappedValue = true
+                                }
+                            }
+                        } else if offset > 10 && !isLarge && openCalendar.wrappedValue {
+                            DispatchQueue.main.async {
+                                withAnimation {
+                                    openCalendar.wrappedValue = false
+                                }
                             }
                         }
                     }
                 }
         } else {
             self
+        }
+    }
+    
+    @ViewBuilder
+    func toolbarTitleShadow(_ colorScheme: ColorScheme) -> some View {
+        if #available(iOS 26, *) {
+            self
+        } else {
+            self
+                .shadow(color: colorScheme == .light ? .white : .black, radius: 5)
+                .shadow(color: colorScheme == .light ? .white : .black, radius: 10)
+                .shadow(color: colorScheme == .light ? .white : .black, radius: 20)
         }
     }
     
@@ -183,6 +218,18 @@ extension View {
             } else {
                 self
             }
+        }
+    }
+}
+
+extension ToolbarItem {
+    @ToolbarContentBuilder
+    func toolbarBackgroundVisibility(_ visibility: Visibility) -> some ToolbarContent {
+        if #available(iOS 26, *) {
+            self
+                .sharedBackgroundVisibility(visibility)
+        } else {
+            self
         }
     }
 }

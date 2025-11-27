@@ -45,7 +45,7 @@ struct Onboarding: View {
     
     @Binding var selectedTab: Int
     
-    private let safeAreas = UIApplication.shared.safeAreas
+    @State var safeAreas: UIEdgeInsets = .zero
     
     var body: some View {
         @Bindable var settings = settings
@@ -330,6 +330,10 @@ struct Onboarding: View {
         .onAppear {
             index = 0
             nextIndex = 0
+            
+            safeAreas = UIApplication.shared.safeAreas
+            
+            viewModel.loadFromCache()
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .highPriorityGesture(DragGesture())

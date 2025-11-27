@@ -7,6 +7,15 @@
 
 import Foundation
 
+
+nonisolated struct NetworkCache: Encodable, Decodable {
+    static var shared = NetworkCache()
+    
+    var years: [Year] = []
+    var courses: [String: [Corso]] = [:]
+    var academicYears: [String: [Anno]] = [:]
+}
+
 enum NetworkError: Error {
     case badURL
     case badServerResponse(statusCode: Int)
@@ -33,17 +42,18 @@ protocol NetworkServiceProtocol {
 
 struct NetworkService: NetworkServiceProtocol {
     private func extractJSONVariable(name variableName: String, from text: String) -> Data? {
-        let searchString = "var \(variableName) ="
+        let pattern: Regex<(Substring, Substring)>
+        do {
+            pattern = try Regex("var\\s+\(variableName)\\s+=\\s+(.*?);")
+                .dotMatchesNewlines()
+        } catch {
+            return nil
+        }
         
-        guard let rangeStart = text.range(of: searchString) else { return nil }
+        guard let match = text.firstMatch(of: pattern) else { return nil }
         
-        let jsonStartIndex = rangeStart.upperBound
-        
-        guard let rangeEnd = text.range(of: ";", range: jsonStartIndex..<text.endIndex) else { return nil }
-        
-        let jsonString = String(text[jsonStartIndex..<rangeEnd.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        return jsonString.data(using: .utf8)
+        let jsonString = match.1
+        return String(jsonString).data(using: .utf8)
     }
     
     private func fetchText(from urlString: String) async throws -> String {
@@ -146,7 +156,7 @@ struct NetworkService: NetworkServiceProtocol {
         request.httpBody = components.query?.data(using: .utf8)
         
         let (data, response) = try await URLSession.shared.data(for: request)
-            
+        
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NetworkError.badServerResponse(statusCode: 0)
         }

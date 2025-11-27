@@ -7,6 +7,21 @@
 
 import SwiftUI
 
+@Observable
+class FractionDatePickerViewModel {
+    static let shared = FractionDatePickerViewModel()
+    
+    var academicWeeks: [[FractionDay]] = []
+}
+
+struct FractionDay: Identifiable, Equatable, Hashable {
+    let id: String // ID Stabile generato una volta sola
+    let date: Date
+    let dayNumber: String      // Es: "12" (Calcolato una volta)
+    let weekdayString: String  // Es: "LUN" (Calcolato una volta)
+    let isOutOfBounds: Bool    // Se il giorno è fuori dall'anno accademico (Calcolato una volta)
+}
+
 struct FractionDatePickerView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
@@ -14,44 +29,49 @@ struct FractionDatePickerView: View {
     @Binding var selectedWeek: Date
     @Binding var loading: Bool
     
-    let week: [Date]
-    
+    let week: [FractionDay]
     let width: CGFloat
     
+    private var itemWidth: CGFloat {
+        (width - 40 - 30) / 7
+    }
+    private var dayFontSize: CGFloat {
+        itemWidth * 0.40
+    }
+    private var weekdayFontSize: CGFloat {
+        itemWidth * 0.35
+    }
+    
+    private let calendar = Calendars.calendar
+    
     var body: some View {
-        let itemWidth = (width - 40 - 30) / 7
-        
-        let dayFontSize = itemWidth * 0.40
-        let weekdayFontSize = itemWidth * 0.35
-        
         HStack(spacing: 5) {
-            ForEach(week, id: \.self) { day in
-                if let year = Int(settings.selectedYear) {
-                    let isOutOfBounds = (day.month == 9 && day.year == year) || (day.month == 10 && day.year == year + 1)
-                    Button(action: {
-                        if !isOutOfBounds {
-                            withAnimation {
-                                selectedWeek = day
-                            }
+            ForEach(week) { day in
+                let isSelected = calendar.isDate(day.date, inSameDayAs: selectedWeek)
+                
+                Button(action: {
+                    if !day.isOutOfBounds {
+                        withAnimation {
+                            selectedWeek = day.date
                         }
-                    }) {
-                        VStack {
-                            Text("\(day.day)")
-                                .font(.system(size: dayFontSize))
-                                .bold()
-                                .foregroundStyle(day.getString(format: "dd-MM-yyyy") == selectedWeek.getString(format: "dd-MM-yyyy") ? colorScheme == .light ? .white : .black : colorScheme == .light ? .black : .white)
-                            Spacer().frame(height: 3)
-                            Text(day.getCurrentWeekdaySymbol(length: .short))
-                                .font(.system(size: weekdayFontSize))
-                                .foregroundStyle(day.getString(format: "dd-MM-yyyy") == selectedWeek.getString(format: "dd-MM-yyyy") ? colorScheme == .light ? .white : .black : colorScheme == .light ? .black : .white)
-                        }
-                        .frame(width: itemWidth, height: itemWidth * 1.35)
-                        .background(Color(white: colorScheme == .light ? 0 : 1, opacity: day.getString(format: "dd-MM-yyyy") == selectedWeek.getString(format: "dd-MM-yyyy") ? 1 : 0.05))
-                        .clipShape(RoundedRectangle(cornerRadius: itemWidth / 2.5, style: .continuous))
                     }
-                    .opacity(isOutOfBounds || loading ? 0.3 : 1)
-                    .disabled(isOutOfBounds)
+                }) {
+                    VStack {
+                        Text("\(day.dayNumber)")
+                            .font(.system(size: dayFontSize))
+                            .bold()
+                            .foregroundStyle(isSelected ? (colorScheme == .light ? .white : .black) : (colorScheme == .light ? .black : .white))
+                        Spacer().frame(height: 3)
+                        Text(day.weekdayString)
+                            .font(.system(size: weekdayFontSize))
+                            .foregroundStyle(isSelected ? (colorScheme == .light ? .white : .black) : (colorScheme == .light ? .black : .white))
+                    }
+                    .frame(width: itemWidth, height: itemWidth * 1.35)
+                    .background(Color(white: colorScheme == .light ? 0 : 1, opacity: isSelected ? 1 : 0.05))
+                    .clipShape(RoundedRectangle(cornerRadius: itemWidth / 2.5, style: .continuous))
                 }
+                .opacity(day.isOutOfBounds || loading ? 0.3 : 1)
+                .disabled(day.isOutOfBounds)
             }
         }
         .frame(maxHeight: .infinity)
@@ -67,8 +87,8 @@ struct FractionDatePickerContainer: View {
     @Binding var loading: Bool
     @Binding var selectionFraction: String?
     @Binding var selectedDetent: PresentationDetent
-
-    @State private var academicWeeks: [[Date]] = []
+    
+    @State var viewModel = FractionDatePickerViewModel.shared
     
     @State private var canUpdateSelection: Bool = false
     
@@ -83,19 +103,10 @@ struct FractionDatePickerContainer: View {
     var body: some View {
         GeometryReader { proxy in
             let screenWidth = proxy.size.width
-            
-            let currentHeight = proxy.size.height
-            let screenHeight = UIScreen.main.bounds.height
-            
-            let smallHeight = screenHeight * 0.15
-            
-            let fadeRange: CGFloat = screenHeight * 0.05
-            
-            let dynamicOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
         
             ScrollView(.horizontal) {
                 LazyHStack(spacing: 0) {
-                    ForEach(academicWeeks, id: \.self) { week in
+                    ForEach(viewModel.academicWeeks, id: \.self) { week in
                         FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, week: week, width: screenWidth)
                             .containerRelativeFrame(.horizontal)
                             .overlay {
@@ -105,10 +116,10 @@ struct FractionDatePickerContainer: View {
                                             Color.clear
                                                 .onChange(of: proxy.frame(in: .named("scrollFractionSpace")).minX) { oldValue, newValue in
                                                     guard canUpdateSelection else { return }
-                                                    
+                        
                                                     if abs(newValue) < 20 {
-                                                        if let currentId = week.first?.getString(format: "dd-MM-yyyy"), selectionFraction != currentId {
-                                                            selectionFraction = currentId
+                                                        if let firstDay = week.first, selectionFraction != firstDay.id {
+                                                            selectionFraction = firstDay.id
                                                         }
                                                     }
                                                 }
@@ -116,7 +127,7 @@ struct FractionDatePickerContainer: View {
                                     }
                                 }
                             }
-                            .id(week.first?.getString(format: "dd-MM-yyyy"))
+                            .id(week.first?.id)
                     }
                 }
                 .scrollTargetLayout()
@@ -146,16 +157,18 @@ struct FractionDatePickerContainer: View {
             .scrollTargetBehavior(.paging)
             .scrollIndicators(.never, axes: .horizontal)
             .scrollPosition(id: $selectionFraction, anchor: .leading)
-            .opacity(min(max(dynamicOpacity, 0), 1))
-            .allowsHitTesting(selectedDetent == .fraction(0.15))
         }
     }
     
     func reloadWeeksAndSelection() {
-        let newWeeks = generateAcademicWeeks(selectedYear: settings.selectedYear)
+        selectionFraction = nil
         
-        if academicWeeks != newWeeks {
-            academicWeeks = newWeeks
+        if viewModel.academicWeeks.isEmpty {
+            let newWeeks = generateAcademicWeeks(selectedYear: settings.selectedYear)
+            
+            if viewModel.academicWeeks != newWeeks {
+                viewModel.academicWeeks = newWeeks
+            }
         }
         
         if selectionFraction != targetId {
@@ -167,7 +180,7 @@ struct FractionDatePickerContainer: View {
         }
     }
     
-    func generateAcademicWeeks(selectedYear: String) -> [[Date]] {
+    func generateAcademicWeeks(selectedYear: String) -> [[FractionDay]] {
         guard let yearInt = Int(selectedYear) else { return [] }
         
         let startAcademicYear = Date(year: yearInt, month: 10, day: 1)
@@ -175,12 +188,27 @@ struct FractionDatePickerContainer: View {
         
         guard var currentWeekStart = startAcademicYear.startOfWeek() else { return [] }
         
-        var allWeeks: [[Date]] = []
+        var allWeeks: [[FractionDay]] = []
         
         while currentWeekStart <= endAcademicYear {
-            let weekOfDates = currentWeekStart.weekDates()
-            allWeeks.append(weekOfDates)
+            var weekOfDays: [FractionDay] = []
+            let weekDates = currentWeekStart.weekDates()
             
+            for date in weekDates {
+                let isOutOfBounds = (date.month == 9 && date.year == yearInt) || (date.month == 10 && date.year == yearInt + 1)
+                
+                let stableID = date.getString(format: "dd-MM-yyyy")
+                
+                weekOfDays.append(FractionDay(
+                    id: stableID,
+                    date: date,
+                    dayNumber: "\(date.day)",
+                    weekdayString: date.getCurrentWeekdaySymbol(length: .short),
+                    isOutOfBounds: isOutOfBounds
+                ))
+            }
+            
+            allWeeks.append(weekOfDays)
             currentWeekStart = currentWeekStart.add(type: .weekOfYear, value: 1)
         }
         
@@ -222,12 +250,12 @@ struct FractionDatePickerContainer: View {
     @Previewable @State var selectionFraction: String? = ""
     
     Text("")
-        .environment(UserSettings.shared)
         .sheet(isPresented: .constant(true)) {
             FractionDatePickerContainer(selectedWeek: $selectedWeek, loading: $loading, selectionFraction: $selectionFraction, selectedDetent: $selectedDetent)
                 .presentationDetents([.fraction(0.15)])
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                .sheetDesign(transition)
+                .sheetDesign(transition, detent: $selectedDetent)
         }
+        .environment(UserSettings.shared)
 }

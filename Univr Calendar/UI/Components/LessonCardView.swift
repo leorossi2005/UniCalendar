@@ -21,12 +21,12 @@ struct LessonCardView: View {
             
             HStack {
                 VStack(alignment: .leading) {
-                    Text(formatName(name: lesson.nomeInsegnamento))
+                    Text(lesson.formattedName)
                         .foregroundStyle(.black)
                         .font(.custom("", size: 20)) // Considera di usare .title3 o .headline
                         .multilineTextAlignment(.leading)
                     
-                    Text(formatClassroom(classroom: lesson.aula))
+                    Text(lesson.formattedClassroom)
                         .foregroundStyle(Color(white: 0.3))
                         .font(.custom("", size: 20))
                     
@@ -42,7 +42,7 @@ struct LessonCardView: View {
                 
                 Spacer(minLength: 20)
                 
-                Text(LessonCardView.getDuration(orario: lesson.orario))
+                Text(lesson.durationCalculated)
                     .foregroundStyle(.black)
                     .font(.system(size: 60))
                     .padding(.trailing, 45)
@@ -50,49 +50,11 @@ struct LessonCardView: View {
                     .lineLimit(1)
             }
         }
-    }
-    
-    // MARK: - Helpers
-    private func formatName(name: String) -> String {
-        return name.replacingOccurrences(of: "Matricole pari", with: "")
-                   .replacingOccurrences(of: "Matricole dispari", with: "")
-    }
-    
-    private func formatClassroom(classroom: String) -> String {
-        guard let bracketIndex = classroom.firstIndex(of: "[") else {
-            return classroom
-        }
-        let index = classroom.index(bracketIndex, offsetBy: -2, limitedBy: classroom.startIndex) ?? classroom.startIndex
-        return String(classroom[...index])
-    }
-    
-    static func getDuration(orario: String) -> String {
-        let parti = orario.components(separatedBy: " - ")
-        guard parti.count == 2 else { return "" }
-        
-        // Usiamo i formatters ottimizzati creati nella Fase 1
-        let formatter = Formatters.hourMinute
-
-        if let inizio = formatter.date(from: parti[0]),
-           let fine = formatter.date(from: parti[1]) {
-            
-            let diff = fine.timeIntervalSince(inizio)
-            let hours = Int(diff) / 3600
-            let minutes = (Int(diff) % 3600) / 60
-            
-            if hours >= 1 && minutes > 0 {
-                return "\(hours)h \(minutes)m"
-            } else if hours >= 1 {
-                return "\(hours)h"
-            } else {
-                return "\(minutes)m"
-            }
-        }
-        return ""
+        .drawingGroup()
     }
 }
 
 #Preview {
-    //LessonCardView(lesson: <#Lesson#>)
-    //    .environment(UserSettings.shared)
+    LessonCardView(lesson: Lesson.sample)
+        .environment(UserSettings.shared)
 }

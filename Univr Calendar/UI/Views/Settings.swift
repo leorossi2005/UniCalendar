@@ -15,6 +15,7 @@ struct Settings: View {
     
     @Binding var detents: Set<PresentationDetent>
     @Binding var openSettings: Bool
+    @Binding var openCalendar: Bool
     @Binding var selectedTab: Int
     @Binding var selectedDetent: PresentationDetent
     
@@ -22,9 +23,9 @@ struct Settings: View {
     @Binding var selectedCourse: String
     @Binding var selectedAcademicYear: String
     @Binding var matricola: String
+    var searchTextFieldFocus: FocusState<Bool>.Binding
     
     @State private var searchText: String = ""
-    @FocusState private var searchTextFieldFocus: Bool
     
     var body: some View {
         List {
@@ -54,7 +55,7 @@ struct Settings: View {
                 }
                 VStack {
                     TextField("Cerca un corso", text: $searchText)
-                                .focused($searchTextFieldFocus)
+                                .focused(searchTextFieldFocus)
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .background(Color.gray.opacity(0.2))
@@ -62,7 +63,7 @@ struct Settings: View {
                                 .padding(.horizontal)
                                 .padding(.top)
                                 .listRowSeparator(.hidden)
-                    if searchText == "" && !searchTextFieldFocus {
+                    if searchText == "" && !searchTextFieldFocus.wrappedValue {
                         Menu(content: {
                             Button(action: {
                                 selectedCourse = "0"
@@ -111,7 +112,7 @@ struct Settings: View {
                                     }
                                     Button(action: {
                                         searchText = ""
-                                        searchTextFieldFocus = false
+                                        searchTextFieldFocus.wrappedValue = false
                                         
                                         selectedCourse = course.valore
                                     }) {
@@ -198,23 +199,36 @@ struct Settings: View {
                     selectedDetent = .fraction(0.15)
                     detents = [.fraction(0.15), .medium]
                     
-                    settings.reset()
-                    
-                    selectedYear = settings.selectedYear
-                    selectedCourse = settings.selectedCourse
-                    selectedAcademicYear = settings.selectedAcademicYear
-                    matricola = settings.matricola
-                    
-                    viewModel.years = []
-                    viewModel.courses = []
-                    viewModel.academicYears = []
-                    
-                    selectedTab = 1
-                    openSettings = false
+                    DispatchQueue.main.async {
+                        settings.reset()
+                        
+                        selectedYear = settings.selectedYear
+                        selectedCourse = settings.selectedCourse
+                        selectedAcademicYear = settings.selectedAcademicYear
+                        matricola = settings.matricola
+                        
+                        viewModel.years = []
+                        viewModel.courses = []
+                        viewModel.academicYears = []
+                        
+                        selectedTab = 1
+                        openSettings = false
+                        
+                        openCalendar = false
+                    }
                 }
             }
         }
+        .onChange(of: searchTextFieldFocus.wrappedValue) {
+            if searchTextFieldFocus.wrappedValue {
+                detents = [.large]
+            } else {
+                detents = [.fraction(0.15), .medium, .large]
+            }
+        }
         .onAppear {
+            viewModel.loadFromCache()
+            
             if viewModel.years.isEmpty {
                 Task {
                     await viewModel.loadYears()
@@ -239,6 +253,8 @@ struct Settings: View {
 }
 
 #Preview {
-    Settings(detents: .constant([]), openSettings: .constant(true), selectedTab: .constant(0), selectedDetent: .constant(.large), selectedYear: .constant(""), selectedCourse: .constant(""), selectedAcademicYear: .constant(""), matricola: .constant(""))
+    @FocusState var isFocused: Bool
+    
+    Settings(detents: .constant([]), openSettings: .constant(true), openCalendar: .constant(true), selectedTab: .constant(0), selectedDetent: .constant(.large), selectedYear: .constant(""), selectedCourse: .constant(""), selectedAcademicYear: .constant(""), matricola: .constant(""), searchTextFieldFocus: $isFocused)
         .environment(UserSettings.shared)
 }

@@ -7,6 +7,12 @@
 
 import Foundation
 
+private struct YearStructure: Sendable {
+    let year: Int
+    let days: [String]
+    let dates: [Date]
+}
+
 @Observable
 class CalendarViewModel {
     var lessons: [Lesson] = []
@@ -22,6 +28,8 @@ class CalendarViewModel {
     private var pendingNewLessons: [Lesson]? = nil
     private var currentPalette: [String] = []
     private let cacheKey = "calendar_cache.json"
+    
+    private var cachedStructure: YearStructure? = nil
     
     private let networkService: NetworkServiceProtocol
     
@@ -40,6 +48,14 @@ class CalendarViewModel {
                     self.noLessonsFound = true
                 }
             }
+        }
+    }
+    
+    func loadNetworkFromCache() {
+        if let cacheResponse = NetworkCacheManager.shared.load(fileName: "network_cache.json", type: NetworkCache.self) {
+            NetworkCache.shared.years = cacheResponse.years
+            NetworkCache.shared.courses = cacheResponse.courses
+            NetworkCache.shared.academicYears = cacheResponse.academicYears
         }
     }
     
@@ -70,19 +86,7 @@ class CalendarViewModel {
                 if self.lessons.isEmpty {
                     self.applyNewData(fetchedLessons, palette: self.currentPalette, selectedYear: selYear, matricola: matricola)
                 } else {
-                    if !self.lessons.elementsEqual(fetchedLessons, by: {
-                        $0.orario == $1.orario &&
-                        $0.tipo == $1.tipo &&
-                        $0.color == $1.color &&
-                        $0.aula == $1.aula &&
-                        $0.nomeInsegnamento == $1.nomeInsegnamento &&
-                        $0.data == $1.data &&
-                        $0.docente == $1.docente &&
-                        $0.codiceInsegnamento == $1.codiceInsegnamento &&
-                        $0.annullato == $1.annullato &&
-                        $0.colorIndex == $1.colorIndex &&
-                        $0.nameOriginal == $1.nameOriginal
-                    }) {
+                    if self.lessons != fetchedLessons {
                         self.pendingNewLessons = fetchedLessons
                         self.showUpdateAlert = true
                     }
@@ -131,18 +135,22 @@ class CalendarViewModel {
         var colorMap: [String: String] = [:]
         var paletteIndex = 0
         
+        for lesson in lessons where !lesson.color.isEmpty && lesson.color != "CCCCCC" && lesson.color != "A0A0A0" {
+            colorMap[lesson.codiceInsegnamento] = lesson.color
+        }
+        
         for i in lessons.indices {
+            let code = lessons[i].codiceInsegnamento
+            
             if lessons[i].annullato == "1" {
                 lessons[i].color = "#FFFFFF"
             } else if lessons[i].tipo == "chiusura_type" {
                 lessons[i].color = "#BDF2F2"
             } else if !lessons[i].colorIndex.isEmpty {
                print("Trovato uno")
-            } else if let existingColor = colorMap[lessons[i].codiceInsegnamento] {
+            } else if let existingColor = colorMap[code] {
                 lessons[i].color = existingColor
             } else {
-                let code = lessons[i].codiceInsegnamento
-                
                 if let existingColor = colorMap[code] {
                     lessons[i].color = existingColor
                 } else {
@@ -153,91 +161,150 @@ class CalendarViewModel {
                     paletteIndex += 1
                 }
             }
+            
+            var hasher = Hasher()
+            hasher.combine(lessons[i].nomeInsegnamento)
+            hasher.combine(lessons[i].nameOriginal)
+            hasher.combine(lessons[i].data)
+            hasher.combine(lessons[i].aula)
+            hasher.combine(lessons[i].orario)
+            hasher.combine(lessons[i].tipo)
+            hasher.combine(lessons[i].docente)
+            hasher.combine(lessons[i].annullato)
+            hasher.combine(lessons[i].colorIndex)
+            hasher.combine(lessons[i].codiceInsegnamento)
+            hasher.combine(lessons[i].color)
+            hasher.combine(lessons[i].infoAulaHTML)
+            hasher.combine(lessons[i].formattedName)
+            hasher.combine(lessons[i].formattedClassroom)
+            hasher.combine(lessons[i].durationCalculated)
+            hasher.combine(lessons[i].gruppo)
+            let hashValue = hasher.finalize()
+            lessons[i].id = String(hashValue)
         }
     }
     
     func organizeData(selectedYear: String, matricola: String) {
         guard let annoInt = Int(selectedYear) else { return }
         
-        self.daysString = generaDateAnnoAccademico(annoInizio: annoInt)
-        var newDays: [[Lesson]] = []
+        let lessonsSnapshot = self.lessons
+        let currentCache = self.cachedStructure
         
-        for day in daysString {
-            var filtered = lessons.filter { lesson in
-                let isRightDay = lesson.data == day
-                let isNotChiusura = (lesson.tipo != "chiusura_type")
-                
-                let nameCondition = lesson.nomeInsegnamento.contains("Matricole \(matricola)") || (!lesson.nomeInsegnamento.contains("Matricole pari") && !lesson.nomeInsegnamento.contains("Matricole dispari"))
-                
-                return isRightDay && isNotChiusura && nameCondition
+        Task.detached(priority: .userInitiated) {
+            let yearStructure: YearStructure
+            
+            if let cache = currentCache, cache.year == annoInt {
+                yearStructure = cache
+            } else {
+                yearStructure = CalendarViewModel.generateYearStructure(year: annoInt)
             }
             
-            filtered = filtered.sorted(by: { $0.orario < $1.orario })
+            let resultDays = CalendarViewModel.mapLessons(
+                lessons: lessonsSnapshot,
+                structure: yearStructure,
+                matricola: matricola
+            )
             
-            if !filtered.isEmpty {
-                var processedDay = filtered
-                var added = 0
-                
-                for i in filtered.indices {
-                    if i + 1 < filtered.count {
-                        let endString = String(filtered[i].orario.split(separator: " - ").last ?? "")
-                        let startString = String(filtered[i + 1].orario.split(separator: " - ").first ?? "")
-                        
-                        let endDate = endString.date(format: "HH:mm")
-                        let startDate = startString.date(format: "HH:mm")
-                        
-                        if let end = endDate, let start = startDate, end.timeIntervalSince1970 < start.timeIntervalSince1970 {
-                            
-                            processedDay.insert(Lesson(
-                                data: day,
-                                orario: endString + " - " + startString,
-                                tipo: "pause"
-                            ), at: i + added + 1)
-                            added += 1
-                        }
-                    }
+            await MainActor.run {
+                if self.cachedStructure?.year != annoInt {
+                    self.cachedStructure = yearStructure
                 }
-                newDays.append(processedDay)
-            } else {
-                newDays.append(filtered)
+                
+                self.daysString = yearStructure.days
+                self.days = resultDays
+                self.loading = false
             }
         }
-        
-        self.days = newDays
     }
     
-    func generaDateAnnoAccademico(annoInizio: Int) -> [String] {
+    nonisolated private static func generateYearStructure(year: Int) -> YearStructure {
         var dateStringhe: [String] = []
-        let calendar = Calendar.current
+        var dateObj: [Date] = []
         
-        let formatter = Formatters.displayDate
+        dateStringhe.reserveCapacity(366)
+        dateObj.reserveCapacity(366)
         
-        var startComponents = DateComponents()
-        startComponents.year = annoInizio
-        startComponents.month = 10
-        startComponents.day = 1
+        let endYear = year + 1
         
-        var endComponents = DateComponents()
-        endComponents.year = annoInizio + 1
-        endComponents.month = 9
-        endComponents.day = 30
+        var currentMonth = 10
+        var currentYear = year
+        var currentDay = 1
         
-        guard let startDate = calendar.date(from: startComponents),
-              let endDate = calendar.date(from: endComponents) else {
-            return []
-        }
-        
-        var currentDate = startDate
-        
-        while currentDate <= endDate {
-            dateStringhe.append(formatter.string(from: currentDate))
-            if let nextDate = calendar.date(byAdding: .day, value: 1, to: currentDate) {
-                currentDate = nextDate
-            } else {
-                break
+        while !(currentYear == endYear && currentMonth == 10) {
+            let dayStr = currentDay < 10 ? "0\(currentDay)" : "\(currentDay)"
+            let monthStr = currentMonth < 10 ? "0\(currentMonth)" : "\(currentMonth)"
+            let datekey = "\(dayStr)-\(monthStr)-\(currentYear)"
+            
+            dateStringhe.append(datekey)
+            dateObj.append(Date(year: currentYear, month: currentMonth, day: currentDay))
+            
+            currentDay += 1
+            
+            let daysInMonth = Calendars.calendar.range(of: .day, in: .month, for: dateObj.last!)!.count
+            
+            if currentDay > daysInMonth {
+                currentDay = 1
+                currentMonth += 1
+                if currentMonth > 12 {
+                    currentMonth = 1
+                    currentYear += 1
+                }
             }
         }
         
-        return dateStringhe
+        return YearStructure(year: year, days: dateStringhe, dates: dateObj)
+    }
+    
+    nonisolated private static func mapLessons(lessons: [Lesson], structure: YearStructure, matricola: String) -> [[Lesson]] {
+        let lessonsByDate = Dictionary(grouping: lessons, by: { $0.data })
+        
+        var newDaysStructure: [[Lesson]] = []
+        newDaysStructure.reserveCapacity(structure.days.count)
+        
+        let filtroUtente: Lesson.GruppoMatricola = (matricola == "pari") ? .pari : .dispari
+        
+        for dayString in structure.days {
+            guard let lessonsForDay = lessonsByDate[dayString] else {
+                newDaysStructure.append([])
+                continue
+            }
+            
+            var filtered = lessonsForDay.filter { lesson in
+                if lesson.tipo == "chiusura_type" { return false }
+                
+                if lesson.gruppo == .tutti { return true }
+                
+                return lesson.gruppo == filtroUtente
+            }
+            
+            if filtered.isEmpty {
+                newDaysStructure.append([])
+                continue
+            }
+            
+            if filtered.count > 1 {
+                filtered.sort(by: { $0.orario < $1.orario })
+            }
+            
+            var processedDay = filtered
+            var added = 0
+            
+            for i in 0..<filtered.count - 1 {
+                let endString = filtered[i].orario.suffix(5)
+                let startString = filtered[i + 1].orario.prefix(5)
+                
+                if endString < startString {
+                    processedDay.insert(Lesson(
+                        data: dayString,
+                        orario: "\(endString)-\(startString)",
+                        tipo: "pause"
+                    ), at: i + added + 1)
+                    added += 1
+                }
+            }
+            newDaysStructure.append(processedDay)
+        }
+        
+        return newDaysStructure
     }
 }

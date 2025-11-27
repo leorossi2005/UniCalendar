@@ -27,17 +27,7 @@ struct CalendarView: View {
     
     @State var openSettings: Bool = false
     @State var oldOpenCalendar: Bool = false
-    @State var openCalendar: Bool = {
-        if #available(iOS 26, *) {
-            return false
-        } else {
-            return true
-        }
-    }()
-    
-    @Binding var years: [Year]
-    @Binding var courses: [Corso]
-    @Binding var academicYears: [Anno]
+    @State var openCalendar: Bool = false
     
     @Binding var selectedTab: Int
     
@@ -47,17 +37,22 @@ struct CalendarView: View {
     @State var tempMatricola: String = ""
     
     private let screenSize: CGRect = UIApplication.shared.screenSize
-    private let safeAreas = UIApplication.shared.safeAreas
+    @State var safeAreas: UIEdgeInsets = .zero
     
     @State var selectedMonth: Int = Date().month
     @State private var selection: String? = ""
     @State private var selectionFraction: String? = ""
     
+    @State private var scrollUpdateTask: Task<Void, Never>?
+    @State private var firstLoading: Bool = true
+    
+    @FocusState var settingsSearchFocus: Bool
+    
     var body: some View {
         NavigationStack {
             ScrollView(.horizontal) {
                 LazyHStack(spacing: 0) {
-                    if viewModel.loading {
+                    if viewModel.loading || firstLoading {
                         if settings.selectedCourse != "0" {
                            ScrollView {
                                if #available(iOS 17, *) {
@@ -86,7 +81,7 @@ struct CalendarView: View {
                        if !viewModel.noLessonsFound {
                            ForEach(viewModel.days.indices, id: \.self) { i in
                                if !viewModel.days[i].isEmpty {
-                                   CalendarViewDay(filteredLessons: viewModel.days[i], detents: $detents, selectedLesson: $selectedLesson, openCalendar: $openCalendar, selectedDetent: $selectedDetent)
+                                   CalendarViewDay(filteredLessons: viewModel.days[i], detents: $detents, selectedLesson: $selectedLesson, openCalendar: $openCalendar, selectedDetent: $selectedDetent, firstLoading: $firstLoading)
                                        .id(viewModel.daysString[i])
                                        .containerRelativeFrame(.horizontal)
                                } else {
@@ -108,13 +103,20 @@ struct CalendarView: View {
                 .multilineTextAlignment(.center)
                 .scrollTargetLayout()
             }
-            .id(settings.selectedCourse + settings.selectedYear + settings.selectedAcademicYear + settings.matricola)
+            .id((firstLoading ? "ready" : "loading") + settings.selectedCourse + settings.selectedYear + settings.selectedAcademicYear + settings.matricola)
             .scrollTargetBehavior(.paging)
             .scrollIndicators(.never, axes: .horizontal)
-            .scrollPosition(id: $selection)
+            .scrollPosition(id: $selection, anchor: .center)
             .task(id: selectedWeek) {
-                if selectedWeek.getString(format: "dd-MM-yyyy") != selection && !viewModel.loading {
-                    selection = selectedWeek.getString(format: "dd-MM-yyyy")
+                if !viewModel.loading && !firstLoading {
+                    let newSelection = selectedWeek.getString(format: "dd-MM-yyyy")
+                    if newSelection != selection {
+                        selection = newSelection
+                    }
+                    
+                    if selectedMonth != selectedWeek.month {
+                        selectedMonth = selectedWeek.month
+                    }
                 }
             }
             .sheet(isPresented: $openCalendar) {
@@ -126,32 +128,28 @@ struct CalendarView: View {
                     .onChange(of: selectedDetent) { oldValue, newValue in
                         handleDetentChange(oldValue: oldValue, newValue: newValue)
                     }
-                    .onChange(of: selection) {
-                        if let date = selection?.date(format: "dd-MM-yyyy") {
-                            if selectedWeek.getString(format: "dd-MM-yyyy") != selection {
-                                selectedWeek = date
-                            }
-                            
-                            selectedMonth = selectedWeek.month
-                            selectedDetent = .fraction(0.15)
-                        }
-                    }
-                    .sheetDesign(transition)
+                    .sheetDesign(transition, detent: $selectedDetent)
             }
             .onAppear {
                 inizializeData()
             }
-            .onChange(of: viewModel.loading) { oldValue, isLoading in
-                if !isLoading {
-                    let today = Date().getString(format: "dd-MM-yyyy")
-                    
-                    if viewModel.daysString.contains(today) {
-                        selection = today
-                    } else {
-                        selection = viewModel.daysString.first
+            .onChange(of: selection) {
+                scrollUpdateTask?.cancel()
+                
+                scrollUpdateTask = Task {
+                    if !Task.isCancelled {
+                        await MainActor.run {
+                            if let date = selection?.date(format: "dd-MM-yyyy") {
+                                if selectedWeek.getString(format: "dd-MM-yyyy") != selection {
+                                    selectedWeek = date
+                                }
+                                
+                                if selectedDetent != .fraction(0.15) {
+                                    selectedDetent = .fraction(0.15)
+                                }
+                            }
+                        }
                     }
-                } else {
-                    selection = nil
                 }
             }
             .onChange(of: openCalendar) { oldValue, newValue in
@@ -166,6 +164,20 @@ struct CalendarView: View {
                 }
             }
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(selectedWeek.getCurrentWeekdaySymbol(length: .full))
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                        Text("\(selectedWeek.day) \(selectedWeek.getCurrentMonthSymbol(length: .full))")
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                    }
+                    .toolbarTitleShadow(colorScheme)
+                    .fixedSize(horizontal: true, vertical: false)
+                }
+                .toolbarBackgroundVisibility(.hidden)
+                
                 if viewModel.checkingUpdates || viewModel.showUpdateAlert {
                     if #available(iOS 26, *) {
                         ToolbarItem {
@@ -214,6 +226,44 @@ struct CalendarView: View {
             .removeTopSafeArea()
         }
         .hideTabBarCompatible()
+        .onAppear {
+            safeAreas = UIApplication.shared.safeAreas
+        }
+        .onChange(of: viewModel.loading) { oldValue, isLoading in
+            if isLoading {
+                selection = nil
+                firstLoading = true
+            } else {
+                let today = Date().getString(format: "dd-MM-yyyy")
+                
+                DispatchQueue.main.async {
+                    var transaction = Transaction()
+                    transaction.disablesAnimations = true
+                    
+                    withTransaction(transaction) {
+                        if viewModel.daysString.contains(today) {
+                            selection = today
+                        } else {
+                            selection = viewModel.daysString.first
+                        }
+                        
+                        firstLoading = false
+                    }
+                }
+            }
+        }
+        //.overlay {
+        //    VStack {
+        //        Spacer()
+        //        RoundedRectangle(cornerRadius: .deviceCornerRadius - 12, style: .continuous)
+        //            .fill(.blue)
+        //            .frame(maxWidth: .infinity)
+        //            .frame(height: 144.75)
+        //            .padding(.horizontal, 8)
+        //            .padding(.bottom, 8)
+        //    }
+        //    .ignoresSafeArea()
+        //}
     }
     
     var settingsButton: some View {
@@ -233,6 +283,7 @@ struct CalendarView: View {
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.circle)
         .tint(colorScheme == .light ? .white.opacity(0.7) : .black.opacity(0.7))
+        .clipShape(.circle)
         .overlay(Circle().stroke(colorScheme == .light ? .black.opacity(0.1) : .white.opacity(0.1), lineWidth: 2))
     }
     
@@ -285,8 +336,8 @@ struct CalendarView: View {
         }
         .frame(height: 45)
         .padding(.horizontal, 12)
-        .clipShape(.capsule)
         .background(colorScheme == .light ? .white.opacity(0.7) : .black.opacity(0.7))
+        .clipShape(.capsule)
         .overlay(Capsule().stroke(colorScheme == .light ? .black.opacity(0.1) : .white.opacity(0.1), lineWidth: 2))
     }
     
@@ -303,8 +354,8 @@ struct CalendarView: View {
         }
         .frame(height: 45)
         .padding(.horizontal, 12)
-        .clipShape(.capsule)
         .background(colorScheme == .light ? .white.opacity(0.7) : .black.opacity(0.7))
+        .clipShape(.capsule)
         .overlay(Capsule().stroke(colorScheme == .light ? .black.opacity(0.1) : .white.opacity(0.1), lineWidth: 2))
     }
     
@@ -328,73 +379,70 @@ struct CalendarView: View {
     @ViewBuilder
     var sheetContent: some View {
         ZStack {
-            FractionDatePickerContainer(selectedWeek: $selectedWeek, loading: $viewModel.loading, selectionFraction: $selectionFraction, selectedDetent: $selectedDetent)
-            
-            DatePickerContainer(selectedDetent: $selectedDetent, selectedMonth: $selectedMonth, selectedWeek: $selectedWeek)
-            
-            if selectedDetent == .large {
-                GeometryReader { proxy in
-                    let currentHeight = proxy.size.height
-                    let screenHeight = UIScreen.main.bounds.height
-                    
-                    let bigHeight = screenHeight * 0.85
-                    
-                    let fadeRange: CGFloat = screenHeight * 0.05
-                    
-                    let dynamicOpacity = 1.0 - (Double(bigHeight - currentHeight) / Double(fadeRange))
-                    
-                    NavigationStack {
+            GeometryReader { proxy in
+                let currentHeight = proxy.size.height
+                let screenHeight = UIScreen.main.bounds.height
+        
+                let largeHeight = screenHeight * 0.85
+                let mediumHeightHigh = screenHeight * 0.55
+                let mediumHeightLow = screenHeight * 0.45
+                let smallHeight = screenHeight * 0.15
+        
+                let fadeRange: CGFloat = screenHeight * 0.05
+        
+                let largeOpacity = 1.0 - (Double(largeHeight - currentHeight) / Double(fadeRange))
+                let mediumOpacity = 1.0 - ((currentHeight < mediumHeightHigh ? Double(mediumHeightLow - currentHeight) : Double(currentHeight - mediumHeightHigh)) / Double(fadeRange))
+                let smallOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
+        
+                ZStack {
+                    if currentHeight < screenHeight * 0.25 {
+                        FractionDatePickerContainer(selectedWeek: $selectedWeek, loading: $viewModel.loading, selectionFraction: $selectionFraction, selectedDetent: $selectedDetent)
+                            .opacity(settingsSearchFocus ? 0 : min(max(smallOpacity, 0), 1))
+                            .allowsHitTesting(selectedDetent == .fraction(0.15))
+                    }
+        
+                    if currentHeight > screenHeight * 0.35 && currentHeight < screenHeight * 0.65 && !settingsSearchFocus {
+                        DatePickerContainer(selectedDetent: $selectedDetent, selectedMonth: $selectedMonth, selectedWeek: $selectedWeek)
+                            .opacity(settingsSearchFocus ? 0 : min(max(mediumOpacity, 0), 1))
+                            .allowsHitTesting(selectedDetent == (isIpad ? .fraction(0.75) : .medium))
+                    }
+        
+                    if currentHeight > screenHeight * 0.75 || settingsSearchFocus {
                         if openSettings {
-                            Settings(
-                                detents: $detents,
-                                openSettings: $openSettings,
-                                selectedTab: $selectedTab,
-                                selectedDetent: $selectedDetent,
-                                
-                                selectedYear: $tempSelectedYear,
-                                selectedCourse: $tempSelectedCourse,
-                                selectedAcademicYear: $tempSelectedAcademicYear,
-                                matricola: $tempMatricola
-                            )
-                            .toolbar {
-                                ToolbarItem(placement: .principal) {
-                                    Text("Impostazioni")
-                                        .font(.headline)
-                                        .opacity(min(max(dynamicOpacity, 0), 1))
+                            NavigationStack {
+                                Settings(
+                                    detents: $detents,
+                                    openSettings: $openSettings,
+                                    openCalendar: $openCalendar,
+                                    selectedTab: $selectedTab,
+                                    selectedDetent: $selectedDetent,
+                        
+                                    selectedYear: $tempSelectedYear,
+                                    selectedCourse: $tempSelectedCourse,
+                                    selectedAcademicYear: $tempSelectedAcademicYear,
+                                    matricola: $tempMatricola,
+                                    searchTextFieldFocus: $settingsSearchFocus
+                                )
+                                .toolbar {
+                                    ToolbarItem(placement: .principal) {
+                                        Text("Impostazioni")
+                                            .font(.headline)
+                                            .opacity(settingsSearchFocus ? 1 : min(max(largeOpacity, 0), 1))
+                                    }
                                 }
+                                .navigationBarTitleDisplayMode(.inline)
                             }
-                            .navigationBarTitleDisplayMode(.inline)
-                        } else if let lesson = selectedLesson{
-                            lessonDetailView(lesson: lesson)
+                            .opacity(settingsSearchFocus ? 1 : min(max(largeOpacity, 0), 1))
+                            .allowsHitTesting(selectedDetent == .large)
+                        } else {
+                            LessonDetailsView(selectedLesson: $selectedLesson, selectedDetent: $selectedDetent)
+                                .opacity(settingsSearchFocus ? 0 : min(max(largeOpacity, 0), 1))
+                                .allowsHitTesting(selectedDetent == .large)
                         }
                     }
-                    .opacity(min(max(dynamicOpacity, 0), 1))
-                    .allowsHitTesting(selectedDetent == .large)
                 }
             }
         }
-    }
-    
-    func lessonDetailView(lesson: Lesson) -> some View {
-        VStack {
-            Text("Informazioni sulla lezione (WIP)")
-                .font(.title2)
-                .bold()
-            Spacer().frame(height: 20)
-            Text(selectedLesson!.nomeInsegnamento)
-            Spacer().frame(height: 10)
-            Text(selectedLesson!.nameOriginal)
-            Spacer().frame(height: 10)
-            Text(selectedLesson!.orario)
-            Spacer().frame(height: 10)
-            Text(selectedLesson!.data)
-            Spacer().frame(height: 10)
-            Text(selectedLesson!.aula)
-            Spacer().frame(height: 10)
-            Text(selectedLesson!.docente)
-        }
-        .padding()
-        .multilineTextAlignment(.center)
     }
     
     private func openSettingsAction() {
@@ -426,6 +474,7 @@ struct CalendarView: View {
         
         if settings.selectedCourse != "0" {
             viewModel.loadFromCache(selYear: settings.selectedYear, matricola: settings.matricola)
+            viewModel.loadNetworkFromCache()
             
             Task {
                 await viewModel.loadLessons(
@@ -476,7 +525,9 @@ struct CalendarView: View {
                     viewModel.organizeData(selectedYear: settings.selectedYear, matricola: settings.matricola)
                     viewModel.loading = false
                 } else {
-                    openCalendar = oldOpenCalendar
+                    if selectedTab == 0 {
+                        openCalendar = oldOpenCalendar
+                    }
                 }
             } else if oldValue == .large {
                 openCalendar = oldOpenCalendar
@@ -503,9 +554,10 @@ struct CalendarViewDay: View {
     @Binding var selectedLesson: Lesson?
     @Binding var openCalendar: Bool
     @Binding var selectedDetent: PresentationDetent
+    @Binding var firstLoading: Bool
 
     private let screenSize: CGRect = UIApplication.shared.screenSize
-    private let safeAreas = UIApplication.shared.safeAreas
+    @State var safeAreas: UIEdgeInsets = .zero
     
     var body: some View {
         ScrollView {
@@ -531,7 +583,7 @@ struct CalendarViewDay: View {
                                 .fill(LinearGradient(stops: [.init(color: Color(white: 0, opacity: 0), location: 0), .init(color: Color(white: colorScheme == .light ? 0 : 1, opacity: colorScheme == .light ? 0.1 : 0.2), location: 0.5), .init(color: Color(white: 0, opacity: 0), location: 1)], startPoint: .leading, endPoint: .trailing))
                                 .padding(.vertical, -5)
                                 .padding(.horizontal, 15)
-                            Text("---- Pausa di " + LessonCardView.getDuration(orario: lesson.orario) + " ----")
+                            Text("---- Pausa di " + lesson.durationCalculated + " ----")
                         }
                     }
                 }
@@ -539,17 +591,17 @@ struct CalendarViewDay: View {
             .scrollViewTopPadding()
             Spacer().frame(height: screenSize.height * 0.10)
         }
-        .onScrollGeometry(openCalendar: $openCalendar, selectedDetent: $selectedDetent)
+        .onScrollGeometry(openCalendar: $openCalendar, selectedDetent: $selectedDetent, firstLoading: $firstLoading)
+        .onAppear {
+            safeAreas = UIApplication.shared.safeAreas
+        }
     }
 }
 
 #Preview {
-    @Previewable @State var years: [Year] = []
-    @Previewable @State var courses: [Corso] = []
-    @Previewable @State var academicYears: [Anno] = []
     @Previewable @State var selectedTab: Int = 0
     
-    CalendarView(years: $years, courses: $courses, academicYears: $academicYears, selectedTab: $selectedTab)
+    CalendarView(selectedTab: $selectedTab)
         .environment(UserSettings.shared)
 }
 

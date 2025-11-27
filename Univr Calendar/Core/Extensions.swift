@@ -20,8 +20,8 @@ enum NewDateComponents: String {
 }
 
 extension Date {
-    init(year: Int, month: Int, day: Int) {
-        let timeInterval: TimeInterval = Calendar.current.date(from: DateComponents(year: year, month: month, day: day))?.timeIntervalSince1970 ?? Date().timeIntervalSince1970
+    nonisolated init(year: Int, month: Int, day: Int) {
+        let timeInterval: TimeInterval = Calendars.calendar.date(from: DateComponents(year: year, month: month, day: day))?.timeIntervalSince1970 ?? Date().timeIntervalSince1970
         
         self.init(timeIntervalSince1970: timeInterval)
     }
@@ -51,46 +51,44 @@ extension Date {
             return Formatters.hourMinute.string(from: self)
         }
         
-        let formatter = DateFormatter()
-        formatter.dateFormat = format // Formato richiesto
-        formatter.locale = Locale(identifier: "it_IT") // Opzionale: forza locale italiano
+        let formatter = FormatterCache.getFormatter(for: format)
         return formatter.string(from: self)
     }
     
     func getCurrentMonthSymbol(length: CalendarSymbolLength) -> String {
         switch length {
             case .full:
-                Foundation.Calendar.current.monthSymbols[month - 1]
+                Calendars.calendar.monthSymbols[month - 1]
             case .short:
-                Foundation.Calendar.current.shortMonthSymbols[month - 1]
+                Calendars.calendar.shortMonthSymbols[month - 1]
             case .veryShort:
-                Foundation.Calendar.current.veryShortMonthSymbols[month - 1]
+                Calendars.calendar.veryShortMonthSymbols[month - 1]
         }
     }
     
     func getCurrentWeekdaySymbol(length: CalendarSymbolLength) -> String {
         switch length {
             case .full:
-                Foundation.Calendar.current.weekdaySymbols[weekday - 1]
+                Calendars.calendar.weekdaySymbols[weekday - 1]
             case .short:
-                Foundation.Calendar.current.shortWeekdaySymbols[weekday - 1]
+                Calendars.calendar.shortWeekdaySymbols[weekday - 1]
             case .veryShort:
-                Foundation.Calendar.current.veryShortWeekdaySymbols[weekday - 1]
+                Calendars.calendar.veryShortWeekdaySymbols[weekday - 1]
         }
     }
     
     func getWeekdaySymbols(length: CalendarSymbolLength) -> [String] {
         switch length {
             case .full:
-                var weekdaySymbols: [String] = Foundation.Calendar.current.weekdaySymbols
+                var weekdaySymbols: [String] = Calendars.calendar.weekdaySymbols
                 weekdaySymbols.append(weekdaySymbols.remove(at: weekdaySymbols.startIndex))
                 return weekdaySymbols
             case .short:
-                var shortWeekdaySymbols: [String] = Foundation.Calendar.current.shortWeekdaySymbols
+                var shortWeekdaySymbols: [String] = Calendars.calendar.shortWeekdaySymbols
                 shortWeekdaySymbols.append(shortWeekdaySymbols.remove(at: shortWeekdaySymbols.startIndex))
                 return shortWeekdaySymbols
             case .veryShort:
-                var verySortWeekdaySymbols: [String] = Foundation.Calendar.current.veryShortWeekdaySymbols
+                var verySortWeekdaySymbols: [String] = Calendars.calendar.veryShortWeekdaySymbols
                 verySortWeekdaySymbols.append(verySortWeekdaySymbols.remove(at: verySortWeekdaySymbols.startIndex))
                 return verySortWeekdaySymbols
         }
@@ -109,31 +107,31 @@ extension Date {
     }
     
     func add(type: Calendar.Component, value: Int) -> Date {
-        Foundation.Calendar.current.date(byAdding: type, value: value, to: self) ?? self
+        Calendars.calendar.date(byAdding: type, value: value, to: self) ?? self
     }
     
     func remove(type: Calendar.Component, value: Int) -> Date {
-        Foundation.Calendar.current.date(byAdding: type, value: -value, to: self) ?? self
+        Calendars.calendar.date(byAdding: type, value: -value, to: self) ?? self
     }
     
     var minute: Int {
-        Foundation.Calendar.current.component(.minute, from: self)
+        Calendars.calendar.component(.minute, from: self)
     }
     
     var hour: Int {
-        Foundation.Calendar.current.component(.hour, from: self)
+        Calendars.calendar.component(.hour, from: self)
     }
     
-    var day: Int {
-        Foundation.Calendar.current.component(.day, from: self)
+    nonisolated var day: Int {
+        Calendars.calendar.component(.day, from: self)
     }
     
-    var month: Int {
-        Foundation.Calendar.current.component(.month, from: self)
+    nonisolated var month: Int {
+        Calendars.calendar.component(.month, from: self)
     }
     
-    var year: Int {
-        Foundation.Calendar.current.component(.year, from: self)
+    nonisolated var year: Int {
+        Calendars.calendar.component(.year, from: self)
     }
     
     var yearSymbol: String {
@@ -141,12 +139,12 @@ extension Date {
     }
     
     var weekday: Int {
-        Foundation.Calendar.current.component(.weekday, from: self)
+        Calendars.calendar.component(.weekday, from: self)
     }
 }
 
 extension String {
-    func date(format: String) -> Date? {
+    nonisolated func date(format: String) -> Date? {
         if format == "dd-MM-yyyy" {
             return Formatters.displayDate.date(from: self)
         } else if format == "HH:mm" {
@@ -154,9 +152,7 @@ extension String {
         }
         
         // Fallback
-        let formatter = DateFormatter()
-        formatter.dateFormat = format
-        formatter.locale = Locale(identifier: "it_IT")
+        let formatter = FormatterCache.getFormatter(for: format)
         return formatter.date(from: self)
     }
 }
