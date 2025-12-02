@@ -152,7 +152,7 @@ struct DatePickerView: View {
             }
             HStack {
                 ForEach(days, id: \.self) { day in
-                    Text("\(day)")
+                    Text("\(day.capitalized)")
                         .frame(width: 40, height: 40)
                     if day != days.last {
                         Spacer()
@@ -185,8 +185,13 @@ struct DatePickerView: View {
                                     .frame(height: 40)
                                     .contentShape(Rectangle())
                                     .onTapGesture {
-                                        if selection != month[index].date {
-                                            selection = month[index].date
+                                        if let yearInt = Int(settings.selectedYear) {
+                                            let isLeftOutOfBounds = month[index].date.month == 9 && month[index].date.year == yearInt
+                                            let isRightOutOfBounds = (month[index].date.month == 10 && month[index].date.year == yearInt + 1)
+                                            
+                                            if selection != month[index].date && !isLeftOutOfBounds && !isRightOutOfBounds {
+                                                selection = month[index].date
+                                            }
                                         }
                                     }
                                 }
@@ -203,7 +208,7 @@ struct DatePickerView: View {
             }
         }
         .onAppear {
-            if viewModel.grid[monthName] == nil || viewModel.grid[monthName]!.isEmpty {
+            if viewModel.grid[monthName] == nil || viewModel.grid[monthName]!.isEmpty || viewModel.grid[monthName]?.first?.date.yearSymbol != year {
                 calculatedGrid()
             }
         }

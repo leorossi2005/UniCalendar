@@ -58,22 +58,22 @@ extension Date {
     func getCurrentMonthSymbol(length: CalendarSymbolLength) -> String {
         switch length {
             case .full:
-                Calendars.calendar.monthSymbols[month - 1]
+                Calendars.calendar.monthSymbols[month - 1].capitalized
             case .short:
-                Calendars.calendar.shortMonthSymbols[month - 1]
+                Calendars.calendar.shortMonthSymbols[month - 1].capitalized
             case .veryShort:
-                Calendars.calendar.veryShortMonthSymbols[month - 1]
+                Calendars.calendar.veryShortMonthSymbols[month - 1].capitalized
         }
     }
     
     func getCurrentWeekdaySymbol(length: CalendarSymbolLength) -> String {
         switch length {
             case .full:
-                Calendars.calendar.weekdaySymbols[weekday - 1]
+                Calendars.calendar.weekdaySymbols[weekday - 1].capitalized
             case .short:
-                Calendars.calendar.shortWeekdaySymbols[weekday - 1]
+                Calendars.calendar.shortWeekdaySymbols[weekday - 1].capitalized
             case .veryShort:
-                Calendars.calendar.veryShortWeekdaySymbols[weekday - 1]
+                Calendars.calendar.veryShortWeekdaySymbols[weekday - 1].capitalized
         }
     }
     

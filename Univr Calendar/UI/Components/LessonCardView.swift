@@ -9,45 +9,74 @@ import SwiftUI
 
 struct LessonCardView: View {
     let lesson: Lesson
+    @State private var cleanText: String = ""
+    @State private var tags: [String] = []
     
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 45, style: .continuous)
-                .fill(LinearGradient(stops: [
-                    .init(color: Color(hex: lesson.color) ?? .black, location: 0),
-                    .init(color: Color(white: 0, opacity: 0.6), location: 2)
-                ], startPoint: .leading, endPoint: .trailing))
-                .padding(.horizontal, 15)
+            RoundedRectangle(cornerRadius: 35, style: .continuous)
+                .fill(Color(hex: lesson.color) ?? .black)
             
             HStack {
-                VStack(alignment: .leading) {
-                    Text(lesson.formattedName)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(lesson.orario.split(separator: " - ").first!)
                         .foregroundStyle(.black)
-                        .font(.custom("", size: 20)) // Considera di usare .title3 o .headline
+                        .font(.system(size: 40))
+                    Label(lesson.durationCalculated, systemImage: "clock")
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background {
+                            Color.black
+                                .opacity(0.1)
+                        }
+                        .cornerRadius(10)
+                    Spacer()
+                }
+                
+                Spacer(minLength: 20)
+                
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(cleanText)
+                        .foregroundStyle(.black)
+                        .font(.headline)
                         .multilineTextAlignment(.leading)
                     
                     Text(lesson.formattedClassroom)
                         .foregroundStyle(Color(white: 0.3))
-                        .font(.custom("", size: 20))
+                        .font(.subheadline)
+                        .multilineTextAlignment(.leading)
                     
-                    Spacer(minLength: 30)
+                    ForEach(tags, id: \.self) { tag in
+                        Text(tag)
+                            .foregroundStyle(.black)
+                            .font(.caption2)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background {
+                                ZStack {
+                                    Color.black
+                                        .opacity(0.5)
+                                    Color(hex: lesson.color)
+                                        .opacity(0.5)
+                                }
+                                .opacity(0.2)
+                            }
+                            .cornerRadius(7)
+                    }
                     
-                    Text(lesson.orario)
-                        .foregroundStyle(.black)
-                        .font(.custom("", size: 20))
+                    Spacer()
                 }
-                .padding(.vertical, 25)
-                .padding(.leading, 45)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                
-                Spacer(minLength: 20)
-                
-                Text(lesson.durationCalculated)
-                    .foregroundStyle(.black)
-                    .font(.system(size: 60))
-                    .padding(.trailing, 45)
-                    .minimumScaleFactor(0.4)
-                    .lineLimit(1)
+            }
+            .padding()
+        }
+        .padding(.horizontal, 15)
+        .onAppear {
+            if cleanText.isEmpty {
+                let result = LessonNameFormatter.format(lesson.nomeInsegnamento)
+                cleanText = result.cleanText
+                tags = result.tags
             }
         }
         .drawingGroup()
@@ -55,6 +84,8 @@ struct LessonCardView: View {
 }
 
 #Preview {
-    LessonCardView(lesson: Lesson.sample)
-        .environment(UserSettings.shared)
+    ScrollView {
+        LessonCardView(lesson: Lesson.sample)
+            .environment(UserSettings.shared)
+    }
 }

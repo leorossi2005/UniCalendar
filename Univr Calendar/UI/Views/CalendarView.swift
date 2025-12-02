@@ -205,10 +205,12 @@ struct CalendarView: View {
                 if #available(iOS 26, *) {
                     ToolbarItem {
                         settingsButton
+                            .disabled(viewModel.loading)
                     }
                 } else {
                     ToolbarItem {
                         settingsButtonLegacy
+                            .disabled(viewModel.loading)
                     }
                 }
                 
@@ -252,18 +254,6 @@ struct CalendarView: View {
                 }
             }
         }
-        //.overlay {
-        //    VStack {
-        //        Spacer()
-        //        RoundedRectangle(cornerRadius: .deviceCornerRadius - 12, style: .continuous)
-        //            .fill(.blue)
-        //            .frame(maxWidth: .infinity)
-        //            .frame(height: 144.75)
-        //            .padding(.horizontal, 8)
-        //            .padding(.bottom, 8)
-        //    }
-        //    .ignoresSafeArea()
-        //}
     }
     
     var settingsButton: some View {
@@ -454,8 +444,21 @@ struct CalendarView: View {
     }
     
     private func updateDate() {
-        if let year = Int(settings.selectedYear) {
-            selectedWeek = Date(year: year, month: Date().month, day: Date().day)
+        let today: Date = .now
+        if let year = Int(settings.selectedYear), let years = NetworkCache.shared.years.last, let currentYear = Int(years.valore) {
+            if year != currentYear {
+                if selectedWeek.getString(format: "dd-MM-yyyy") != "01-10-\(year)" {
+                    selectedWeek = "01-10-\(year)".date(format: "dd-MM-yyyy") ?? Date(year: year, month: today.month, day: today.day)
+                }
+            } else {
+                if selectedWeek.getString(format: "dd-MM-yyyy") != Date().getString(format: "dd-MM-yyyy") {
+                    selectedWeek = Date(year: today.year, month: today.month, day: today.day)
+                }
+            }
+        } else {
+            if selectedWeek.getString(format: "dd-MM-yyyy") != Date().getString(format: "dd-MM-yyyy") {
+                selectedWeek = Date(year: today.year, month: today.month, day: today.day)
+            }
         }
     }
     
@@ -494,6 +497,10 @@ struct CalendarView: View {
                 let hasChanged = tempSelectedCourse != settings.selectedCourse || tempSelectedAcademicYear != settings.selectedAcademicYear || tempSelectedYear != settings.selectedYear
                 
                 if hasChanged {
+                    settings.selectedYear = ""
+                    settings.selectedCourse = ""
+                    settings.selectedAcademicYear = ""
+                    settings.matricola = ""
                     settings.selectedYear = tempSelectedYear
                     settings.selectedCourse = tempSelectedCourse
                     settings.selectedAcademicYear = tempSelectedAcademicYear
@@ -518,6 +525,7 @@ struct CalendarView: View {
                         }
                     }
                 } else if tempMatricola != settings.matricola {
+                    settings.matricola = ""
                     settings.matricola = tempMatricola
                     
                     openCalendar = true

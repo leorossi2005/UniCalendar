@@ -155,16 +155,16 @@ struct Settings: View {
                         detents = [.fraction(0.15), .medium, .large]
                         
                         viewModel.academicYears = []
+                        selectedAcademicYear = "0"
                         
-                        viewModel.updateAcademicYears(for: selectedCourse)
+                        viewModel.updateAcademicYears(for: selectedCourse, year: selectedYear)
                         
                         selectedAcademicYear = viewModel.academicYears.first!.valore
-                        
-                        settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                     } else {
                         detents = [.large]
                         
                         viewModel.academicYears = []
+                        selectedAcademicYear = "0"
                     }
                 }
                 HStack {
@@ -242,6 +242,10 @@ struct Settings: View {
                     await MainActor.run {
                         if selectedCourse != "0" {
                             viewModel.academicYears = viewModel.courses.filter { $0.valore == selectedCourse }.first!.elenco_anni
+                            
+                            if !viewModel.academicYears.contains(where: { $0.valore == selectedAcademicYear }) {
+                                selectedAcademicYear = viewModel.academicYears.first!.valore
+                            }
                         } else if openSettings {
                             detents = [.large]
                         }

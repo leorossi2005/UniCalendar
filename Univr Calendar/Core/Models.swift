@@ -19,12 +19,11 @@ struct ResponseAPI: Codable, Sendable, Equatable {
     let colori: [String]
 }
 
-struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
+nonisolated struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
     enum GruppoMatricola: String, Codable {
         case pari, dispari, tutti
     }
     
-    var id: String
     let nomeInsegnamento: String
     let nameOriginal: String
     let data: String
@@ -38,10 +37,86 @@ struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
     var color: String
     let infoAulaHTML: String
     
-    let formattedName: String
-    let formattedClassroom: String
-    let durationCalculated: String
-    let gruppo: GruppoMatricola
+    var id: String {
+        var hasher = Hasher()
+        hasher.combine(nomeInsegnamento)
+        hasher.combine(nameOriginal)
+        hasher.combine(data)
+        hasher.combine(aula)
+        hasher.combine(orario)
+        hasher.combine(tipo)
+        hasher.combine(docente)
+        hasher.combine(annullato)
+        hasher.combine(colorIndex)
+        hasher.combine(codiceInsegnamento)
+        hasher.combine(color)
+        hasher.combine(infoAulaHTML)
+        hasher.combine(formattedName)
+        hasher.combine(formattedClassroom)
+        hasher.combine(durationCalculated)
+        hasher.combine(gruppo)
+        let hashValue = hasher.finalize()
+        return String(hashValue)
+    }
+    
+    var formattedName: String {
+        nomeInsegnamento
+            .replacingOccurrences(of: "Matricole pari", with: "")
+            .replacingOccurrences(of: "Matricole dispari", with: "")
+            .trimmingCharacters(in: .whitespaces)
+    }
+    
+    var formattedClassroom: String {
+        if let bracketIndex = aula.firstIndex(of: "[") {
+            let index = self.aula.index(bracketIndex, offsetBy: -2, limitedBy: self.aula.startIndex) ?? self.aula.startIndex
+            return String(self.aula[...index])
+        } else if let bracketIndex = aula.firstIndex(of: "<") {
+            let index = self.aula.index(bracketIndex, offsetBy: -1, limitedBy: self.aula.startIndex) ?? self.aula.startIndex
+            return String(self.aula[...index])
+        }
+        return aula
+    }
+    
+    var durationCalculated: String {
+        Lesson.calculateDuration(orario: orario)
+    }
+    
+    var gruppo: GruppoMatricola {
+        if nomeInsegnamento.contains("Matricole pari") {
+            return .pari
+        } else if nomeInsegnamento.contains("Matricole dispari") {
+            return .dispari
+        } else {
+            return .tutti
+        }
+    }
+    
+    var indirizzoAula: String? {
+        guard let openBracketIndex = infoAulaHTML.lastIndex(of: "["),
+              let closeBracketIndex = infoAulaHTML.lastIndex(of: "]"),
+              openBracketIndex < closeBracketIndex else {
+            return nil
+        }
+        let startIndex = infoAulaHTML.index(after: openBracketIndex)
+        let address = String(infoAulaHTML[startIndex..<closeBracketIndex])
+        return address.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    var capacity: Int? {
+        let regex = /Capacità: <\/span>\s*(\d+)\s*</
+        
+        if let match = infoAulaHTML.firstMatch(of: regex) {
+            let capacityString = match.1
+            
+            if let newCapacity = Int(capacityString) {
+                return newCapacity
+            } else {
+                return nil
+            }
+        } else {
+            return nil
+        }
+    }
     
     private enum CodingKeys: String, CodingKey {
         case nomeInsegnamento = "nome_insegnamento"
@@ -83,55 +158,11 @@ struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
         self.codiceInsegnamento = try container.decodeIfPresent(String.self, forKey: .codiceInsegnamento) ?? ""
         self.color = try container.decodeIfPresent(String.self, forKey: .color) ?? ""
         
-        do {
-            let infoContainer = try container.nestedContainer(keyedBy: InfoLezioneKeys.self, forKey: .infoAulaHTML)
-            let contenutoContainer = try infoContainer.nestedContainer(keyedBy: ContenutoKeys.self, forKey: .contenuto)
-            let dettagliAula = try contenutoContainer.decodeIfPresent([DettaglioAula].self, forKey: .key5)
-            self.infoAulaHTML = dettagliAula?.first?.contenuto ?? ""
-        } catch {
-            self.infoAulaHTML = try container.decodeIfPresent(String.self, forKey: .infoAulaHTML) ?? ""
-        }
-        
-        self.formattedName = self.nomeInsegnamento
-            .replacingOccurrences(of: "Matricole pari", with: "")
-            .replacingOccurrences(of: "Matricole dispari", with: "")
-        
-        if let bracketIndex = self.aula.firstIndex(of: "[") {
-            let index = self.aula.index(bracketIndex, offsetBy: -2, limitedBy: self.aula.startIndex) ?? self.aula.startIndex
-            self.formattedClassroom = String(self.aula[...index])
+        if let simpleString = try? container.decodeIfPresent(String.self, forKey: .infoAulaHTML) {
+            self.infoAulaHTML = simpleString
         } else {
-            self.formattedClassroom = self.aula
+            self.infoAulaHTML = Lesson.decodeComplexInfoAula(from: container)
         }
-        
-        self.durationCalculated = Lesson.calculateDuration(orario: orario)
-        
-        if nomeInsegnamento.contains("Matricole pari") {
-            self.gruppo = .pari
-        } else if nomeInsegnamento.contains("Matricole dispari") {
-            self.gruppo = .dispari
-        } else {
-            self.gruppo = .tutti
-        }
-        
-        var hasher = Hasher()
-        hasher.combine(nomeInsegnamento)
-        hasher.combine(nameOriginal)
-        hasher.combine(data)
-        hasher.combine(aula)
-        hasher.combine(orario)
-        hasher.combine(tipo)
-        hasher.combine(docente)
-        hasher.combine(annullato)
-        hasher.combine(colorIndex)
-        hasher.combine(codiceInsegnamento)
-        hasher.combine(color)
-        hasher.combine(infoAulaHTML)
-        hasher.combine(formattedName)
-        hasher.combine(formattedClassroom)
-        hasher.combine(durationCalculated)
-        hasher.combine(gruppo)
-        let hashValue = hasher.finalize()
-        self.id = String(hashValue)
     }
     
     nonisolated init(
@@ -160,47 +191,21 @@ struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
         self.codiceInsegnamento = codice_insegnamento
         self.color = color
         self.infoAulaHTML = infoAulaHTML
+    }
+    
+    private static func decodeComplexInfoAula(from container: KeyedDecodingContainer<CodingKeys>) -> String {
+        struct DettaglioAula: Codable { let contenuto: String }
+        enum InfoLezioneKeys: String, CodingKey { case contenuto }
+        enum ContenutoKeys: String, CodingKey { case key5 = "5" }
         
-        self.formattedName = self.nomeInsegnamento
-            .replacingOccurrences(of: "Matricole pari", with: "")
-            .replacingOccurrences(of: "Matricole dispari", with: "")
-        
-        if let bracketIndex = self.aula.firstIndex(of: "[") {
-            let index = self.aula.index(bracketIndex, offsetBy: -2, limitedBy: self.aula.startIndex) ?? self.aula.startIndex
-            self.formattedClassroom = String(self.aula[...index])
-        } else {
-            self.formattedClassroom = self.aula
+        do {
+            let infoContainer = try container.nestedContainer(keyedBy: InfoLezioneKeys.self, forKey: .infoAulaHTML)
+            let contenutoContainer = try infoContainer.nestedContainer(keyedBy: ContenutoKeys.self, forKey: .contenuto)
+            let dettagliAula = try contenutoContainer.decodeIfPresent([DettaglioAula].self, forKey: .key5)
+            return dettagliAula?.first?.contenuto ?? ""
+        } catch {
+            return ""
         }
-        
-        self.durationCalculated = Lesson.calculateDuration(orario: orario)
-        
-        if nomeInsegnamento.contains("Matricole pari") {
-            self.gruppo = .pari
-        } else if nomeInsegnamento.contains("Matricole dispari") {
-            self.gruppo = .dispari
-        } else {
-            self.gruppo = .tutti
-        }
-        
-        var hasher = Hasher()
-        hasher.combine(nomeInsegnamento)
-        hasher.combine(nameOriginal)
-        hasher.combine(data)
-        hasher.combine(aula)
-        hasher.combine(orario)
-        hasher.combine(tipo)
-        hasher.combine(docente)
-        hasher.combine(annullato)
-        hasher.combine(colorIndex)
-        hasher.combine(codiceInsegnamento)
-        hasher.combine(color)
-        hasher.combine(infoAulaHTML)
-        hasher.combine(formattedName)
-        hasher.combine(formattedClassroom)
-        hasher.combine(durationCalculated)
-        hasher.combine(gruppo)
-        let hashValue = hasher.finalize()
-        self.id = String(hashValue)
     }
     
     nonisolated static private func calculateDuration(orario: String) -> String {
@@ -253,7 +258,7 @@ struct Insegnamento: Codable, Sendable, Equatable {
 
 extension Lesson {
     static let sample = Lesson(
-        nome_insegnamento: "Insegnamento di prova molto lungo",
+        nome_insegnamento: "Insegnamento di prova molto lungo Laboratorio",
         name_original: "Insegnamento di prova molto lungo lungo lungo",
         data: "01-01-2025",
         aula: "Aula Gino Tessari",
@@ -266,20 +271,4 @@ extension Lesson {
         color: "#A0A0A0",
         infoAulaHTML: "<span style=\"font-weight:bold\">Nome aula: </span><a aria-label=\"Aula Gino Tessari\" href=\"index.php?view=rooms&include=rooms&_lang=&sede=2&aula=32&date=30-01-2026\" target=\"_blank\" title=\"Apri un'altra TAB del browser per consultare l'orario di: Aula Aula Gino Tessari\">Aula Gino Tessari</a><br><span style=\"font-weight:bold\">Capacità: </span>236<br><span style=\"font-weight:bold\">Sede: </span><a aria-label=\"Borgo Roma - Ca' Vignal 2\" href=\"index.php?view=rooms&include=rooms&_lang=&sede=2&date=30-01-2026\" target=\"_blank\" title=\"Apri un'altra TAB del browser per consultare l'orario di: Borgo Roma - Ca' Vignal 2\">Borgo Roma - Ca' Vignal 2</a> [Strada Le Grazie, 15 - 37134 Verona]"
     )
-    
-    var indirizzoAula: String? {
-            // Cerca l'ultima parentesi quadra aperta
-            guard let openBracketIndex = infoAulaHTML.lastIndex(of: "["),
-                  // Cerca l'ultima parentesi quadra chiusa
-                  let closeBracketIndex = infoAulaHTML.lastIndex(of: "]"),
-                  openBracketIndex < closeBracketIndex else {
-                return nil
-            }
-            
-            // Estrai la sottostringa e rimuovi eventuali spazi bianchi extra
-            let startIndex = infoAulaHTML.index(after: openBracketIndex)
-            let address = String(infoAulaHTML[startIndex..<closeBracketIndex])
-            
-            return address.trimmingCharacters(in: .whitespacesAndNewlines)
-        }
 }

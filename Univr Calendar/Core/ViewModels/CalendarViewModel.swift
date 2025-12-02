@@ -161,26 +161,6 @@ class CalendarViewModel {
                     paletteIndex += 1
                 }
             }
-            
-            var hasher = Hasher()
-            hasher.combine(lessons[i].nomeInsegnamento)
-            hasher.combine(lessons[i].nameOriginal)
-            hasher.combine(lessons[i].data)
-            hasher.combine(lessons[i].aula)
-            hasher.combine(lessons[i].orario)
-            hasher.combine(lessons[i].tipo)
-            hasher.combine(lessons[i].docente)
-            hasher.combine(lessons[i].annullato)
-            hasher.combine(lessons[i].colorIndex)
-            hasher.combine(lessons[i].codiceInsegnamento)
-            hasher.combine(lessons[i].color)
-            hasher.combine(lessons[i].infoAulaHTML)
-            hasher.combine(lessons[i].formattedName)
-            hasher.combine(lessons[i].formattedClassroom)
-            hasher.combine(lessons[i].durationCalculated)
-            hasher.combine(lessons[i].gruppo)
-            let hashValue = hasher.finalize()
-            lessons[i].id = String(hashValue)
         }
     }
     

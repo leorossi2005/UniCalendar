@@ -7,40 +7,45 @@
 
 import SwiftUI
 
+@MainActor
 class ColorCache {
     static let shared = ColorCache()
     private var cache: [String: Color] = [:]
     
     func color(for hex: String) -> Color? {
         if let cached = cache[hex] { return cached }
-        let color = Color.parseHex(hex)
-        if let color { cache[hex] = color }
-        return color
+        
+        if let color = Color.parseHex(hex) {
+            cache[hex] = color
+            return color
+        }
+        return nil
     }
 }
 
 extension Color {
     static func parseHex(_ hex: String) -> Color? {
-        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-        if hexSanitized.hasPrefix("#") {
-            hexSanitized.removeFirst()
-        }
+        let hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "#", with: "")
         
-        guard hexSanitized.count == 6 || hexSanitized.count == 8 else { return nil }
+        var rgb: UInt64 = 0
+        guard Scanner(string: hexSanitized).scanHexInt64(&rgb) else { return nil }
         
-        guard let rgb = UInt64(hexSanitized, radix: 16) else { return nil }
-
+        let length = hexSanitized.count
         let r, g, b, a: Double
-        if hexSanitized.count == 6 {
+        
+        if length == 6 {
             r = Double((rgb >> 16) & 0xFF) / 255.0
             g = Double((rgb >> 8) & 0xFF) / 255.0
             b = Double(rgb & 0xFF) / 255.0
             a = 1.0
-        } else {
+        } else if length == 8 {
             r = Double((rgb >> 24) & 0xFF) / 255.0
             g = Double((rgb >> 16) & 0xFF) / 255.0
             b = Double((rgb >> 8) & 0xFF) / 255.0
             a = Double(rgb & 0xFF) / 255.0
+        } else {
+            return nil
         }
 
         return Color(red: r, green: g, blue: b, opacity: a)
@@ -58,7 +63,7 @@ extension View {
         self.overlay {
             GeometryReader { geometry in
                 let width = geometry.size.width
-                let height = geometry.size.height
+                let extraOffset = width * 1.5
                 
                 Rectangle()
                     .fill(
@@ -68,7 +73,7 @@ extension View {
                             endPoint: .trailing
                         )
                     )
-                    .frame(width: width * 1.5, height: height)
+                    .frame(width: extraOffset, height: geometry.size.height)
                     .offset(x: -width)
                     // Animazione continua
                     .phaseAnimator([false, true]) { content, phase in
@@ -79,6 +84,7 @@ extension View {
                     }
             }
             .mask(self)
+            .allowsHitTesting(false)
         }
     }
     
@@ -198,12 +204,10 @@ extension View {
     @ViewBuilder
     func hideTabBarCompatible() -> some View {
         if #available(iOS 18.0, *) {
-            // API iOS 18+
             self
                 .tabViewStyle(.tabBarOnly)
                 .toolbarVisibility(.hidden, for: .tabBar)
         } else {
-            // API iOS 17 e precedenti
             self
                 .toolbar(.hidden, for: .tabBar)
         }
@@ -218,6 +222,8 @@ extension View {
             } else {
                 self
             }
+        } else {
+            self
         }
     }
 }
@@ -237,30 +243,20 @@ extension ToolbarItem {
 extension UIApplication {
     /// Ritorna le dimensioni della safe area attuale (se disponibili)
     var safeAreas: UIEdgeInsets {
-        guard let window = connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .flatMap({ $0.windows })
-            .first(where: \.isKeyWindow)
-        else {
-            return .zero
-        }
-        return window.safeAreaInsets
+        connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.keyWindow?.safeAreaInsets ?? .zero
     }
     
     var screenSize: CGRect {
-        guard let window = connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .flatMap({ $0.windows })
-            .first(where: \.isKeyWindow)
-        else {
-            return .init()
-        }
-        return window.screen.bounds
+        connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.screen.bounds ?? .zero
     }
 }
 
 extension CGFloat {
-    static var deviceCornerRadius: CGFloat {
+    static var deviceCornerRadius: CGFloat = {
         var systemInfo = utsname()
         uname(&systemInfo)
         let machineMirror = Mirror(reflecting: systemInfo.machine)
@@ -390,12 +386,160 @@ extension CGFloat {
             return radius
         }
         
-        let bottomSafeArea = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.windows.first?.safeAreaInsets.bottom ?? 0
-        
-        if bottomSafeArea > 0 {
-            return 47.33
-        } else {
-            return 0
+        let bottomSafeArea = UIApplication.shared.safeAreas.bottom
+        return bottomSafeArea > 0 ? 47.33 : 0
+    }()
+}
+
+#Preview {
+    testView()
+}
+
+struct testView: View {
+    @State var text = "Elementi di architettura e sistemi operativi ELEMENTI DI ARCHITETTURE Laboratorio Matricole pari"
+    //@State var text = "Analisi matematica Matricole pari ANALISI I"
+    //@State var text = "Algebra e matematica di base Matricole pari"
+    //@State var text = "Algebra lineare Matricole pari"
+    //@State var text = "Programmazione I Matricole pari Laboratorio 1"
+    //@State var text = "Fisica teorica"
+    //@State var text = "Inglese B2 - Abilità produttive (GRUPPO 2)"
+    //@State var text = "Chimica generale ed inorganica esercitazioni"
+    //@State var text = "Biologia generale e cellulare BIOLOGIA GENERALE E CELLULARE: I"
+    //@State var text = "P?????? ?????????? 2 (Letteratura russa 2)"
+    @State var formattedText = ""
+    @State var tags: [String] = []
+    
+    var body: some View {
+        VStack {
+            Text(formattedText)
+                .multilineTextAlignment(.center)
+                .padding()
+                .onAppear {
+                    formattedText = formatText(text)
+                }
+            HStack {
+                ForEach(tags, id: \.self) { tag in
+                    Text(tag)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                }
+            }
         }
     }
+    
+    func formatText(_ txt: String) -> String {
+        var formattedTxt = txt
+            .replacingOccurrences(of: "Matricole pari", with: "")
+            .replacingOccurrences(of: "Matricole dispari", with: "")
+        
+        let keywords = ["Laboratorio", "Teoria", "Esercitazioni"]
+
+        // 1. Costruiamo la Regex: cercherà la parola chiave seguita da zero o più caratteri
+        // non-lettera (come spazio, numeri, parentesi) all'inizio o alla fine della stringa.
+        let pattern = "(?:" + keywords.joined(separator: "|") + ")" + "\\s*[^A-Za-zÀ-ÖØ-Þa-zà-öø-þ]*"
+
+        if let regex = try? NSRegularExpression(pattern: pattern) {
+            let nsFormattedTxt = formattedTxt as NSString
+            let fullRange = NSRange(location: 0, length: nsFormattedTxt.length)
+            
+            // Trova la prima corrispondenza
+            if let match = regex.firstMatch(in: formattedTxt, range: fullRange) {
+                
+                // Estrai l'intera porzione che corrisponde al pattern (es. "Laboratorio 1")
+                if let rangeToRemove = Range(match.range, in: formattedTxt) {
+                    
+                    // 2. Determina la parola chiave effettiva (Laboratorio/Teoria/Esercitazioni)
+                    // Lavoriamo con la stringa rimossa per trovare la parola chiave esatta
+                    let matchedPart = String(formattedTxt[rangeToRemove])
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                    
+                    tags.append(matchedPart)
+                    // Trova quale delle parole chiave è contenuta nella parte trovata
+                    //if let foundKeyword = keywords.first(where: { matchedPart.contains($0) }) {
+                    //    tags.append(foundKeyword) // Aggiungi solo la parola chiave (es. "Laboratorio")
+                    //}
+
+                    // 3. Rimuovi l'intera corrispondenza dalla stringa
+                    formattedTxt.removeSubrange(rangeToRemove)
+                }
+            }
+        }
+        
+        if formattedTxt.contains("??") {
+            let upperCasePattern = "\\((.*?)\\)"
+            
+            if let regex = try? NSRegularExpression(pattern: upperCasePattern) {
+                let matches = regex.matches(in: formattedTxt, range: NSRange(formattedTxt.startIndex..., in: formattedTxt))
+                
+                for match in matches {
+                    if let range = Range(match.range, in: formattedTxt) {
+                        var upperCasePart = String(formattedTxt[range])
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                        
+                        
+                        if upperCasePart.contains("Letteratura russa") {
+                            let number = upperCasePart[upperCasePart.index(upperCasePart.endIndex, offsetBy: -2)]
+                            formattedTxt = "Русская литература \(number) \(upperCasePart)"
+                        } else {
+                            upperCasePart.removeFirst()
+                            upperCasePart.removeLast()
+                            
+                            formattedTxt = upperCasePart
+                        }
+                    }
+                }
+            }
+        } else if formattedTxt.contains("(") {
+            let upperCasePattern = "\\((.*?)\\)"
+            
+            if let regex = try? NSRegularExpression(pattern: upperCasePattern) {
+                let matches = regex.matches(in: formattedTxt, range: NSRange(formattedTxt.startIndex..., in: formattedTxt))
+                
+                for match in matches {
+                    if let range = Range(match.range, in: formattedTxt) {
+                        var upperCasePart = String(formattedTxt[range])
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                        
+                        formattedTxt.removeSubrange(range)
+                        upperCasePart.removeFirst()
+                        upperCasePart.removeLast()
+                        
+                        tags.append(upperCasePart)
+                    }
+                }
+            }
+        } else {
+            let upperCasePattern = "[A-ZÀ-ÖØ-Þ\\s]{5,}"
+            
+            if let regex = try? NSRegularExpression(pattern: upperCasePattern) {
+                let matches = regex.matches(in: formattedTxt, range: NSRange(location: 0, length: formattedTxt.utf16.count))
+                
+                for match in matches {
+                    if let range = Range(match.range, in: formattedTxt) {
+                        var upperCasePart = String(formattedTxt[range])
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                        
+                        if upperCasePart.count >= 5 {
+                            // Safely check if there's a colon immediately after the matched uppercase range
+                            if range.upperBound < formattedTxt.endIndex {
+                                let nextIndex = formattedTxt.index(range.upperBound, offsetBy: 3)
+                                let colonRange = range.upperBound..<nextIndex
+                                if formattedTxt[colonRange].first == ":" {
+                                    upperCasePart.append(" " + formattedTxt[formattedTxt.index(before: nextIndex)..<nextIndex])
+                                    
+                                    formattedTxt.removeSubrange(colonRange)
+                                }
+                            }
+                            
+                            formattedTxt.removeSubrange(range)
+                            tags.append(upperCasePart)
+                        }
+                    }
+                }
+            }
+        }
+        
+        return formattedTxt.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
+

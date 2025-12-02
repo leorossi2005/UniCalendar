@@ -114,20 +114,20 @@ class OnboardingViewModel {
         }
     }
     
-    func updateAcademicYears(for courseValue: String) {
+    func updateAcademicYears(for courseValue: String, year: String) {
         var newAcademicYears: [Anno] = []
-        if NetworkCache.shared.academicYears[courseValue] == nil {
+        if NetworkCache.shared.academicYears[year]?[courseValue] == nil {
             guard let selectedCorso = courses.first(where: { $0.valore == courseValue }) else {
                 return
             }
             
             newAcademicYears = selectedCorso.elenco_anni
         } else {
-            newAcademicYears = NetworkCache.shared.academicYears[courseValue]!
+            newAcademicYears = NetworkCache.shared.academicYears[year]![courseValue]!
         }
         
-        let oldNetworkCache = NetworkCache.shared.academicYears[courseValue] ?? nil
-        NetworkCache.shared.academicYears[courseValue] = newAcademicYears
+        let oldNetworkCache = NetworkCache.shared.academicYears[year]?[courseValue] ?? nil
+        NetworkCache.shared.academicYears[year]?[courseValue] = newAcademicYears
         self.academicYears = newAcademicYears
         
         Task.detached { [self] in
@@ -136,7 +136,7 @@ class OnboardingViewModel {
             }
             
             if selectedCorso.elenco_anni != oldNetworkCache {
-                NetworkCache.shared.academicYears[courseValue] = selectedCorso.elenco_anni
+                NetworkCache.shared.academicYears[year]?[courseValue] = selectedCorso.elenco_anni
                 
                 updateCache()
                 

@@ -15,6 +15,9 @@ struct LessonDetailsView: View {
     @Binding var selectedDetent: PresentationDetent
     
     @State var title: String = ""
+    @State private var cleanText: String = ""
+    @State private var tags: [String] = []
+    @State private var date: Date = .now
     
     // Stato per le coordinate e la posizione della camera
     @State private var coordinate: CLLocationCoordinate2D?
@@ -24,42 +27,48 @@ struct LessonDetailsView: View {
     @State var safeAreas: UIEdgeInsets = .zero
     
     var body: some View {
-        GeometryReader { proxy in
-            let screenHeight = UIScreen.main.bounds.height
-            
-            if selectedLesson != nil {
-                VStack {
+        if let lesson = selectedLesson {
+            GeometryReader { proxy in
+                let screenHeight = UIScreen.main.bounds.height
+                
+                VStack(alignment: .leading, spacing: 20) {
                     Text(title)
                         .font(.title2)
                         .bold()
-                        .padding(.horizontal, 10)
                         .onTapGesture {
-                            if title == selectedLesson!.nomeInsegnamento {
-                                title = selectedLesson!.nameOriginal
+                            if title == cleanText {
+                                title = lesson.nameOriginal
                             } else {
-                                title = selectedLesson!.nomeInsegnamento
+                                title = cleanText
                             }
                         }
-                    Spacer().frame(height: 20)
-                    HStack {
-                        Text(formatClassroom(classroom: selectedLesson!.aula))
-                            .font(.title3)
-                            .bold()
-                            .foregroundStyle(Color(white: 0.3))
-                        Spacer()
-                        Text(selectedLesson!.docente)
+                    if !tags.isEmpty {
+                        HStack {
+                            ForEach(tags, id: \.self) { tag in
+                                Text(tag)
+                                    .font(.caption)
+                                    .padding(.horizontal, 7)
+                                    .padding(.vertical, 3)
+                                    .background {
+                                        Color(hex: lesson.color)
+                                            .opacity(0.2)
+                                    }
+                                    .cornerRadius(7)
+                            }
+                        }
                     }
-                    Spacer().frame(height: 20)
-                    HStack {
-                        Text(selectedLesson!.orario)
-                        Spacer()
-                        Text(selectedLesson!.data)
-                    }
-                    Spacer().frame(height: 40)
+                    Label("\(date.getCurrentWeekdaySymbol(length: .full)), \(date.day) \(date.getCurrentMonthSymbol(length: .full)) \(date.yearSymbol)", systemImage: "calendar")
+                        .font(.headline)
+                    Label("\(lesson.orario) (\(lesson.durationCalculated))", systemImage: "clock.fill")
+                        .font(.headline)
+                    Label("\(lesson.docente.isEmpty ? "Non specificato" : lesson.docente)", systemImage: lesson.docente.contains(",") ? "person.2.fill" : "person.fill")
+                        .font(.headline)
+                    Label("\(lesson.formattedClassroom) \(lesson.capacity != nil ? "(\(lesson.capacity!) posti)" : "")", systemImage: "mappin")
+                        .font(.headline)
                     ZStack {
                         if let coordinate = coordinate {
                             Map(position: $mapPosition) {
-                                Annotation(selectedLesson!.aula, coordinate: coordinate) {
+                                Annotation(lesson.aula, coordinate: coordinate) {
                                     ZStack {
                                         Circle().fill(.white)
                                             .frame(width: 30, height: 30)
@@ -77,7 +86,7 @@ struct LessonDetailsView: View {
                             .safeAreaPadding(.deviceCornerRadius / 3.5)
                             .overlay(alignment: .topTrailing) {
                                 Button(action: {
-                                    openMaps(coordinate: coordinate, name: selectedLesson!.aula)
+                                    openMaps(coordinate: coordinate, name: lesson.aula)
                                 }) {
                                     Image(systemName: "map.fill")
                                         .padding(8)
@@ -86,55 +95,50 @@ struct LessonDetailsView: View {
                                         .padding(.deviceCornerRadius / 3.5)
                                 }
                             }
-                            .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 16))
+                            .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 24))
                             .frame(maxHeight: .infinity)
                         } else if isLoadingMap {
                             ProgressView()
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .background(Color.gray.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 16))
+                                .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 24))
                         } else {
-                            ContentUnavailableView("Posizione non trovata", systemImage: "mappin.slash")
+                            ContentUnavailableView("Posizione non trovata\n\n\(lesson.aula)", systemImage: "mappin.slash")
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                                 .background(Color.gray.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 16))
+                                .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 24))
                         }
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.top, 30)
-                .padding(.bottom, -safeAreas.bottom + 16)
-                .padding(.horizontal, 16)
+                .padding(.top, 40)
+                .padding(.bottom, -safeAreas.bottom + 24)
+                .padding(.horizontal, 24)
                 .frame(height: screenHeight - safeAreas.top - safeAreas.bottom)
-                .multilineTextAlignment(.center)
+                .multilineTextAlignment(.leading)
                 .onAppear {
-                    //selectedLesson!.color = "CFRSCD"
-                    title = selectedLesson!.nomeInsegnamento
-                }
-                .task(id: selectedLesson!.id) {
-                    await findLocation()
-                }
-                .background {
-                    ZStack {
-                        Color.black.opacity(0.15)
-                        LinearGradient(stops: [.init(color: (Color(hex: selectedLesson!.color) ?? .black).opacity(colorScheme == .light ? 0.6 : 0.3), location: 0), .init(color: (Color(hex: selectedLesson!.color) ?? .black).opacity(colorScheme == .light ? 0.1 : 0.05), location: 0.5)], startPoint: .top, endPoint: .bottom)
+                    if cleanText.isEmpty {
+                        if let lesson = selectedLesson {
+                            let result = LessonNameFormatter.format(lesson.nomeInsegnamento)
+                            cleanText = result.cleanText
+                            tags = result.tags
+                            
+                            date = lesson.data.date(format: "dd-MM-yyyy") ?? Date()
+                        }
                     }
-                    .frame(height: screenHeight)
+                    
+                    //lesson.color = "CFRSCD"
+                    title = cleanText
+                }
+                .task(id: lesson.id) {
+                    await findLocation()
                 }
                 .ignoresSafeArea()
             }
+            .onAppear {
+                safeAreas = UIApplication.shared.safeAreas
+            }
         }
-        .onAppear {
-            safeAreas = UIApplication.shared.safeAreas
-        }
-    }
-    
-    private func formatClassroom(classroom: String) -> String {
-        guard let bracketIndex = classroom.firstIndex(of: "[") else {
-            return classroom
-        }
-        let index = classroom.index(bracketIndex, offsetBy: -2, limitedBy: classroom.startIndex) ?? classroom.startIndex
-        return String(classroom[...index])
     }
     
     // Funzione per Geocodificare l'indirizzo
@@ -142,7 +146,7 @@ struct LessonDetailsView: View {
         // Resetta stato
         self.coordinate = nil
         
-        guard let address = selectedLesson!.indirizzoAula else {
+        guard let lesson = selectedLesson, let address = lesson.indirizzoAula else {
             print("Nessun indirizzo trovato nel campo infoAulaHTML")
             return
         }
@@ -151,8 +155,6 @@ struct LessonDetailsView: View {
         let geocoder = CLGeocoder()
         
         do {
-            // Aggiungiamo "Verona, Italy" se non presente per aiutare il geocoder,
-            // anche se nel tuo esempio "Verona" c'è già.
             let searchString = address
             
             let placemarks = try await geocoder.geocodeAddressString(searchString)

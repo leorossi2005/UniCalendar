@@ -13,7 +13,7 @@ nonisolated struct NetworkCache: Encodable, Decodable {
     
     var years: [Year] = []
     var courses: [String: [Corso]] = [:]
-    var academicYears: [String: [Anno]] = [:]
+    var academicYears: [String: [String: [Anno]]] = [:]
 }
 
 enum NetworkError: Error {

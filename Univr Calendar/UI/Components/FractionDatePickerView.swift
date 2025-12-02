@@ -12,6 +12,7 @@ class FractionDatePickerViewModel {
     static let shared = FractionDatePickerViewModel()
     
     var academicWeeks: [[FractionDay]] = []
+    var currentYear: String = ""
 }
 
 struct FractionDay: Identifiable, Equatable, Hashable {
@@ -140,13 +141,14 @@ struct FractionDatePickerContainer: View {
                     canUpdateSelection = true
                 }
             }
-            .onChange(of: settings.selectedYear) {
-                reloadWeeksAndSelection()
-            }
             .onChange(of: selectedWeek) {
-                if selectionFraction != targetId {
-                    withAnimation(.easeInOut(duration: 0)) {
-                        selectionFraction = targetId
+                if viewModel.currentYear != settings.selectedYear {
+                    reloadWeeksAndSelection()
+                } else if selectionFraction != targetId {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
+                        withAnimation(nil) {
+                            selectionFraction = targetId
+                        }
                     }
                 }
             }
@@ -163,11 +165,12 @@ struct FractionDatePickerContainer: View {
     func reloadWeeksAndSelection() {
         selectionFraction = nil
         
-        if viewModel.academicWeeks.isEmpty {
+        if viewModel.academicWeeks.isEmpty || viewModel.currentYear != settings.selectedYear {
             let newWeeks = generateAcademicWeeks(selectedYear: settings.selectedYear)
             
             if viewModel.academicWeeks != newWeeks {
                 viewModel.academicWeeks = newWeeks
+                viewModel.currentYear = settings.selectedYear
             }
         }
         

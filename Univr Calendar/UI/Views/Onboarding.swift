@@ -229,7 +229,7 @@ struct Onboarding: View {
                             viewModel.academicYears = []
                             settings.foundMatricola = false
                             
-                            viewModel.updateAcademicYears(for: settings.selectedCourse)
+                            viewModel.updateAcademicYears(for: settings.selectedCourse, year: settings.selectedYear)
                             
                             settings.selectedAcademicYear = viewModel.academicYears.first!.valore
                             
