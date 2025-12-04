@@ -1,5 +1,5 @@
 //
-//  OnboardingViewModel.swift
+//  SettingsViewModel.swift
 //  Univr Calendar
 //
 //  Created by Leonardo Rossi on 19/11/25.
@@ -8,10 +8,10 @@
 import Foundation
 
 @Observable
-class OnboardingViewModel {
-    var years: [Year] = []
-    var courses: [Corso] = []
-    var academicYears: [Anno] = []
+public class SettingsViewModel {
+    public var years: [Year] = []
+    public var courses: [Corso] = []
+    public var academicYears: [Anno] = []
     
     var loading: Bool = false
     var errorMessage: String? = nil
@@ -20,11 +20,11 @@ class OnboardingViewModel {
     
     private let networkService: NetworkService
     
-    init(service: NetworkService = NetworkService()){
+    public init(service: NetworkService = NetworkService()){
         self.networkService = service
     }
     
-    func loadFromCache() {
+    public func loadFromCache() {
         if let cacheResponse = NetworkCacheManager.shared.load(fileName: cacheKey, type: NetworkCache.self) {
             NetworkCache.shared.years = cacheResponse.years
             NetworkCache.shared.courses = cacheResponse.courses
@@ -38,13 +38,13 @@ class OnboardingViewModel {
     }
     
     @MainActor
-    func loadYears() async {
+    public func loadYears() async {
         var newYears: [Year] = []
         if NetworkCache.shared.years.isEmpty {
             do {
                 newYears = try await networkService.getYears()
             } catch {
-                self.errorMessage = "Errore caricamento anni: \(error.localizedDescription)"
+                self.errorMessage = String(localized: "Errore caricamento anni: \(error.localizedDescription)")
             }
         } else {
             newYears = NetworkCache.shared.years
@@ -74,7 +74,7 @@ class OnboardingViewModel {
     }
     
     @MainActor
-    func loadCourses(year: String) async {
+    public func loadCourses(year: String) async {
         self.loading = true
         
         var newCourses: [Corso] = []
@@ -82,7 +82,7 @@ class OnboardingViewModel {
             do {
                 newCourses = try await networkService.getCourses(year: year)
             } catch {
-                self.errorMessage = "Errore caricamento corsi: \(error.localizedDescription)"
+                self.errorMessage = String(localized: "Errore caricamento corsi: \(error.localizedDescription)")
                 print(error)
             }
         } else {
@@ -114,7 +114,7 @@ class OnboardingViewModel {
         }
     }
     
-    func updateAcademicYears(for courseValue: String, year: String) {
+    public func updateAcademicYears(for courseValue: String, year: String) {
         var newAcademicYears: [Anno] = []
         if NetworkCache.shared.academicYears[year]?[courseValue] == nil {
             guard let selectedCorso = courses.first(where: { $0.valore == courseValue }) else {
@@ -147,7 +147,7 @@ class OnboardingViewModel {
         }
     }
     
-    func checkForMatricola(in academicYearValue: String) -> Bool {
+    public func checkForMatricola(in academicYearValue: String) -> Bool {
         guard let anno = academicYears.first(where: { $0.valore == academicYearValue }) else {
             return false
         }

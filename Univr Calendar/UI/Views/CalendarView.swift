@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UnivrCore
 
 var isIpad: Bool {
     UIDevice.current.userInterfaceIdiom == .pad
@@ -463,6 +464,9 @@ struct CalendarView: View {
     }
     
     private func inizializeData() {
+        selectedDetent = .fraction(0.15)
+        detents = [.fraction(0.15), isIpad ? .fraction(0.75) : .medium]
+        
         updateDate()
         
         tempSelectedYear = settings.selectedYear
@@ -586,13 +590,15 @@ struct CalendarViewDay: View {
                                 selectedDetent = .large
                             }
                     } else {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 45, style: .continuous)
-                                .fill(LinearGradient(stops: [.init(color: Color(white: 0, opacity: 0), location: 0), .init(color: Color(white: colorScheme == .light ? 0 : 1, opacity: colorScheme == .light ? 0.1 : 0.2), location: 0.5), .init(color: Color(white: 0, opacity: 0), location: 1)], startPoint: .leading, endPoint: .trailing))
-                                .padding(.vertical, -5)
-                                .padding(.horizontal, 15)
-                            Text("---- Pausa di " + lesson.durationCalculated + " ----")
+                        HStack(alignment: .bottom) {
+                            Image(systemName: "cup.and.heat.waves.fill")
+                                .font(.system(size: 40))
+                            Text(lesson.durationCalculated)
+                                .font(.system(size: 30))
+                                .italic()
+                                .bold()
                         }
+                        .foregroundStyle(Color(white: 0.35))
                     }
                 }
             }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-nonisolated struct Calendars {
+public nonisolated struct Calendars {
     static var deviceLocale: Locale {
         guard let preferredIdentifier = Locale.preferredLanguages.first else {
             return Locale.current
@@ -15,14 +15,14 @@ nonisolated struct Calendars {
         return Locale(identifier: preferredIdentifier)
     }
 
-    static let calendar: Calendar = {
+    public static let calendar: Calendar = {
         var calendar = Calendar.current
         calendar.locale = deviceLocale
         return calendar
     }()
 }
 
-nonisolated struct Formatters {
+public nonisolated struct Formatters {
     // Formatter per le date complete (es. 10-10-2025)
     static let displayDate: DateFormatter = {
         let formatter = DateFormatter()
@@ -47,7 +47,7 @@ nonisolated struct Formatters {
     }()
 }
 
-nonisolated struct FormatterCache {
+public nonisolated struct FormatterCache {
     private static var cache: [String: DateFormatter] = [:]
     
     static func getFormatter(for format: String) -> DateFormatter {
@@ -62,25 +62,8 @@ nonisolated struct FormatterCache {
     }
 }
 
-struct Stopwatch {
-    private var startTime: DispatchTime?
-    
-    mutating func start() {
-        startTime = DispatchTime.now()
-    }
-    
-    /// Ritorna i secondi trascorsi e resetta lo start
-    mutating func stop() -> Double {
-        guard let startTime else { return 0 }
-        let end = DispatchTime.now()
-        let nanos = end.uptimeNanoseconds &- startTime.uptimeNanoseconds
-        self.startTime = nil
-        return Double(nanos) / 1_000_000_000.0
-    }
-}
-
 /// Gestisce la formattazione centralizzata dei nomi delle lezioni
-struct LessonNameFormatter {
+public struct LessonNameFormatter {
     
     // Cache delle Regex per ottimizzare le performance (evita di ricrearle ad ogni chiamata)
     private static let keywordsRegex: NSRegularExpression? = {
@@ -105,7 +88,7 @@ struct LessonNameFormatter {
     /// Pulisce il nome della materia e estrae i tag rilevanti
     /// - Parameter text: Il nome originale della materia
     /// - Returns: Una tupla contenente il nome pulito e l'array di tag trovati
-    static func format(_ text: String) -> (cleanText: String, tags: [String]) {
+    public static func format(_ text: String) -> (cleanText: String, tags: [String]) {
         var formattedTxt = text
             .replacingOccurrences(of: "Matricole pari", with: "")
             .replacingOccurrences(of: "Matricole dispari", with: "")
@@ -174,7 +157,7 @@ struct LessonNameFormatter {
             
             for match in matches.reversed() {
                 if let range = Range(match.range, in: formattedTxt) {
-                    var upperCasePart = String(formattedTxt[range])
+                    let upperCasePart = String(formattedTxt[range])
                         .trimmingCharacters(in: .whitespacesAndNewlines)
                     
                     if upperCasePart.count >= 5 {
@@ -216,5 +199,22 @@ struct LessonNameFormatter {
         }
         
         return (formattedTxt.trimmingCharacters(in: .whitespacesAndNewlines), tags)
+    }
+}
+
+public struct Stopwatch {
+    private var startTime: DispatchTime?
+    
+    mutating func start() {
+        startTime = DispatchTime.now()
+    }
+    
+    /// Ritorna i secondi trascorsi e resetta lo start
+    mutating func stop() -> Double {
+        guard let startTime else { return 0 }
+        let end = DispatchTime.now()
+        let nanos = end.uptimeNanoseconds &- startTime.uptimeNanoseconds
+        self.startTime = nil
+        return Double(nanos) / 1_000_000_000.0
     }
 }

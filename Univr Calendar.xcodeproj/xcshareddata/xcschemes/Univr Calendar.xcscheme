@@ -41,6 +41,24 @@
       debugServiceExtension = "internal"
       enableGPUValidationMode = "1"
       allowLocationSimulation = "YES">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Run Script"
+               scriptText = "cd &quot;${PROJECT_DIR}&quot;&#10;# Incrementa la versione solo quando lanci l&apos;app (Simulatore o Device)&#10;xcrun agvtool next-version -all&#10;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "A74C008C2E960653001AB35D"
+                     BuildableName = "Univr Calendar.app"
+                     BlueprintName = "Univr Calendar"
+                     ReferencedContainer = "container:Univr Calendar.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference
@@ -75,5 +93,23 @@
    <ArchiveAction
       buildConfiguration = "Release"
       revealArchiveInOrganizer = "YES">
+      <PreActions>
+         <ExecutionAction
+            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
+            <ActionContent
+               title = "Run Script"
+               scriptText = "cd &quot;${PROJECT_DIR}&quot;&#10;# Incrementa la versione solo quando lanci l&apos;app (Simulatore o Device)&#10;xcrun agvtool next-version -all&#10;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "A74C008C2E960653001AB35D"
+                     BuildableName = "Univr Calendar.app"
+                     BlueprintName = "Univr Calendar"
+                     ReferencedContainer = "container:Univr Calendar.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
+            </ActionContent>
+         </ExecutionAction>
+      </PreActions>
    </ArchiveAction>
 </Scheme>

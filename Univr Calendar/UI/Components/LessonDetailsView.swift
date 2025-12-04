@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MapKit
+import UnivrCore
 
 struct LessonDetailsView: View {
     @Environment(\.colorScheme) var colorScheme: ColorScheme
@@ -61,9 +62,9 @@ struct LessonDetailsView: View {
                         .font(.headline)
                     Label("\(lesson.orario) (\(lesson.durationCalculated))", systemImage: "clock.fill")
                         .font(.headline)
-                    Label("\(lesson.docente.isEmpty ? "Non specificato" : lesson.docente)", systemImage: lesson.docente.contains(",") ? "person.2.fill" : "person.fill")
+                    Label("\(lesson.docente.isEmpty ? String(localized: "Non specificato") : lesson.docente)", systemImage: lesson.docente.contains(",") ? "person.2.fill" : "person.fill")
                         .font(.headline)
-                    Label("\(lesson.formattedClassroom) \(lesson.capacity != nil ? "(\(lesson.capacity!) posti)" : "")", systemImage: "mappin")
+                    Label("\(lesson.formattedClassroom) \(lesson.capacity != nil ? "(\(lesson.capacity!) \(String(localized: "posti")))" : "")", systemImage: "mappin")
                         .font(.headline)
                     ZStack {
                         if let coordinate = coordinate {
@@ -147,7 +148,7 @@ struct LessonDetailsView: View {
         self.coordinate = nil
         
         guard let lesson = selectedLesson, let address = lesson.indirizzoAula else {
-            print("Nessun indirizzo trovato nel campo infoAulaHTML")
+            print("No address found")
             return
         }
         

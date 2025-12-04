@@ -8,36 +8,36 @@
 import Foundation
 
 // MARK: Year struct
-struct Year: Encodable, Decodable, Sendable, Equatable {
-    let label: String
-    let valore: String
+public struct Year: Encodable, Decodable, Sendable, Equatable {
+    public let label: String
+    public let valore: String
 }
 
 // MARK: Lesson struct
-struct ResponseAPI: Codable, Sendable, Equatable {
+public struct ResponseAPI: Codable, Sendable, Equatable {
     var celle: [Lesson]
     let colori: [String]
 }
 
-nonisolated struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
-    enum GruppoMatricola: String, Codable {
+public nonisolated struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
+    public enum GruppoMatricola: String, Codable {
         case pari, dispari, tutti
     }
     
-    let nomeInsegnamento: String
-    let nameOriginal: String
-    let data: String
-    let aula: String
-    let orario: String
-    let tipo: String
-    let docente: String
-    let annullato: String
-    let colorIndex: String
-    let codiceInsegnamento: String
-    var color: String
-    let infoAulaHTML: String
+    public let nomeInsegnamento: String
+    public let nameOriginal: String
+    public let data: String
+    public let aula: String
+    public let orario: String
+    public let tipo: String
+    public let docente: String
+    public let annullato: String
+    public let colorIndex: String
+    public let codiceInsegnamento: String
+    public var color: String
+    public let infoAulaHTML: String
     
-    var id: String {
+    public var id: String {
         var hasher = Hasher()
         hasher.combine(nomeInsegnamento)
         hasher.combine(nameOriginal)
@@ -59,14 +59,14 @@ nonisolated struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable 
         return String(hashValue)
     }
     
-    var formattedName: String {
+    public var formattedName: String {
         nomeInsegnamento
             .replacingOccurrences(of: "Matricole pari", with: "")
             .replacingOccurrences(of: "Matricole dispari", with: "")
             .trimmingCharacters(in: .whitespaces)
     }
     
-    var formattedClassroom: String {
+    public var formattedClassroom: String {
         if let bracketIndex = aula.firstIndex(of: "[") {
             let index = self.aula.index(bracketIndex, offsetBy: -2, limitedBy: self.aula.startIndex) ?? self.aula.startIndex
             return String(self.aula[...index])
@@ -77,11 +77,11 @@ nonisolated struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable 
         return aula
     }
     
-    var durationCalculated: String {
+    public var durationCalculated: String {
         Lesson.calculateDuration(orario: orario)
     }
     
-    var gruppo: GruppoMatricola {
+    public var gruppo: GruppoMatricola {
         if nomeInsegnamento.contains("Matricole pari") {
             return .pari
         } else if nomeInsegnamento.contains("Matricole dispari") {
@@ -91,7 +91,7 @@ nonisolated struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable 
         }
     }
     
-    var indirizzoAula: String? {
+    public var indirizzoAula: String? {
         guard let openBracketIndex = infoAulaHTML.lastIndex(of: "["),
               let closeBracketIndex = infoAulaHTML.lastIndex(of: "]"),
               openBracketIndex < closeBracketIndex else {
@@ -102,11 +102,13 @@ nonisolated struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable 
         return address.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    var capacity: Int? {
-        let regex = /Capacità: <\/span>\s*(\d+)\s*</
+    public var capacity: Int? {
+        let pattern = #"Capacità: <\/span>\s*(\d+)\s*<"#
         
-        if let match = infoAulaHTML.firstMatch(of: regex) {
-            let capacityString = match.1
+        if let regex = try? Regex(pattern),
+           let match = infoAulaHTML.firstMatch(of: regex),
+           let range = match[1].range {
+            let capacityString = infoAulaHTML[range]
             
             if let newCapacity = Int(capacityString) {
                 return newCapacity
@@ -143,7 +145,7 @@ nonisolated struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable 
         let contenuto: String
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
         self.nomeInsegnamento = try container.decodeIfPresent(String.self, forKey: .nomeInsegnamento) ?? ""
@@ -240,24 +242,24 @@ nonisolated struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable 
 }
 
 // MARK: Struct corsi per il network
-struct Corso: Codable, Sendable, Equatable {
-    let elenco_anni: [Anno]
-    let label: String
-    let valore: String
+public struct Corso: Codable, Sendable, Equatable {
+    public let elenco_anni: [Anno]
+    public let label: String
+    public let valore: String
 }
 
-struct Anno: Codable, Sendable, Equatable {
-    let label: String
-    let valore: String
-    let elenco_insegnamenti: [Insegnamento]
+public struct Anno: Codable, Sendable, Equatable {
+    public let label: String
+    public let valore: String
+    public let elenco_insegnamenti: [Insegnamento]
 }
 
-struct Insegnamento: Codable, Sendable, Equatable {
-    let label: String
+public struct Insegnamento: Codable, Sendable, Equatable {
+    public let label: String
 }
 
 extension Lesson {
-    static let sample = Lesson(
+    public static let sample = Lesson(
         nome_insegnamento: "Insegnamento di prova molto lungo Laboratorio",
         name_original: "Insegnamento di prova molto lungo lungo lungo",
         data: "01-01-2025",
@@ -270,5 +272,11 @@ extension Lesson {
         codice_insegnamento: "XYZ",
         color: "#A0A0A0",
         infoAulaHTML: "<span style=\"font-weight:bold\">Nome aula: </span><a aria-label=\"Aula Gino Tessari\" href=\"index.php?view=rooms&include=rooms&_lang=&sede=2&aula=32&date=30-01-2026\" target=\"_blank\" title=\"Apri un'altra TAB del browser per consultare l'orario di: Aula Aula Gino Tessari\">Aula Gino Tessari</a><br><span style=\"font-weight:bold\">Capacità: </span>236<br><span style=\"font-weight:bold\">Sede: </span><a aria-label=\"Borgo Roma - Ca' Vignal 2\" href=\"index.php?view=rooms&include=rooms&_lang=&sede=2&date=30-01-2026\" target=\"_blank\" title=\"Apri un'altra TAB del browser per consultare l'orario di: Borgo Roma - Ca' Vignal 2\">Borgo Roma - Ca' Vignal 2</a> [Strada Le Grazie, 15 - 37134 Verona]"
+    )
+    
+    public static let pausaSample = Lesson(
+        data: "01-01-2025",
+        orario: "08:30 - 10:30",
+        tipo: "pause"
     )
 }

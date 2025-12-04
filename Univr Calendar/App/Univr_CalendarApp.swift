@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UnivrCore
 
 @main
 struct Univr_CalendarApp: App {
@@ -13,7 +14,7 @@ struct Univr_CalendarApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
                 .environment(settings)
         }
     }

@@ -8,8 +8,8 @@
 import Foundation
 
 @Observable
-class UserSettings {
-    static let shared = UserSettings()
+public class UserSettings {
+    public static let shared = UserSettings()
     
     private let defaults: UserDefaults = .standard
     
@@ -22,27 +22,27 @@ class UserSettings {
         static let onboardingCompleted = "onboardingCompleted"
     }
     
-    var selectedYear: String {
+    public var selectedYear: String {
         didSet { defaults.set(selectedYear, forKey: Keys.selectedYear) }
     }
     
-    var selectedCourse: String {
+    public var selectedCourse: String {
         didSet { defaults.set(selectedCourse, forKey: Keys.selectedCourse) }
     }
     
-    var selectedAcademicYear: String {
+    public var selectedAcademicYear: String {
         didSet { defaults.set(selectedAcademicYear, forKey: Keys.selectedAcademicYear) }
     }
     
-    var foundMatricola: Bool {
+    public var foundMatricola: Bool {
         didSet { defaults.set(foundMatricola, forKey: Keys.foundMatricola) }
     }
     
-    var matricola: String {
+    public var matricola: String {
         didSet { defaults.set(matricola, forKey: Keys.matricola) }
     }
     
-    var onboardingCompleted: Bool {
+    public var onboardingCompleted: Bool {
         didSet { defaults.set(onboardingCompleted, forKey: Keys.onboardingCompleted) }
     }
     
@@ -55,7 +55,7 @@ class UserSettings {
         self.onboardingCompleted = defaults.bool(forKey: Keys.onboardingCompleted)
     }
     
-    func reset() {
+    public func reset() {
         selectedYear = "2025"
         selectedCourse = "0"
         selectedAcademicYear = "0"

@@ -14,16 +14,16 @@ private struct YearStructure: Sendable {
 }
 
 @Observable
-class CalendarViewModel {
-    var lessons: [Lesson] = []
-    var days: [[Lesson]] = []
-    var daysString: [String] = []
+public class CalendarViewModel {
+    public var lessons: [Lesson] = []
+    public var days: [[Lesson]] = []
+    public var daysString: [String] = []
     
-    var loading: Bool = true
-    var checkingUpdates: Bool = false
-    var showUpdateAlert: Bool = false
+    public var loading: Bool = true
+    public var checkingUpdates: Bool = false
+    public var showUpdateAlert: Bool = false
     var errorMessage: String? = nil
-    var noLessonsFound: Bool = false
+    public var noLessonsFound: Bool = false
     
     private var pendingNewLessons: [Lesson]? = nil
     private var currentPalette: [String] = []
@@ -33,11 +33,11 @@ class CalendarViewModel {
     
     private let networkService: NetworkServiceProtocol
     
-    init(service: NetworkServiceProtocol = NetworkService()) {
+    public init(service: NetworkServiceProtocol = NetworkService()) {
         self.networkService = service
     }
     
-    func loadFromCache(selYear: String, matricola: String) {
+    public func loadFromCache(selYear: String, matricola: String) {
         if let cacheResponse = CacheManager.shared.load(fileName: cacheKey, type: ResponseAPI.self) {
             self.lessons = cacheResponse.celle
             self.organizeData(selectedYear: selYear, matricola: matricola)
@@ -51,7 +51,7 @@ class CalendarViewModel {
         }
     }
     
-    func loadNetworkFromCache() {
+    public func loadNetworkFromCache() {
         if let cacheResponse = NetworkCacheManager.shared.load(fileName: "network_cache.json", type: NetworkCache.self) {
             NetworkCache.shared.years = cacheResponse.years
             NetworkCache.shared.courses = cacheResponse.courses
@@ -60,7 +60,7 @@ class CalendarViewModel {
     }
     
     @MainActor
-    func loadLessons(corso: String, anno: String, selYear: String, matricola: String) async {
+    public func loadLessons(corso: String, anno: String, selYear: String, matricola: String) async {
         guard corso != "0" else { return }
         
         if !lessons.isEmpty {
@@ -96,7 +96,7 @@ class CalendarViewModel {
             if let netError = error as? NetworkError {
                 self.errorMessage = netError.localizedDescription
             } else {
-                self.errorMessage = "Errore Generico: \(error.localizedDescription)"
+                self.errorMessage = String(localized: "Errore Generico: \(error.localizedDescription)")
             }
             print("Debug Error: \(error)")
         }
@@ -107,13 +107,13 @@ class CalendarViewModel {
         self.checkingUpdates = false
     }
     
-    func clearPendingUpdate() {
+    public func clearPendingUpdate() {
         pendingNewLessons = nil
         checkingUpdates = false
         showUpdateAlert = false
     }
     
-    func confirmUpdate(selectedYear: String, matricola: String) {
+    public func confirmUpdate(selectedYear: String, matricola: String) {
         guard let newLessons = pendingNewLessons else { return }
         
         applyNewData(newLessons, palette: self.currentPalette, selectedYear: selectedYear, matricola: matricola)
@@ -164,7 +164,7 @@ class CalendarViewModel {
         }
     }
     
-    func organizeData(selectedYear: String, matricola: String) {
+    public func organizeData(selectedYear: String, matricola: String) {
         guard let annoInt = Int(selectedYear) else { return }
         
         let lessonsSnapshot = self.lessons

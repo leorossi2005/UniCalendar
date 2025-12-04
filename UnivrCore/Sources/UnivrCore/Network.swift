@@ -8,12 +8,12 @@
 import Foundation
 
 
-nonisolated struct NetworkCache: Encodable, Decodable {
-    static var shared = NetworkCache()
+public nonisolated struct NetworkCache: Encodable, Decodable {
+    public static var shared = NetworkCache()
     
-    var years: [Year] = []
-    var courses: [String: [Corso]] = [:]
-    var academicYears: [String: [String: [Anno]]] = [:]
+    public var years: [Year] = []
+    public var courses: [String: [Corso]] = [:]
+    public var academicYears: [String: [String: [Anno]]] = [:]
 }
 
 enum NetworkError: Error {
@@ -25,22 +25,24 @@ enum NetworkError: Error {
     
     var errorDescription: String? {
         switch self {
-            case .badURL: return "URL non valido"
-            case .badServerResponse(let code): return "Errore server: \(code)."
-            case .emptyData: return "Dati vuoti ricevuti dal server."
-            case .dataNotFound(let variable): return "Impossibile trovare i dati per: \(variable)."
-            case .decodingError(let err): return "Errore decodifica: \(err.localizedDescription)"
+            case .badURL: return "URL is not valid"
+            case .badServerResponse(let code): return "server Error: \(code)."
+            case .emptyData: return "Empty data recieved from the server"
+            case .dataNotFound(let variable): return "Impossible to find data for: \(variable)."
+            case .decodingError(let err): return "Decoding error: \(err.localizedDescription)"
         }
     }
 }
 
-protocol NetworkServiceProtocol {
+public protocol NetworkServiceProtocol {
     func getYears() async throws -> [Year]
     func getCourses(year: String) async throws -> [Corso]
     func fetchOrario(corso: String, anno: String, selyear: String) async throws -> ResponseAPI
 }
 
-struct NetworkService: NetworkServiceProtocol {
+public struct NetworkService: NetworkServiceProtocol {
+    public init() {}
+    
     private func extractJSONVariable(name variableName: String, from text: String) -> Data? {
         let pattern: Regex<(Substring, Substring)>
         do {
@@ -78,7 +80,7 @@ struct NetworkService: NetworkServiceProtocol {
         return text
     }
     
-    func getYears() async throws -> [Year] {
+    public func getYears() async throws -> [Year] {
         var components = URLComponents(string: "https://logistica.univr.it/PortaleStudentiUnivr/combo.php")
         components?.queryItems = [
             URLQueryItem(name: "aa", value: "1")
@@ -105,7 +107,7 @@ struct NetworkService: NetworkServiceProtocol {
         }
     }
     
-    func getCourses(year: String) async throws -> [Corso] {
+    public func getCourses(year: String) async throws -> [Corso] {
         var components = URLComponents(string: "https://logistica.univr.it/PortaleStudentiUnivr/combo.php")
         components?.queryItems = [
             URLQueryItem(name: "aa", value: year),
@@ -130,7 +132,7 @@ struct NetworkService: NetworkServiceProtocol {
         }
     }
     
-    func fetchOrario(corso: String, anno: String, selyear: String) async throws -> ResponseAPI {
+    public func fetchOrario(corso: String, anno: String, selyear: String) async throws -> ResponseAPI {
         guard let url = URL(string: "https://logistica.univr.it/PortaleStudentiUnivr/grid_call.php") else {
             throw NetworkError.badURL
         }

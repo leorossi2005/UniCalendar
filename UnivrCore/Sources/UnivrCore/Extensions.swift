@@ -7,44 +7,44 @@
 
 import Foundation
 
-enum CalendarSymbolLength: String {
+public enum CalendarSymbolLength: String {
     case full
     case short
     case veryShort
 }
 
-enum NewDateComponents: String {
+public enum NewDateComponents: String {
     case day
     case month
     case year
 }
 
 extension Date {
-    nonisolated init(year: Int, month: Int, day: Int) {
+    public nonisolated init(year: Int, month: Int, day: Int) {
         let timeInterval: TimeInterval = Calendars.calendar.date(from: DateComponents(year: year, month: month, day: day))?.timeIntervalSince1970 ?? Date().timeIntervalSince1970
         
         self.init(timeIntervalSince1970: timeInterval)
     }
     
     // Restituisce la data del primo giorno della settimana (esempio: lunedì)
-    func startOfWeek(using calendar: Foundation.Calendar = .current) -> Date? {
+    public func startOfWeek(using calendar: Foundation.Calendar = .current) -> Date? {
         let comp = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: self)
         return calendar.date(from: comp)
     }
     
-    func startWeekdaySymbolOfMonth(length: CalendarSymbolLength) -> String {
+    public func startWeekdaySymbolOfMonth(length: CalendarSymbolLength) -> String {
         Date(year: year, month: month, day: 1).getCurrentWeekdaySymbol(length: length)
     }
 
     // Restituisce l'array dei 7 giorni della settimana
-    func weekDates(using calendar: Foundation.Calendar = .current) -> [Date] {
+    public func weekDates(using calendar: Foundation.Calendar = .current) -> [Date] {
         guard let start = startOfWeek(using: calendar) else { return [] }
         return (0..<7).compactMap { offset in
             calendar.date(byAdding: .day, value: offset, to: start)
         }
     }
     
-    func getString(format: String) -> String {
+    public func getString(format: String) -> String {
         if format == "dd-MM-yyyy" {
             return Formatters.displayDate.string(from: self)
         } else if format == "HH:mm" {
@@ -55,7 +55,7 @@ extension Date {
         return formatter.string(from: self)
     }
     
-    func getCurrentMonthSymbol(length: CalendarSymbolLength) -> String {
+    public func getCurrentMonthSymbol(length: CalendarSymbolLength) -> String {
         switch length {
             case .full:
                 Calendars.calendar.monthSymbols[month - 1].capitalized
@@ -66,7 +66,7 @@ extension Date {
         }
     }
     
-    func getCurrentWeekdaySymbol(length: CalendarSymbolLength) -> String {
+    public func getCurrentWeekdaySymbol(length: CalendarSymbolLength) -> String {
         switch length {
             case .full:
                 Calendars.calendar.weekdaySymbols[weekday - 1].capitalized
@@ -77,7 +77,7 @@ extension Date {
         }
     }
     
-    func getWeekdaySymbols(length: CalendarSymbolLength) -> [String] {
+    public func getWeekdaySymbols(length: CalendarSymbolLength) -> [String] {
         switch length {
             case .full:
                 var weekdaySymbols: [String] = Calendars.calendar.weekdaySymbols
@@ -95,7 +95,7 @@ extension Date {
         
     }
     
-    func set(type: NewDateComponents, value: Int) -> Date {
+    public func set(type: NewDateComponents, value: Int) -> Date {
         switch type {
             case .day:
                 Date(year: year, month: month, day: value)
@@ -106,45 +106,45 @@ extension Date {
         }
     }
     
-    func add(type: Calendar.Component, value: Int) -> Date {
+    public func add(type: Calendar.Component, value: Int) -> Date {
         Calendars.calendar.date(byAdding: type, value: value, to: self) ?? self
     }
     
-    func remove(type: Calendar.Component, value: Int) -> Date {
+    public func remove(type: Calendar.Component, value: Int) -> Date {
         Calendars.calendar.date(byAdding: type, value: -value, to: self) ?? self
     }
     
-    var minute: Int {
+    public var minute: Int {
         Calendars.calendar.component(.minute, from: self)
     }
     
-    var hour: Int {
+    public var hour: Int {
         Calendars.calendar.component(.hour, from: self)
     }
     
-    nonisolated var day: Int {
+    public nonisolated var day: Int {
         Calendars.calendar.component(.day, from: self)
     }
     
-    nonisolated var month: Int {
+    public nonisolated var month: Int {
         Calendars.calendar.component(.month, from: self)
     }
     
-    nonisolated var year: Int {
+    public nonisolated var year: Int {
         Calendars.calendar.component(.year, from: self)
     }
     
-    var yearSymbol: String {
+    public var yearSymbol: String {
         String(year)
     }
     
-    var weekday: Int {
+    public var weekday: Int {
         Calendars.calendar.component(.weekday, from: self)
     }
 }
 
 extension String {
-    nonisolated func date(format: String) -> Date? {
+    public nonisolated func date(format: String) -> Date? {
         if format == "dd-MM-yyyy" {
             return Formatters.displayDate.date(from: self)
         } else if format == "HH:mm" {

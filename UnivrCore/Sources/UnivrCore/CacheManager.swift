@@ -25,7 +25,7 @@ struct CacheManager {
                 let data = try JSONEncoder().encode(object)
                 try data.write(to: fileUrl)
             } catch {
-                print("Errore salvataggio cache \(fileName): \(error)")
+                print("Error saving cache \(fileName): \(error)")
             }
         }
     }
@@ -41,7 +41,7 @@ struct CacheManager {
             let object = try JSONDecoder().decode(type, from: data)
             return object
         } catch {
-            print("Errore caricamento cache \(fileName): \(error)")
+            print("Error loading cache \(fileName): \(error)")
             return nil
         }
     }
@@ -72,7 +72,7 @@ nonisolated struct NetworkCacheManager {
                 let data = try JSONEncoder().encode(object)
                 try data.write(to: fileUrl)
             } catch {
-                print("Errore salvataggio cache \(fileName): \(error)")
+                print("Error saving cache \(fileName): \(error)")
             }
         }
     }
@@ -88,7 +88,7 @@ nonisolated struct NetworkCacheManager {
             let object = try JSONDecoder().decode(type, from: data)
             return object
         } catch {
-            print("Errore caricamento cache \(fileName): \(error)")
+            print("Error loading cache \(fileName): \(error)")
             return nil
         }
     }

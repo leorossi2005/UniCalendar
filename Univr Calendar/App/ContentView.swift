@@ -6,15 +6,19 @@
 //
 
 import SwiftUI
+import UnivrCore
 
 struct ContentView: View {
     @Environment(UserSettings.self) var settings
-    
+
     @State var selectedTab: Int = 1
+
+    @State var animation: Namespace.ID
+    @Binding var showSplash: Bool
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            Onboarding(selectedTab: $selectedTab)
+            Onboarding(selectedTab: $selectedTab, animation: animation, showSplash: $showSplash)
                 .hideTabBarCompatible()
                 .tag(1)
             CalendarView(selectedTab: $selectedTab)
@@ -29,6 +33,9 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView()
+    @Previewable @Namespace var animation: Namespace.ID
+    @Previewable @State var showSplash: Bool = false
+    
+    ContentView(animation: animation, showSplash: $showSplash)
         .environment(UserSettings.shared)
 }

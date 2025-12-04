@@ -6,8 +6,11 @@
 //
 
 import SwiftUI
+import UnivrCore
 
 struct LessonCardView: View {
+    @Environment(\.colorScheme) var colorScheme
+    
     let lesson: Lesson
     @State private var cleanText: String = ""
     @State private var tags: [String] = []
@@ -16,6 +19,20 @@ struct LessonCardView: View {
         ZStack {
             RoundedRectangle(cornerRadius: 35, style: .continuous)
                 .fill(Color(hex: lesson.color) ?? .black)
+                .if(Color(hex: lesson.color) == .white && colorScheme == .light) { view in
+                    view
+                        .overlay {
+                            GeometryReader { proxy in
+                                let size = proxy.size
+                                let scaleX = (size.width - 0.5) / size.width
+                                let scaleY = (size.height - 0.5) / size.height
+                                
+                                RoundedRectangle(cornerRadius: 35, style: .continuous)
+                                    .stroke(Color(white: 0.35), style: .init(lineWidth: 0.5))
+                                    .scaleEffect(x: scaleX, y: scaleY)
+                            }
+                        }
+                }
             
             HStack {
                 VStack(alignment: .leading, spacing: 5) {
@@ -70,6 +87,7 @@ struct LessonCardView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding()
+            .opacity(lesson.annullato == "1" ? 0.5 : 1.0)
         }
         .padding(.horizontal, 15)
         .onAppear {
@@ -84,8 +102,24 @@ struct LessonCardView: View {
 }
 
 #Preview {
+    @Previewable @Environment(\.colorScheme) var colorScheme
+    
     ScrollView {
-        LessonCardView(lesson: Lesson.sample)
-            .environment(UserSettings.shared)
+        ForEach([Lesson.sample, Lesson.pausaSample, Lesson.sample]) { lesson in
+            if lesson.tipo != "pause" && lesson.tipo != "chiusura_type" {
+                LessonCardView(lesson: lesson)
+            } else {
+                HStack(alignment: .bottom) {
+                    Image(systemName: "cup.and.heat.waves.fill")
+                        .font(.system(size: 40))
+                    Text(lesson.durationCalculated)
+                        .font(.system(size: 30))
+                        .italic()
+                        .bold()
+                }
+                .foregroundStyle(Color(white: 0.35))
+            }
+        }
     }
+    .environment(UserSettings.shared)
 }

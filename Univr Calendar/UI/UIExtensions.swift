@@ -136,11 +136,11 @@ extension View {
                 .navigationTransition(
                     .zoom(sourceID: "calendar", in: namespace)
                 )
-                .presentationCornerRadius(detent.wrappedValue != .large ? .deviceCornerRadius - 8 : .deviceCornerRadius)
+                .presentationCornerRadius(detent.wrappedValue != .large ? .deviceCornerRadius - 8 : nil)
                 .animation(.easeInOut, value: detent.wrappedValue)
         } else {
             self
-                .presentationCornerRadius(.deviceCornerRadius)
+                .presentationCornerRadius(detent.wrappedValue != .large ? .deviceCornerRadius : nil)
             
         }
     }
@@ -149,6 +149,7 @@ extension View {
     func scrollViewTopPadding() -> some View {
         if #available(iOS 26, *) {
             self
+                .padding(.top, 5)
         } else if #available(iOS 18, *) {
             self
                 .padding(.top, 15)
@@ -391,155 +392,10 @@ extension CGFloat {
     }()
 }
 
-#Preview {
-    testView()
-}
-
-struct testView: View {
-    @State var text = "Elementi di architettura e sistemi operativi ELEMENTI DI ARCHITETTURE Laboratorio Matricole pari"
-    //@State var text = "Analisi matematica Matricole pari ANALISI I"
-    //@State var text = "Algebra e matematica di base Matricole pari"
-    //@State var text = "Algebra lineare Matricole pari"
-    //@State var text = "Programmazione I Matricole pari Laboratorio 1"
-    //@State var text = "Fisica teorica"
-    //@State var text = "Inglese B2 - Abilità produttive (GRUPPO 2)"
-    //@State var text = "Chimica generale ed inorganica esercitazioni"
-    //@State var text = "Biologia generale e cellulare BIOLOGIA GENERALE E CELLULARE: I"
-    //@State var text = "P?????? ?????????? 2 (Letteratura russa 2)"
-    @State var formattedText = ""
-    @State var tags: [String] = []
-    
-    var body: some View {
-        VStack {
-            Text(formattedText)
-                .multilineTextAlignment(.center)
-                .padding()
-                .onAppear {
-                    formattedText = formatText(text)
-                }
-            HStack {
-                ForEach(tags, id: \.self) { tag in
-                    Text(tag)
-                        .multilineTextAlignment(.center)
-                        .padding()
-                }
-            }
-        }
-    }
-    
-    func formatText(_ txt: String) -> String {
-        var formattedTxt = txt
-            .replacingOccurrences(of: "Matricole pari", with: "")
-            .replacingOccurrences(of: "Matricole dispari", with: "")
-        
-        let keywords = ["Laboratorio", "Teoria", "Esercitazioni"]
-
-        // 1. Costruiamo la Regex: cercherà la parola chiave seguita da zero o più caratteri
-        // non-lettera (come spazio, numeri, parentesi) all'inizio o alla fine della stringa.
-        let pattern = "(?:" + keywords.joined(separator: "|") + ")" + "\\s*[^A-Za-zÀ-ÖØ-Þa-zà-öø-þ]*"
-
-        if let regex = try? NSRegularExpression(pattern: pattern) {
-            let nsFormattedTxt = formattedTxt as NSString
-            let fullRange = NSRange(location: 0, length: nsFormattedTxt.length)
-            
-            // Trova la prima corrispondenza
-            if let match = regex.firstMatch(in: formattedTxt, range: fullRange) {
-                
-                // Estrai l'intera porzione che corrisponde al pattern (es. "Laboratorio 1")
-                if let rangeToRemove = Range(match.range, in: formattedTxt) {
-                    
-                    // 2. Determina la parola chiave effettiva (Laboratorio/Teoria/Esercitazioni)
-                    // Lavoriamo con la stringa rimossa per trovare la parola chiave esatta
-                    let matchedPart = String(formattedTxt[rangeToRemove])
-                        .trimmingCharacters(in: .whitespacesAndNewlines)
-                    
-                    tags.append(matchedPart)
-                    // Trova quale delle parole chiave è contenuta nella parte trovata
-                    //if let foundKeyword = keywords.first(where: { matchedPart.contains($0) }) {
-                    //    tags.append(foundKeyword) // Aggiungi solo la parola chiave (es. "Laboratorio")
-                    //}
-
-                    // 3. Rimuovi l'intera corrispondenza dalla stringa
-                    formattedTxt.removeSubrange(rangeToRemove)
-                }
-            }
-        }
-        
-        if formattedTxt.contains("??") {
-            let upperCasePattern = "\\((.*?)\\)"
-            
-            if let regex = try? NSRegularExpression(pattern: upperCasePattern) {
-                let matches = regex.matches(in: formattedTxt, range: NSRange(formattedTxt.startIndex..., in: formattedTxt))
-                
-                for match in matches {
-                    if let range = Range(match.range, in: formattedTxt) {
-                        var upperCasePart = String(formattedTxt[range])
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                        
-                        
-                        if upperCasePart.contains("Letteratura russa") {
-                            let number = upperCasePart[upperCasePart.index(upperCasePart.endIndex, offsetBy: -2)]
-                            formattedTxt = "Русская литература \(number) \(upperCasePart)"
-                        } else {
-                            upperCasePart.removeFirst()
-                            upperCasePart.removeLast()
-                            
-                            formattedTxt = upperCasePart
-                        }
-                    }
-                }
-            }
-        } else if formattedTxt.contains("(") {
-            let upperCasePattern = "\\((.*?)\\)"
-            
-            if let regex = try? NSRegularExpression(pattern: upperCasePattern) {
-                let matches = regex.matches(in: formattedTxt, range: NSRange(formattedTxt.startIndex..., in: formattedTxt))
-                
-                for match in matches {
-                    if let range = Range(match.range, in: formattedTxt) {
-                        var upperCasePart = String(formattedTxt[range])
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                        
-                        formattedTxt.removeSubrange(range)
-                        upperCasePart.removeFirst()
-                        upperCasePart.removeLast()
-                        
-                        tags.append(upperCasePart)
-                    }
-                }
-            }
-        } else {
-            let upperCasePattern = "[A-ZÀ-ÖØ-Þ\\s]{5,}"
-            
-            if let regex = try? NSRegularExpression(pattern: upperCasePattern) {
-                let matches = regex.matches(in: formattedTxt, range: NSRange(location: 0, length: formattedTxt.utf16.count))
-                
-                for match in matches {
-                    if let range = Range(match.range, in: formattedTxt) {
-                        var upperCasePart = String(formattedTxt[range])
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                        
-                        if upperCasePart.count >= 5 {
-                            // Safely check if there's a colon immediately after the matched uppercase range
-                            if range.upperBound < formattedTxt.endIndex {
-                                let nextIndex = formattedTxt.index(range.upperBound, offsetBy: 3)
-                                let colonRange = range.upperBound..<nextIndex
-                                if formattedTxt[colonRange].first == ":" {
-                                    upperCasePart.append(" " + formattedTxt[formattedTxt.index(before: nextIndex)..<nextIndex])
-                                    
-                                    formattedTxt.removeSubrange(colonRange)
-                                }
-                            }
-                            
-                            formattedTxt.removeSubrange(range)
-                            tags.append(upperCasePart)
-                        }
-                    }
-                }
-            }
-        }
-        
-        return formattedTxt.trimmingCharacters(in: .whitespacesAndNewlines)
+extension Bundle {
+    var appVersion: String {
+        let version = object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "N/A"
+        let build = object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "N/A"
+        return "v\(version) (\(build))"
     }
 }
-
