@@ -1,11 +1,17 @@
 //
 //  Models.swift
-//  Univr Calendar
+//  Univr Core
 //
 //  Created by Leonardo Rossi on 08/10/25.
 //
 
 import Foundation
+
+private extension KeyedDecodingContainer {
+    func decodeOrEmpty(_ key: Key) throws -> String {
+        (try decodeIfPresent(String.self, forKey: key)) ?? ""
+    }
+}
 
 // MARK: Year struct
 public struct Year: Encodable, Decodable, Sendable, Equatable {
@@ -19,9 +25,14 @@ public struct ResponseAPI: Codable, Sendable, Equatable {
     let colori: [String]
 }
 
-public nonisolated struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
-    public enum GruppoMatricola: String, Codable {
-        case pari, dispari, tutti
+public struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
+    public var id: Int {
+        var hasher = Hasher()
+        hasher.combine(nomeInsegnamento)
+        hasher.combine(data)
+        hasher.combine(orario)
+        hasher.combine(docente)
+        return hasher.finalize()
     }
     
     public let nomeInsegnamento: String
@@ -37,88 +48,12 @@ public nonisolated struct Lesson: Codable, Sendable, Hashable, Identifiable, Equ
     public var color: String
     public let infoAulaHTML: String
     
-    public var id: String {
-        var hasher = Hasher()
-        hasher.combine(nomeInsegnamento)
-        hasher.combine(nameOriginal)
-        hasher.combine(data)
-        hasher.combine(aula)
-        hasher.combine(orario)
-        hasher.combine(tipo)
-        hasher.combine(docente)
-        hasher.combine(annullato)
-        hasher.combine(colorIndex)
-        hasher.combine(codiceInsegnamento)
-        hasher.combine(color)
-        hasher.combine(infoAulaHTML)
-        hasher.combine(formattedName)
-        hasher.combine(formattedClassroom)
-        hasher.combine(durationCalculated)
-        hasher.combine(gruppo)
-        let hashValue = hasher.finalize()
-        return String(hashValue)
-    }
+    public let durationCalculated: String
+    public let cleanName: String
+    public let tags: [String]
     
-    public var formattedName: String {
-        nomeInsegnamento
-            .replacingOccurrences(of: "Matricole pari", with: "")
-            .replacingOccurrences(of: "Matricole dispari", with: "")
-            .trimmingCharacters(in: .whitespaces)
-    }
-    
-    public var formattedClassroom: String {
-        if let bracketIndex = aula.firstIndex(of: "[") {
-            let index = self.aula.index(bracketIndex, offsetBy: -2, limitedBy: self.aula.startIndex) ?? self.aula.startIndex
-            return String(self.aula[...index])
-        } else if let bracketIndex = aula.firstIndex(of: "<") {
-            let index = self.aula.index(bracketIndex, offsetBy: -1, limitedBy: self.aula.startIndex) ?? self.aula.startIndex
-            return String(self.aula[...index])
-        }
-        return aula
-    }
-    
-    public var durationCalculated: String {
-        Lesson.calculateDuration(orario: orario)
-    }
-    
-    public var gruppo: GruppoMatricola {
-        if nomeInsegnamento.contains("Matricole pari") {
-            return .pari
-        } else if nomeInsegnamento.contains("Matricole dispari") {
-            return .dispari
-        } else {
-            return .tutti
-        }
-    }
-    
-    public var indirizzoAula: String? {
-        guard let openBracketIndex = infoAulaHTML.lastIndex(of: "["),
-              let closeBracketIndex = infoAulaHTML.lastIndex(of: "]"),
-              openBracketIndex < closeBracketIndex else {
-            return nil
-        }
-        let startIndex = infoAulaHTML.index(after: openBracketIndex)
-        let address = String(infoAulaHTML[startIndex..<closeBracketIndex])
-        return address.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-    
-    public var capacity: Int? {
-        let pattern = #"Capacità: <\/span>\s*(\d+)\s*<"#
-        
-        if let regex = try? Regex(pattern),
-           let match = infoAulaHTML.firstMatch(of: regex),
-           let range = match[1].range {
-            let capacityString = infoAulaHTML[range]
-            
-            if let newCapacity = Int(capacityString) {
-                return newCapacity
-            } else {
-                return nil
-            }
-        } else {
-            return nil
-        }
-    }
+    nonisolated(unsafe) private static let addressRegex = /\[(.*?)]/
+    nonisolated(unsafe) private static let capacityRegex = /Capacità: <\/span>\s*(\d+)\s*</
     
     private enum CodingKeys: String, CodingKey {
         case nomeInsegnamento = "nome_insegnamento"
@@ -131,114 +66,136 @@ public nonisolated struct Lesson: Codable, Sendable, Hashable, Identifiable, Equ
         case infoAulaHTML = "informazioni_lezione"
     }
     
-    // Chiavi per navigare dentro "informazioni_lezione" -> "contenuto" -> "5"
-    private enum InfoLezioneKeys: String, CodingKey {
-        case contenuto
+    public var startTime: String {
+        orario.split(separator: " - ").first.map(String.init) ?? ""
     }
     
-    private enum ContenutoKeys: String, CodingKey {
-        case key5 = "5" // La chiave "5" che contiene l'array dell'aula
+    public var formattedClassroom: String {
+        aula.split(whereSeparator: { "[<".contains($0) })
+            .first?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? aula
     }
     
-    // Struct di appoggio interna per decodificare l'oggetto dentro l'array "5"
-    private struct DettaglioAula: Codable {
-        let contenuto: String
+    public var gruppo: GruppoMatricola {
+        if nomeInsegnamento.contains("Matricole pari") { return .pari }
+        if nomeInsegnamento.contains("Matricole dispari") { return .dispari }
+        return .tutti
+    }
+    
+    public var indirizzoAula: String? {
+        infoAulaHTML.firstMatch(of: Self.addressRegex)?.1.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    public var capacity: Int? {
+        guard let match = infoAulaHTML.firstMatch(of: Self.capacityRegex) else { return nil }
+        return Int(match.1)
+    }
+    
+    public enum GruppoMatricola: String, Codable, Sendable {
+        case pari, dispari, tutti
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        self.nomeInsegnamento = try container.decodeIfPresent(String.self, forKey: .nomeInsegnamento) ?? ""
-        self.nameOriginal = try container.decodeIfPresent(String.self, forKey: .nameOriginal) ?? ""
-        self.data = try container.decodeIfPresent(String.self, forKey: .data) ?? ""
-        self.aula = try container.decodeIfPresent(String.self, forKey: .aula) ?? ""
-        self.orario = try container.decodeIfPresent(String.self, forKey: .orario) ?? ""
-        self.tipo = try container.decodeIfPresent(String.self, forKey: .tipo) ?? ""
-        self.docente = try container.decodeIfPresent(String.self, forKey: .docente) ?? ""
-        self.annullato = try container.decodeIfPresent(String.self, forKey: .annullato) ?? ""
-        self.colorIndex = try container.decodeIfPresent(String.self, forKey: .colorIndex) ?? ""
-        self.codiceInsegnamento = try container.decodeIfPresent(String.self, forKey: .codiceInsegnamento) ?? ""
-        self.color = try container.decodeIfPresent(String.self, forKey: .color) ?? ""
+        self.nomeInsegnamento = try container.decodeOrEmpty(.nomeInsegnamento)
+        self.nameOriginal = try container.decodeOrEmpty(.nameOriginal)
+        self.data = try container.decodeOrEmpty(.data)
+        self.aula = try container.decodeOrEmpty(.aula)
+        self.orario = try container.decodeOrEmpty(.orario)
+        self.tipo = try container.decodeOrEmpty(.tipo)
+        self.docente = try container.decodeOrEmpty(.docente)
+        self.annullato = try container.decodeOrEmpty(.annullato)
+        self.colorIndex = try container.decodeOrEmpty(.colorIndex)
+        self.codiceInsegnamento = try container.decodeOrEmpty(.codiceInsegnamento)
+        self.color = try container.decodeOrEmpty(.color)
         
-        if let simpleString = try? container.decodeIfPresent(String.self, forKey: .infoAulaHTML) {
-            self.infoAulaHTML = simpleString
-        } else {
-            self.infoAulaHTML = Lesson.decodeComplexInfoAula(from: container)
-        }
+        self.infoAulaHTML = try Lesson.decodeInfoAula(from: container)
+        
+        (self.cleanName, self.tags) = LessonNameFormatter.format(self.nomeInsegnamento)
+        self.durationCalculated = Lesson.calculateDuration(orario: self.orario)
     }
     
-    nonisolated init(
-        nome_insegnamento: String = "",
-        name_original: String = "",
+    init(
+        nomeInsegnamento: String = "",
+        nameOriginal: String = "",
         data: String,
         aula: String = "",
         orario: String,
         tipo: String,
         docente: String = "",
-        Annullato: String = "",
-        color_index: String = "",
-        codice_insegnamento: String = "",
+        annullato: String = "",
+        colorIndex: String = "",
+        codiceInsegnamento: String = "",
         color: String = "",
         infoAulaHTML: String = ""
     ) {
-        self.nomeInsegnamento = nome_insegnamento
-        self.nameOriginal = name_original
+        self.nomeInsegnamento = nomeInsegnamento
+        self.nameOriginal = nameOriginal
         self.data = data
         self.aula = aula
         self.orario = orario
         self.tipo = tipo
         self.docente = docente
-        self.annullato = Annullato
-        self.colorIndex = color_index
-        self.codiceInsegnamento = codice_insegnamento
+        self.annullato = annullato
+        self.colorIndex = colorIndex
+        self.codiceInsegnamento = codiceInsegnamento
         self.color = color
         self.infoAulaHTML = infoAulaHTML
+        
+        (self.cleanName, self.tags) = LessonNameFormatter.format(self.nomeInsegnamento)
+        self.durationCalculated = Lesson.calculateDuration(orario: self.orario)
     }
     
-    private static func decodeComplexInfoAula(from container: KeyedDecodingContainer<CodingKeys>) -> String {
-        struct DettaglioAula: Codable { let contenuto: String }
-        enum InfoLezioneKeys: String, CodingKey { case contenuto }
-        enum ContenutoKeys: String, CodingKey { case key5 = "5" }
+    private static func decodeInfoAula(from container: KeyedDecodingContainer<CodingKeys>) throws -> String {
+        if let simpleString = try? container.decodeIfPresent(String.self, forKey: .infoAulaHTML) {
+            return simpleString
+        }
         
-        do {
-            let infoContainer = try container.nestedContainer(keyedBy: InfoLezioneKeys.self, forKey: .infoAulaHTML)
-            let contenutoContainer = try infoContainer.nestedContainer(keyedBy: ContenutoKeys.self, forKey: .contenuto)
-            let dettagliAula = try contenutoContainer.decodeIfPresent([DettaglioAula].self, forKey: .key5)
-            return dettagliAula?.first?.contenuto ?? ""
-        } catch {
+        struct DettaglioAula: Decodable { let contenuto: String }
+        
+        guard let infoContainer = try? container.nestedContainer(keyedBy: GenericCodingKeys.self, forKey: .infoAulaHTML),
+              let contenutoKey = GenericCodingKeys(stringValue: "contenuto"),
+              let contenutoContainer = try? infoContainer.nestedContainer(keyedBy: GenericCodingKeys.self, forKey: contenutoKey),
+              let listKey = GenericCodingKeys(stringValue: "5"),
+              let arrayWrapper = try? contenutoContainer.decode([DettaglioAula].self, forKey: listKey) else {
             return ""
         }
+        
+        return arrayWrapper.first?.contenuto ?? ""
     }
     
-    nonisolated static private func calculateDuration(orario: String) -> String {
-        let times = orario.split(separator: "-")
+    private static func calculateDuration(orario: String) -> String {
+        let times = orario.split(separator: "-").map { $0.trimmingCharacters(in: .whitespaces) }
         guard times.count == 2 else { return "" }
         
-        func parseMinutes(_ time: Substring) -> Int {
-            let parts = time.trimmingCharacters(in: .whitespaces).split(separator: ":")
-            guard parts.count == 2,
-                  let h = Int(parts[0]),
-                  let m = Int(parts[1]) else { return 0 }
-            return h * 60 + m
-        }
+        let start = toMinutes(times[0])
+        let end = toMinutes(times[1])
+              
+        guard end > start else { return "" }
         
-        let startMin = parseMinutes(times[0])
-        let endMin = parseMinutes(times[1])
-        
-        let diff = endMin - startMin
-        guard diff > 0 else { return "" }
-        
+        let diff = end - start
         let h = diff / 60
         let m = diff % 60
         
-        if h >= 1 && m > 0 {
-            return "\(h)h \(m)m"
-        } else if h >= 1 {
-            return "\(h)h"
-        } else {
-            return "\(m)m"
-        }
+        if h > 0 && m > 0 { return "\(h)h \(m)m" }
+        if h > 0 { return "\(h)h" }
+        if m > 0 { return "\(m)m" }
+        return ""
     }
+    
+    private static func toMinutes(_ time: String) -> Int {
+        let parts = time.split(separator: ":")
+        guard parts.count == 2, let h = Int(parts[0]), let m = Int(parts[1]) else { return 0 }
+        return h * 60 + m
+    }
+}
+
+struct GenericCodingKeys: CodingKey {
+    var stringValue: String
+    init?(stringValue: String) { self.stringValue = stringValue }
+    var intValue: Int?
+    init?(intValue: Int) { return nil }
 }
 
 // MARK: Struct corsi per il network
@@ -246,6 +203,11 @@ public struct Corso: Codable, Sendable, Equatable {
     public let elenco_anni: [Anno]
     public let label: String
     public let valore: String
+    
+    public static func filter(_ courses: [Corso], with searchText: String) -> [Corso] {
+        guard !searchText.isEmpty else { return courses }
+        return courses.filter { $0.label.localizedCaseInsensitiveContains(searchText) }
+    }
 }
 
 public struct Anno: Codable, Sendable, Equatable {
@@ -260,16 +222,16 @@ public struct Insegnamento: Codable, Sendable, Equatable {
 
 extension Lesson {
     public static let sample = Lesson(
-        nome_insegnamento: "Insegnamento di prova molto lungo Laboratorio",
-        name_original: "Insegnamento di prova molto lungo lungo lungo",
+        nomeInsegnamento: "Insegnamento di prova molto lungo Laboratorio",
+        nameOriginal: "Insegnamento di prova molto lungo lungo lungo",
         data: "01-01-2025",
         aula: "Aula Gino Tessari",
         orario: "08:30 - 10:30",
         tipo: "Lezione",
         docente: "Prof. Rossi",
-        Annullato: "0",
-        color_index: "",
-        codice_insegnamento: "XYZ",
+        annullato: "0",
+        colorIndex: "",
+        codiceInsegnamento: "XYZ",
         color: "#A0A0A0",
         infoAulaHTML: "<span style=\"font-weight:bold\">Nome aula: </span><a aria-label=\"Aula Gino Tessari\" href=\"index.php?view=rooms&include=rooms&_lang=&sede=2&aula=32&date=30-01-2026\" target=\"_blank\" title=\"Apri un'altra TAB del browser per consultare l'orario di: Aula Aula Gino Tessari\">Aula Gino Tessari</a><br><span style=\"font-weight:bold\">Capacità: </span>236<br><span style=\"font-weight:bold\">Sede: </span><a aria-label=\"Borgo Roma - Ca' Vignal 2\" href=\"index.php?view=rooms&include=rooms&_lang=&sede=2&date=30-01-2026\" target=\"_blank\" title=\"Apri un'altra TAB del browser per consultare l'orario di: Borgo Roma - Ca' Vignal 2\">Borgo Roma - Ca' Vignal 2</a> [Strada Le Grazie, 15 - 37134 Verona]"
     )

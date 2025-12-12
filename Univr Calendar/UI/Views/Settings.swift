@@ -12,22 +12,18 @@ struct Settings: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
     
-    @State private var viewModel = SettingsViewModel()
+    @State private var viewModel = UniversityDataManager()
     @State private var showDeleteAlert = false
+    @State private var searchText: String = ""
     
     @Binding var detents: Set<PresentationDetent>
-    @Binding var openSettings: Bool
-    @Binding var openCalendar: Bool
-    @Binding var selectedTab: Int
     @Binding var selectedDetent: PresentationDetent
     
     @Binding var selectedYear: String
     @Binding var selectedCourse: String
     @Binding var selectedAcademicYear: String
     @Binding var matricola: String
-    var searchTextFieldFocus: FocusState<Bool>.Binding
-    
-    @State private var searchText: String = ""
+    @Binding var searchTextFieldFocus: Bool
     
     private let screenSize: CGRect = UIApplication.shared.screenSize
     
@@ -38,165 +34,32 @@ struct Settings: View {
                     Label("Anno", systemImage: "calendar")
                         .foregroundStyle(.primary)
                         .padding(.trailing)
-                    Picker(selection: $selectedYear, content: {
+                    Picker(selection: $selectedYear) {
                         ForEach(viewModel.years, id: \.valore) { year in
                             Text(year.label).tag(year.valore)
                         }
-                    }) {}
+                    } label: {}
                         .pickerStyle(.segmented)
                         .onChange(of: selectedYear) {
-                            detents = [.large]
-                            
-                            viewModel.courses = []
-                            selectedCourse = "0"
-                            
-                            viewModel.academicYears = []
-                            selectedAcademicYear = "0"
-                            
-                            Task {
-                                await viewModel.loadCourses(year: selectedYear)
-                            }
+                            handleYearChange()
                         }
                 }
-                VStack {
-                    HStack {
-                        TextField("Cerca un corso", text: $searchText)
-                                    .focused(searchTextFieldFocus)
-                                    .frame(height: 50)
-                                    .padding(.horizontal)
-                                    .background(Color.gray.opacity(0.2))
-                                    .cornerRadius(25)
-                        if searchTextFieldFocus.wrappedValue {
-                            Button(action: {
-                                withAnimation(nil) {
-                                    searchTextFieldFocus.wrappedValue = false
-                                }
-                            }) {
-                                Image(systemName: "xmark")
-                                    .frame(width: 50, height: 50)
-                                    .background(Color.gray.opacity(0.2))
-                                    .cornerRadius(25)
-                            }
-                            .tint(.primary)
-                        }
-                    }
-                    .padding(.top)
-                    .padding(.horizontal)
-                    .frame(maxWidth: .infinity)
-                    if searchText == "" && !searchTextFieldFocus.wrappedValue {
-                        Menu(content: {
-                            Button(action: {
-                                selectedCourse = "0"
-                            }) {
-                                HStack {
-                                    if selectedCourse == "0" {
-                                        Image(systemName: "checkmark")
-                                            .frame(width: 40)
-                                    }
-                                    Text("Scegli un corso")
-                                }
-                            }
-                            ForEach(viewModel.courses, id: \.valore) { course in
-                                Button(action: {
-                                    selectedCourse = course.valore
-                                }) {
-                                    HStack {
-                                        if selectedCourse == course.valore {
-                                            Image(systemName: "checkmark")
-                                                .frame(width: 40)
-                                        }
-                                        Text(course.label).tag(course.valore)
-                                    }
-                                }
-                            }
-                        }) {
-                            Text(viewModel.courses.filter{$0.valore == selectedCourse}.first?.label ?? String(localized: "Scegli un corso"))
-                                .foregroundStyle(colorScheme == .light ? .black : .white)
-                                .padding()
-                                .frame(height: 100)
-                                .frame(maxWidth: .infinity)
-                                .background(Color.gray.opacity(0.2))
-                                .cornerRadius(25)
-                                .padding(.horizontal)
-                                .padding(.bottom)
-                        }
-                        .disabled(viewModel.courses.isEmpty)
-                    } else {
-                        let filteredCourses = viewModel.courses.filter { (searchText != "" ? $0.label.localizedCaseInsensitiveContains(searchText) : true) }
-                        
-                        if !filteredCourses.isEmpty {
-                            ScrollView {
-                                VStack {
-                                    ForEach(filteredCourses, id: \.valore) { course in
-                                        if course.valore != filteredCourses.first?.valore {
-                                            Divider()
-                                        }
-                                        Button(action: {
-                                            searchText = ""
-                                            searchTextFieldFocus.wrappedValue = false
-                                            
-                                            selectedCourse = course.valore
-                                        }) {
-                                            HStack {
-                                                Image(systemName: "checkmark")
-                                                    .frame(width: 40)
-                                                    .opacity(selectedCourse == course.valore ? 1 : 0)
-                                                Text(course.label)
-                                                    .padding(.vertical)
-                                                    .padding(.trailing)
-                                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                                    .multilineTextAlignment(.leading)
-                                            }
-                                            .foregroundStyle(colorScheme == .light ? .black : .white)
-                                        }
-                                        .buttonStyle(.borderless)
-                                    }
-                                }
-                            }
-                            .background(Color.gray.opacity(0.2))
-                            .frame(height: screenSize.height * 0.23)
-                            .cornerRadius(25)
-                            .padding(.bottom)
-                            .padding(.horizontal)
-                        } else {
-                            Text("Nessun corso trovato")
-                                .padding(.vertical)
-                                .padding(10)
-                                .frame(maxWidth: .infinity)
-                                .background(Color.gray.opacity(0.2))
-                                .cornerRadius(25)
-                                .padding(.horizontal)
-                                .padding(.bottom)
-                        }
-                    }
-                }
+                CourseSelectionView(
+                    searchText: $searchText,
+                    isFocused: $searchTextFieldFocus,
+                    selectedCourse: $selectedCourse,
+                    courses: viewModel.courses,
+                    screenSize: screenSize
+                )
                 .onChange(of: selectedCourse) {
-                    if selectedCourse != "0" {
-                        settings.foundMatricola = false
-                        
-                        detents = [.fraction(0.15), .medium, .large]
-                        
-                        viewModel.academicYears = []
-                        selectedAcademicYear = "0"
-                        
-                        viewModel.updateAcademicYears(for: selectedCourse, year: selectedYear)
-                        
-                        selectedAcademicYear = viewModel.academicYears.first!.valore
-                    } else {
-                        detents = [.large]
-                        
-                        viewModel.academicYears = []
-                        selectedAcademicYear = "0"
-                        
-                        settings.foundMatricola = false
-                    }
+                    handleCourseChange()
                 }
                 if selectedCourse != "0" {
-                    Picker(selection: $selectedAcademicYear, content: {
+                    Picker(selection: $selectedAcademicYear) {
                         ForEach(viewModel.academicYears, id: \.valore) { year in
                             Text(year.label).tag(year.valore)
                         }
-                    }) {
+                    } label: {
                         Label("Anno di Corso", systemImage: "calendar.badge.clock")
                             .foregroundStyle(.primary)
                     }
@@ -222,56 +85,32 @@ struct Settings: View {
                 Text("Usa questa sezione per modificare le impostazioni dell'app, cambia pure l'anno, il corso, l'anno di corso o la matricola se presente.")
             }
             Section {
-                //Link(destination: URL(string: "https://www.apple.com")!) {
-                //    HStack {
-                //        Label("Fammi un regalino", systemImage: "cup.and.saucer")
-                //            .foregroundStyle(.primary)
-                //        Spacer()
-                //        Image(systemName: "arrow.up.forward.square")
-                //            .foregroundStyle(.gray)
-                //    }
-                //}
-                //.tint(.primary)
+                Link(destination: AppConstants.URLs.donation) {
+                    HStack {
+                        Label("Fammi un regalino", systemImage: "cup.and.saucer")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "arrow.up.forward.square")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .tint(.primary)
                 NavigationLink(destination: AboutView()) {
-                    Label("Informazioni", systemImage: "info.circle.text.page")
+                    Label("Informazioni", systemImage: .infoPageDynamic)
                         .foregroundStyle(.primary)
                 }
             } footer: {
-                //Text("Ps. Se non si fosse capito il regalino è una donazione, e ti ringrazio di cuore se mi darai un po' di sostegno per aver creato questa app.")
+                Text("Ps. Se non si fosse capito il regalino è una donazione, e ti ringrazio di cuore se mi darai un po' di sostegno per aver creato questa app.")
             }
             Section("DANGER ZONE") {
-                Button(action: {
-                    withAnimation(.spring()) {
-                        showDeleteAlert.toggle()
-                    }
-                }) {
+                Button {
+                    showDeleteAlert.toggle()
+                } label: {
                     Label("Resetta l'app", systemImage: "trash")
                         .foregroundStyle(.red)
                 }
                 .alert("Vuoi resettare l'app?", isPresented: $showDeleteAlert) {
-                    Button("Conferma", role: .destructive) {
-                        selectedDetent = .fraction(0.15)
-                        detents = [.fraction(0.15), .medium]
-                        
-                        DispatchQueue.main.async {
-                            settings.reset()
-                        
-                            selectedYear = settings.selectedYear
-                            selectedCourse = settings.selectedCourse
-                            selectedAcademicYear = settings.selectedAcademicYear
-                            matricola = settings.matricola
-                        
-                            viewModel.years = []
-                            viewModel.courses = []
-                            viewModel.academicYears = []
-                        
-                            selectedTab = 1
-                            openSettings = false
-                        
-                            openCalendar = false
-                        }
-                    }
-                    
+                    Button("Conferma", role: .destructive, action: performReset)
                     Button("Annulla", role: .cancel) {}
                 } message: {
                     Text("Confermando cancellerai le impostazioni e tornerai al benvenuto iniziale.")
@@ -281,52 +120,105 @@ struct Settings: View {
                 Text("Buono studio!")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .center) // Centra il testo
+                    .frame(maxWidth: .infinity, alignment: .center)
             }
             .listRowBackground(Color.clear)
         }
-        .onChange(of: searchTextFieldFocus.wrappedValue) {
-            if searchTextFieldFocus.wrappedValue {
+        .onChange(of: searchTextFieldFocus) {
+            if searchTextFieldFocus {
                 detents = [.large]
             } else {
                 detents = [.fraction(0.15), .medium, .large]
             }
         }
         .onAppear {
-            viewModel.loadFromCache()
+            loadInitialData()
+        }
+    }
+    
+    // MARK: - Logic Methods
+    private func handleYearChange() {
+        detents = [.large]
+        viewModel.courses = []
+        selectedCourse = "0"
+        viewModel.academicYears = []
+        selectedAcademicYear = "0"
+        
+        Task {
+            await viewModel.loadCourses(year: selectedYear)
+        }
+    }
+    
+    private func handleCourseChange() {
+        if selectedCourse != "0" {
+            settings.foundMatricola = false
+            detents = [.fraction(0.15), .medium, .large]
+            viewModel.academicYears = []
+            selectedAcademicYear = "0"
             
-            if viewModel.years.isEmpty {
-                Task {
-                    await viewModel.loadYears()
+            viewModel.updateAcademicYears(for: selectedCourse, year: selectedYear)
+            
+            if let firstYear = viewModel.academicYears.first {
+                selectedAcademicYear = firstYear.valore
+                if selectedAcademicYear != "0" {
+                    settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                 }
             }
-            
-            if viewModel.courses.isEmpty {
-                Task {
-                    await viewModel.loadCourses(year: selectedYear)
+        } else {
+            detents = [.large]
+            viewModel.academicYears = []
+            selectedAcademicYear = "0"
+            settings.foundMatricola = false
+        }
+    }
+    
+    private func performReset() {
+        selectedDetent = .fraction(0.15)
+        
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.1))
+            await viewModel.clearCalendarCache()
+            settings.reset()
+        }
+    }
+    
+    private func loadInitialData() {
+        viewModel.loadFromCache()
+        
+        if viewModel.years.isEmpty {
+            Task {
+                await viewModel.loadYears()
+            }
+        }
+        
+        if viewModel.courses.isEmpty {
+            Task {
+                await viewModel.loadCourses(year: selectedYear)
+                
+                await MainActor.run {
+                    if !["pari", "dispari"].contains(matricola) {
+                        matricola = "pari"
+                    }
                     
-                    await MainActor.run {
-                        if !["pari", "dispari"].contains(matricola) {
-                            matricola = "pari"
+                    if !viewModel.years.contains(where: { $0.valore == selectedYear }) {
+                        if let lastYear = viewModel.years.last {
+                            selectedYear = lastYear.valore
                         }
-                        
-                        if !viewModel.years.contains(where: { $0.valore == selectedYear }) {
-                            selectedYear = viewModel.years.last!.valore
-                        }
-                        
-                        if selectedCourse != "0" {
-                            if let course = viewModel.courses.first(where: { $0.valore == selectedCourse }) {
-                                viewModel.academicYears = course.elenco_anni
-                                
-                                if !viewModel.academicYears.contains(where: { $0.valore == selectedAcademicYear }) {
-                                    selectedAcademicYear = viewModel.academicYears.first!.valore
+                    }
+                    
+                    if selectedCourse != "0" {
+                        if let course = viewModel.courses.first(where: { $0.valore == selectedCourse }) {
+                            viewModel.academicYears = course.elenco_anni
+                            
+                            if !viewModel.academicYears.contains(where: { $0.valore == selectedAcademicYear }) {
+                                if let firstAcademicYear = viewModel.academicYears.last {
+                                    selectedAcademicYear = firstAcademicYear.valore
                                 }
-                                
-                                settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                             }
-                        } else if openSettings {
-                            detents = [.large]
+                            settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                         }
+                    } else {
+                        detents = [.large]
                     }
                 }
             }
@@ -338,16 +230,15 @@ struct Settings: View {
     @Previewable @State var detents: Set<PresentationDetent> = []
     @Previewable @State var openSettings: Bool = true
     @Previewable @State var openCalendar: Bool = true
-    @Previewable @State var selectedTab: Int = 0
     @Previewable @State var selectedDetent: PresentationDetent = .large
     @Previewable @State var selectedYear: String = "2025"
     @Previewable @State var selectedCourse: String = "0"
     @Previewable @State var selectedAcademicYear: String = "0"
     @Previewable @State var matricola: String = "pari"
-    @FocusState var isFocused: Bool
+    @Previewable @State var isFocused: Bool = false
     
     NavigationStack {
-        Settings(detents: $detents, openSettings: $openSettings, openCalendar: $openCalendar, selectedTab: $selectedTab, selectedDetent: $selectedDetent, selectedYear: $selectedYear, selectedCourse: $selectedCourse, selectedAcademicYear: $selectedAcademicYear, matricola: $matricola, searchTextFieldFocus: $isFocused)
+        Settings(detents: $detents, selectedDetent: $selectedDetent, selectedYear: $selectedYear, selectedCourse: $selectedCourse, selectedAcademicYear: $selectedAcademicYear, matricola: $matricola, searchTextFieldFocus: $isFocused)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("Impostazioni")

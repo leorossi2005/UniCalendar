@@ -1,19 +1,25 @@
 //
 //  CalendarViewModel.swift
-//  Univr Calendar
+//  Univr Core
 //
 //  Created by Leonardo Rossi on 22/10/25.
 //
 
 import Foundation
+#if canImport(Observation)
+import Observation
+#endif
 
-private struct YearStructure: Sendable {
+struct YearStructure: Sendable {
     let year: Int
     let days: [String]
     let dates: [Date]
 }
 
+@MainActor
+#if canImport(Observation)
 @Observable
+#endif
 public class CalendarViewModel {
     public var lessons: [Lesson] = []
     public var days: [[Lesson]] = []
@@ -22,89 +28,78 @@ public class CalendarViewModel {
     public var loading: Bool = true
     public var checkingUpdates: Bool = false
     public var showUpdateAlert: Bool = false
-    var errorMessage: String? = nil
+    public var errorMessage: String? = nil
     public var noLessonsFound: Bool = false
     
     private var pendingNewLessons: [Lesson]? = nil
     private var currentPalette: [String] = []
-    private let cacheKey = "calendar_cache.json"
-    
     private var cachedStructure: YearStructure? = nil
     
-    private let networkService: NetworkServiceProtocol
+    private let service = NetworkService()
+    private let cacheKey = "calendar_cache.json"
     
-    public init(service: NetworkServiceProtocol = NetworkService()) {
-        self.networkService = service
-    }
+    public init() {}
     
-    public func loadFromCache(selYear: String, matricola: String) {
-        if let cacheResponse = CacheManager.shared.load(fileName: cacheKey, type: ResponseAPI.self) {
+    public func loadFromCache(selYear: String, matricola: String) async {
+        if let cacheResponse = await CacheManager.shared.load(fileName: cacheKey, type: ResponseAPI.self) {
             self.lessons = cacheResponse.celle
-            self.organizeData(selectedYear: selYear, matricola: matricola)
+            self.currentPalette = cacheResponse.colori
             
-            DispatchQueue.main.async {
-                self.loading = false
-                if self.lessons.isEmpty {
-                    self.noLessonsFound = true
-                }
-            }
+            await self.organizeData(selectedYear: selYear, matricola: matricola)
+            
+            self.loading = false
+            self.noLessonsFound = self.lessons.isEmpty
         }
     }
     
-    public func loadNetworkFromCache() {
-        if let cacheResponse = NetworkCacheManager.shared.load(fileName: "network_cache.json", type: NetworkCache.self) {
-            NetworkCache.shared.years = cacheResponse.years
-            NetworkCache.shared.courses = cacheResponse.courses
-            NetworkCache.shared.academicYears = cacheResponse.academicYears
+    public func loadNetworkFromCache() async {
+        if let cacheResponse = await CacheManager.shared.load(fileName: "network_cache.json", type: NetworkCacheData.self) {
+            NetworkCache.shared.update(from: cacheResponse)
         }
     }
     
-    @MainActor
-    public func loadLessons(corso: String, anno: String, selYear: String, matricola: String) async {
+    public func loadLessons(corso: String, anno: String, selYear: String, matricola: String, updating: Bool) async {
         guard corso != "0" else { return }
         
-        if !lessons.isEmpty {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
-                self.checkingUpdates = true
-            }
+        if !updating && lessons.isEmpty {
+            await loadFromCache(selYear: selYear, matricola: matricola)
+        }
+        
+        if !updating && !lessons.isEmpty {
+            self.checkingUpdates = true
+        } else {
+            self.loading = true
         }
         self.errorMessage = nil
         
         do {
-            let response = try await networkService.fetchOrario(corso: corso, anno: anno, selyear: selYear)
-            
-            var fetchedLessons = response.celle
+            let response = try await service.fetchOrario(corso: corso, anno: anno, selyear: selYear)
             self.currentPalette = response.colori
             
-            if fetchedLessons.isEmpty {
-                noLessonsFound = true
-                self.applyNewData(fetchedLessons, palette: self.currentPalette, selectedYear: selYear, matricola: matricola)
-            } else {
-                assignColors(to: &fetchedLessons, palette: self.currentPalette)
-                
-                noLessonsFound = false
-                if self.lessons.isEmpty {
-                    self.applyNewData(fetchedLessons, palette: self.currentPalette, selectedYear: selYear, matricola: matricola)
-                } else {
-                    if self.lessons != fetchedLessons {
-                        self.pendingNewLessons = fetchedLessons
-                        self.showUpdateAlert = true
-                    }
-                }
+            var fetchedLessons = response.celle
+            if !fetchedLessons.isEmpty {
+                fetchedLessons = CalendarLogic.applyColors(to: fetchedLessons, palette: self.currentPalette)
             }
+            
+            try await handleNewData(fetchedLessons, selectedYear: selYear, matricola: matricola, update: updating)
         } catch {
-            if let netError = error as? NetworkError {
-                self.errorMessage = netError.localizedDescription
-            } else {
-                self.errorMessage = String(localized: "Errore Generico: \(error.localizedDescription)")
-            }
-            print("Debug Error: \(error)")
+            self.handleError(error)
         }
         
-        if self.loading {
-            self.loading = false
-        }
+        self.loading = false
         self.checkingUpdates = false
+    }
+    
+    public func confirmUpdate(selectedYear: String, matricola: String) {
+        Task {
+            guard let newLessons = pendingNewLessons else { return }
+            
+            try? await handleNewData(newLessons, selectedYear: selectedYear, matricola: matricola, update: true)
+            
+            noLessonsFound = false
+            pendingNewLessons = nil
+            showUpdateAlert = false
+        }
     }
     
     public func clearPendingUpdate() {
@@ -113,178 +108,190 @@ public class CalendarViewModel {
         showUpdateAlert = false
     }
     
-    public func confirmUpdate(selectedYear: String, matricola: String) {
-        guard let newLessons = pendingNewLessons else { return }
-        
-        applyNewData(newLessons, palette: self.currentPalette, selectedYear: selectedYear, matricola: matricola)
-        
-        noLessonsFound = false
-        pendingNewLessons = nil
-        showUpdateAlert = false
-    }
-    
-    private func applyNewData(_ newLessons: [Lesson], palette: [String], selectedYear: String, matricola: String) {
-        self.lessons = newLessons
-        self.organizeData(selectedYear: selectedYear, matricola: matricola)
-        
-        let cacheObject = ResponseAPI(celle: newLessons, colori: palette)
-        CacheManager.shared.save(cacheObject, fileName: cacheKey)
-    }
-    
-    private func assignColors(to lessons: inout [Lesson], palette: [String]) {
-        var colorMap: [String: String] = [:]
-        var paletteIndex = 0
-        
-        for lesson in lessons where !lesson.color.isEmpty && lesson.color != "CCCCCC" && lesson.color != "A0A0A0" {
-            colorMap[lesson.codiceInsegnamento] = lesson.color
-        }
-        
-        for i in lessons.indices {
-            let code = lessons[i].codiceInsegnamento
-            
-            if lessons[i].annullato == "1" {
-                lessons[i].color = "#FFFFFF"
-            } else if lessons[i].tipo == "chiusura_type" {
-                lessons[i].color = "#BDF2F2"
-            } else if !lessons[i].colorIndex.isEmpty {
-               print("Trovato uno")
-            } else if let existingColor = colorMap[code] {
-                lessons[i].color = existingColor
-            } else {
-                if let existingColor = colorMap[code] {
-                    lessons[i].color = existingColor
-                } else {
-                    let newColor = (paletteIndex < palette.count) ? palette[paletteIndex] : "#CCCCCC"
-                    colorMap[code] = newColor
-                    lessons[i].color = newColor
-                    
-                    paletteIndex += 1
-                }
-            }
-        }
-    }
-    
-    public func organizeData(selectedYear: String, matricola: String) {
+    public func organizeData(selectedYear: String, matricola: String) async {
         guard let annoInt = Int(selectedYear) else { return }
         
         let lessonsSnapshot = self.lessons
         let currentCache = self.cachedStructure
         
-        Task.detached(priority: .userInitiated) {
-            let yearStructure: YearStructure
-            
-            if let cache = currentCache, cache.year == annoInt {
-                yearStructure = cache
-            } else {
-                yearStructure = CalendarViewModel.generateYearStructure(year: annoInt)
-            }
-            
-            let resultDays = CalendarViewModel.mapLessons(
-                lessons: lessonsSnapshot,
-                structure: yearStructure,
-                matricola: matricola
-            )
-            
-            await MainActor.run {
-                if self.cachedStructure?.year != annoInt {
-                    self.cachedStructure = yearStructure
-                }
-                
-                self.daysString = yearStructure.days
-                self.days = resultDays
-                self.loading = false
-            }
+        let (newStructure, organizedDays) = await CalendarLogic.processCalendarData(
+            year: annoInt,
+            matricola: matricola,
+            lessons: lessonsSnapshot,
+            cachedStructure: currentCache
+        )
+        
+        if self.cachedStructure?.year != annoInt {
+            self.cachedStructure = newStructure
+        }
+        self.daysString = newStructure.days
+        self.days = organizedDays
+    }
+    
+    private func handleNewData(_ fetchedLessons: [Lesson], selectedYear: String, matricola: String, update: Bool) async throws {
+        if fetchedLessons.isEmpty {
+            self.noLessonsFound = true
+            await updateStateAndCache([], selectedYear: selectedYear, matricola: matricola)
+            return
+        }
+        
+        self.noLessonsFound = false
+        
+        if self.lessons.isEmpty || update {
+            await updateStateAndCache(fetchedLessons, selectedYear: selectedYear, matricola: matricola)
+            return
+        }
+        
+        if self.lessons != fetchedLessons {
+            self.pendingNewLessons = fetchedLessons
+            self.showUpdateAlert = true
         }
     }
     
-    nonisolated private static func generateYearStructure(year: Int) -> YearStructure {
-        var dateStringhe: [String] = []
-        var dateObj: [Date] = []
+    private func updateStateAndCache(_ newLessons: [Lesson], selectedYear: String, matricola: String) async {
+        self.lessons = newLessons
         
-        dateStringhe.reserveCapacity(366)
+        let cacheObject = ResponseAPI(celle: newLessons, colori: self.currentPalette)
+        await CacheManager.shared.save(cacheObject, fileName: cacheKey)
+        
+        await self.organizeData(selectedYear: selectedYear, matricola: matricola)
+    }
+    
+    private func handleError(_ error: Error) {
+        if let netError = error as? NetworkError {
+            self.errorMessage = netError.localizedDescription
+        } else {
+            self.errorMessage = "Errore Generico: \(error.localizedDescription)"
+        }
+        print("Debug Error: \(error)")
+    }
+}
+
+struct CalendarLogic {
+    static func processCalendarData(
+        year: Int,
+        matricola: String,
+        lessons: [Lesson],
+        cachedStructure: YearStructure?
+    ) async -> (YearStructure, [[Lesson]]) {
+        return await Task.detached(priority: .userInitiated) {
+            let structure: YearStructure
+            if let cache = cachedStructure, cache.year == year {
+                structure = cache
+            } else {
+                structure = generateYearStructure(year: year)
+            }
+            
+            let lessonsByDate = Dictionary(grouping: lessons, by: { $0.data })
+            let userFilter: Lesson.GruppoMatricola = (matricola == "pari") ? .pari : .dispari
+            
+            var organized: [[Lesson]] = []
+            organized.reserveCapacity(structure.days.count)
+            
+            for dayString in structure.days {
+                guard let dailyLessons = lessonsByDate[dayString] else {
+                    organized.append([])
+                    continue
+                }
+                
+                let filtered = dailyLessons.filter { lesson in
+                    lesson.tipo != "chiusura_type" &&
+                    (lesson.gruppo == .tutti || lesson.gruppo == userFilter)
+                }.sorted(by: { $0.orario < $1.orario })
+                
+                if filtered.isEmpty {
+                    organized.append([])
+                } else {
+                    organized.append(insertPauses(in: filtered, date: dayString))
+                }
+            }
+            
+            return (structure, organized)
+        }.value
+    }
+    
+    static func generateYearStructure(year: Int) -> YearStructure {
+        let startDate = Date(year: year, month: 10, day: 1)
+        let endDate = Date(year: year + 1, month: 9, day: 30)
+        
+        var dateStrings: [String] = []
+        var dateObj: [Date] = []
+        dateStrings.reserveCapacity(366)
         dateObj.reserveCapacity(366)
         
-        let endYear = year + 1
-        
-        var currentMonth = 10
-        var currentYear = year
-        var currentDay = 1
-        
-        while !(currentYear == endYear && currentMonth == 10) {
-            let dayStr = currentDay < 10 ? "0\(currentDay)" : "\(currentDay)"
-            let monthStr = currentMonth < 10 ? "0\(currentMonth)" : "\(currentMonth)"
-            let datekey = "\(dayStr)-\(monthStr)-\(currentYear)"
-            
-            dateStringhe.append(datekey)
-            dateObj.append(Date(year: currentYear, month: currentMonth, day: currentDay))
-            
-            currentDay += 1
-            
-            let daysInMonth = Calendars.calendar.range(of: .day, in: .month, for: dateObj.last!)!.count
-            
-            if currentDay > daysInMonth {
-                currentDay = 1
-                currentMonth += 1
-                if currentMonth > 12 {
-                    currentMonth = 1
-                    currentYear += 1
-                }
-            }
+        var currentDate = startDate
+        while currentDate <= endDate {
+            dateStrings.append(currentDate.formatUnivrStyle())
+            dateObj.append(currentDate)
+            currentDate = currentDate.add(type: .day, value: 1)
         }
         
-        return YearStructure(year: year, days: dateStringhe, dates: dateObj)
+        return YearStructure(year: year, days: dateStrings, dates: dateObj)
     }
     
-    nonisolated private static func mapLessons(lessons: [Lesson], structure: YearStructure, matricola: String) -> [[Lesson]] {
-        let lessonsByDate = Dictionary(grouping: lessons, by: { $0.data })
+    private static func insertPauses(in lessons: [Lesson], date: String) -> [Lesson] {
+        var processedDay = lessons
+        var offset = 0
         
-        var newDaysStructure: [[Lesson]] = []
-        newDaysStructure.reserveCapacity(structure.days.count)
+        for i in 0..<lessons.count - 1 {
+            let currentEnd = lessons[i].orario.suffix(5)
+            let NextStart = lessons[i + 1].orario.prefix(5)
+            
+            if currentEnd < NextStart {
+                let pauseLesson = Lesson(
+                    data: date,
+                    orario: "\(currentEnd)-\(NextStart)",
+                    tipo: "pause"
+                )
+                
+                processedDay.insert(pauseLesson, at: i + 1 + offset)
+                offset += 1
+            }
+        }
+        return processedDay
+    }
+    
+    static func applyColors(to lessons: [Lesson], palette: [String]) -> [Lesson] {
+        var processedLessons = lessons
+        var colorMap: [String: String] = [:]
+        var paletteIndex = 0
         
-        let filtroUtente: Lesson.GruppoMatricola = (matricola == "pari") ? .pari : .dispari
-        
-        for dayString in structure.days {
-            guard let lessonsForDay = lessonsByDate[dayString] else {
-                newDaysStructure.append([])
-                continue
-            }
-            
-            var filtered = lessonsForDay.filter { lesson in
-                if lesson.tipo == "chiusura_type" { return false }
-                
-                if lesson.gruppo == .tutti { return true }
-                
-                return lesson.gruppo == filtroUtente
-            }
-            
-            if filtered.isEmpty {
-                newDaysStructure.append([])
-                continue
-            }
-            
-            if filtered.count > 1 {
-                filtered.sort(by: { $0.orario < $1.orario })
-            }
-            
-            var processedDay = filtered
-            var added = 0
-            
-            for i in 0..<filtered.count - 1 {
-                let endString = filtered[i].orario.suffix(5)
-                let startString = filtered[i + 1].orario.prefix(5)
-                
-                if endString < startString {
-                    processedDay.insert(Lesson(
-                        data: dayString,
-                        orario: "\(endString)-\(startString)",
-                        tipo: "pause"
-                    ), at: i + added + 1)
-                    added += 1
-                }
-            }
-            newDaysStructure.append(processedDay)
+        for lesson in processedLessons where hasCustomColor(lesson) {
+            colorMap[lesson.codiceInsegnamento] = lesson.color
         }
         
-        return newDaysStructure
+        for i in processedLessons.indices {
+            if processedLessons[i].annullato == "1" {
+                processedLessons[i].color = "#FFFFFF"
+                continue
+            }
+            
+            if processedLessons[i].tipo == "chiusura_type" {
+                processedLessons[i].color = "#BDF2F2"
+                continue
+            }
+            
+            if !processedLessons[i].colorIndex.isEmpty {
+                print("Trovato uno")
+                continue
+            }
+            
+            let code = lessons[i].codiceInsegnamento
+            
+            if let existingColor = colorMap[code] {
+                processedLessons[i].color = existingColor
+            } else {
+                let newColor = (paletteIndex < palette.count) ? palette[paletteIndex] : "#CCCCCC"
+                colorMap[code] = newColor
+                processedLessons[i].color = newColor
+                
+                paletteIndex += 1
+            }
+        }
+        return processedLessons
+    }
+    
+    private static func hasCustomColor(_ lesson: Lesson) -> Bool {
+        return !lesson.color.isEmpty && lesson.color != "CCCCCC" && lesson.color != "A0A0A0"
     }
 }

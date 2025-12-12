@@ -6,8 +6,11 @@
 //
 
 import SwiftUI
+import UnivrCore
 
 struct AboutView: View {
+    private static let iconSize: CGFloat = 100
+    
     var body: some View {
         List {
             Section {
@@ -15,11 +18,11 @@ struct AboutView: View {
                     Image("InternalIcon")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 100, height: 100)
-                        .clipShape(RoundedRectangle(cornerRadius: 100 * 0.275, style: .continuous))
+                        .frame(width: Self.iconSize, height: Self.iconSize)
+                        .clipShape(RoundedRectangle(cornerRadius: Self.iconSize * 0.225, style: .continuous))
                     
                     VStack(spacing: 5) {
-                        Text("UniVR Calendar")
+                        Text(AppConstants.AppInfo.appName)
                             .font(.title2)
                             .bold()
                         
@@ -34,52 +37,47 @@ struct AboutView: View {
             .listRowBackground(Color.clear)
             
             Section {
-                HStack {
-                    Label("Leonardo Rossi", systemImage: "person")
-                        .foregroundStyle(.primary)
-                    //Image(systemName: "arrow.up.forward.square")
-                    //    .foregroundStyle(.gray)
-                    Spacer()
-                    Text("Sviluppatore")
-                        .foregroundStyle(.gray)
-                }
-                .onTapGesture {
-                    // Dovrai aprire il tuo portfolio
-                }
-                HStack {
-                    Label("Gaia", systemImage: "person")
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Text("Aiuto Sviluppo")
-                        .foregroundStyle(.gray)
-                }
-                HStack {
-                    Label("Nicola", systemImage: "person")
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Text("Aiuto Testing")
-                        .foregroundStyle(.gray)
-                }
-                HStack {
-                    Label("Edoardo", systemImage: "person")
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Text("Aiuto Testing")
-                        .foregroundStyle(.gray)
+                ForEach(AppConstants.Credits.contributors) { credit in
+                    infoRow(
+                        name: LocalizedStringKey(credit.name),
+                        role: LocalizedStringKey(credit.role),
+                        link: credit.url
+                    )
                 }
             } header: {
                 Text("Crediti")
             } footer: {
-                VStack(alignment: .leading) {
+                VStack(alignment: .leading, spacing: 20) {
                     Text("Ci tengo a ringraziare immensamente tutte le persone che hanno collaborato in un qualsiasi modo alla creazione e allo sviluppo di questo progetto.")
-                    Spacer()
                     Text("Grazie amore mio, ti amo tanto.")
-                        .opacity(0.1)
+                        .font(.caption2)
+                        .opacity(0.15)
                 }
             }
         }
         .navigationTitle("Informazioni")
         .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    // MARK: - Components
+    private func infoRow(name: LocalizedStringKey, role: LocalizedStringKey, link: URL? = nil) -> some View {
+        HStack {
+            Label(name, systemImage: "person")
+                .foregroundStyle(.primary)
+            if link != nil {
+                Image(systemName: "arrow.up.forward.square")
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Text(role)
+                .foregroundStyle(.secondary)
+        }
+        .contentShape(.rect)
+        .onTapGesture {
+            if let link {
+                UIApplication.shared.open(link)
+            }
+        }
     }
 }
 

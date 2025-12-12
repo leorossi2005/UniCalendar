@@ -6,85 +6,56 @@
 //
 
 import SwiftUI
+import UnivrCore
 
-@MainActor
-class ColorCache {
-    static let shared = ColorCache()
-    private var cache: [String: Color] = [:]
-    
-    func color(for hex: String) -> Color? {
-        if let cached = cache[hex] { return cached }
-        
-        if let color = Color.parseHex(hex) {
-            cache[hex] = color
-            return color
-        }
-        return nil
+extension Color {
+    init?(hex: String) {
+        guard let components = HexColorParser.parse(hex) else { return nil }
+        self.init(red: components.red, green: components.green, blue: components.blue, opacity: components.opacity)
     }
 }
 
-extension Color {
-    static func parseHex(_ hex: String) -> Color? {
-        let hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-            .replacingOccurrences(of: "#", with: "")
-        
-        var rgb: UInt64 = 0
-        guard Scanner(string: hexSanitized).scanHexInt64(&rgb) else { return nil }
-        
-        let length = hexSanitized.count
-        let r, g, b, a: Double
-        
-        if length == 6 {
-            r = Double((rgb >> 16) & 0xFF) / 255.0
-            g = Double((rgb >> 8) & 0xFF) / 255.0
-            b = Double(rgb & 0xFF) / 255.0
-            a = 1.0
-        } else if length == 8 {
-            r = Double((rgb >> 24) & 0xFF) / 255.0
-            g = Double((rgb >> 16) & 0xFF) / 255.0
-            b = Double((rgb >> 8) & 0xFF) / 255.0
-            a = Double(rgb & 0xFF) / 255.0
-        } else {
-            return nil
-        }
-
-        return Color(red: r, green: g, blue: b, opacity: a)
-    }
+struct ShimmeringGradient: View {
+    @Environment(\.colorScheme) var colorScheme
     
-    init?(hex: String) {
-        guard let c = ColorCache.shared.color(for: hex) else { return nil }
-        self = c
+    var body: some View {
+        PhaseAnimator([false, true]) { phase in
+            LinearGradient(
+                colors: [
+                    .black.opacity(0),
+                    colorScheme == .light ? .black.opacity(0.3) : .white.opacity(0.05),
+                    .black.opacity(0)
+                ],
+                startPoint: phase ? UnitPoint(x: 1, y: 0.5) : UnitPoint(x: -1, y: 0.5),
+                endPoint: phase ? UnitPoint(x: 2, y: 0.5) : UnitPoint(x: 0, y: 0.5)
+            )
+        } animation: { _ in
+            .linear(duration: 1.5).repeatForever(autoreverses: false)
+        }
     }
 }
 
 extension View {
     @ViewBuilder
-    func shimmeringPlaceholder() -> some View {
-        self.overlay {
-            GeometryReader { geometry in
-                let width = geometry.size.width
-                let extraOffset = width * 1.5
-                
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [.clear, .white.opacity(0.2), .clear]),
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(width: extraOffset, height: geometry.size.height)
-                    .offset(x: -width)
-                    // Animazione continua
-                    .phaseAnimator([false, true]) { content, phase in
-                        content
-                            .offset(x: phase ? width * 2 : -width)
-                    } animation: { _ in
-                        .linear(duration: 1.5).repeatForever(autoreverses: false)
+    func shimmeringPlaceholder(active: Bool = true, opacity: CGFloat) -> some View {
+        if active {
+            self
+                .redacted(reason: .placeholder)
+                .saturation(0)
+                .opacity(opacity)
+                .colorMultiply(Color(.tertiarySystemGroupedBackground))
+                .overlay {
+                    ZStack {
+                        ShimmeringGradient()
+                            .mask {
+                                self
+                                    .redacted(reason: .placeholder)
+                            }
                     }
-            }
-            .mask(self)
-            .allowsHitTesting(false)
+                    .opacity(opacity)
+                }
+        } else {
+            self
         }
     }
     
@@ -130,17 +101,16 @@ extension View {
     }
     
     @ViewBuilder
-    func sheetDesign(_ namespace: Namespace.ID, detent: Binding<PresentationDetent>) -> some View {
+    func sheetDesign(_ namespace: Namespace.ID, sourceID: String, detent: Binding<PresentationDetent>) -> some View {
         if #available(iOS 26, *) {
             self
-                .navigationTransition(
-                    .zoom(sourceID: "calendar", in: namespace)
-                )
+                .navigationTransition(.zoom(sourceID: sourceID, in: namespace))
                 .presentationCornerRadius(detent.wrappedValue != .large ? .deviceCornerRadius - 8 : nil)
                 .animation(.easeInOut, value: detent.wrappedValue)
         } else {
             self
                 .presentationCornerRadius(detent.wrappedValue != .large ? .deviceCornerRadius : nil)
+                .animation(.easeInOut, value: detent.wrappedValue)
             
         }
     }
@@ -148,12 +118,9 @@ extension View {
     @ViewBuilder
     func scrollViewTopPadding() -> some View {
         if #available(iOS 26, *) {
-            self
-                .padding(.top, 5)
+            self.padding(.top, 5)
         } else if #available(iOS 18, *) {
-            self
-                .padding(.top, 15)
-            
+            self.padding(.top, 15)
         } else {
             self
         }
@@ -171,16 +138,12 @@ extension View {
                         let isLarge = selectedDetent.wrappedValue == .large
                         
                         if offset <= 0 && !openCalendar.wrappedValue {
-                            DispatchQueue.main.async {
-                                withAnimation {
-                                    openCalendar.wrappedValue = true
-                                }
+                            withAnimation {
+                                openCalendar.wrappedValue = true
                             }
                         } else if offset > 10 && !isLarge && openCalendar.wrappedValue {
-                            DispatchQueue.main.async {
-                                withAnimation {
-                                    openCalendar.wrappedValue = false
-                                }
+                            withAnimation {
+                                openCalendar.wrappedValue = false
                             }
                         }
                     }
@@ -202,29 +165,13 @@ extension View {
         }
     }
     
-    @ViewBuilder
-    func hideTabBarCompatible() -> some View {
-        if #available(iOS 18.0, *) {
-            self
-                .tabViewStyle(.tabBarOnly)
-                .toolbarVisibility(.hidden, for: .tabBar)
-        } else {
-            self
-                .toolbar(.hidden, for: .tabBar)
-        }
-    }
-    
+    // MARK: Fallback iOS 17
     @ViewBuilder
     func removeTopSafeArea() -> some View {
-        if #available(iOS 17, *) {
-            if #unavailable(iOS 18.0) {
-                self
-                    .ignoresSafeArea(edges: .top)
-            } else {
-                self
-            }
-        } else {
+        if #available(iOS 18, *) {
             self
+        } else {
+            self.ignoresSafeArea(edges: .top)
         }
     }
 }
@@ -233,16 +180,15 @@ extension ToolbarItem {
     @ToolbarContentBuilder
     func toolbarBackgroundVisibility(_ visibility: Visibility) -> some ToolbarContent {
         if #available(iOS 26, *) {
-            self
-                .sharedBackgroundVisibility(visibility)
+            self.sharedBackgroundVisibility(visibility)
         } else {
             self
         }
     }
 }
 
+@MainActor
 extension UIApplication {
-    /// Ritorna le dimensioni della safe area attuale (se disponibili)
     var safeAreas: UIEdgeInsets {
         connectedScenes
             .compactMap { $0 as? UIWindowScene }
@@ -254,6 +200,17 @@ extension UIApplication {
             .compactMap { $0 as? UIWindowScene }
             .first?.screen.bounds ?? .zero
     }
+}
+
+@MainActor
+extension UIDevice {
+    static var isIpad: Bool {
+        current.userInterfaceIdiom == .pad
+    }
+}
+
+extension EnvironmentValues {
+    @Entry var safeAreaInsets: UIEdgeInsets = .zero
 }
 
 extension CGFloat {
@@ -392,10 +349,20 @@ extension CGFloat {
     }()
 }
 
-extension Bundle {
-    var appVersion: String {
-        let version = object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "N/A"
-        let build = object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "N/A"
-        return "v\(version) (\(build))"
+extension String {
+    static var cupDynamic: String {
+        if #available(iOS 18, *) {
+            return "cup.and.heat.waves.fill"
+        } else {
+            return "cup.and.saucer.fill"
+        }
+    }
+    
+    static var infoPageDynamic: String {
+        if #available(iOS 18, *) {
+            return "info.circle.text.page"
+        } else {
+            return "info.circle"
+        }
     }
 }

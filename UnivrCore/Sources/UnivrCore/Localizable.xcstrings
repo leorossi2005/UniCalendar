@@ -2,6 +2,7 @@
   "sourceLanguage" : "it",
   "strings" : {
     "Errore caricamento anni: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -12,6 +13,7 @@
       }
     },
     "Errore caricamento corsi: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -20,6 +22,9 @@
           }
         }
       }
+    },
+    "Errore generico: %@" : {
+
     },
     "Errore Generico: %@" : {
       "localizations" : {

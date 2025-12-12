@@ -7,176 +7,228 @@
 
 import SwiftUI
 import MapKit
+import CoreLocation
 import UnivrCore
 
 struct LessonDetailsView: View {
-    @Environment(\.colorScheme) var colorScheme: ColorScheme
+    @Environment(\.safeAreaInsets) var safeAreas
+    @Environment(\.colorScheme) var colorScheme
     
     @Binding var selectedLesson: Lesson?
     @Binding var selectedDetent: PresentationDetent
     
-    @State var title: String = ""
-    @State private var cleanText: String = ""
-    @State private var tags: [String] = []
-    @State private var date: Date = .now
+    @State private var title: String = ""
+    @State private var date: Date = .distantFuture
     
-    // Stato per le coordinate e la posizione della camera
     @State private var coordinate: CLLocationCoordinate2D?
     @State private var mapPosition: MapCameraPosition = .automatic
     @State private var isLoadingMap: Bool = false
     
-    @State var safeAreas: UIEdgeInsets = .zero
-    
     var body: some View {
         if let lesson = selectedLesson {
-            GeometryReader { proxy in
-                let screenHeight = UIScreen.main.bounds.height
-                
-                VStack(alignment: .leading, spacing: 20) {
-                    Text(title)
-                        .font(.title2)
-                        .bold()
-                        .onTapGesture {
-                            if title == cleanText {
-                                title = lesson.nameOriginal
-                            } else {
-                                title = cleanText
-                            }
-                        }
-                    if !tags.isEmpty {
-                        HStack {
-                            ForEach(tags, id: \.self) { tag in
-                                Text(tag)
-                                    .font(.caption)
-                                    .padding(.horizontal, 7)
-                                    .padding(.vertical, 3)
-                                    .background {
-                                        Color(hex: lesson.color)
-                                            .opacity(0.2)
-                                    }
-                                    .cornerRadius(7)
-                            }
-                        }
-                    }
-                    Label("\(date.getCurrentWeekdaySymbol(length: .full)), \(date.day) \(date.getCurrentMonthSymbol(length: .full)) \(date.yearSymbol)", systemImage: "calendar")
-                        .font(.headline)
-                    Label("\(lesson.orario) (\(lesson.durationCalculated))", systemImage: "clock.fill")
-                        .font(.headline)
-                    Label("\(lesson.docente.isEmpty ? String(localized: "Non specificato") : lesson.docente)", systemImage: lesson.docente.contains(",") ? "person.2.fill" : "person.fill")
-                        .font(.headline)
-                    Label("\(lesson.formattedClassroom) \(lesson.capacity != nil ? "(\(lesson.capacity!) \(String(localized: "posti")))" : "")", systemImage: "mappin")
-                        .font(.headline)
-                    ZStack {
-                        if let coordinate = coordinate {
-                            Map(position: $mapPosition) {
-                                Annotation(lesson.aula, coordinate: coordinate) {
-                                    ZStack {
-                                        Circle().fill(.white)
-                                            .frame(width: 30, height: 30)
-                                            .shadow(radius: 2)
-                                        Image(systemName: "graduationcap.circle.fill")
-                                            .resizable()
-                                            .frame(width: 30, height: 30)
-                                            .foregroundColor(.blue)
-                                            .background(.white)
-                                            .clipShape(Circle())
-                                    }
-                                }
-                            }
-                            // Aggiunge un controllo per aprire nelle mappe di Apple
-                            .safeAreaPadding(.deviceCornerRadius / 3.5)
-                            .overlay(alignment: .topTrailing) {
-                                Button(action: {
-                                    openMaps(coordinate: coordinate, name: lesson.aula)
-                                }) {
-                                    Image(systemName: "map.fill")
-                                        .padding(8)
-                                        .background(.thinMaterial)
-                                        .clipShape(Circle())
-                                        .padding(.deviceCornerRadius / 3.5)
-                                }
-                            }
-                            .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 24))
-                            .frame(maxHeight: .infinity)
-                        } else if isLoadingMap {
-                            ProgressView()
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .background(Color.gray.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 24))
-                        } else {
-                            ContentUnavailableView("Posizione non trovata\n\n\(lesson.aula)", systemImage: "mappin.slash")
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .background(Color.gray.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 24))
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 40)
-                .padding(.bottom, -safeAreas.bottom + 24)
-                .padding(.horizontal, 24)
-                .frame(height: screenHeight - safeAreas.top - safeAreas.bottom)
-                .multilineTextAlignment(.leading)
-                .onAppear {
-                    if cleanText.isEmpty {
-                        if let lesson = selectedLesson {
-                            let result = LessonNameFormatter.format(lesson.nomeInsegnamento)
-                            cleanText = result.cleanText
-                            tags = result.tags
-                            
-                            date = lesson.data.date(format: "dd-MM-yyyy") ?? Date()
-                        }
-                    }
-                    
-                    //lesson.color = "CFRSCD"
-                    title = cleanText
-                }
-                .task(id: lesson.id) {
-                    await findLocation()
-                }
-                .ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 20) {
+                headerInfo(lesson: lesson)
+                detailRows(lesson: lesson)
+                mapSection(lesson: lesson)
             }
+            .padding(.top, 40)
+            .padding(.horizontal, 24)
+            .padding(.bottom, -safeAreas.bottom + 24)
+            .frame(height: UIApplication.shared.screenSize.height - safeAreas.top - safeAreas.bottom)
+            .ignoresSafeArea(edges: .bottom)
             .onAppear {
-                safeAreas = UIApplication.shared.safeAreas
+                setupInitialData(lesson: lesson)
+            }
+            .task(id: lesson.id) {
+                await findLocation(for: lesson)
             }
         }
     }
     
-    // Funzione per Geocodificare l'indirizzo
-    private func findLocation() async {
-        // Resetta stato
-        self.coordinate = nil
+    // MARK: - Subviews
+    private func headerInfo(lesson: Lesson) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(title)
+                .font(.title2)
+                .bold()
+                .contentShape(.rect)
+                .onTapGesture {
+                    title = (title == lesson.cleanName) ? lesson.nameOriginal : lesson.cleanName
+                }
+            if !lesson.tags.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack {
+                        ForEach(lesson.tags, id: \.self) { tag in
+                            Text(tag)
+                                .font(.caption)
+                                .padding(.horizontal, 7)
+                                .padding(.vertical, 3)
+                                .background(Color(hex: lesson.color).opacity(0.2))
+                                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                                .overlay {
+                                    if Color(hex: lesson.color) == .white && colorScheme == .light {
+                                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                                            .strokeBorder(Color(white: 0.35), lineWidth: 0.5)
+                                    }
+                                }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private func detailRows(lesson: Lesson) -> some View {
+        VStack(alignment: .leading, spacing: 15) {
+            rowLabel(
+                text: "\(date.getCurrentWeekdaySymbol(length: .wide)), \(date.day) \(date.getCurrentMonthSymbol(length: .wide)) \(date.yearSymbol)",
+                icon: "calendar"
+            )
+            rowLabel(
+                text: "\(lesson.orario) (\(lesson.durationCalculated))",
+                icon: "clock.fill"
+            )
+            rowLabel(
+                text: lesson.docente.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.docente),
+                icon: lesson.docente.contains(",") ? "person.2.fill" : "person.fill"
+            )
+            rowLabel(
+                text: "\(lesson.formattedClassroom) \(lesson.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
+                icon: "mappin"
+            )
+        }
+    }
+    
+    private func rowLabel(text: LocalizedStringKey, icon: String) -> some View {
+        Label(text, systemImage: icon)
+            .font(.headline)
+    }
+    
+    private func mapSection(lesson: Lesson) -> some View {
+        ZStack {
+            if let coordinate = coordinate {
+                Map(position: $mapPosition) {
+                    Annotation(lesson.aula, coordinate: coordinate) {
+                        mapAnnotationView(lesson: lesson)
+                    }
+                }
+                .mapControlVisibility(.hidden)
+                .safeAreaPadding((.deviceCornerRadius - 24) / 2)
+                .overlay(alignment: .topTrailing) {
+                    openInMapsButton(coordinate: coordinate, name: lesson.formattedClassroom, color: Color(hex: lesson.color) ?? .clear)
+                }
+            } else if isLoadingMap {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.gray.opacity(0.1))
+            } else {
+                ContentUnavailableView("Posizione non trovata\n\n\(lesson.aula)", systemImage: "mappin.slash")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.gray.opacity(0.1))
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 24))
+    }
+    
+    private func mapAnnotationView(lesson: Lesson) -> some View {
+        ZStack {
+            Circle()
+                .fill(Color(hex: lesson.color) ?? .black)
+                .frame(width: 30, height: 30)
+                .shadow(radius: 2)
+            Image(systemName: "graduationcap.fill")
+                .font(.system(size: 10))
+                .foregroundStyle(.black)
+        }
+    }
+    
+    private func openInMapsButton(coordinate: CLLocationCoordinate2D, name: String, color: Color) -> some View {
+        Group {
+            if #available(iOS 26.0, *) {
+                Button(action: {
+                    openMaps(coordinate: coordinate, name: name)
+                }) {
+                    Image(systemName: "map.fill")
+                        .frame(width: 50, height: 50)
+                }
+                .tint(.black)
+                .glassEffect(.clear.interactive().tint(color.opacity(0.5)))
+                .buttonBorderShape(.circle)
+                .padding((.deviceCornerRadius - 24) / 2)
+            } else {
+                Button(action: {
+                    openMaps(coordinate: coordinate, name: name)
+                }) {
+                    Image(systemName: "map.fill")
+                        .frame(width: 50, height: 50)
+                }
+                .tint(.black)
+                .background(.ultraThinMaterial)
+                .background(color.opacity(0.4))
+                .clipShape(.circle)
+                .padding((.deviceCornerRadius - 24) / 2)
+            }
+        }
+    }
+    
+    // MARK: - Logic
+    private func setupInitialData(lesson: Lesson) {
+        if date == .distantFuture {
+            date = lesson.data.toDateModern() ?? Date()
+        }
+        if title.isEmpty {
+            title = lesson.cleanName
+        }
+    }
+    
+    private func findLocation(for lesson: Lesson) async {
+        guard let address = lesson.indirizzoAula, !address.isEmpty else { return }
         
-        guard let lesson = selectedLesson, let address = lesson.indirizzoAula else {
-            print("No address found")
+        if let cachedCoord = await CoordinateCache.shared.coordinate(for: address) {
+            let clCoord = CLLocationCoordinate2D(latitude: cachedCoord.latitude, longitude: cachedCoord.longitude)
+            await MainActor.run {
+                updateMap(with: clCoord)
+            }
             return
         }
         
         self.isLoadingMap = true
-        let geocoder = CLGeocoder()
         
         do {
-            let searchString = address
-            
-            let placemarks = try await geocoder.geocodeAddressString(searchString)
+            let geocoder = CLGeocoder()
+            let placemarks = try await geocoder.geocodeAddressString(address)
             
             if let location = placemarks.first?.location {
-                withAnimation {
-                    self.coordinate = location.coordinate
-                    self.mapPosition = .region(MKCoordinateRegion(
-                        center: location.coordinate,
-                        span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-                    ))
+                let coord = location.coordinate
+                let cacheCoord = Coordinate(latitude: coord.latitude, longitude: coord.longitude)
+                
+                await CoordinateCache.shared.save(cacheCoord, for: address)
+                await MainActor.run {
+                    updateMap(with: coord)
+                }
+            } else {
+                await MainActor.run {
                     self.isLoadingMap = false
                 }
             }
         } catch {
             print("Errore geocoding: \(error.localizedDescription)")
-            self.isLoadingMap = false
+            await MainActor.run {
+                self.isLoadingMap = false
+            }
         }
     }
     
-    // Helper per aprire Mappe di Apple
+    @MainActor
+    private func updateMap(with coordinate: CLLocationCoordinate2D) {
+        self.coordinate = coordinate
+        self.mapPosition = .region(MKCoordinateRegion(
+            center: coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
+        ))
+        self.isLoadingMap = false
+    }
+    
     private func openMaps(coordinate: CLLocationCoordinate2D, name: String) {
         let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
         mapItem.name = name
@@ -195,6 +247,6 @@ struct LessonDetailsView: View {
                 .presentationDetents([.medium, .large], selection: $selectedDetent)
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                .sheetDesign(transition, detent: $selectedDetent)
+                .sheetDesign(transition, sourceID: "", detent: $selectedDetent)
         }
 }

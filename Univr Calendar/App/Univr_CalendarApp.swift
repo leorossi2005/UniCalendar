@@ -10,12 +10,11 @@ import UnivrCore
 
 @main
 struct Univr_CalendarApp: App {
-    @State private var settings: UserSettings = .shared
-    
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environment(settings)
+                .environment(UserSettings.shared)
+                .environment(\.safeAreaInsets, UIApplication.shared.safeAreas)
         }
     }
 }

@@ -1,66 +1,115 @@
 //
 //  UserSettings.swift
-//  Univr Calendar
+//  Univr Core
 //
 //  Created by Leonardo Rossi on 21/11/25.
 //
 
 import Foundation
+#if canImport(Observation)
+import Observation
+#endif
 
+@MainActor
+#if canImport(Observation)
 @Observable
+#endif
 public class UserSettings {
     public static let shared = UserSettings()
     
-    private let defaults: UserDefaults = .standard
+    private enum Key: String {
+        case selectedYear, selectedCourse, selectedAcademicYear
+        case foundMatricola, matricola, onboardingCompleted
+    }
     
-    private enum Keys {
-        static let selectedYear = "selectedYear"
-        static let selectedCourse = "selectedCourse"
-        static let selectedAcademicYear = "selectedAcademicYear"
-        static let foundMatricola = "foundMatricola"
-        static let matricola = "matricola"
-        static let onboardingCompleted = "onboardingCompleted"
+    private enum Default {
+        static let year = "2025"
+        static let course = "0"
+        static let academicYear = "0"
+        static let matricola = "pari"
+        static let boolFalse = false
     }
     
     public var selectedYear: String {
-        didSet { defaults.set(selectedYear, forKey: Keys.selectedYear) }
+        didSet { save(selectedYear, key: .selectedYear) }
     }
     
     public var selectedCourse: String {
-        didSet { defaults.set(selectedCourse, forKey: Keys.selectedCourse) }
+        didSet { save(selectedCourse, key: .selectedCourse) }
     }
     
     public var selectedAcademicYear: String {
-        didSet { defaults.set(selectedAcademicYear, forKey: Keys.selectedAcademicYear) }
+        didSet { save(selectedAcademicYear, key: .selectedAcademicYear) }
     }
     
     public var foundMatricola: Bool {
-        didSet { defaults.set(foundMatricola, forKey: Keys.foundMatricola) }
+        didSet { save(foundMatricola, key: .foundMatricola) }
     }
     
     public var matricola: String {
-        didSet { defaults.set(matricola, forKey: Keys.matricola) }
+        didSet { save(matricola, key: .matricola) }
     }
     
     public var onboardingCompleted: Bool {
-        didSet { defaults.set(onboardingCompleted, forKey: Keys.onboardingCompleted) }
+        didSet { save(onboardingCompleted, key: .onboardingCompleted) }
     }
     
-    init() {
-        self.selectedYear = defaults.string(forKey: Keys.selectedYear) ?? "2025"
-        self.selectedCourse = defaults.string(forKey: Keys.selectedCourse) ?? "0"
-        self.selectedAcademicYear = defaults.string(forKey: Keys.selectedAcademicYear) ?? "0"
-        self.foundMatricola = defaults.bool(forKey: Keys.foundMatricola)
-        self.matricola = defaults.string(forKey: Keys.matricola) ?? "pari"
-        self.onboardingCompleted = defaults.bool(forKey: Keys.onboardingCompleted)
+    private init() {
+        self.selectedYear = Self.load(.selectedYear, fallback: Default.year)
+        self.selectedCourse = Self.load(.selectedCourse, fallback: Default.course)
+        self.selectedAcademicYear = Self.load(.selectedAcademicYear, fallback: Default.academicYear)
+        self.foundMatricola = Self.load(.foundMatricola, fallback: Default.boolFalse)
+        self.matricola = Self.load(.matricola, fallback: Default.matricola)
+        self.onboardingCompleted = Self.load(.onboardingCompleted, fallback: Default.boolFalse)
     }
     
     public func reset() {
-        selectedYear = "2025"
-        selectedCourse = "0"
-        selectedAcademicYear = "0"
-        foundMatricola = false
-        matricola = "pari"
-        onboardingCompleted = false
+        selectedYear = Default.year
+        selectedCourse = Default.course
+        selectedAcademicYear = Default.academicYear
+        foundMatricola = Default.boolFalse
+        matricola = Default.matricola
+        onboardingCompleted =  Default.boolFalse
+    }
+    
+    private func save(_ value: Any, key: Key) {
+        UserDefaults.standard.set(value, forKey: key.rawValue)
+    }
+    
+    private static func load<T>(_ key: Key, fallback: T) -> T {
+        UserDefaults.standard.object(forKey: key.rawValue) as? T ?? fallback
+    }
+}
+
+@MainActor
+public struct TempSettingsState {
+    public var selectedYear: String = ""
+    public var selectedCourse: String = ""
+    public var selectedAcademicYear: String = ""
+    public var matricola: String = ""
+    
+    public init() {}
+    
+    public mutating func sync(with settings: UserSettings) {
+        self.selectedYear = settings.selectedYear
+        self.selectedCourse = settings.selectedCourse
+        self.selectedAcademicYear = settings.selectedAcademicYear
+        self.matricola = settings.matricola
+    }
+    
+    public func hasChanged(from settings: UserSettings) -> Bool {
+        return selectedCourse != settings.selectedCourse || selectedYear != settings.selectedYear || selectedAcademicYear != settings.selectedAcademicYear
+    }
+    
+    public func apply(to settings: UserSettings) {
+        settings.selectedYear = ""
+        settings.selectedCourse = ""
+        settings.selectedAcademicYear = ""
+        settings.matricola = ""
+        
+        settings.selectedYear = self.selectedYear
+        settings.selectedCourse = self.selectedCourse
+        settings.selectedAcademicYear = self.selectedAcademicYear
+        settings.matricola = self.matricola
     }
 }

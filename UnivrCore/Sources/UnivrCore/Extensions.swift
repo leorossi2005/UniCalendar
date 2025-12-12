@@ -1,158 +1,122 @@
 //
 //  Extensions.swift
-//  Univr Calendar
+//  Univr Core
 //
 //  Created by Leonardo Rossi on 10/10/25.
 //
 
 import Foundation
 
-public enum CalendarSymbolLength: String {
-    case full
-    case short
-    case veryShort
+public enum CalendarSymbolLength: String, Sendable {
+    case full, short, veryShort
 }
 
-public enum NewDateComponents: String {
-    case day
-    case month
-    case year
+extension Date.ParseStrategy {
+    static var univrDate: Date.ParseStrategy {
+        Date.ParseStrategy(
+            format: "\(day: .twoDigits)-\(month: .twoDigits)-\(year: .extended())",
+            timeZone: .autoupdatingCurrent
+        )
+    }
 }
 
 extension Date {
-    public nonisolated init(year: Int, month: Int, day: Int) {
-        let timeInterval: TimeInterval = Calendars.calendar.date(from: DateComponents(year: year, month: month, day: day))?.timeIntervalSince1970 ?? Date().timeIntervalSince1970
-        
-        self.init(timeIntervalSince1970: timeInterval)
+    private var calendar: Calendar { .autoupdatingCurrent }
+    
+    public init(year: Int, month: Int, day: Int) {
+        self = Calendar.autoupdatingCurrent.date(from: DateComponents(year: year, month: month, day: day)) ?? Date()
     }
     
-    // Restituisce la data del primo giorno della settimana (esempio: lunedì)
-    public func startOfWeek(using calendar: Foundation.Calendar = .current) -> Date? {
-        let comp = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: self)
-        return calendar.date(from: comp)
+    public func formatUnivrStyle() -> String {
+        self.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year(.extended()))
+            .replacingOccurrences(of: "/", with: "-")
     }
     
-    public func startWeekdaySymbolOfMonth(length: CalendarSymbolLength) -> String {
-        Date(year: year, month: month, day: 1).getCurrentWeekdaySymbol(length: length)
-    }
-
-    // Restituisce l'array dei 7 giorni della settimana
-    public func weekDates(using calendar: Foundation.Calendar = .current) -> [Date] {
-        guard let start = startOfWeek(using: calendar) else { return [] }
-        return (0..<7).compactMap { offset in
-            calendar.date(byAdding: .day, value: offset, to: start)
-        }
+    public func startOfWeek() -> Date? {
+        calendar.dateComponents([.calendar, .yearForWeekOfYear, .weekOfYear], from: self).date
     }
     
-    public func getString(format: String) -> String {
-        if format == "dd-MM-yyyy" {
-            return Formatters.displayDate.string(from: self)
-        } else if format == "HH:mm" {
-            return Formatters.hourMinute.string(from: self)
-        }
-        
-        let formatter = FormatterCache.getFormatter(for: format)
-        return formatter.string(from: self)
+    public func weekDates() -> [Date] {
+        guard let start = startOfWeek() else { return [] }
+        return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
     }
     
-    public func getCurrentMonthSymbol(length: CalendarSymbolLength) -> String {
-        switch length {
-            case .full:
-                Calendars.calendar.monthSymbols[month - 1].capitalized
-            case .short:
-                Calendars.calendar.shortMonthSymbols[month - 1].capitalized
-            case .veryShort:
-                Calendars.calendar.veryShortMonthSymbols[month - 1].capitalized
-        }
-    }
-    
-    public func getCurrentWeekdaySymbol(length: CalendarSymbolLength) -> String {
-        switch length {
-            case .full:
-                Calendars.calendar.weekdaySymbols[weekday - 1].capitalized
-            case .short:
-                Calendars.calendar.shortWeekdaySymbols[weekday - 1].capitalized
-            case .veryShort:
-                Calendars.calendar.veryShortWeekdaySymbols[weekday - 1].capitalized
-        }
-    }
-    
-    public func getWeekdaySymbols(length: CalendarSymbolLength) -> [String] {
-        switch length {
-            case .full:
-                var weekdaySymbols: [String] = Calendars.calendar.weekdaySymbols
-                weekdaySymbols.append(weekdaySymbols.remove(at: weekdaySymbols.startIndex))
-                return weekdaySymbols
-            case .short:
-                var shortWeekdaySymbols: [String] = Calendars.calendar.shortWeekdaySymbols
-                shortWeekdaySymbols.append(shortWeekdaySymbols.remove(at: shortWeekdaySymbols.startIndex))
-                return shortWeekdaySymbols
-            case .veryShort:
-                var verySortWeekdaySymbols: [String] = Calendars.calendar.veryShortWeekdaySymbols
-                verySortWeekdaySymbols.append(verySortWeekdaySymbols.remove(at: verySortWeekdaySymbols.startIndex))
-                return verySortWeekdaySymbols
-        }
-        
-    }
-    
-    public func set(type: NewDateComponents, value: Int) -> Date {
-        switch type {
-            case .day:
-                Date(year: year, month: month, day: value)
-            case .month:
-                Date(year: year, month: value, day: day)
-            case .year:
-                Date(year: value, month: month, day: day)
-        }
+    public func set(type: Calendar.Component, value: Int) -> Date {
+        calendar.date(bySetting: type, value: value, of: self) ?? self
     }
     
     public func add(type: Calendar.Component, value: Int) -> Date {
-        Calendars.calendar.date(byAdding: type, value: value, to: self) ?? self
+        calendar.date(byAdding: type, value: value, to: self) ?? self
     }
     
     public func remove(type: Calendar.Component, value: Int) -> Date {
-        Calendars.calendar.date(byAdding: type, value: -value, to: self) ?? self
+        add(type: type, value: -value)
     }
     
-    public var minute: Int {
-        Calendars.calendar.component(.minute, from: self)
+    public func getCurrentMonthSymbol(length: Date.FormatStyle.Symbol.Month) -> String {
+        self.formatted(.dateTime.month(length)).capitalized
     }
     
-    public var hour: Int {
-        Calendars.calendar.component(.hour, from: self)
+    public func startWeekdaySymbolOfMonth(length: Date.FormatStyle.Symbol.Weekday) -> String {
+        guard let firstOfMonth = calendar.date(bySetting: .day, value: 1, of: self) else { return "" }
+        return firstOfMonth.getCurrentWeekdaySymbol(length: length)
     }
     
-    public nonisolated var day: Int {
-        Calendars.calendar.component(.day, from: self)
+    public func getCurrentWeekdaySymbol(length: Date.FormatStyle.Symbol.Weekday) -> String {
+        self.formatted(.dateTime.weekday(length)).capitalized
     }
     
-    public nonisolated var month: Int {
-        Calendars.calendar.component(.month, from: self)
+    public func getWeekdaySymbols(length: CalendarSymbolLength) -> [String] {
+        var symbols = switch length {
+            case .full: calendar.weekdaySymbols
+            case .short: calendar.shortWeekdaySymbols
+            case .veryShort: calendar.veryShortWeekdaySymbols
+        }
+        
+        if let first = symbols.first {
+            symbols.append(first)
+            symbols.removeFirst()
+        }
+        
+        return symbols.map { $0.capitalized }
     }
     
-    public nonisolated var year: Int {
-        Calendars.calendar.component(.year, from: self)
+    public func isOutOfAcademicBounds(for academicYear: Int) -> Bool {
+        (month == 9 && year == academicYear) || (month == 10 && year == academicYear + 1)
     }
     
-    public var yearSymbol: String {
-        String(year)
+    public func isInAcademicYear(for academicYear: String) -> Bool {
+        guard let yearInt = Int(academicYear) else { return false }
+        let month = calendar.component(.month, from: self)
+        let year = calendar.component(.year, from: self)
+        
+        if year == yearInt {
+            return month >= 10
+        } else if year == yearInt + 1 {
+            return month <= 9
+        }
+        return false
     }
     
-    public var weekday: Int {
-        Calendars.calendar.component(.weekday, from: self)
-    }
+    public var minute: Int { calendar.component(.minute, from: self) }
+    public var hour: Int { calendar.component(.hour, from: self) }
+    public var day: Int { calendar.component(.day, from: self) }
+    public var month: Int { calendar.component(.month, from: self) }
+    public var year: Int { calendar.component(.year, from: self) }
+    public var weekday: Int { calendar.component(.weekday, from: self) }
+    public var yearSymbol: String { String(year) }
 }
 
 extension String {
-    public nonisolated func date(format: String) -> Date? {
-        if format == "dd-MM-yyyy" {
-            return Formatters.displayDate.date(from: self)
-        } else if format == "HH:mm" {
-            return Formatters.hourMinute.date(from: self)
-        }
-        
-        // Fallback
-        let formatter = FormatterCache.getFormatter(for: format)
-        return formatter.date(from: self)
+    public func toDateModern() -> Date? {
+        (try? Date(self, strategy: Date.ParseStrategy.univrDate)) ?? (try? Date(self, strategy: .iso8601))
+    }
+}
+
+extension Bundle {
+    public var appVersion: String {
+        let version = object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "N/A"
+        let build = object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "N/A"
+        return "v\(version) (\(build))"
     }
 }

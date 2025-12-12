@@ -1,43 +1,45 @@
 //
 //  CacheManager.swift
-//  Univr Calendar
+//  Univr Code
 //
 //  Created by Leonardo Rossi on 21/11/25.
 //
 
 import Foundation
 
-struct CacheManager {
+public actor CacheManager: Sendable {
     static let shared = CacheManager()
     
-    private let fileManager = FileManager.default
+    private let cacheDirectory: URL?
     
-    private var cacheDirectory: URL? {
-        fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
+    private init() {
+        self.cacheDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
     }
     
-    func save<T: Encodable>(_ object: T, fileName: String) {
+    func save<T: Encodable & Sendable>(_ object: T, fileName: String) async {
         guard let folder = cacheDirectory else { return }
         let fileUrl = folder.appendingPathComponent(fileName)
         
-        Task.detached {
-            do {
-                let data = try JSONEncoder().encode(object)
+        do {
+            let data = try JSONEncoder().encode(object)
+            try await Task.detached(priority: .utility) {
                 try data.write(to: fileUrl)
-            } catch {
-                print("Error saving cache \(fileName): \(error)")
-            }
+            }.value
+        } catch {
+            print("Error saving cache \(fileName): \(error)")
         }
     }
     
-    func load<T: Decodable>(fileName: String, type: T.Type) -> T? {
+    func load<T: Decodable & Sendable>(fileName: String, type: T.Type) async -> T? {
         guard let folder = cacheDirectory else { return nil }
         let fileUrl = folder.appendingPathComponent(fileName)
         
-        guard fileManager.fileExists(atPath: fileUrl.path) else { return nil }
+        guard FileManager.default.fileExists(atPath: fileUrl.path()) else { return nil }
         
         do {
-            let data = try Data(contentsOf: fileUrl)
+            let data = try await Task.detached(priority: .utility) {
+                try Data(contentsOf: fileUrl)
+            }.value
             let object = try JSONDecoder().decode(type, from: data)
             return object
         } catch {
@@ -46,58 +48,40 @@ struct CacheManager {
         }
     }
     
-    func clear(fileName: String) {
+    func clear(fileName: String) async {
         guard let folder = cacheDirectory else { return }
         let fileUrl = folder.appendingPathComponent(fileName)
-        
-        try? fileManager.removeItem(at: fileUrl)
-    }
-}
-
-nonisolated struct NetworkCacheManager {
-    static let shared = NetworkCacheManager()
-    
-    private let fileManager = FileManager.default
-    
-    private var cacheDirectory: URL? {
-        fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first
-    }
-    
-    func save<T: Encodable>(_ object: T, fileName: String) {
-        guard let folder = cacheDirectory else { return }
-        let fileUrl = folder.appendingPathComponent(fileName)
-        
-        Task.detached {
-            do {
-                let data = try JSONEncoder().encode(object)
-                try data.write(to: fileUrl)
-            } catch {
-                print("Error saving cache \(fileName): \(error)")
-            }
-        }
-    }
-    
-    func load<T: Decodable>(fileName: String, type: T.Type) -> T? {
-        guard let folder = cacheDirectory else { return nil }
-        let fileUrl = folder.appendingPathComponent(fileName)
-        
-        guard fileManager.fileExists(atPath: fileUrl.path) else { return nil }
         
         do {
-            let data = try Data(contentsOf: fileUrl)
-            let object = try JSONDecoder().decode(type, from: data)
-            return object
+            try await Task.detached(priority: .utility) {
+                try FileManager.default.removeItem(at: fileUrl)
+            }.value
         } catch {
-            print("Error loading cache \(fileName): \(error)")
-            return nil
+            print("Error clearing cache \(fileName): \(error)")
         }
-    }
-    
-    func clear(fileName: String) {
-        guard let folder = cacheDirectory else { return }
-        let fileUrl = folder.appendingPathComponent(fileName)
-        
-        try? fileManager.removeItem(at: fileUrl)
     }
 }
 
+public struct Coordinate: Sendable {
+    public let latitude: Double
+    public let longitude: Double
+    
+    public init(latitude: Double, longitude: Double) {
+        self.latitude = latitude
+        self.longitude = longitude
+    }
+}
+
+public actor CoordinateCache {
+    public static let shared = CoordinateCache()
+    
+    private var cache: [String: Coordinate] = [:]
+    
+    public func coordinate(for address: String) -> Coordinate? {
+        cache[address]
+    }
+    
+    public func save(_ coordinate: Coordinate, for address: String) {
+        cache[address] = coordinate
+    }
+}

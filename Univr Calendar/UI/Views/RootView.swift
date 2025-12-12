@@ -12,42 +12,52 @@ struct RootView: View {
     @Environment(UserSettings.self) var settings
     
     @State private var showSplash: Bool = true
+    @Namespace private var animation
     
-    @Namespace var animation
+    
+    private static let iconSize: CGFloat = 200
     
     var body: some View {
         ZStack {
-            ContentView(animation: animation, showSplash: $showSplash)
-                .zIndex(0)
+            if settings.onboardingCompleted {
+                CalendarView()
+            } else {
+                Onboarding(animation: animation, showSplash: $showSplash)
+            }
             
             if showSplash {
-                ZStack {
-                    Color(UIColor.systemBackground)
-                        .ignoresSafeArea()
-                        .transition(.opacity.animation(.easeIn(duration: 0.2)))
-                    
-                    Image("InternalIcon")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .clipShape(RoundedRectangle(cornerRadius: 200 * 0.225, style: .continuous))
-                        .matchedGeometryEffect(id: "appIcon", in: animation, isSource: true)
-                        .frame(width: 200, height: 200)
-                }
-                .zIndex(1)
-                .ignoresSafeArea()
+                splashScreen
             }
         }
-        .onAppear {
-            if settings.onboardingCompleted {
-                withAnimation(nil) {
-                    showSplash = false
-                }
-            } else {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    withAnimation(.spring(response: 0.7, dampingFraction: 0.8)) {
-                        showSplash = false
-                    }
-                }
+    }
+    
+    // MARK: - Subviews
+    private var splashScreen: some View {
+        ZStack {
+            Color(.systemBackground)
+                .ignoresSafeArea()
+            
+            Image("InternalIcon")
+                .resizable()
+                .clipShape(RoundedRectangle(cornerRadius: Self.iconSize * 0.225, style: .continuous))
+                .matchedGeometryEffect(id: "appIcon", in: animation, isSource: true)
+                .frame(width: Self.iconSize, height: Self.iconSize)
+        }
+        .zIndex(1)
+        .ignoresSafeArea()
+        .task {
+            await handleSplashDelay()
+        }
+    }
+    
+    // MARK: - Logic
+    private func handleSplashDelay() async {
+        if settings.onboardingCompleted {
+            showSplash = false
+        } else {
+            try? await Task.sleep(for: .seconds(1.5))
+            withAnimation(.spring(response: 0.7, dampingFraction: 0.8)) {
+                showSplash = false
             }
         }
     }
