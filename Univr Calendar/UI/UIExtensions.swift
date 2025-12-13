@@ -101,10 +101,13 @@ extension View {
     }
     
     @ViewBuilder
-    func ipadSheetDesign(_ namespace: Namespace.ID, sourceID: String) -> some View {
+    func ipadSheetDesign(_ namespace: Namespace.ID, sourceID: String, sheet: Binding<UnevenRoundedRectangle>) -> some View {
         if #available(iOS 26, *) {
             self
                 .navigationTransition(.zoom(sourceID: sourceID, in: namespace))
+                .glassEffect(.regular.interactive(), in: sheet.wrappedValue)
+                .padding(.horizontal, 8)
+                .padding(.bottom, 8)
         } else {
             self
             

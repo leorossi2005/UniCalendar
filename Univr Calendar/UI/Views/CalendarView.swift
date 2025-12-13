@@ -39,6 +39,13 @@ struct CalendarView: View {
     @State private var settingsSearchFocus: Bool = false
     
     
+    @State private var sheetShape = UnevenRoundedRectangle(
+        topLeadingRadius: 24,
+        bottomLeadingRadius: 24,
+        bottomTrailingRadius: 24,
+        topTrailingRadius: 24
+    )
+    
     private let screenSize: CGRect = UIApplication.shared.screenSize
     private var defaultDetents: Set<PresentationDetent> {
         [.fraction(0.15), UIDevice.isIpad ? .fraction(0.75) : .medium]
@@ -53,23 +60,36 @@ struct CalendarView: View {
             mainScrollView
                 .safeAreaInset(edge: .bottom) {
                     if openCalendar {
-                        UnevenRoundedRectangle(
-                            topLeadingRadius: 32 - 8,
-                            bottomLeadingRadius: (positionObserver.edges.bottomLeftSquare ? 18 : 32) - 8,
-                            bottomTrailingRadius: (positionObserver.edges.bottomRightSquare ? 18 : 32) - 8,
-                            topTrailingRadius: 32 - 8
-                        )
+                        ZStack {
+                            sheetShape
+                            .fill(.clear)
+                            
+                            FractionDatePickerContainer(
+                                selectedWeek: $selectedWeek,
+                                loading: $viewModel.loading,
+                                selectionFraction: $selectionFraction,
+                                selectedDetent: $selectedDetent
+                            )
+                        }
                         .frame(maxWidth: .infinity)
                         .frame(height: screenSize.height * 0.2)
-                        .padding(.horizontal, 8)
-                        .padding(.bottom, 8)
-                        .ipadSheetDesign(transition, sourceID: currentSourceID)
+                        .ipadSheetDesign(transition, sourceID: currentSourceID, sheet: $sheetShape)
                     }
                 }
                 .ignoresSafeArea(edges: .bottom)
                 .background(WindowAccessor { window in
                     positionObserver.startObserving(window: window)
                 })
+                .onChange(of: positionObserver.edges) { _, newEdges in
+                    withAnimation {
+                        sheetShape = UnevenRoundedRectangle(
+                            topLeadingRadius: 32 - 8,
+                            bottomLeadingRadius: (newEdges.bottomLeftSquare ? 18 : 32) - 8,
+                            bottomTrailingRadius: (newEdges.bottomRightSquare ? 18 : 32) - 8,
+                            topTrailingRadius: 32 - 8
+                        )
+                    }
+                }
                 .toolbar {
                     buildToolbar()
                 }
