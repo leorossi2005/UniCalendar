@@ -77,7 +77,7 @@ struct DatePickerView: View {
             }
             .opacity(isEnabled ? 1 : 0.3)
             Spacer()
-            if today.isInAcademicYear(for: year) {
+            if today.isInAcademicYear(for: settings.selectedYear) {
                 Button("Oggi") {
                     if selection != today {
                         selection = today
@@ -110,7 +110,7 @@ struct DatePickerView: View {
         .contentShape(Rectangle())
         .onTapGesture {
             guard let yearInt = Int(settings.selectedYear) else { return }
-            if selection != cell.date && cell.date.isOutOfAcademicBounds(for: yearInt) {
+            if selection != cell.date && !cell.date.isOutOfAcademicBounds(for: yearInt) {
                 selection = cell.date
             }
         }

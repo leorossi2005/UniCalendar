@@ -95,13 +95,13 @@ struct CalendarView: View {
             .onChange(of: viewModel.loading) { _, isLoading in
                 handleLoadingChange(isLoading)
             }
-            //.onChange(of: scenePhase) { oldPhase, newPhase in
-            //    if newPhase == .background {
-            //        currentSourceID = "safe_anchor"
-            //    } else if newPhase == .active {
-            //        currentSourceID = "calendar"
-            //    }
-            //}
+            .onChange(of: scenePhase) { oldPhase, newPhase in
+                if newPhase == .background {
+                    currentSourceID = "safe_anchor"
+                } else if newPhase == .active {
+                    currentSourceID = "calendar"
+                }
+            }
             //.overlay(alignment: .bottomTrailing) { // Allinea in basso a destra per controllo totale
             //    if #available(iOS 26, *) {
             //        HStack(spacing: 0) { // Spacing 0 per calcoli precisi

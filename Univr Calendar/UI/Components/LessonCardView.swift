@@ -45,7 +45,7 @@ struct LessonCardView: View {
     private var timeInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(lesson.startTime)
-                .font(.system(size: 40))
+                .font(.system(size: 40).monospacedDigit())
                 .fontWeight(.medium)
             Label(lesson.durationCalculated, systemImage: "clock")
                 .padding(.horizontal, 10)
