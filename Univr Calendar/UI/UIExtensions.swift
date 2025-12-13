@@ -101,6 +101,17 @@ extension View {
     }
     
     @ViewBuilder
+    func ipadSheetDesign(_ namespace: Namespace.ID, sourceID: String) -> some View {
+        if #available(iOS 26, *) {
+            self
+                .navigationTransition(.zoom(sourceID: sourceID, in: namespace))
+        } else {
+            self
+            
+        }
+    }
+    
+    @ViewBuilder
     func sheetDesign(_ namespace: Namespace.ID, sourceID: String, detent: Binding<PresentationDetent>) -> some View {
         if #available(iOS 26, *) {
             self
@@ -340,6 +351,7 @@ extension CGFloat {
             "iPad6,3": 18.0,     //iPad Pro (9.7 inch, WiFi)
         ]
         
+        print(modelIdentifier)
         if let radius = radii[modelIdentifier] {
             return radius
         }

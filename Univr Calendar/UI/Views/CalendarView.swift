@@ -12,10 +12,13 @@ struct CalendarView: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.scenePhase) var scenePhase
+    @Environment(\.horizontalSizeClass) var sizeClass
     @Environment(UserSettings.self) var settings
     @Namespace var transition
     
     @State private var viewModel = CalendarViewModel()
+    @State private var tempSettings = TempSettingsState()
+    @State private var positionObserver = WindowPositionObserver()
     @State private var currentSourceID: String = "calendar"
     
     @State private var selectedDetent: PresentationDetent = .fraction(0.15)
@@ -35,7 +38,6 @@ struct CalendarView: View {
     @State private var openSettings: Bool = false
     @State private var settingsSearchFocus: Bool = false
     
-    @State private var tempSettings = TempSettingsState()
     
     private let screenSize: CGRect = UIApplication.shared.screenSize
     private var defaultDetents: Set<PresentationDetent> {
@@ -49,92 +51,111 @@ struct CalendarView: View {
     var body: some View {
         NavigationStack {
             mainScrollView
-            .sheet(isPresented: $openCalendar) {
-                DynamicSheetContent(
-                    selectedWeek: $selectedWeek,
-                    selectedMonth: $selectedMonth,
-                    selectedDetent: $selectedDetent,
-                    detents: $detents,
-                    selectedFraction: $selectionFraction,
-                    selectedLesson: $selectedLesson,
-                    openSettings: $openSettings,
-                    settingsSearchFocus: $settingsSearchFocus,
-                    loading: $viewModel.loading,
-                    tempSettings: $tempSettings,
-                    openCalendar: $openCalendar
-                )
-                .presentationDetents(detents, selection: $selectedDetent)
-                .interactiveDismissDisabled(true)
-                .presentationBackgroundInteraction(.enabled(upThrough: UIDevice.isIpad ? .fraction(0.75) : .medium))
-                .disabled((viewModel.loading || viewModel.noLessonsFound) && !openSettings)
-                .onChange(of: selectedDetent) { oldValue, newValue in
-                    handleDetentChange(oldValue: oldValue, newValue: newValue)
+                .safeAreaInset(edge: .bottom) {
+                    if openCalendar {
+                        UnevenRoundedRectangle(
+                            topLeadingRadius: 32 - 8,
+                            bottomLeadingRadius: (positionObserver.edges.bottomLeftSquare ? 18 : 32) - 8,
+                            bottomTrailingRadius: (positionObserver.edges.bottomRightSquare ? 18 : 32) - 8,
+                            topTrailingRadius: 32 - 8
+                        )
+                        .frame(maxWidth: .infinity)
+                        .frame(height: screenSize.height * 0.2)
+                        .padding(.horizontal, 8)
+                        .padding(.bottom, 8)
+                        .ipadSheetDesign(transition, sourceID: currentSourceID)
+                    }
                 }
-                .sheetDesign(transition, sourceID: currentSourceID, detent: $selectedDetent)
-            }
-            .toolbar {
-                buildToolbar()
-            }
-            //.background {
-            //    if #available(iOS 26, *) {
-            //        Color.clear
-            //            .frame(width: 1, height: 1)
-            //            .matchedTransitionSource(id: "safe_anchor", in: transition)
-            //    }
-            //}
-            .onAppear {
-                inizializeData()
-            }
-            .onChange(of: selection) {
-                handleSelectionChange()
-            }
-            .onChange(of: openCalendar) { oldValue, newValue in
-                oldOpenCalendar = oldValue
-                if !newValue { selectionFraction = nil }
-            }
-            .onChange(of: viewModel.loading) { _, isLoading in
-                handleLoadingChange(isLoading)
-            }
-            //.onChange(of: scenePhase) { oldPhase, newPhase in
-            //    if newPhase == .background {
-            //        currentSourceID = "safe_anchor"
-            //    } else if newPhase == .active {
-            //        currentSourceID = "calendar"
-            //    }
-            //}
-            //.overlay(alignment: .bottomTrailing) { // Allinea in basso a destra per controllo totale
-            //    if #available(iOS 26, *) {
-            //        HStack(spacing: 0) { // Spacing 0 per calcoli precisi
-            //
-            //            // IL BOTTONE
-            //            Button {
-            //                withAnimation {
-            //                    selectedLesson = nil
-            //                    openCalendar = true
-            //                    detents = defaultDetents
-            //                }
-            //            } label: {
-            //                HStack(spacing: 8) {
-            //                    Image(systemName: "calendar")
-            //                        .font(.title2)
-            //                    Text("Calendario")
-            //                }
-            //                .padding(.vertical, 5.2)
-            //                .padding(.horizontal, -2)
-            //            }
-            //            .buttonStyle(.glass)
-            //
-            //            .padding(.trailing, 28)
-            //            .matchedTransitionSource(id: "calendar", in: transition)
-            //        }
-            //        .padding(.bottom, 28)
-            //        .background(Color.clear)
-            //    }
-            //}
-            //.ignoresSafeArea(edges: .bottom)
-            .removeTopSafeArea()
-            .animation(.default, value: viewModel.checkingUpdates)
-            .animation(.default, value: viewModel.showUpdateAlert)
+                .ignoresSafeArea(edges: .bottom)
+                .background(WindowAccessor { window in
+                    positionObserver.startObserving(window: window)
+                })
+                .toolbar {
+                    buildToolbar()
+                }
+                //.sheet(isPresented: $openCalendar) {
+                //    DynamicSheetContent(
+                //        selectedWeek: $selectedWeek,
+                //        selectedMonth: $selectedMonth,
+                //        selectedDetent: $selectedDetent,
+                //        detents: $detents,
+                //        selectedFraction: $selectionFraction,
+                //        selectedLesson: $selectedLesson,
+                //        openSettings: $openSettings,
+                //        settingsSearchFocus: $settingsSearchFocus,
+                //        loading: $viewModel.loading,
+                //        tempSettings: $tempSettings,
+                //        openCalendar: $openCalendar
+                //    )
+                //    .presentationDetents(detents, selection: $selectedDetent)
+                //    .interactiveDismissDisabled(true)
+                //    .presentationBackgroundInteraction(.enabled(upThrough: UIDevice.isIpad ? .fraction(0.75) : .medium))
+                //    .disabled((viewModel.loading || viewModel.noLessonsFound) && !openSettings)
+                //    .onChange(of: selectedDetent) { oldValue, newValue in
+                //        handleDetentChange(oldValue: oldValue, newValue: newValue)
+                //    }
+                //    .sheetDesign(transition, sourceID: currentSourceID, detent: $selectedDetent)
+                //}
+                //.background {
+                //    if #available(iOS 26, *) {
+                //        Color.clear
+                //            .frame(width: 1, height: 1)
+                //            .matchedTransitionSource(id: "safe_anchor", in: transition)
+                //    }
+                //}
+                .onAppear {
+                    inizializeData()
+                }
+                .onChange(of: selection) {
+                    handleSelectionChange()
+                }
+                .onChange(of: openCalendar) { oldValue, newValue in
+                    oldOpenCalendar = oldValue
+                    if !newValue { selectionFraction = nil }
+                }
+                .onChange(of: viewModel.loading) { _, isLoading in
+                    handleLoadingChange(isLoading)
+                }
+                //.onChange(of: scenePhase) { oldPhase, newPhase in
+                //    if newPhase == .background {
+                //        currentSourceID = "safe_anchor"
+                //    } else if newPhase == .active {
+                //        currentSourceID = "calendar"
+                //    }
+                //}
+                //.overlay(alignment: .bottomTrailing) { // Allinea in basso a destra per controllo totale
+                //    if #available(iOS 26, *) {
+                //        HStack(spacing: 0) { // Spacing 0 per calcoli precisi
+                //
+                //            // IL BOTTONE
+                //            Button {
+                //                withAnimation {
+                //                    selectedLesson = nil
+                //                    openCalendar = true
+                //                    detents = defaultDetents
+                //                }
+                //            } label: {
+                //                HStack(spacing: 8) {
+                //                    Image(systemName: "calendar")
+                //                        .font(.title2)
+                //                    Text("Calendario")
+                //                }
+                //                .padding(.vertical, 5.2)
+                //                .padding(.horizontal, -2)
+                //            }
+                //            .buttonStyle(.glass)
+                //
+                //            .padding(.trailing, 28)
+                //            .matchedTransitionSource(id: "calendar", in: transition)
+                //        }
+                //        .padding(.bottom, 28)
+                //        .background(Color.clear)
+                //    }
+                //}
+                //.ignoresSafeArea(edges: .bottom)
+                .removeTopSafeArea()
+                .animation(.default, value: viewModel.checkingUpdates)
+                .animation(.default, value: viewModel.showUpdateAlert)
         }
     }
     

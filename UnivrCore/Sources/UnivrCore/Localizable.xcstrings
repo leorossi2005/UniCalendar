@@ -1,32 +1,7 @@
 {
   "sourceLanguage" : "it",
   "strings" : {
-    "Errore caricamento anni: %@" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Error loading years: %@"
-          }
-        }
-      }
-    },
-    "Errore caricamento corsi: %@" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Error loading courses: %@"
-          }
-        }
-      }
-    },
     "Errore generico: %@" : {
-
-    },
-    "Errore Generico: %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {

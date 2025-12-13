@@ -161,7 +161,7 @@ public class CalendarViewModel {
         if let netError = error as? NetworkError {
             self.errorMessage = netError.localizedDescription
         } else {
-            self.errorMessage = "Errore Generico: \(error.localizedDescription)"
+            self.errorMessage = "Errore generico: \(error.localizedDescription)"
         }
         print("Debug Error: \(error)")
     }
