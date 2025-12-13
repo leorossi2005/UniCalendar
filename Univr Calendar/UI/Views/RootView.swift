@@ -14,21 +14,23 @@ struct RootView: View {
     @State private var showSplash: Bool = true
     @Namespace private var animation
     
-    
     private static let iconSize: CGFloat = 200
     
     var body: some View {
         ZStack {
             if settings.onboardingCompleted {
                 CalendarView()
+                    .transition(.opacity)
             } else {
                 Onboarding(animation: animation, showSplash: $showSplash)
+                    .transition(.opacity)
             }
             
             if showSplash {
                 splashScreen
             }
         }
+        .animation(.default, value: settings.onboardingCompleted )
     }
     
     // MARK: - Subviews

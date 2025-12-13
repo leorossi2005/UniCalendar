@@ -285,9 +285,7 @@ struct Onboarding: View {
     }
     
     public func completeOnboarding() {
-        withAnimation {
-            settings.onboardingCompleted = true
-        }
+        settings.onboardingCompleted = true
     }
 }
 
