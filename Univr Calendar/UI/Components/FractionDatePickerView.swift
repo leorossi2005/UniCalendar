@@ -75,6 +75,7 @@ struct FractionDatePickerContainer: View {
     @Binding var selectedDetent: PresentationDetent
     
     @State private var canUpdateSelection: Bool = false
+    @State private var positionObserver = WindowPositionObserver()
     
     private var targetId: String {
         selectedWeek.weekDates().first?.formatUnivrStyle() ?? ""
@@ -84,52 +85,65 @@ struct FractionDatePickerContainer: View {
         GeometryReader { proxy in
             let screenWidth = proxy.size.width
         
-            ScrollView(.horizontal) {
-                LazyHStack(spacing: 0) {
-                    ForEach(viewModel.academicWeeks, id: \.self) { week in
-                        FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, week: week, width: screenWidth)
-                            .containerRelativeFrame(.horizontal)
-                            .id(week.first?.id)
-                            .overlay {
-                                if #unavailable(iOS 18.0) {
-                                    GeometryReader { geo in
-                                        Color.clear
-                                            .onChange(of: geo.frame(in: .named("scrollFractionSpace")).minX) { _, newValue in
-                                                guard canUpdateSelection, abs(newValue) < 20 else { return }
-                                                if let firstID = week.first?.id, selectionFraction != firstID {
-                                                    selectionFraction = firstID
+            ScrollViewReader { scrollProxy in
+                ScrollView(.horizontal) {
+                    LazyHStack(spacing: 0) {
+                        ForEach(viewModel.academicWeeks, id: \.self) { week in
+                            FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, week: week, width: screenWidth)
+                                .containerRelativeFrame(.horizontal)
+                                .id(week.first?.id)
+                                .overlay {
+                                    if #unavailable(iOS 18.0) {
+                                        GeometryReader { geo in
+                                            Color.clear
+                                                .onChange(of: geo.frame(in: .named("scrollFractionSpace")).minX) { _, newValue in
+                                                    guard canUpdateSelection, abs(newValue) < 20 else { return }
+                                                    if let firstID = week.first?.id, selectionFraction != firstID {
+                                                        selectionFraction = firstID
+                                                    }
                                                 }
-                                            }
+                                        }
                                     }
                                 }
-                            }
+                        }
                     }
+                    .scrollTargetLayout()
                 }
-                .scrollTargetLayout()
-            }
-            .coordinateSpace(name: "scrollFractionSpace")
-            .scrollTargetBehavior(.paging)
-            .scrollIndicators(.never, axes: .horizontal)
-            .scrollPosition(id: $selectionFraction, anchor: .leading)
-            .task(id: settings.selectedYear) {
-                await reloadWeeksAndSelection()
-            }
-            .task {
-                canUpdateSelection = true
-            }
-            .onChange(of: selectedWeek) {
-                if selectionFraction != targetId {
-                    Task { @MainActor in
-                        try? await Task.sleep(for: .seconds(0.01))
-                        withAnimation(nil) {
-                            selectionFraction = targetId
+                .coordinateSpace(name: "scrollFractionSpace")
+                .scrollTargetBehavior(.paging)
+                .scrollIndicators(.never, axes: .horizontal)
+                .scrollPosition(id: $selectionFraction, anchor: .leading)
+                .task(id: settings.selectedYear) {
+                    await reloadWeeksAndSelection()
+                }
+                .task {
+                    canUpdateSelection = true
+                }
+                .onChange(of: selectedWeek) {
+                    if selectionFraction != targetId {
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .seconds(0.01))
+                            withAnimation(nil) {
+                                selectionFraction = targetId
+                            }
                         }
                     }
                 }
+                .onChange(of: selectionFraction) {
+                    handleFractionSelectionChange()
+                }
+                .onChange(of: positionObserver.windowFrame.size.width) { _, _ in
+                    guard let currentSelection = selectionFraction else { return }
+                    var transaction = Transaction()
+                    transaction.disablesAnimations = true
+                    withTransaction(transaction) {
+                        scrollProxy.scrollTo(currentSelection, anchor: .leading)
+                    }
+                }
             }
-            .onChange(of: selectionFraction) {
-                handleFractionSelectionChange()
-            }
+            .background(WindowAccessor { window in
+                positionObserver.startObserving(window: window)
+            })
         }
     }
     

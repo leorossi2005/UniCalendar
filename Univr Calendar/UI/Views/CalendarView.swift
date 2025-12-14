@@ -57,37 +57,93 @@ struct CalendarView: View {
     
     var body: some View {
         NavigationStack {
-            mainScrollView
-                .safeAreaInset(edge: .bottom) {
-                    if openCalendar {
-                        ZStack {
-                            sheetShape
-                            .fill(.clear)
-                            
-                            FractionDatePickerContainer(
-                                selectedWeek: $selectedWeek,
-                                loading: $viewModel.loading,
-                                selectionFraction: $selectionFraction,
-                                selectedDetent: $selectedDetent
-                            )
-                        }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: screenSize.height * 0.2)
-                        .ipadSheetDesign(transition, sourceID: currentSourceID, sheet: $sheetShape)
+            Group {
+                if #available(iOS 26, *) {
+                    GlassEffectContainer(spacing: 40) {
+                        mainScrollView
+                            .overlay(alignment: .bottom) {
+                                if openCalendar {
+                                    FractionDatePickerContainer(
+                                        selectedWeek: $selectedWeek,
+                                        loading: $viewModel.loading,
+                                        selectionFraction: $selectionFraction,
+                                        selectedDetent: $selectedDetent
+                                    )
+                                    .frame(height: screenSize.height * 0.2)
+                                    .glassEffect(.regular.interactive(), in: sheetShape)
+                                    .glassEffectID("calendar", in: transition)
+                                    .glassEffectTransition(.matchedGeometry)
+                                    .padding(.horizontal, 8)
+                                    .padding(.bottom, 8)
+                                    .id(colorScheme)
+                                } else {
+                                    Button {
+                                        withAnimation {
+                                            selectedLesson = nil
+                                            openCalendar = true
+                                            detents = defaultDetents
+                                        }
+                                    } label: {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "calendar")
+                                                .font(.title2)
+                                            Text("Calendario")
+                                        }
+                                        .padding(.vertical, 12.2)
+                                        .padding(.horizontal, 10)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .glassEffect(colorScheme == .dark ? .clear.interactive().tint(.black.opacity(0.7)) : .clear.interactive(), in: sheetShape)
+                                    .glassEffectID("calendar", in: transition)
+                                    .glassEffectTransition(.matchedGeometry)
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                    .padding(.trailing, 28)
+                                    .padding(.bottom, 28)
+                                }
+                            }
                     }
+                } else {
+                    mainScrollView
+                        .safeAreaInset(edge: .bottom) {
+                            if openCalendar {
+                                ZStack {
+                                    sheetShape
+                                    .fill(.clear)
+                                    
+                                    FractionDatePickerContainer(
+                                        selectedWeek: $selectedWeek,
+                                        loading: $viewModel.loading,
+                                        selectionFraction: $selectionFraction,
+                                        selectedDetent: $selectedDetent
+                                    )
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: screenSize.height * 0.2)
+                            }
+                        }
                 }
+            }
                 .ignoresSafeArea(edges: .bottom)
                 .background(WindowAccessor { window in
                     positionObserver.startObserving(window: window)
                 })
                 .onChange(of: positionObserver.edges) { _, newEdges in
                     withAnimation {
-                        sheetShape = UnevenRoundedRectangle(
-                            topLeadingRadius: 32 - 8,
-                            bottomLeadingRadius: (newEdges.bottomLeftSquare ? 18 : 32) - 8,
-                            bottomTrailingRadius: (newEdges.bottomRightSquare ? 18 : 32) - 8,
-                            topTrailingRadius: 32 - 8
-                        )
+                        if UIDevice.isIpad {
+                            sheetShape = UnevenRoundedRectangle(
+                                topLeadingRadius: 32 - 8,
+                                bottomLeadingRadius: (newEdges.bottomLeftSquare && openCalendar ? 18 : 32) - 8,
+                                bottomTrailingRadius: (newEdges.bottomRightSquare && openCalendar ? 18 : 32) - 8,
+                                topTrailingRadius: 32 - 8
+                            )
+                        } else {
+                            sheetShape = UnevenRoundedRectangle(
+                                topLeadingRadius: .deviceCornerRadius - 8,
+                                bottomLeadingRadius: .deviceCornerRadius - 8,
+                                bottomTrailingRadius: .deviceCornerRadius - 8,
+                                topTrailingRadius: .deviceCornerRadius - 8
+                            )
+                        }
                     }
                 }
                 .toolbar {
@@ -132,17 +188,33 @@ struct CalendarView: View {
                 .onChange(of: openCalendar) { oldValue, newValue in
                     oldOpenCalendar = oldValue
                     if !newValue { selectionFraction = nil }
+                    
+                    if UIDevice.isIpad {
+                        sheetShape = UnevenRoundedRectangle(
+                            topLeadingRadius: 32 - 8,
+                            bottomLeadingRadius: (positionObserver.edges.bottomLeftSquare && newValue ? 18 : 32) - 8,
+                            bottomTrailingRadius: (positionObserver.edges.bottomRightSquare && newValue ? 18 : 32) - 8,
+                            topTrailingRadius: 32 - 8
+                        )
+                    } else {
+                        sheetShape = UnevenRoundedRectangle(
+                            topLeadingRadius: .deviceCornerRadius - 8,
+                            bottomLeadingRadius: .deviceCornerRadius - 8,
+                            bottomTrailingRadius: .deviceCornerRadius - 8,
+                            topTrailingRadius: .deviceCornerRadius - 8
+                        )
+                    }
                 }
                 .onChange(of: viewModel.loading) { _, isLoading in
                     handleLoadingChange(isLoading)
                 }
-                //.onChange(of: scenePhase) { oldPhase, newPhase in
-                //    if newPhase == .background {
-                //        currentSourceID = "safe_anchor"
-                //    } else if newPhase == .active {
-                //        currentSourceID = "calendar"
-                //    }
-                //}
+                .onChange(of: scenePhase) { oldPhase, newPhase in
+                    if newPhase == .background {
+                        currentSourceID = "safe_anchor"
+                    } else if newPhase == .active {
+                        currentSourceID = "calendar"
+                    }
+                }
                 //.overlay(alignment: .bottomTrailing) { // Allinea in basso a destra per controllo totale
                 //    if #available(iOS 26, *) {
                 //        HStack(spacing: 0) { // Spacing 0 per calcoli precisi
@@ -181,25 +253,35 @@ struct CalendarView: View {
     
     // MARK: - Main Content
     private var mainScrollView: some View {
-        ScrollView(.horizontal) {
-            LazyHStack(spacing: 0) {
-                if viewModel.loading || firstLoading {
-                    loadingPlaceholder
-                } else {
-                    loadedContent
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: 0) {
+                    if viewModel.loading || firstLoading {
+                        loadingPlaceholder
+                    } else {
+                        loadedContent
+                    }
+                }
+                .multilineTextAlignment(.center)
+                .scrollTargetLayout()
+            }
+            .scrollTargetBehavior(.paging)
+            .scrollIndicators(.never, axes: .horizontal)
+            .scrollPosition(id: $selection, anchor: .center)
+            .task(id: selectedWeek) {
+                if !viewModel.loading && !firstLoading {
+                    let newSelection = selectedWeek.formatUnivrStyle()
+                    if newSelection != selection { selection = newSelection }
+                    if selectedMonth != selectedWeek.month { selectedMonth = selectedWeek.month }
                 }
             }
-            .multilineTextAlignment(.center)
-            .scrollTargetLayout()
-        }
-        .scrollTargetBehavior(.paging)
-        .scrollIndicators(.never, axes: .horizontal)
-        .scrollPosition(id: $selection, anchor: .center)
-        .task(id: selectedWeek) {
-            if !viewModel.loading && !firstLoading {
-                let newSelection = selectedWeek.formatUnivrStyle()
-                if newSelection != selection { selection = newSelection }
-                if selectedMonth != selectedWeek.month { selectedMonth = selectedWeek.month }
+            .onChange(of: positionObserver.windowFrame.size.width) { _, _ in
+                guard let currentSelection = selection else { return }
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) {
+                    proxy.scrollTo(currentSelection, anchor: .center)
+                }
             }
         }
     }
@@ -303,13 +385,13 @@ struct CalendarView: View {
             }
         }
         
-        if #available(iOS 26, *) {
-            ToolbarItem(placement: .bottomBar) { Spacer() }
-            ToolbarItem(id: "calendarButton", placement: .bottomBar) {
-                calendarButton
-                    .matchedTransitionSource(id: "calendar", in: transition)
-            }
-        }
+        //if #available(iOS 26, *) {
+        //    ToolbarItem(placement: .bottomBar) { Spacer() }
+        //    ToolbarItem(id: "calendarButton", placement: .bottomBar) {
+        //        calendarButton
+        //            .matchedTransitionSource(id: "calendar", in: transition)
+        //    }
+        //}
     }
     
     // MARK: - Toolbar Components

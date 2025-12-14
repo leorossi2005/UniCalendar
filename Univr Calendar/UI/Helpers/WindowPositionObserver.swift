@@ -42,7 +42,6 @@ struct WindowEdges: Equatable {
         !touchesTop && !touchesBottom && !touchesLeft && !touchesRight
     }
     
-    // Quali angoli sono "contro il bordo" (quindi squadrati)?
     var topLeftSquare: Bool { touchesTop && touchesLeft }
     var topRightSquare: Bool { touchesTop && touchesRight }
     var bottomLeftSquare: Bool { touchesBottom && touchesLeft }
@@ -58,7 +57,6 @@ final class WindowPositionObserver {
     private var displayLink: CADisplayLink?
     private weak var observedWindow: UIWindow?
     
-    // Tolleranza per il confronto (per gestire piccole imprecisioni)
     private let tolerance: CGFloat = 1.0
     
     func startObserving(window: UIWindow) {
@@ -69,7 +67,6 @@ final class WindowPositionObserver {
         displayLink?.preferredFrameRateRange = CAFrameRateRange(minimum: 10, maximum: 15, preferred: 15)
         displayLink?.add(to: .main, forMode: .common)
         
-        // Check iniziale
         checkFrame()
     }
     
@@ -83,30 +80,25 @@ final class WindowPositionObserver {
         guard let window = observedWindow,
               let windowScene = window.windowScene else { return }
         
-        // Prendi il frame in coordinate fisse (fisiche)
         let fixedSpace = windowScene.screen.fixedCoordinateSpace
         let frameInFixed = window.convert(window.bounds, to: fixedSpace)
         let screenFixed = fixedSpace.bounds
         
-        // Aggiorna solo se cambiato
         guard frameInFixed != windowFrame || screenFixed != screenBounds else { return }
         
         windowFrame = frameInFixed
         screenBounds = screenFixed
         
-        // Calcola i bordi in coordinate fisiche
         let touchesFixedTop = frameInFixed.minY <= tolerance
         let touchesFixedBottom = abs(frameInFixed.maxY - screenFixed.height) <= tolerance
         let touchesFixedLeft = frameInFixed.minX <= tolerance
         let touchesFixedRight = abs(frameInFixed.maxX - screenFixed.width) <= tolerance
         
-        // Mappa alle coordinate UI in base all'orientamento
         let orientation = windowScene.interfaceOrientation
         
         let newEdges: WindowEdges
         switch orientation {
         case .portrait:
-            // Dritto: nessuna trasformazione
             newEdges = WindowEdges(
                 touchesTop: touchesFixedTop,
                 touchesBottom: touchesFixedBottom,
@@ -114,7 +106,6 @@ final class WindowPositionObserver {
                 touchesRight: touchesFixedRight
             )
         case .portraitUpsideDown:
-            // Sottosopra: tutto invertito
             newEdges = WindowEdges(
                 touchesTop: touchesFixedBottom,
                 touchesBottom: touchesFixedTop,
@@ -122,7 +113,6 @@ final class WindowPositionObserver {
                 touchesRight: touchesFixedLeft
             )
         case .landscapeLeft:
-            // Home button a sinistra
             newEdges = WindowEdges(
                 touchesTop: touchesFixedLeft,
                 touchesBottom: touchesFixedRight,
@@ -130,7 +120,6 @@ final class WindowPositionObserver {
                 touchesRight: touchesFixedTop
             )
         case .landscapeRight:
-            // Home button a destra
             newEdges = WindowEdges(
                 touchesTop: touchesFixedRight,
                 touchesBottom: touchesFixedLeft,
@@ -148,11 +137,6 @@ final class WindowPositionObserver {
         
         if newEdges != edges {
             edges = newEdges
-            print("📐 Window edges changed:")
-            print("   Top: \(newEdges.touchesTop), Bottom: \(newEdges.touchesBottom)")
-            print("   Left: \(newEdges.touchesLeft), Right: \(newEdges.touchesRight)")
-            print("   Corners - TL: \(newEdges.topLeftSquare), TR: \(newEdges.topRightSquare)")
-            print("            BL: \(newEdges.bottomLeftSquare), BR: \(newEdges.bottomRightSquare)")
         }
     }
 }
