@@ -88,6 +88,9 @@ struct CalendarView: View {
                                         .padding(.vertical, 12.2)
                                         .padding(.horizontal, 10)
                                     }
+                                    .contentShape(.capsule)
+                                    .contentShape(.hoverEffect, .capsule)
+                                    .hoverEffect(.highlight)
                                     .buttonStyle(.plain)
                                     .glassEffect(colorScheme == .dark ? .clear.interactive().tint(.black.opacity(0.7)) : .clear.interactive(), in: sheetShape)
                                     .glassEffectID("calendar", in: transition)
@@ -124,23 +127,7 @@ struct CalendarView: View {
                     positionObserver.startObserving(window: window)
                 })
                 .onChange(of: positionObserver.edges) { _, newEdges in
-                    withAnimation {
-                        if UIDevice.isIpad {
-                            sheetShape = UnevenRoundedRectangle(
-                                topLeadingRadius: 32 - 8,
-                                bottomLeadingRadius: (newEdges.bottomLeftSquare && openCalendar ? 18 : 32) - 8,
-                                bottomTrailingRadius: (newEdges.bottomRightSquare && openCalendar ? 18 : 32) - 8,
-                                topTrailingRadius: 32 - 8
-                            )
-                        } else {
-                            sheetShape = UnevenRoundedRectangle(
-                                topLeadingRadius: .deviceCornerRadius - 8,
-                                bottomLeadingRadius: .deviceCornerRadius - 8,
-                                bottomTrailingRadius: .deviceCornerRadius - 8,
-                                topTrailingRadius: .deviceCornerRadius - 8
-                            )
-                        }
-                    }
+                    setSheetShape(isOpen: openCalendar)
                 }
                 .toolbar {
                     buildToolbar()
@@ -194,36 +181,6 @@ struct CalendarView: View {
                         currentSourceID = "calendar"
                     }
                 }
-                //.overlay(alignment: .bottomTrailing) { // Allinea in basso a destra per controllo totale
-                //    if #available(iOS 26, *) {
-                //        HStack(spacing: 0) { // Spacing 0 per calcoli precisi
-                //
-                //            // IL BOTTONE
-                //            Button {
-                //                withAnimation {
-                //                    selectedLesson = nil
-                //                    openCalendar = true
-                //                    detents = defaultDetents
-                //                }
-                //            } label: {
-                //                HStack(spacing: 8) {
-                //                    Image(systemName: "calendar")
-                //                        .font(.title2)
-                //                    Text("Calendario")
-                //                }
-                //                .padding(.vertical, 5.2)
-                //                .padding(.horizontal, -2)
-                //            }
-                //            .buttonStyle(.glass)
-                //
-                //            .padding(.trailing, 28)
-                //            .matchedTransitionSource(id: "calendar", in: transition)
-                //        }
-                //        .padding(.bottom, 28)
-                //        .background(Color.clear)
-                //    }
-                //}
-                //.ignoresSafeArea(edges: .bottom)
                 .removeTopSafeArea()
                 .animation(.default, value: viewModel.checkingUpdates)
                 .animation(.default, value: viewModel.showUpdateAlert)
@@ -641,17 +598,17 @@ struct CalendarView: View {
     private func setSheetShape(isOpen: Bool) {
         if UIDevice.isIpad {
             sheetShape = UnevenRoundedRectangle(
-                topLeadingRadius: 32 - 8,
-                bottomLeadingRadius: (positionObserver.edges.bottomLeftSquare && isOpen ? 18 : 32) - 8,
-                bottomTrailingRadius: (positionObserver.edges.bottomRightSquare && isOpen ? 18 : 32) - 8,
-                topTrailingRadius: 32 - 8
+                topLeadingRadius: (isOpen ? 32 : (47.4 / 2 + 8)) - 8,
+                bottomLeadingRadius: (isOpen ? (positionObserver.edges.bottomLeftSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
+                bottomTrailingRadius: (isOpen ? (positionObserver.edges.bottomRightSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
+                topTrailingRadius: (isOpen ? 32 : (47.4 / 2 + 8)) - 8
             )
         } else {
             sheetShape = UnevenRoundedRectangle(
-                topLeadingRadius: .deviceCornerRadius - 8,
-                bottomLeadingRadius: .deviceCornerRadius - 8,
-                bottomTrailingRadius: .deviceCornerRadius - 8,
-                topTrailingRadius: .deviceCornerRadius - 8
+                topLeadingRadius: (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8,
+                bottomLeadingRadius: (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8,
+                bottomTrailingRadius: (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8,
+                topTrailingRadius: (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8
             )
         }
     }

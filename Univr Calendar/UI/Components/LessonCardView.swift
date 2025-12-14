@@ -26,6 +26,8 @@ struct LessonCardView: View {
             .padding()
             .opacity(lesson.annullato == "1" ? 0.5 : 1.0)
         }
+        .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
+        .hoverEffect(.lift)
         .padding(.horizontal, 15)
     }
     
