@@ -76,13 +76,15 @@ struct FractionDatePickerContainer: View {
     @Binding var selectedDetent: PresentationDetent
 
     @State private var isSyncingSelectionFraction: Bool = false
+    @State private var lastIsDualMode: Bool? = nil
     
     var body: some View {
         GeometryReader { proxy in
             let screenWidth = proxy.size.width
+            let isDualMode = screenWidth >= 1000
             
             TabView(selection: $selectionFraction) {
-                if screenWidth < 1000 {
+                if !isDualMode {
                     ForEach(viewModel.academicWeeks, id: \.self) { week in
                         FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, week: week, width: screenWidth)
                             .tag(week.first?.id)
@@ -102,6 +104,31 @@ struct FractionDatePickerContainer: View {
             .task(id: settings.selectedYear) {
                 await reloadWeeksAndSelection(containerWidth: screenWidth)
             }
+            .onAppear {
+                if lastIsDualMode == nil {
+                    lastIsDualMode = isDualMode
+                }
+            }
+            .onChange(of: screenWidth) { _, newWidth in
+                let newIsDual = newWidth >= 1000
+                let didCrossThreshold = (lastIsDualMode != nil && lastIsDualMode != newIsDual)
+                lastIsDualMode = newIsDual
+
+                guard didCrossThreshold else { return }
+                guard !viewModel.academicWeeks.isEmpty else { return }
+                
+                let newTarget = targetId(containerWidth: screenWidth)
+                if selectionFraction != newTarget {
+                    Task { @MainActor in
+                        isSyncingSelectionFraction = true
+                        withAnimation(nil) {
+                            selectionFraction = newTarget
+                        }
+                        await Task.yield()
+                        isSyncingSelectionFraction = false
+                    }
+                }
+            }
             .onChange(of: selectedWeek) {
                 let newTarget = targetId(containerWidth: screenWidth)
                 if selectionFraction != newTarget {
@@ -117,7 +144,7 @@ struct FractionDatePickerContainer: View {
             }
             .onChange(of: selectionFraction) {
                 guard !isSyncingSelectionFraction else { return }
-                handleFractionSelectionChange()
+                handleFractionSelectionChange(containerWidth: screenWidth)
             }
         }
     }
@@ -136,17 +163,27 @@ struct FractionDatePickerContainer: View {
             }
         }
         await Task.yield()
-        await MainActor.run {
-            isSyncingSelectionFraction = false
-        }
+        await MainActor.run { isSyncingSelectionFraction = false }
     }
-    
-    private func handleFractionSelectionChange() {
+
+    private func handleFractionSelectionChange(containerWidth: CGFloat) {
         guard let selectionFraction,
               let currentWeekStart = selectedWeek.weekDates().first?.formatUnivrStyle(),
               selectionFraction != currentWeekStart,
               let newDate = selectionFraction.toDateModern(),
               let yearInt = Int(settings.selectedYear) else { return }
+
+        if containerWidth >= 1000,
+           let baseIndex = viewModel.academicWeeks.firstIndex(where: { $0.first?.id == selectionFraction }) {
+            let baseId = viewModel.academicWeeks[baseIndex].first?.id
+            let nextId = (baseIndex + 1 < viewModel.academicWeeks.count)
+                ? viewModel.academicWeeks[baseIndex + 1].first?.id
+                : nil
+
+            if currentWeekStart == baseId || currentWeekStart == nextId {
+                return
+            }
+        }
         
         let isLeftOutOfBounds = newDate.month == 9 && newDate.year == yearInt
         let isRightOutOfBounds = (newDate.month == 10 && newDate.year == yearInt + 1)
