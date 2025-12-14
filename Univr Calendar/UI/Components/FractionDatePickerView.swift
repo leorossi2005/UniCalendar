@@ -19,7 +19,7 @@ struct FractionDatePickerView: View {
     let width: CGFloat
         
     private var itemWidth: CGFloat {
-        (width - 70) / 7
+        (min(width, 500) - 70) / 7
     }
     
     var body: some View {
@@ -40,6 +40,7 @@ struct FractionDatePickerView: View {
             }
         }
         .frame(maxHeight: .infinity)
+        .frame(maxWidth: 500)
         .padding(20)
         .ignoresSafeArea()
     }
@@ -73,89 +74,70 @@ struct FractionDatePickerContainer: View {
     @Binding var loading: Bool
     @Binding var selectionFraction: String?
     @Binding var selectedDetent: PresentationDetent
-    
-    @State private var canUpdateSelection: Bool = false
-    @State private var positionObserver = WindowPositionObserver()
-    
-    private var targetId: String {
-        selectedWeek.weekDates().first?.formatUnivrStyle() ?? ""
-    }
+
+    @State private var isSyncingSelectionFraction: Bool = false
     
     var body: some View {
         GeometryReader { proxy in
             let screenWidth = proxy.size.width
-        
-            ScrollViewReader { scrollProxy in
-                ScrollView(.horizontal) {
-                    LazyHStack(spacing: 0) {
-                        ForEach(viewModel.academicWeeks, id: \.self) { week in
-                            FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, week: week, width: screenWidth)
-                                .containerRelativeFrame(.horizontal)
-                                .id(week.first?.id)
-                                .overlay {
-                                    if #unavailable(iOS 18.0) {
-                                        GeometryReader { geo in
-                                            Color.clear
-                                                .onChange(of: geo.frame(in: .named("scrollFractionSpace")).minX) { _, newValue in
-                                                    guard canUpdateSelection, abs(newValue) < 20 else { return }
-                                                    if let firstID = week.first?.id, selectionFraction != firstID {
-                                                        selectionFraction = firstID
-                                                    }
-                                                }
-                                        }
-                                    }
-                                }
-                        }
+            
+            TabView(selection: $selectionFraction) {
+                if screenWidth < 1000 {
+                    ForEach(viewModel.academicWeeks, id: \.self) { week in
+                        FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, week: week, width: screenWidth)
+                            .tag(week.first?.id)
                     }
-                    .scrollTargetLayout()
-                }
-                .coordinateSpace(name: "scrollFractionSpace")
-                .scrollTargetBehavior(.paging)
-                .scrollIndicators(.never, axes: .horizontal)
-                .scrollPosition(id: $selectionFraction, anchor: .leading)
-                .task(id: settings.selectedYear) {
-                    await reloadWeeksAndSelection()
-                }
-                .task {
-                    canUpdateSelection = true
-                }
-                .onChange(of: selectedWeek) {
-                    if selectionFraction != targetId {
-                        Task { @MainActor in
-                            try? await Task.sleep(for: .seconds(0.01))
-                            withAnimation(nil) {
-                                selectionFraction = targetId
-                            }
+                } else {
+                    ForEach(Array(stride(from: 0, to: viewModel.academicWeeks.count, by: 2)), id: \.self) { index in
+                        HStack {
+                            let isLast = index != viewModel.academicWeeks.count - 1
+                            FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, week: viewModel.academicWeeks[index], width: screenWidth)
+                            FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, week: isLast ? viewModel.academicWeeks[index + 1] : viewModel.additionalWeek, width: screenWidth)
                         }
-                    }
-                }
-                .onChange(of: selectionFraction) {
-                    handleFractionSelectionChange()
-                }
-                .onChange(of: positionObserver.windowFrame.size.width) { _, _ in
-                    guard let currentSelection = selectionFraction else { return }
-                    var transaction = Transaction()
-                    transaction.disablesAnimations = true
-                    withTransaction(transaction) {
-                        scrollProxy.scrollTo(currentSelection, anchor: .leading)
+                        .tag(viewModel.academicWeeks[index].first?.id)
                     }
                 }
             }
-            .background(WindowAccessor { window in
-                positionObserver.startObserving(window: window)
-            })
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .task(id: settings.selectedYear) {
+                await reloadWeeksAndSelection(containerWidth: screenWidth)
+            }
+            .onChange(of: selectedWeek) {
+                let newTarget = targetId(containerWidth: screenWidth)
+                if selectionFraction != newTarget {
+                    Task { @MainActor in
+                        isSyncingSelectionFraction = true
+                        withAnimation(nil) {
+                            selectionFraction = newTarget
+                        }
+                        await Task.yield()
+                        isSyncingSelectionFraction = false
+                    }
+                }
+            }
+            .onChange(of: selectionFraction) {
+                guard !isSyncingSelectionFraction else { return }
+                handleFractionSelectionChange()
+            }
         }
     }
     
-    func reloadWeeksAndSelection() async {
-        selectionFraction = nil
+    // MARK: - Logic
+    
+    func reloadWeeksAndSelection(containerWidth: CGFloat) async {
         await viewModel.generateAcademicWeeks(selectedYear: settings.selectedYear)
         
-        if selectionFraction != targetId {
-            try? await Task.sleep(for: .seconds(0.01))
+        let newTarget = targetId(containerWidth: containerWidth)
+        guard selectionFraction != newTarget else { return }
+        await MainActor.run {
+            isSyncingSelectionFraction = true
             withAnimation(nil) {
-                selectionFraction = targetId
+                selectionFraction = newTarget
             }
+        }
+        await Task.yield()
+        await MainActor.run {
+            isSyncingSelectionFraction = false
         }
     }
     
@@ -184,6 +166,23 @@ struct FractionDatePickerContainer: View {
                 selectedWeek = newDate
             }
         }
+    }
+    
+    private func targetId(containerWidth: CGFloat) -> String {
+        let weekStartId = selectedWeek.weekDates().first?.formatUnivrStyle() ?? ""
+
+        guard containerWidth >= 1000 else { return weekStartId }
+
+        guard let index = viewModel.academicWeeks.firstIndex(where: { $0.first?.id == weekStartId }) else {
+            return selectionFraction ?? viewModel.academicWeeks.first?.first?.id ?? weekStartId
+        }
+
+        let baseIndex = index - (index % 2)
+        if baseIndex >= 0, baseIndex < viewModel.academicWeeks.count {
+            return viewModel.academicWeeks[baseIndex].first?.id ?? weekStartId
+        }
+
+        return weekStartId
     }
 }
 

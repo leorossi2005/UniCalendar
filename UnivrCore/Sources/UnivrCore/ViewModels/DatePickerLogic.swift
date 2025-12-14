@@ -36,6 +36,7 @@ public class DatePickerCache {
     
     public var monthGrids: [String: [CalendarCell]] = [:]
     public var academicWeeks: [[FractionDay]] = []
+    public var additionalWeek: [FractionDay] = []
     public var currentYear: String = ""
     
     public func generateMonthGrid(for date: Date, monthName: String) async {
@@ -97,11 +98,11 @@ public class DatePickerCache {
         guard currentYear != selectedYear else { return }
         guard let yearInt = Int(selectedYear) else { return }
         
-        let weeks: [[FractionDay]] = await Task.detached(priority: .userInitiated) {
+        (self.academicWeeks, self.additionalWeek) = await Task.detached(priority: .userInitiated) {
             let startAcademicYear = Date(year: yearInt, month: 10, day: 1)
             let endAcademicYear = Date(year: yearInt + 1, month: 9, day: 30)
             
-            guard var currentWeekStart = startAcademicYear.startOfWeek() else { return [[FractionDay]]() }
+            guard var currentWeekStart = startAcademicYear.startOfWeek() else { return ([[FractionDay]](), [FractionDay]()) }
             
             var allWeeks: [[FractionDay]] = []
             
@@ -124,10 +125,25 @@ public class DatePickerCache {
                 allWeeks.append(weekOfDays)
                 currentWeekStart = currentWeekStart.add(type: .weekOfYear, value: 1)
             }
-            return allWeeks
+            
+            var weekOfDays: [FractionDay] = []
+            let weekDates = currentWeekStart.weekDates()
+            
+            for date in weekDates {
+                let stableID = date.formatUnivrStyle()
+                
+                weekOfDays.append(FractionDay(
+                    id: stableID,
+                    dayNumber: "\(date.day)",
+                    weekdayString: date.getCurrentWeekdaySymbol(length: .abbreviated),
+                    isOutOfBounds: date.isOutOfAcademicBounds(for: yearInt),
+                    date: date
+                ))
+            }
+            
+            return (allWeeks, weekOfDays)
         }.value
         
-        self.academicWeeks = weeks
         self.currentYear = selectedYear
     }
 }

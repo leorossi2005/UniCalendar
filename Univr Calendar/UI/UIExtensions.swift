@@ -141,7 +141,12 @@ extension View {
     }
     
     @ViewBuilder
-    func onScrollGeometry(openCalendar: Binding<Bool>, selectedDetent: Binding<PresentationDetent>, firstLoading: Binding<Bool>) -> some View {
+    func onScrollGeometry(
+        openCalendar: Binding<Bool>,
+        selectedDetent: Binding<PresentationDetent>,
+        firstLoading: Binding<Bool>,
+        changeOpenCalendar: ((_ isOpen: Bool) -> Void)?
+    ) -> some View {
         if #available(iOS 26, *) {
             self
                 .onScrollGeometryChange(for: CGFloat.self, of: { geometry in
@@ -151,13 +156,9 @@ extension View {
                         let isLarge = selectedDetent.wrappedValue == .large
                         
                         if newValue <= 0 && !openCalendar.wrappedValue {
-                            withAnimation {
-                                openCalendar.wrappedValue = true
-                            }
+                            changeOpenCalendar?(true)
                         } else if newValue > 10 && !isLarge && openCalendar.wrappedValue {
-                            withAnimation {
-                                openCalendar.wrappedValue = false
-                            }
+                            changeOpenCalendar?(false)
                         }
                     }
                 }

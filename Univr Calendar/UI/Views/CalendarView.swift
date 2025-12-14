@@ -78,11 +78,7 @@ struct CalendarView: View {
                                     .id(colorScheme)
                                 } else {
                                     Button {
-                                        withAnimation {
-                                            selectedLesson = nil
-                                            openCalendar = true
-                                            detents = defaultDetents
-                                        }
+                                        changeOpenCalendar(true)
                                     } label: {
                                         HStack(spacing: 8) {
                                             Image(systemName: "calendar")
@@ -187,23 +183,6 @@ struct CalendarView: View {
                 }
                 .onChange(of: openCalendar) { oldValue, newValue in
                     oldOpenCalendar = oldValue
-                    if !newValue { selectionFraction = nil }
-                    
-                    if UIDevice.isIpad {
-                        sheetShape = UnevenRoundedRectangle(
-                            topLeadingRadius: 32 - 8,
-                            bottomLeadingRadius: (positionObserver.edges.bottomLeftSquare && newValue ? 18 : 32) - 8,
-                            bottomTrailingRadius: (positionObserver.edges.bottomRightSquare && newValue ? 18 : 32) - 8,
-                            topTrailingRadius: 32 - 8
-                        )
-                    } else {
-                        sheetShape = UnevenRoundedRectangle(
-                            topLeadingRadius: .deviceCornerRadius - 8,
-                            bottomLeadingRadius: .deviceCornerRadius - 8,
-                            bottomTrailingRadius: .deviceCornerRadius - 8,
-                            topTrailingRadius: .deviceCornerRadius - 8
-                        )
-                    }
                 }
                 .onChange(of: viewModel.loading) { _, isLoading in
                     handleLoadingChange(isLoading)
@@ -325,7 +304,8 @@ struct CalendarView: View {
                             selectedLesson: $selectedLesson,
                             openCalendar: $openCalendar,
                             selectedDetent: $selectedDetent,
-                            firstLoading: $firstLoading
+                            firstLoading: $firstLoading,
+                            changeOpenCalendar: changeOpenCalendar
                         )
                         .id(viewModel.daysString[i])
                         .containerRelativeFrame(.horizontal)
@@ -637,6 +617,44 @@ struct CalendarView: View {
             oldOpenCalendar = openCalendar
         }
     }
+    
+    private func changeOpenCalendar(_ toOpen: Bool) {
+        guard openCalendar != toOpen else { return }
+
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            setSheetShape(isOpen: toOpen)
+        }
+
+        if toOpen {
+            selectedLesson = nil
+            openSettings = false
+            detents = defaultDetents
+        }
+
+        withAnimation(.spring(duration: 0.5, bounce: 0.3)) {
+            openCalendar = toOpen
+        }
+    }
+    
+    private func setSheetShape(isOpen: Bool) {
+        if UIDevice.isIpad {
+            sheetShape = UnevenRoundedRectangle(
+                topLeadingRadius: 32 - 8,
+                bottomLeadingRadius: (positionObserver.edges.bottomLeftSquare && isOpen ? 18 : 32) - 8,
+                bottomTrailingRadius: (positionObserver.edges.bottomRightSquare && isOpen ? 18 : 32) - 8,
+                topTrailingRadius: 32 - 8
+            )
+        } else {
+            sheetShape = UnevenRoundedRectangle(
+                topLeadingRadius: .deviceCornerRadius - 8,
+                bottomLeadingRadius: .deviceCornerRadius - 8,
+                bottomTrailingRadius: .deviceCornerRadius - 8,
+                topTrailingRadius: .deviceCornerRadius - 8
+            )
+        }
+    }
 }
 
 // MARK: - Subviews
@@ -736,6 +754,8 @@ struct CalendarViewDay: View {
     @Binding var selectedDetent: PresentationDetent
     @Binding var firstLoading: Bool
 
+    var changeOpenCalendar: ((_ isOpen: Bool) -> Void)
+
     private let screenSize: CGRect = UIApplication.shared.screenSize
     
     var body: some View {
@@ -750,10 +770,10 @@ struct CalendarViewDay: View {
                     if lesson.tipo != "pause" && lesson.tipo != "chiusura_type" {
                         LessonCardView(lesson: lesson)
                             .onTapGesture {
-                                openCalendar = true
-                                selectedLesson = lesson
-                                detents = [.fraction(0.15), UIDevice.isIpad ? .fraction(0.75) : .medium, .large]
-                                selectedDetent = .large
+                                changeOpenCalendar(true)
+                                //selectedLesson = lesson
+                                //detents = [.fraction(0.15), UIDevice.isIpad ? .fraction(0.75) : .medium, .large]
+                                //selectedDetent = .large
                             }
                     } else {
                         HStack(alignment: .bottom) {
@@ -771,7 +791,12 @@ struct CalendarViewDay: View {
             .scrollViewTopPadding()
             Spacer().frame(height: screenSize.height * 0.10)
         }
-        .onScrollGeometry(openCalendar: $openCalendar, selectedDetent: $selectedDetent, firstLoading: $firstLoading)
+        .onScrollGeometry(
+            openCalendar: $openCalendar,
+            selectedDetent: $selectedDetent,
+            firstLoading: $firstLoading,
+            changeOpenCalendar: changeOpenCalendar
+        )
     }
 }
 

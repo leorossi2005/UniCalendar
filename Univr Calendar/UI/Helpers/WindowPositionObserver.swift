@@ -12,17 +12,16 @@ struct WindowAccessor: UIViewRepresentable {
     let onWindow: (UIWindow) -> Void
     
     func makeUIView(context: Context) -> UIView {
-        let view = UIView()
+        let view = UIView(frame: .zero)
         view.backgroundColor = .clear
         view.isUserInteractionEnabled = false
+        view.isHidden = true
         return view
     }
     
     func updateUIView(_ uiView: UIView, context: Context) {
-        DispatchQueue.main.async {
-            if let window = uiView.window {
-                onWindow(window)
-            }
+        if let window = uiView.window {
+            onWindow(window)
         }
     }
 }
