@@ -19,7 +19,6 @@ struct CalendarView: View {
     @State private var viewModel = CalendarViewModel()
     @State private var tempSettings = TempSettingsState()
     @State private var positionObserver = WindowPositionObserver()
-    @State private var currentSourceID: String = "calendar"
     
     @State private var selectedDetent: PresentationDetent = .fraction(0.15)
     @State private var detents: Set<PresentationDetent> = [.fraction(0.15), UIDevice.isIpad ? .fraction(0.75) : .medium]
@@ -103,87 +102,70 @@ struct CalendarView: View {
                     }
                 } else {
                     mainScrollView
-                        .safeAreaInset(edge: .bottom) {
-                            if openCalendar {
-                                ZStack {
-                                    sheetShape
-                                    .fill(.clear)
-                                    
-                                    FractionDatePickerContainer(
-                                        selectedWeek: $selectedWeek,
-                                        loading: $viewModel.loading,
-                                        selectionFraction: $selectionFraction,
-                                        selectedDetent: $selectedDetent
-                                    )
-                                }
-                                .frame(maxWidth: .infinity)
-                                .frame(height: screenSize.height * 0.2)
+                        .overlay(alignment: .bottom) {
+                            ZStack {
+                                sheetShape
+                                    .fill(.primary)
+                                
+                                FractionDatePickerContainer(
+                                    selectedWeek: $selectedWeek,
+                                    loading: $viewModel.loading,
+                                    selectionFraction: $selectionFraction,
+                                    selectedDetent: $selectedDetent
+                                )
                             }
+                            .frame(height: screenSize.height * 0.2)
                         }
                 }
             }
-                .ignoresSafeArea(edges: .bottom)
-                .background(WindowAccessor { window in
-                    positionObserver.startObserving(window: window)
-                })
-                .onChange(of: positionObserver.edges) { _, newEdges in
-                    setSheetShape(isOpen: openCalendar)
-                }
-                .toolbar {
-                    buildToolbar()
-                }
-                //.sheet(isPresented: $openCalendar) {
-                //    DynamicSheetContent(
-                //        selectedWeek: $selectedWeek,
-                //        selectedMonth: $selectedMonth,
-                //        selectedDetent: $selectedDetent,
-                //        detents: $detents,
-                //        selectedFraction: $selectionFraction,
-                //        selectedLesson: $selectedLesson,
-                //        openSettings: $openSettings,
-                //        settingsSearchFocus: $settingsSearchFocus,
-                //        loading: $viewModel.loading,
-                //        tempSettings: $tempSettings,
-                //        openCalendar: $openCalendar
-                //    )
-                //    .presentationDetents(detents, selection: $selectedDetent)
-                //    .interactiveDismissDisabled(true)
-                //    .presentationBackgroundInteraction(.enabled(upThrough: UIDevice.isIpad ? .fraction(0.75) : .medium))
-                //    .disabled((viewModel.loading || viewModel.noLessonsFound) && !openSettings)
-                //    .onChange(of: selectedDetent) { oldValue, newValue in
-                //        handleDetentChange(oldValue: oldValue, newValue: newValue)
-                //    }
-                //    .sheetDesign(transition, sourceID: currentSourceID, detent: $selectedDetent)
-                //}
-                //.background {
-                //    if #available(iOS 26, *) {
-                //        Color.clear
-                //            .frame(width: 1, height: 1)
-                //            .matchedTransitionSource(id: "safe_anchor", in: transition)
-                //    }
-                //}
-                .onAppear {
-                    inizializeData()
-                }
-                .onChange(of: selection) {
-                    handleSelectionChange()
-                }
-                .onChange(of: openCalendar) { oldValue, newValue in
-                    oldOpenCalendar = oldValue
-                }
-                .onChange(of: viewModel.loading) { _, isLoading in
-                    handleLoadingChange(isLoading)
-                }
-                .onChange(of: scenePhase) { oldPhase, newPhase in
-                    if newPhase == .background {
-                        currentSourceID = "safe_anchor"
-                    } else if newPhase == .active {
-                        currentSourceID = "calendar"
-                    }
-                }
-                .removeTopSafeArea()
-                .animation(.default, value: viewModel.checkingUpdates)
-                .animation(.default, value: viewModel.showUpdateAlert)
+            .ignoresSafeArea(edges: .bottom)
+            .background(WindowAccessor { window in
+                positionObserver.startObserving(window: window)
+            })
+            .onChange(of: positionObserver.edges) {
+                setSheetShape(isOpen: openCalendar)
+            }
+            .toolbar {
+                buildToolbar()
+            }
+            //.sheet(isPresented: $openCalendar) {
+            //    DynamicSheetContent(
+            //        selectedWeek: $selectedWeek,
+            //        selectedMonth: $selectedMonth,
+            //        selectedDetent: $selectedDetent,
+            //        detents: $detents,
+            //        selectedFraction: $selectionFraction,
+            //        selectedLesson: $selectedLesson,
+            //        openSettings: $openSettings,
+            //        settingsSearchFocus: $settingsSearchFocus,
+            //        loading: $viewModel.loading,
+            //        tempSettings: $tempSettings,
+            //        openCalendar: $openCalendar
+            //    )
+            //    .presentationDetents(detents, selection: $selectedDetent)
+            //    .interactiveDismissDisabled(true)
+            //    .presentationBackgroundInteraction(.enabled(upThrough: UIDevice.isIpad ? .fraction(0.75) : .medium))
+            //    .disabled((viewModel.loading || viewModel.noLessonsFound) && !openSettings)
+            //    .onChange(of: selectedDetent) { oldValue, newValue in
+            //        handleDetentChange(oldValue: oldValue, newValue: newValue)
+            //    }
+            //    .sheetDesign(transition, sourceID: "calendar", detent: $selectedDetent)
+            //}
+            .onAppear {
+                inizializeData()
+            }
+            .onChange(of: selection) {
+                handleSelectionChange()
+            }
+            .onChange(of: openCalendar) { oldValue, newValue in
+                oldOpenCalendar = oldValue
+            }
+            .onChange(of: viewModel.loading) { _, isLoading in
+                handleLoadingChange(isLoading)
+            }
+            .removeTopSafeArea()
+            .animation(.default, value: viewModel.checkingUpdates)
+            .animation(.default, value: viewModel.showUpdateAlert)
         }
     }
     
@@ -596,20 +578,40 @@ struct CalendarView: View {
     }
     
     private func setSheetShape(isOpen: Bool) {
-        if UIDevice.isIpad {
-            sheetShape = UnevenRoundedRectangle(
-                topLeadingRadius: (isOpen ? 32 : (47.4 / 2 + 8)) - 8,
-                bottomLeadingRadius: (isOpen ? (positionObserver.edges.bottomLeftSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
-                bottomTrailingRadius: (isOpen ? (positionObserver.edges.bottomRightSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
-                topTrailingRadius: (isOpen ? 32 : (47.4 / 2 + 8)) - 8
-            )
-        } else {
-            sheetShape = UnevenRoundedRectangle(
-                topLeadingRadius: (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8,
-                bottomLeadingRadius: (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8,
-                bottomTrailingRadius: (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8,
-                topTrailingRadius: (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8
-            )
+        withAnimation {
+            if #available(iOS 26, *) {
+                if UIDevice.isIpad {
+                    sheetShape = UnevenRoundedRectangle(
+                        topLeadingRadius: (isOpen ? 32 : (47.4 / 2 + 8)) - 8,
+                        bottomLeadingRadius: (isOpen ? (positionObserver.edges.bottomLeftSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
+                        bottomTrailingRadius: (isOpen ? (positionObserver.edges.bottomRightSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
+                        topTrailingRadius: (isOpen ? 32 : (47.4 / 2 + 8)) - 8
+                    )
+                } else {
+                    sheetShape = UnevenRoundedRectangle(
+                        topLeadingRadius: (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8,
+                        bottomLeadingRadius: (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8,
+                        bottomTrailingRadius: (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8,
+                        topTrailingRadius: (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8
+                    )
+                }
+            } else {
+                if UIDevice.isIpad {
+                    sheetShape = UnevenRoundedRectangle(
+                        topLeadingRadius: 32,
+                        bottomLeadingRadius: 0,
+                        bottomTrailingRadius: 0,
+                        topTrailingRadius: 32
+                    )
+                } else {
+                    sheetShape = UnevenRoundedRectangle(
+                        topLeadingRadius: .deviceCornerRadius,
+                        bottomLeadingRadius: 0,
+                        bottomTrailingRadius: 0,
+                        topTrailingRadius: .deviceCornerRadius
+                    )
+                }
+            }
         }
     }
 }
