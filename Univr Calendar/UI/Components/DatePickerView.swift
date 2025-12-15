@@ -10,6 +10,7 @@ import UnivrCore
 
 struct DatePickerView: View {
     @Environment(UserSettings.self) var settings
+    @Environment(\.colorScheme) var colorScheme
     @Environment(\.isEnabled) var isEnabled
     @Environment(\.calendar) var calendar
     
@@ -17,6 +18,7 @@ struct DatePickerView: View {
     
     @Binding var selection: Date
     @Binding var selectedMonth: Int
+    @Binding var blockTabSwipe: Bool
     
     let date: Date
     private let screenSize: CGRect = UIApplication.shared.screenSize
@@ -46,6 +48,7 @@ struct DatePickerView: View {
                         GridRow {
                             ForEach(0..<7, id: \.self) { column in
                                 let index = (row * 7) + column
+                                
                                 if index < monthCell.count {
                                     dayCell(for: monthCell[index])
                                 }
@@ -79,37 +82,43 @@ struct DatePickerView: View {
             Spacer()
             if today.isInAcademicYear(for: settings.selectedYear) {
                 Button("Oggi") {
-                    if selection != today {
+                    if selection != today && !blockTabSwipe {
                         selection = today
                     }
                 }
                 .glassIfAvailable()
+                .hoverEffect()
             }
         }
     }
     
     private func dayCell(for cell: CalendarCell) -> some View {
         let isSelected = calendar.isDate(selection, inSameDayAs: cell.date)
-        let isSelectedMonth = calendar.isDate(selection, equalTo: date, toGranularity: .month)
         let isToday = calendar.isDateInToday(cell.date)
-        let showSelectionCircle = isSelected && isSelectedMonth
+        let showSelectionCircle = isSelected
+        let isOutsideBounds = cell.date.isOutOfAcademicBounds(for: Int(settings.selectedYear) ?? 0)
         
         return ZStack {
             if showSelectionCircle {
                 Circle()
-                    .fill(.blue)
+                    .fill(colorScheme == .light ? .black : .white)
                     .frame(width: 40, height: 40)
-                    .opacity(isEnabled ? (cell.isCurrentMonth ? 0.3 : 0.1) : 0.1)
+                    .opacity(isEnabled ? (cell.isCurrentMonth ? 1 : 0.3) : (cell.isCurrentMonth ? 0.3 : 0.1))
             }
             Text(cell.dayNumber)
-                .fontWeight(isToday && !showSelectionCircle ? .bold : .regular)
-                .foregroundStyle(isToday && !showSelectionCircle ? .blue : .primary)
+                .fontWeight(isToday && !showSelectionCircle ? .black : .regular)
+                .foregroundStyle(isToday && !showSelectionCircle ? Color.primary : showSelectionCircle ? colorScheme == .light ? .white : .black : .primary)
                 .opacity(isEnabled ? (cell.isCurrentMonth ? 1 : 0.3) : (cell.isCurrentMonth ? 0.3 : 0.1))
         }
         .frame(width: 40, height: 40)
         .contentShape(Rectangle())
+        .if(!isOutsideBounds) { view in
+            view
+                .contentShape(.hoverEffect, .circle)
+                .hoverEffect(showSelectionCircle ? .lift : .highlight)
+        }
         .onTapGesture {
-            guard let yearInt = Int(settings.selectedYear) else { return }
+            guard let yearInt = Int(settings.selectedYear), !blockTabSwipe else { return }
             if selection != cell.date && !cell.date.isOutOfAcademicBounds(for: yearInt) {
                 selection = cell.date
             }
@@ -123,6 +132,7 @@ struct DatePickerContainer: View {
     @Binding var selectedDetent: PresentationDetent
     @Binding var selectedMonth: Int
     @Binding var selectedWeek: Date
+    @Binding var blockTabSwipe: Bool
     
     var body: some View {
         TabView(selection: $selectedMonth) {
@@ -132,12 +142,14 @@ struct DatePickerContainer: View {
                     DatePickerView(
                         selection: $selectedWeek,
                         selectedMonth: $selectedMonth,
+                        blockTabSwipe: $blockTabSwipe,
                         date: date
                     )
                     .tag(date.month)
                 }
             }
         }
+        .disableTabViewScrolling(blockTabSwipe)
         .tabViewStyle(.page(indexDisplayMode: .never))
     }
 }
@@ -147,6 +159,6 @@ struct DatePickerContainer: View {
     @Previewable @State var selectedMonth: Int = 11
     @Previewable @State var selectedWeek: Date = Date()
     
-    DatePickerContainer(selectedDetent: $selectedDetent, selectedMonth: $selectedMonth, selectedWeek: $selectedWeek)
+    DatePickerContainer(selectedDetent: $selectedDetent, selectedMonth: $selectedMonth, selectedWeek: $selectedWeek, blockTabSwipe: .constant(false))
         .environment(UserSettings.shared)
 }

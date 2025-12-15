@@ -54,6 +54,30 @@ struct CalendarView: View {
         [.fraction(0.15), UIDevice.isIpad ? .fraction(0.75) : .medium, .large]
     }
     
+    //Custom Sheet
+    @State var baseHeight: CGFloat = (((500 - 70) / 7) * 1.35) + 50
+    @GestureState var dragY: CGFloat = .zero
+    @State var offset: CGFloat = 0
+    @State var gestureLockedDirection: GestureDirection? = nil
+    @State var blockTabSwipe: Bool = false
+    @State var customSheetDetents: [CGFloat] = [
+        (((500 - 70) / 7) * 1.35) + 50,
+        UIApplication.shared.screenSize.height * 0.50,
+        UIApplication.shared.screenSize.height * 0.85
+    ]
+    @State var enabledCustomSheetDetents: [CGFloat] = [
+        (((500 - 70) / 7) * 1.35) + 50,
+        UIApplication.shared.screenSize.height * 0.50
+    ]
+    @State var selectedCustomSheetDetent = (((500 - 70) / 7) * 1.35) + 50
+    
+    enum GestureDirection {
+        case horizontal, vertical
+    }
+    private var liveHeight: CGFloat {
+        min(max(baseHeight - dragY, customSheetDetents.first!), customSheetDetents.last!)
+    }
+    
     var body: some View {
         NavigationStack {
             Group {
@@ -62,19 +86,171 @@ struct CalendarView: View {
                         mainScrollView
                             .overlay(alignment: .bottom) {
                                 if openCalendar {
-                                    FractionDatePickerContainer(
-                                        selectedWeek: $selectedWeek,
-                                        loading: $viewModel.loading,
-                                        selectionFraction: $selectionFraction,
-                                        selectedDetent: $selectedDetent
+                                    ZStack {
+                                        Color.clear
+                                        
+                                        FractionDatePickerContainer(
+                                            selectedWeek: $selectedWeek,
+                                            loading: $viewModel.loading,
+                                            selectionFraction: $selectionFraction,
+                                            selectedDetent: $selectedDetent,
+                                            blockTabSwipe: $blockTabSwipe
+                                        )
+                                        .opacity(selectedCustomSheetDetent == customSheetDetents[0] ? 1 : 0)
+                                        
+                                        DatePickerContainer(
+                                            selectedDetent: $selectedDetent,
+                                            selectedMonth: $selectedMonth,
+                                            selectedWeek: $selectedWeek,
+                                            blockTabSwipe: $blockTabSwipe
+                                        )
+                                        .opacity(selectedCustomSheetDetent == customSheetDetents[1] ? 1 : 0)
+                                        .disabled(false)
+                                    }
+                                    .clipShape(sheetShape)
+                                    .overlay(alignment: .top) {
+                                        RoundedRectangle(cornerRadius: 2.5)
+                                            .frame(width: 30, height: 5)
+                                            .padding(.top, 5)
+                                            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
+                                            .hoverEffect(.highlight)
+                                    }
+                                    .frame(height: liveHeight)
+                                    .simultaneousGesture(
+                                        DragGesture(minimumDistance: 4, coordinateSpace: .global)
+                                            .onChanged { value in
+                                                if gestureLockedDirection == nil {
+                                                    let dx = abs(value.translation.width)
+                                                    let dy = abs(value.translation.height)
+                                                    let angle = atan2(dy, dx) * 180 / .pi
+                                                    gestureLockedDirection = angle > 45 ? .vertical : .horizontal
+                                                    blockTabSwipe = (gestureLockedDirection == .vertical)
+                                                    
+                                                    if gestureLockedDirection == .vertical {
+                                                        var transaction = Transaction()
+                                                        transaction.disablesAnimations = true
+                                                        withTransaction(transaction) {
+                                                            baseHeight = liveHeight
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            .updating($dragY) { value, state, _ in
+                                                guard gestureLockedDirection == .vertical else {
+                                                    state = 0
+                                                    return
+                                                }
+                                                
+                                                let predictedHeight = baseHeight - value.translation.height
+                                                let minDetent = customSheetDetents.first ?? 0
+                                                let maxDetent = enabledCustomSheetDetents.last ?? 1000
+                                                
+                                                if predictedHeight >= minDetent && predictedHeight <= maxDetent {
+                                                    state = value.translation.height
+                                                    offset = 0
+                                                } else {
+                                                    if predictedHeight > maxDetent {
+                                                        let excess = predictedHeight - maxDetent
+                                                        let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent - maxDetent * 0.75)
+                                                        state = baseHeight - (maxDetent + dampedExcess)
+                                                        
+                                                        offset = 0
+                                                    } else if predictedHeight < minDetent {
+                                                        let excess = minDetent - predictedHeight
+                                                        let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent - maxDetent * 0.75)
+                                                        state = baseHeight - minDetent
+                                                        offset = -dampedExcess
+                                                    }
+                                                }
+                                            }
+                                            .onEnded { value in
+                                                if gestureLockedDirection == .vertical {
+                                                    let dx = abs(value.translation.width)
+                                                    let dy = abs(value.translation.height)
+                                                    let angle = atan2(dy, dx) * 180 / .pi
+                                                    
+                                                    guard angle > 45 else {
+                                                        blockTabSwipe = false
+                                                        gestureLockedDirection = nil
+                                                        return
+                                                    }
+                                                    
+                                                    let rawPredictedHeight = baseHeight - value.translation.height
+                                                    let minDetent = customSheetDetents.first ?? 0
+                                                    let maxDetent = enabledCustomSheetDetents.last ?? 1000
+                                                    
+                                                    var effectiveTranslation = rawPredictedHeight
+                                                    
+                                                    if rawPredictedHeight > maxDetent {
+                                                        let excess = rawPredictedHeight - maxDetent
+                                                        let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent - maxDetent * 0.75)
+                                                        effectiveTranslation = maxDetent + dampedExcess
+                                                    }
+                                                    else if rawPredictedHeight < minDetent {
+                                                        effectiveTranslation = minDetent
+                                                    }
+                                                    
+                                                    let currentH = effectiveTranslation
+                                                            
+                                                    let predictedTranslation = value.predictedEndTranslation.height
+                                                    let predictedHeight = baseHeight - predictedTranslation
+                                                    var target = enabledCustomSheetDetents.min(by: { abs($0 - predictedHeight) < abs($1 - predictedHeight) }) ?? predictedHeight
+                                                    selectedCustomSheetDetent = target
+                                                    
+                                                    if currentH < minDetent || rawPredictedHeight < minDetent {
+                                                        target = minDetent
+                                                    } else if currentH > maxDetent {
+                                                        target = maxDetent
+                                                    }
+                                                    
+                                                    let isGoingDown = target < currentH
+                                                    
+                                                    let projectedDelta = predictedTranslation - value.translation.height
+                                                    let baseVelocityPerSecond = -(projectedDelta * 5.0)
+                                                    
+                                                    var boostFactor: CGFloat = 1.0
+                                                    
+                                                    if !isGoingDown && currentH >= minDetent && currentH <= maxDetent {
+                                                        let distanceToMove = abs(target - currentH)
+                                                        let maxDistance = maxDetent - minDetent
+                                                        boostFactor = 1.0 + 2.0 * (distanceToMove / maxDistance)
+                                                    }
+                                                    
+                                                    let boostedVelocityPerSecond = baseVelocityPerSecond * boostFactor
+                                                    
+                                                    let distanceToTarget = target - currentH
+                                                    let relativeVelocity = abs(distanceToTarget) > 1 ? boostedVelocityPerSecond / distanceToTarget : 0
+                                                    
+                                                    baseHeight = currentH
+                                                    
+                                                    var limit: CGFloat = isGoingDown ? 65 : 65
+                                                    if baseHeight - dragY > enabledCustomSheetDetents.last! {
+                                                        limit = 0
+                                                    }
+                                                    withAnimation(.interpolatingSpring(
+                                                        mass: 1.0,
+                                                        stiffness: 200,
+                                                        damping: 30,
+                                                        initialVelocity: min(max(relativeVelocity, -limit), limit)
+                                                    )) {
+                                                        baseHeight = target
+                                                        offset = 0
+                                                    }
+                                                }
+                                                
+                                                Task { @MainActor in
+                                                    self.blockTabSwipe = false
+                                                    self.gestureLockedDirection = nil
+                                                }
+                                            }
                                     )
-                                    .frame(height: screenSize.height * 0.2)
                                     .glassEffect(.regular.interactive(), in: sheetShape)
                                     .glassEffectID("calendar", in: transition)
                                     .glassEffectTransition(.matchedGeometry)
                                     .padding(.horizontal, 8)
                                     .padding(.bottom, 8)
                                     .id(colorScheme)
+                                    .offset(y: -offset)
                                 } else {
                                     Button {
                                         changeOpenCalendar(true)
@@ -111,10 +287,11 @@ struct CalendarView: View {
                                     selectedWeek: $selectedWeek,
                                     loading: $viewModel.loading,
                                     selectionFraction: $selectionFraction,
-                                    selectedDetent: $selectedDetent
+                                    selectedDetent: $selectedDetent,
+                                    blockTabSwipe: $blockTabSwipe
                                 )
                             }
-                            .frame(height: screenSize.height * 0.2)
+                            .frame(height: screenSize.height * 0.15)
                         }
                 }
             }
@@ -614,6 +791,12 @@ struct CalendarView: View {
             }
         }
     }
+    
+    func rubberBandDistance(offset: CGFloat, dimension: CGFloat) -> CGFloat {
+        let coefficient: CGFloat = 0.55
+        let result = (1.0 - (1.0 / ((offset * coefficient / dimension) + 1.0))) * dimension
+        return result
+    }
 }
 
 // MARK: - Subviews
@@ -653,7 +836,8 @@ struct DynamicSheetContent: View {
                             selectedWeek: $selectedWeek,
                             loading: $loading,
                             selectionFraction: $selectedFraction,
-                            selectedDetent: $selectedDetent
+                            selectedDetent: $selectedDetent,
+                            blockTabSwipe: .constant(false)
                         )
                         .opacity(settingsSearchFocus ? 0 : min(max(smallOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == .fraction(0.15))
@@ -663,7 +847,8 @@ struct DynamicSheetContent: View {
                         DatePickerContainer(
                             selectedDetent: $selectedDetent,
                             selectedMonth: $selectedMonth,
-                            selectedWeek: $selectedWeek
+                            selectedWeek: $selectedWeek,
+                            blockTabSwipe: .constant(false)
                         )
                         .opacity(settingsSearchFocus ? 0 : min(max(mediumOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == (UIDevice.isIpad ? .fraction(0.75) : .medium))
