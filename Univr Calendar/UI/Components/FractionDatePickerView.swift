@@ -79,81 +79,95 @@ struct FractionDatePickerContainer: View {
     @Binding var selectedWeek: Date
     @Binding var loading: Bool
     @Binding var selectionFraction: String?
-    @Binding var selectedDetent: PresentationDetent
     @Binding var blockTabSwipe: Bool
 
     @State private var isSyncingSelectionFraction: Bool = false
     @State private var lastIsDualMode: Bool? = nil
     
+    @State private var containerWidth: CGFloat = UIScreen.main.bounds.width
+    
     var body: some View {
-        GeometryReader { proxy in
-            let screenWidth = proxy.size.width
-            let isDualMode = screenWidth >= 1000
+        let screenWidth = containerWidth
+        let isDualMode = screenWidth >= 1000
+        
+        TabView(selection: $selectionFraction) {
+            if !isDualMode {
+                ForEach(viewModel.academicWeeks, id: \.self) { week in
+                    FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, blockTabSwipe: $blockTabSwipe, week: week, width: screenWidth)
+                        .tag(week.first?.id)
+                }
+            } else {
+                ForEach(Array(stride(from: 0, to: viewModel.academicWeeks.count, by: 2)), id: \.self) { index in
+                    let isLast = index != viewModel.academicWeeks.count - 1
+                    HStack {
+                        Spacer()
+                        FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, blockTabSwipe: $blockTabSwipe, week: viewModel.academicWeeks[index], width: screenWidth)
+                        Spacer()
+                        FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, blockTabSwipe: $blockTabSwipe, week: isLast ? viewModel.academicWeeks[index + 1] : viewModel.additionalWeek, width: screenWidth)
+                        Spacer()
+                    }
+                    .tag(viewModel.academicWeeks[index].first?.id)
+                }
+            }
+        }
+        .disableTabViewScrolling(blockTabSwipe)
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .frame(maxWidth: .infinity)
+        .background(
+            GeometryReader { proxy in
+                Color.clear
+                    .onChange(of: proxy.size.width, initial: true) { _, newWidth in
+                        
+                        if containerWidth != newWidth {
+                            containerWidth = newWidth
+                        }
+                    }
+            }
+        )
+        .task(id: settings.selectedYear) {
+            await reloadWeeksAndSelection(containerWidth: screenWidth)
+        }
+        .onAppear {
+            if lastIsDualMode == nil {
+                lastIsDualMode = isDualMode
+            }
+        }
+        .onChange(of: screenWidth) { _, newWidth in
+            let newIsDual = newWidth >= 1000
+            let didCrossThreshold = (lastIsDualMode != nil && lastIsDualMode != newIsDual)
+            lastIsDualMode = newIsDual
             
-            TabView(selection: $selectionFraction) {
-                if !isDualMode {
-                    ForEach(viewModel.academicWeeks, id: \.self) { week in
-                        FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, blockTabSwipe: $blockTabSwipe, week: week, width: screenWidth)
-                            .tag(week.first?.id)
+            guard didCrossThreshold else { return }
+            guard !viewModel.academicWeeks.isEmpty else { return }
+            
+            let newTarget = targetId(containerWidth: screenWidth)
+            if selectionFraction != newTarget {
+                Task { @MainActor in
+                    isSyncingSelectionFraction = true
+                    withAnimation(nil) {
+                        selectionFraction = newTarget
                     }
-                } else {
-                    ForEach(Array(stride(from: 0, to: viewModel.academicWeeks.count, by: 2)), id: \.self) { index in
-                        HStack {
-                            let isLast = index != viewModel.academicWeeks.count - 1
-                            FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, blockTabSwipe: $blockTabSwipe, week: viewModel.academicWeeks[index], width: screenWidth)
-                            FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, blockTabSwipe: $blockTabSwipe, week: isLast ? viewModel.academicWeeks[index + 1] : viewModel.additionalWeek, width: screenWidth)
-                        }
-                        .tag(viewModel.academicWeeks[index].first?.id)
-                    }
+                    await Task.yield()
+                    isSyncingSelectionFraction = false
                 }
             }
-            .disableTabViewScrolling(blockTabSwipe)
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .task(id: settings.selectedYear) {
-                await reloadWeeksAndSelection(containerWidth: screenWidth)
-            }
-            .onAppear {
-                if lastIsDualMode == nil {
-                    lastIsDualMode = isDualMode
-                }
-            }
-            .onChange(of: screenWidth) { _, newWidth in
-                let newIsDual = newWidth >= 1000
-                let didCrossThreshold = (lastIsDualMode != nil && lastIsDualMode != newIsDual)
-                lastIsDualMode = newIsDual
-                
-                guard didCrossThreshold else { return }
-                guard !viewModel.academicWeeks.isEmpty else { return }
-                
-                let newTarget = targetId(containerWidth: screenWidth)
-                if selectionFraction != newTarget {
-                    Task { @MainActor in
-                        isSyncingSelectionFraction = true
-                        withAnimation(nil) {
-                            selectionFraction = newTarget
-                        }
-                        await Task.yield()
-                        isSyncingSelectionFraction = false
+        }
+        .onChange(of: selectedWeek) {
+            let newTarget = targetId(containerWidth: screenWidth)
+            if selectionFraction != newTarget {
+                Task { @MainActor in
+                    isSyncingSelectionFraction = true
+                    withAnimation(nil) {
+                        selectionFraction = newTarget
                     }
+                    await Task.yield()
+                    isSyncingSelectionFraction = false
                 }
             }
-            .onChange(of: selectedWeek) {
-                let newTarget = targetId(containerWidth: screenWidth)
-                if selectionFraction != newTarget {
-                    Task { @MainActor in
-                        isSyncingSelectionFraction = true
-                        withAnimation(nil) {
-                            selectionFraction = newTarget
-                        }
-                        await Task.yield()
-                        isSyncingSelectionFraction = false
-                    }
-                }
-            }
-            .onChange(of: selectionFraction) {
-                guard !isSyncingSelectionFraction else { return }
-                handleFractionSelectionChange(containerWidth: screenWidth)
-            }
+        }
+        .onChange(of: selectionFraction) {
+            guard !isSyncingSelectionFraction else { return }
+            handleFractionSelectionChange(containerWidth: screenWidth)
         }
     }
     
@@ -235,16 +249,16 @@ struct FractionDatePickerContainer: View {
     @Previewable @Namespace var transition
     @Previewable @State var selectedWeek: Date = Date()
     @Previewable @State var loading: Bool = false
-    @Previewable @State var selectedDetent: PresentationDetent = .fraction(0.15)
+    //@Previewable @State var selectedDetent: PresentationDetent = .fraction(0.15)
     @Previewable @State var selectionFraction: String? = ""
     
     Text("")
         .sheet(isPresented: .constant(true)) {
-            FractionDatePickerContainer(selectedWeek: $selectedWeek, loading: $loading, selectionFraction: $selectionFraction, selectedDetent: $selectedDetent, blockTabSwipe: .constant(false))
+            FractionDatePickerContainer(selectedWeek: $selectedWeek, loading: $loading, selectionFraction: $selectionFraction, blockTabSwipe: .constant(false))
                 .presentationDetents([.fraction(0.15)])
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                .sheetDesign(transition, sourceID: "", detent: $selectedDetent)
+                //.sheetDesign(transition, sourceID: "", detent: $selectedDetent)
         }
         .environment(UserSettings.shared)
 }

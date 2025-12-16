@@ -143,7 +143,7 @@ extension View {
     @ViewBuilder
     func onScrollGeometry(
         openCalendar: Binding<Bool>,
-        selectedDetent: Binding<PresentationDetent>,
+        selectedDetent: Binding<CustomSheetDetent>,
         firstLoading: Binding<Bool>,
         changeOpenCalendar: ((_ isOpen: Bool) -> Void)?
     ) -> some View {

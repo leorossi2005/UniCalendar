@@ -16,14 +16,13 @@ struct Settings: View {
     @State private var showDeleteAlert = false
     @State private var searchText: String = ""
     
-    @Binding var detents: Set<PresentationDetent>
-    @Binding var selectedDetent: PresentationDetent
-    
     @Binding var selectedYear: String
     @Binding var selectedCourse: String
     @Binding var selectedAcademicYear: String
     @Binding var matricola: String
     @Binding var searchTextFieldFocus: Bool
+    @Binding var isContentAtTop: Bool
+    @Binding var lockSheet: Bool
     
     private let screenSize: CGRect = UIApplication.shared.screenSize
     
@@ -126,9 +125,9 @@ struct Settings: View {
         }
         .onChange(of: searchTextFieldFocus) {
             if searchTextFieldFocus {
-                detents = [.large]
+                lockSheet = true
             } else {
-                detents = [.fraction(0.15), .medium, .large]
+                lockSheet = false
             }
         }
         .onAppear {
@@ -138,7 +137,7 @@ struct Settings: View {
     
     // MARK: - Logic Methods
     private func handleYearChange() {
-        detents = [.large]
+        lockSheet = true
         viewModel.courses = []
         selectedCourse = "0"
         viewModel.academicYears = []
@@ -152,7 +151,7 @@ struct Settings: View {
     private func handleCourseChange() {
         if selectedCourse != "0" {
             settings.foundMatricola = false
-            detents = [.fraction(0.15), .medium, .large]
+            lockSheet = false
             viewModel.academicYears = []
             selectedAcademicYear = "0"
             
@@ -165,7 +164,7 @@ struct Settings: View {
                 }
             }
         } else {
-            detents = [.large]
+            lockSheet = true
             viewModel.academicYears = []
             selectedAcademicYear = "0"
             settings.foundMatricola = false
@@ -173,8 +172,6 @@ struct Settings: View {
     }
     
     private func performReset() {
-        selectedDetent = .fraction(0.15)
-        
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.1))
             await viewModel.clearCalendarCache()
@@ -218,7 +215,7 @@ struct Settings: View {
                             settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                         }
                     } else {
-                        detents = [.large]
+                        lockSheet = true
                     }
                 }
             }
@@ -227,18 +224,18 @@ struct Settings: View {
 }
 
 #Preview {
-    @Previewable @State var detents: Set<PresentationDetent> = []
     @Previewable @State var openSettings: Bool = true
     @Previewable @State var openCalendar: Bool = true
-    @Previewable @State var selectedDetent: PresentationDetent = .large
     @Previewable @State var selectedYear: String = "2025"
     @Previewable @State var selectedCourse: String = "0"
     @Previewable @State var selectedAcademicYear: String = "0"
     @Previewable @State var matricola: String = "pari"
     @Previewable @State var isFocused: Bool = false
+    @Previewable @State var isContentAtTop: Bool = false
+    @Previewable @State var lockSheet: Bool = false
     
     NavigationStack {
-        Settings(detents: $detents, selectedDetent: $selectedDetent, selectedYear: $selectedYear, selectedCourse: $selectedCourse, selectedAcademicYear: $selectedAcademicYear, matricola: $matricola, searchTextFieldFocus: $isFocused)
+        Settings(selectedYear: $selectedYear, selectedCourse: $selectedCourse, selectedAcademicYear: $selectedAcademicYear, matricola: $matricola, searchTextFieldFocus: $isFocused, isContentAtTop: $isContentAtTop, lockSheet: $lockSheet)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("Impostazioni")

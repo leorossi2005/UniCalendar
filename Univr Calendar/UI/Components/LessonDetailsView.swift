@@ -15,32 +15,25 @@ struct LessonDetailsView: View {
     @Environment(\.colorScheme) var colorScheme
     
     @Binding var selectedLesson: Lesson?
-    @Binding var selectedDetent: PresentationDetent
     
     @State private var title: String = ""
     @State private var date: Date = .distantFuture
-    
-    @State private var coordinate: CLLocationCoordinate2D?
-    @State private var mapPosition: MapCameraPosition = .automatic
-    @State private var isLoadingMap: Bool = false
     
     var body: some View {
         if let lesson = selectedLesson {
             VStack(alignment: .leading, spacing: 20) {
                 headerInfo(lesson: lesson)
                 detailRows(lesson: lesson)
-                mapSection(lesson: lesson)
+                StableMapView(lesson: lesson)
             }
-            .padding(.top, 40)
+            .frame(
+                width: UIApplication.shared.screenSize.width - 48,
+                height: UIApplication.shared.screenSize.height - safeAreas.top - safeAreas.bottom - 40,
+            )
             .padding(.horizontal, 24)
-            .padding(.bottom, -safeAreas.bottom + 24)
-            .frame(height: UIApplication.shared.screenSize.height - safeAreas.top - safeAreas.bottom)
-            .ignoresSafeArea(edges: .bottom)
+            .padding(.top, 40)
             .onAppear {
                 setupInitialData(lesson: lesson)
-            }
-            .task(id: lesson.id) {
-                await findLocation(for: lesson)
             }
         }
     }
@@ -104,18 +97,34 @@ struct LessonDetailsView: View {
             .font(.headline)
     }
     
-    private func mapSection(lesson: Lesson) -> some View {
+    // MARK: - Logic
+    private func setupInitialData(lesson: Lesson) {
+        if date == .distantFuture {
+            date = lesson.data.toDateModern() ?? Date()
+        }
+        if title.isEmpty {
+            title = lesson.cleanName
+        }
+    }
+}
+
+// MARK: - Subviews
+struct StableMapView: View {
+    let lesson: Lesson
+    @State private var coordinate: CLLocationCoordinate2D?
+    @State private var isLoadingMap: Bool = false
+
+    var body: some View {
         ZStack {
             if let coordinate = coordinate {
-                Map(position: $mapPosition) {
-                    Annotation(lesson.aula, coordinate: coordinate) {
-                        mapAnnotationView(lesson: lesson)
+                UIKitStaticMap(coordinate: coordinate, padding: (.deviceCornerRadius - 24) / 2)
+                mapAnnotationView(lesson: lesson)
+                VStack {
+                    HStack {
+                        Spacer()
+                        openInMapsButton(coordinate: coordinate, name: lesson.formattedClassroom, color: Color(hex: lesson.color) ?? .clear)
                     }
-                }
-                .mapControlVisibility(.hidden)
-                .safeAreaPadding((.deviceCornerRadius - 24) / 2)
-                .overlay(alignment: .topTrailing) {
-                    openInMapsButton(coordinate: coordinate, name: lesson.formattedClassroom, color: Color(hex: lesson.color) ?? .clear)
+                    Spacer()
                 }
             } else if isLoadingMap {
                 ProgressView()
@@ -128,19 +137,37 @@ struct LessonDetailsView: View {
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 24))
+        .task(id: lesson.id) {
+            await findLocation(for: lesson)
+        }
     }
     
     private func mapAnnotationView(lesson: Lesson) -> some View {
-        ZStack {
-            Circle()
-                .fill(Color(hex: lesson.color) ?? .black)
-                .frame(width: 30, height: 30)
-                .shadow(radius: 2)
-            Image(systemName: "graduationcap.fill")
-                .font(.system(size: 10))
-                .foregroundStyle(.black)
+        VStack(spacing: 4) {
+            ZStack {
+                Circle()
+                    .fill(Color(hex: lesson.color) ?? .black)
+                    .frame(width: 30, height: 30)
+                    .shadow(radius: 2)
+                Image(systemName: "graduationcap.fill")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.black)
+            }
+            
+            Text(lesson.aula)
+                .frame(height: 10)
+                .font(.caption)
+                .bold()
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(.regularMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .shadow(radius: 1)
         }
+        .offset(y: 10)
     }
+
     
     private func openInMapsButton(coordinate: CLLocationCoordinate2D, name: String, color: Color) -> some View {
         Group {
@@ -152,7 +179,7 @@ struct LessonDetailsView: View {
                         .frame(width: 50, height: 50)
                 }
                 .tint(.black)
-                .glassEffect(.clear.interactive().tint(color.opacity(0.5)))
+                .glassEffect(.clear.interactive().tint(color.opacity(0.3)))
                 .buttonBorderShape(.circle)
                 .padding((.deviceCornerRadius - 24) / 2)
             } else {
@@ -171,23 +198,14 @@ struct LessonDetailsView: View {
         }
     }
     
-    // MARK: - Logic
-    private func setupInitialData(lesson: Lesson) {
-        if date == .distantFuture {
-            date = lesson.data.toDateModern() ?? Date()
-        }
-        if title.isEmpty {
-            title = lesson.cleanName
-        }
-    }
-    
     private func findLocation(for lesson: Lesson) async {
         guard let address = lesson.indirizzoAula, !address.isEmpty else { return }
         
         if let cachedCoord = await CoordinateCache.shared.coordinate(for: address) {
             let clCoord = CLLocationCoordinate2D(latitude: cachedCoord.latitude, longitude: cachedCoord.longitude)
             await MainActor.run {
-                updateMap(with: clCoord)
+                self.coordinate = clCoord
+                self.isLoadingMap = false
             }
             return
         }
@@ -204,29 +222,16 @@ struct LessonDetailsView: View {
                 
                 await CoordinateCache.shared.save(cacheCoord, for: address)
                 await MainActor.run {
-                    updateMap(with: coord)
-                }
-            } else {
-                await MainActor.run {
+                    self.coordinate = coord
                     self.isLoadingMap = false
                 }
+            } else {
+                await MainActor.run { self.isLoadingMap = false }
             }
         } catch {
             print("Errore geocoding: \(error.localizedDescription)")
-            await MainActor.run {
-                self.isLoadingMap = false
-            }
+            await MainActor.run { self.isLoadingMap = false }
         }
-    }
-    
-    @MainActor
-    private func updateMap(with coordinate: CLLocationCoordinate2D) {
-        self.coordinate = coordinate
-        self.mapPosition = .region(MKCoordinateRegion(
-            center: coordinate,
-            span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-        ))
-        self.isLoadingMap = false
     }
     
     private func openMaps(coordinate: CLLocationCoordinate2D, name: String) {
@@ -236,17 +241,18 @@ struct LessonDetailsView: View {
     }
 }
 
+
 #Preview {
     @Previewable @Namespace var transition
     @Previewable @State var lesson: Lesson? = Lesson.sample
-    @Previewable @State var selectedDetent: PresentationDetent = .large
+    //@Previewable @State var selectedDetent: PresentationDetent = .large
     
     Text("")
         .sheet(isPresented: .constant(true)) {
-            LessonDetailsView(selectedLesson: $lesson, selectedDetent: $selectedDetent)
-                .presentationDetents([.medium, .large], selection: $selectedDetent)
+            LessonDetailsView(selectedLesson: $lesson)
+                //.presentationDetents([.medium, .large], selection: $selectedDetent)
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                .sheetDesign(transition, sourceID: "", detent: $selectedDetent)
+                //.sheetDesign(transition, sourceID: "", detent: $selectedDetent)
         }
 }
