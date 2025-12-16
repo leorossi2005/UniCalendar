@@ -8,6 +8,10 @@
 import SwiftUI
 import UnivrCore
 
+enum SettingsRoute: Hashable {
+    case about
+}
+
 struct Settings: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
@@ -15,6 +19,7 @@ struct Settings: View {
     @State private var viewModel = UniversityDataManager()
     @State private var showDeleteAlert = false
     @State private var searchText: String = ""
+    @State private var initialIsContentAtTop: Bool? = nil
     
     @Binding var selectedYear: String
     @Binding var selectedCourse: String
@@ -22,7 +27,10 @@ struct Settings: View {
     @Binding var matricola: String
     @Binding var searchTextFieldFocus: Bool
     @Binding var isContentAtTop: Bool
+    @Binding var sheetInitialIsContentAtTop: Bool
     @Binding var lockSheet: Bool
+    @Binding var draggingDirection: CustomSheetDraggingDirection
+    @Binding var navigationPath: NavigationPath
     
     private let screenSize: CGRect = UIApplication.shared.screenSize
     
@@ -94,7 +102,7 @@ struct Settings: View {
                     }
                 }
                 .tint(.primary)
-                NavigationLink(destination: AboutView()) {
+                NavigationLink(value: SettingsRoute.about) {
                     Label("Informazioni", systemImage: .infoPageDynamic)
                         .foregroundStyle(.primary)
                 }
@@ -123,6 +131,19 @@ struct Settings: View {
             }
             .listRowBackground(Color.clear)
         }
+        .scrollDisabled(sheetInitialIsContentAtTop && draggingDirection == .up)
+        .background(Color(.secondarySystemBackground))
+        .navigationTitle("Impostazioni")
+        .navigationDestination(for: SettingsRoute.self) { route in
+            switch route {
+            case .about: AboutView(isContentAtTop: $isContentAtTop, sheetInitialIsContentAtTop: $sheetInitialIsContentAtTop, draggingDirection: $draggingDirection)
+            }
+        }
+        .onChange(of: navigationPath) { _, newPath in
+            if newPath.count > 0 {
+                initialIsContentAtTop = isContentAtTop
+            }
+        }
         .onChange(of: searchTextFieldFocus) {
             if searchTextFieldFocus {
                 lockSheet = true
@@ -132,6 +153,15 @@ struct Settings: View {
         }
         .onAppear {
             loadInitialData()
+            
+            if let initialIsContentAtTop {
+                isContentAtTop = initialIsContentAtTop
+                self.initialIsContentAtTop = nil
+            }
+        }
+        .overlay {
+            ListScrollOffsetReader(isAtTop: $isContentAtTop)
+                .frame(width: 0, height: 0)
         }
     }
     
@@ -235,7 +265,7 @@ struct Settings: View {
     @Previewable @State var lockSheet: Bool = false
     
     NavigationStack {
-        Settings(selectedYear: $selectedYear, selectedCourse: $selectedCourse, selectedAcademicYear: $selectedAcademicYear, matricola: $matricola, searchTextFieldFocus: $isFocused, isContentAtTop: $isContentAtTop, lockSheet: $lockSheet)
+        Settings(selectedYear: $selectedYear, selectedCourse: $selectedCourse, selectedAcademicYear: $selectedAcademicYear, matricola: $matricola, searchTextFieldFocus: $isFocused, isContentAtTop: $isContentAtTop, sheetInitialIsContentAtTop: .constant(false), lockSheet: $lockSheet, draggingDirection: .constant(.none), navigationPath: .constant(NavigationPath()))
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("Impostazioni")

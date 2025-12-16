@@ -22,9 +22,13 @@ enum CustomSheetDetent {
             let topSafeArea = UIApplication.shared.safeAreas.top
             let topMargin = topSafeArea > 0 ? topSafeArea : 20
             
-            return screenHeight - topMargin - 10
+            return screenHeight - topMargin - 1
         }
     }
+}
+
+enum CustomSheetDraggingDirection {
+    case up, down, left, right, none
 }
 
 struct CustomSheetView: View {
@@ -37,7 +41,6 @@ struct CustomSheetView: View {
     @Binding var loading: Bool
     @Binding var sheetShape: UnevenRoundedRectangle
     
-    //@Binding var detents: Set<PresentationDetent>
     @Binding var selectedLesson: Lesson?
     @Binding var openSettings: Bool
     @Binding var settingsSearchFocus: Bool
@@ -47,6 +50,7 @@ struct CustomSheetView: View {
     @Binding var offset: CGFloat
     @Binding var enableBackground: Bool
     @Binding var sheetPadding: CGFloat
+    var setSheetShape: (Bool, CGFloat) -> ()
     
     // Gesture & Layout States
     @State private var baseHeight: CGFloat = CustomSheetDetent.small.value
@@ -57,7 +61,9 @@ struct CustomSheetView: View {
     
     @State private var gestureLockedDirection: GestureDirection? = nil
     @State private var blockTabSwipe: Bool = false
+    @State private var draggingDirection: CustomSheetDraggingDirection = .none
     @State private var isContentAtTop: Bool = true
+    @State private var initialIsContentAtTop: Bool = true
     @State private var lockSheet: Bool = false
     @State private var initialPadding: CGFloat = .zero
     
@@ -89,20 +95,22 @@ struct CustomSheetView: View {
                 tempSettings: $tempSettings,
                 openCalendar: $openCalendar,
                 isContentAtTop: $isContentAtTop,
-                lockSheet: $lockSheet
+                sheetInitialIsContentAtTop: $initialIsContentAtTop,
+                lockSheet: $lockSheet,
+                draggingDirection: $draggingDirection
             )
         }
         .clipShape(sheetShape)
         .overlay(alignment: .top) {
             RoundedRectangle(cornerRadius: 2.5)
-                .frame(width: 30, height: 5)
+                .frame(width: 35, height: 5)
                 .padding(.top, 5)
                 .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
                 .hoverEffect(.highlight)
         }
         .frame(height: liveHeight)
         .simultaneousGesture(
-            DragGesture(minimumDistance: 4, coordinateSpace: .global)
+            DragGesture(minimumDistance: 1, coordinateSpace: .global)
                 .onChanged { value in
                     handleDragChanged(value)
                 }
@@ -122,12 +130,14 @@ struct CustomSheetView: View {
             )) {
                 if newValue == .large {
                     sheetPadding = 0
+                    setSheetShape(true, 36)
                     
                     withAnimation(.easeInOut(duration: 0.2)) {
                         enableBackground = true
                     }
                 } else {
                     sheetPadding = initialPadding
+                    setSheetShape(true, -1)
                     
                     withAnimation(.easeInOut(duration: 0.2)) {
                         enableBackground = false
@@ -141,12 +151,20 @@ struct CustomSheetView: View {
             }
             
             if oldValue == .large {
-                openSettings = false
                 sheetDetents = [.small, .medium]
             } else if newValue == .large {
                 sheetDetents = [.small, .medium, .large]
             }
-            print(sheetDetents)
+        }
+        .onChange(of: isContentAtTop) {
+            if isContentAtTop && draggingDirection == .none {
+                lockSheet = false
+                if selectedDetent == .large {
+                    sheetDetents = [.small, .medium, .large]
+                } else {
+                    sheetDetents = [.small, .medium]
+                }
+            }
         }
         .onAppear {
             initialPadding = sheetPadding
@@ -164,27 +182,52 @@ struct CustomSheetView: View {
         if gestureLockedDirection == nil {
             let dx = abs(value.translation.width)
             let dy = abs(value.translation.height)
+            
+            if dx < 4 && dy < 4 { return }
+            
             let angle = atan2(dy, dx) * 180 / .pi
             gestureLockedDirection = angle > 45 ? .vertical : .horizontal
             blockTabSwipe = (gestureLockedDirection == .vertical)
             
             if gestureLockedDirection == .vertical {
+                let isDraggingUp = value.translation.height > 0
+                let isDraggingDown = value.translation.height < 0
+                let isDraggingLeft = value.translation.width < 0
+                let isDraggingRight = value.translation.width > 0
+                
+                if isDraggingUp {
+                    draggingDirection = .up
+                } else if isDraggingDown {
+                    draggingDirection = .down
+                } else if isDraggingLeft {
+                    draggingDirection = .left
+                } else if isDraggingRight {
+                    draggingDirection = .right
+                }
+                
                 var transaction = Transaction()
                 transaction.disablesAnimations = true
                 withTransaction(transaction) {
                     baseHeight = liveHeight
                 }
             }
+            
+            initialIsContentAtTop = isContentAtTop
         }
     }
     
     private func handleDragUpdating(value: DragGesture.Value, state: inout CGFloat) {
-        guard gestureLockedDirection == .vertical else {
+        guard gestureLockedDirection == .vertical && initialIsContentAtTop else {
             state = 0
             return
         }
         
         if selectedDetent == .large {
+            if !isContentAtTop {
+                lockSheet = true
+                sheetDetents = [.large]
+            }
+            
             if value.translation.height < 0 {
                 state = 0
                 return
@@ -197,10 +240,10 @@ struct CustomSheetView: View {
         }
         
         let predictedHeight = baseHeight - value.translation.height
-        let minDetent = CustomSheetDetent.small.value
+        let minDetent = sheetDetents.first!.value
         let maxDetent = sheetDetents.last!.value
         
-        if maxDetent == CustomSheetDetent.large.value {
+        if maxDetent == CustomSheetDetent.large.value && sheetDetents.contains(.medium) {
             if predictedHeight >= CustomSheetDetent.medium.value && predictedHeight <= CustomSheetDetent.large.value {
                 sheetPadding = min(max(initialPadding - ((initialPadding * (predictedHeight - CustomSheetDetent.medium.value)) / (CustomSheetDetent.large.value - CustomSheetDetent.medium.value)), 0), initialPadding)
             } else if predictedHeight > CustomSheetDetent.large.value {
@@ -215,10 +258,12 @@ struct CustomSheetView: View {
 
             if predictedHeight > CustomSheetDetent.large.value * 0.8 {
                 withAnimation(.easeInOut(duration: 0.2)) {
+                    setSheetShape(true, 36)
                     enableBackground = true
                 }
             } else {
                 withAnimation(.easeInOut(duration: 0.2)) {
+                    setSheetShape(true, -1)
                     enableBackground = false
                 }
             }
@@ -240,6 +285,8 @@ struct CustomSheetView: View {
     }
     
     private func handleDragEnded(_ value: DragGesture.Value) {
+        draggingDirection = .none
+        
         if gestureLockedDirection == .vertical {
             if selectedDetent == .large {
                 if value.translation.height < 0 || (value.translation.height > 0 && !isContentAtTop) {
@@ -252,7 +299,7 @@ struct CustomSheetView: View {
             }
             
             let rawPredictedHeight = baseHeight - value.translation.height
-            let minDetent = CustomSheetDetent.small
+            let minDetent = sheetDetents.first!
             let maxDetent = sheetDetents.last!
             
             var effectiveTranslation = rawPredictedHeight
@@ -301,10 +348,12 @@ struct CustomSheetView: View {
             
             if target == .large {
                 withAnimation(.easeInOut(duration: 0.2)) {
+                    setSheetShape(true, 36)
                     enableBackground = true
                 }
             } else {
                 withAnimation(.easeInOut(duration: 0.2)) {
+                    setSheetShape(true, -1)
                     enableBackground = false
                 }
             }
@@ -330,6 +379,15 @@ struct CustomSheetView: View {
             }
         }
         
+        if isContentAtTop {
+            lockSheet = false
+            if selectedDetent == .large {
+                sheetDetents = [.small, .medium, .large]
+            } else {
+                sheetDetents = [.small, .medium]
+            }
+        }
+        
         Task { @MainActor in
             self.blockTabSwipe = false
             self.gestureLockedDirection = nil
@@ -350,7 +408,9 @@ struct DynamicSheetContent: View {
     @Binding var tempSettings: TempSettingsState
     @Binding var openCalendar: Bool
     @Binding var isContentAtTop: Bool
+    @Binding var sheetInitialIsContentAtTop: Bool
     @Binding var lockSheet: Bool
+    @Binding var draggingDirection: CustomSheetDraggingDirection
     
     @State private var path = NavigationPath()
     
@@ -401,7 +461,13 @@ struct DynamicSheetContent: View {
                                 matricola: $tempSettings.matricola,
                                 searchTextFieldFocus: $settingsSearchFocus,
                                 isContentAtTop: $isContentAtTop,
-                                lockSheet: $lockSheet
+                                sheetInitialIsContentAtTop: $sheetInitialIsContentAtTop,
+                                lockSheet: $lockSheet,
+                                draggingDirection: $draggingDirection,
+                                navigationPath: $path
+                            )
+                            .frame(
+                                width: UIApplication.shared.screenSize.width - 0.1
                             )
                             .toolbar {
                                 ToolbarItem(placement: .principal) {
@@ -416,10 +482,16 @@ struct DynamicSheetContent: View {
                         .allowsHitTesting(selectedDetent == .large)
                     } else if currentHeight > screenHeight * 0.75 {
                         LessonDetailsView(selectedLesson: $selectedLesson)
+                            .padding(.top, 6)
                             .opacity(settingsSearchFocus ? 0 : min(max(largeOpacity, 0), 1))
                             .allowsHitTesting(selectedDetent == .large)
                     }
                 }
+            }
+        }
+        .onChange(of: openSettings) {
+            if !openSettings {
+                path = NavigationPath()
             }
         }
     }

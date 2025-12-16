@@ -78,7 +78,8 @@ struct CalendarView: View {
                                     openCalendar: $openCalendar,
                                     offset: $sheetOffset,
                                     enableBackground: $sheetEnableBackground,
-                                    sheetPadding: $sheetPadding
+                                    sheetPadding: $sheetPadding,
+                                    setSheetShape: setSheetShape
                                 )
                             }
                     }
@@ -114,6 +115,9 @@ struct CalendarView: View {
                 //    }
                 //    .sheetDesign(transition, sourceID: "calendar", detent: $selectedDetent)
                 //}
+                .onChange(of: selectedDetent) { oldValue, newValue in
+                    handleDetentChange(oldValue: oldValue, newValue: newValue)
+                }
                 .onAppear {
                     inizializeData()
                 }
@@ -137,51 +141,59 @@ struct CalendarView: View {
             
             if #available(iOS 26, *) {
                 GlassEffectContainer {
-                    if openCalendar {
-                        CustomSheetView(
-                            selectedWeek: $selectedWeek,
-                            selectedMonth: $selectedMonth,
-                            selectedDetent: $selectedDetent,
-                            selectionFraction: $selectionFraction,
-                            loading: $viewModel.loading,
-                            sheetShape: $sheetShape,
-                            selectedLesson: $selectedLesson,
-                            openSettings: $openSettings,
-                            settingsSearchFocus: $settingsSearchFocus,
-                            tempSettings: $tempSettings,
-                            openCalendar: $openCalendar,
-                            offset: $sheetOffset,
-                            enableBackground: $sheetEnableBackground,
-                            sheetPadding: $sheetPadding
-                        )
-                        .glassEffect(sheetEnableBackground ? .identity : .regular.interactive(), in: sheetShape)
-                        .glassEffectID("calendar", in: transition)
-                        .glassEffectTransition(.matchedGeometry)
-                        .offset(y: -sheetOffset)
-                        .padding(.horizontal, sheetPadding)
-                        .padding(.bottom, sheetPadding)
-                    } else {
-                        Button {
-                            changeOpenCalendar(true)
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "calendar")
-                                    .font(.title2)
-                                Text("Calendario")
-                            }
-                            .padding(.vertical, 12.2)
-                            .padding(.horizontal, 10)
+                    ZStack(alignment: .bottom) {
+                        if sheetEnableBackground {
+                            Color.black.opacity(0.5)
+                                .ignoresSafeArea()
                         }
-                        .contentShape(.capsule)
-                        .contentShape(.hoverEffect, .capsule)
-                        .hoverEffect(.highlight)
-                        .buttonStyle(.plain)
-                        .glassEffect(colorScheme == .dark ? .clear.interactive().tint(.black.opacity(0.7)) : .clear.interactive(), in: sheetShape)
-                        .glassEffectID("calendar", in: transition)
-                        .glassEffectTransition(.matchedGeometry)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .padding(.trailing, 28)
-                        .padding(.bottom, 28)
+                        
+                        if openCalendar {
+                            CustomSheetView(
+                                selectedWeek: $selectedWeek,
+                                selectedMonth: $selectedMonth,
+                                selectedDetent: $selectedDetent,
+                                selectionFraction: $selectionFraction,
+                                loading: $viewModel.loading,
+                                sheetShape: $sheetShape,
+                                selectedLesson: $selectedLesson,
+                                openSettings: $openSettings,
+                                settingsSearchFocus: $settingsSearchFocus,
+                                tempSettings: $tempSettings,
+                                openCalendar: $openCalendar,
+                                offset: $sheetOffset,
+                                enableBackground: $sheetEnableBackground,
+                                sheetPadding: $sheetPadding,
+                                setSheetShape: setSheetShape
+                            )
+                            .glassEffect(sheetEnableBackground ? .identity : .regular.interactive(), in: sheetShape)
+                            .glassEffectID("calendar", in: transition)
+                            .glassEffectTransition(.matchedGeometry)
+                            .offset(y: -sheetOffset)
+                            .padding(.horizontal, sheetPadding)
+                            .padding(.bottom, sheetPadding)
+                        } else {
+                            Button {
+                                changeOpenCalendar(true)
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "calendar")
+                                        .font(.title2)
+                                    Text("Calendario")
+                                }
+                                .padding(.vertical, 12.2)
+                                .padding(.horizontal, 10)
+                            }
+                            .contentShape(.capsule)
+                            .contentShape(.hoverEffect, .capsule)
+                            .hoverEffect(.highlight)
+                            .buttonStyle(.plain)
+                            .glassEffect(colorScheme == .dark ? .clear.interactive().tint(.black.opacity(0.7)) : .clear.interactive(), in: sheetShape)
+                            .glassEffectID("calendar", in: transition)
+                            .glassEffectTransition(.matchedGeometry)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .padding(.trailing, 28)
+                            .padding(.bottom, 28)
+                        }
                     }
                 }
             }
@@ -523,7 +535,7 @@ struct CalendarView: View {
         }
     }
     
-    private func handleDetentChange(oldValue: PresentationDetent, newValue: PresentationDetent) {
+    private func handleDetentChange(oldValue: CustomSheetDetent, newValue: CustomSheetDetent) {
         if newValue != .large {
             if openSettings {
                 let hasChanged = tempSettings.hasChanged(from: settings)
@@ -587,39 +599,39 @@ struct CalendarView: View {
         }
     }
     
-    private func setSheetShape(isOpen: Bool) {
+    private func setSheetShape(isOpen: Bool, sheetCornerRadius: CGFloat = -1) {
         withAnimation {
             if #available(iOS 26, *) {
                 if UIDevice.isIpad {
                     sheetShape = UnevenRoundedRectangle(
-                        topLeadingRadius: (isOpen ? 32 : (47.4 / 2 + 8)) - 8,
+                        topLeadingRadius: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.4 / 2 + 8)) - 8 : sheetCornerRadius,
                         bottomLeadingRadius: (isOpen ? (positionObserver.edges.bottomLeftSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
                         bottomTrailingRadius: (isOpen ? (positionObserver.edges.bottomRightSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
-                        topTrailingRadius: (isOpen ? 32 : (47.4 / 2 + 8)) - 8
+                        topTrailingRadius: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.4 / 2 + 8)) - 8 : sheetCornerRadius
                     )
                 } else {
                     let radius: CGFloat = (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8
                     sheetShape = UnevenRoundedRectangle(
-                        topLeadingRadius: radius,
+                        topLeadingRadius: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
                         bottomLeadingRadius: radius,
                         bottomTrailingRadius: radius,
-                        topTrailingRadius: radius
+                        topTrailingRadius: sheetCornerRadius == -1 ? radius : sheetCornerRadius
                     )
                 }
             } else {
                 if UIDevice.isIpad {
                     sheetShape = UnevenRoundedRectangle(
-                        topLeadingRadius: 32,
+                        topLeadingRadius: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
                         bottomLeadingRadius: 0,
                         bottomTrailingRadius: 0,
-                        topTrailingRadius: 32
+                        topTrailingRadius: sheetCornerRadius == -1 ? 32 : sheetCornerRadius
                     )
                 } else {
                     sheetShape = UnevenRoundedRectangle(
-                        topLeadingRadius: .deviceCornerRadius,
+                        topLeadingRadius: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
                         bottomLeadingRadius: 0,
                         bottomTrailingRadius: 0,
-                        topTrailingRadius: .deviceCornerRadius
+                        topTrailingRadius: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius
                     )
                 }
             }
