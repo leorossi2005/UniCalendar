@@ -59,8 +59,8 @@ struct DatePickerView: View, Equatable {
                 }
             }
         }
-        .frame(maxWidth: 328)
-        .drawingGroup()
+        .frame(maxWidth: 328, maxHeight: .infinity)
+        .ignoresSafeArea()
         .task(id: date) {
             await viewModel.generateMonthGrid(for: date, monthName: monthName)
         }
@@ -185,7 +185,6 @@ struct DatePickerContainer: View {
                     }
                 }
             }
-            .disableTabViewScrolling(blockTabSwipe)
             .tabViewStyle(.page(indexDisplayMode: .never))
             .onAppear {
                 let width = proxy.size.width

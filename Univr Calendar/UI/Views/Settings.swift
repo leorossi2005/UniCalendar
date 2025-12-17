@@ -91,6 +91,7 @@ struct Settings: View {
             } footer: {
                 Text("Usa questa sezione per modificare le impostazioni dell'app, cambia pure l'anno, il corso, l'anno di corso o la matricola se presente.")
             }
+            .listRowBackground(Color(.tertiarySystemBackground))
             Section {
                 Link(destination: AppConstants.URLs.donation) {
                     HStack {
@@ -109,6 +110,7 @@ struct Settings: View {
             } footer: {
                 Text("Ps. Se non si fosse capito il regalino è una donazione, e ti ringrazio di cuore se mi darai un po' di sostegno per aver creato questa app.")
             }
+            .listRowBackground(Color(.tertiarySystemBackground))
             Section("DANGER ZONE") {
                 Button {
                     showDeleteAlert.toggle()
@@ -123,6 +125,7 @@ struct Settings: View {
                     Text("Confermando cancellerai le impostazioni e tornerai al benvenuto iniziale.")
                 }
             }
+            .listRowBackground(Color(.tertiarySystemBackground))
             Section {
                 Text("Buono studio!")
                     .font(.caption)
@@ -132,6 +135,7 @@ struct Settings: View {
             .listRowBackground(Color.clear)
         }
         .scrollDisabled(sheetInitialIsContentAtTop && draggingDirection == .up)
+        .scrollContentBackground(.hidden)
         .background(Color(.secondarySystemBackground))
         .navigationTitle("Impostazioni")
         .navigationDestination(for: SettingsRoute.self) { route in

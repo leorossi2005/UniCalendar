@@ -60,10 +60,12 @@ struct AboutView: View {
                         .opacity(0.15)
                 }
             }
+            .listRowBackground(Color(.tertiarySystemBackground))
         }
         .navigationTitle("Informazioni")
         .navigationBarTitleDisplayMode(.inline)
         .scrollDisabled(sheetInitialIsContentAtTop && draggingDirection == .up)
+        .scrollContentBackground(.hidden)
         .background(Color(.secondarySystemBackground))
         .overlay {
             ListScrollOffsetReader(isAtTop: $isContentAtTop)

@@ -179,7 +179,9 @@ struct StableMapView: View {
                         .frame(width: 50, height: 50)
                 }
                 .tint(.black)
-                .glassEffect(.clear.interactive().tint(color.opacity(0.3)))
+                .background {
+                    GlassContainer(radii: .init(tl: 25, tr: 25, bl: 25, br: 25), style: .clear, tint: color.opacity(0.4))
+                }
                 .buttonBorderShape(.circle)
                 .padding((.deviceCornerRadius - 24) / 2)
             } else {

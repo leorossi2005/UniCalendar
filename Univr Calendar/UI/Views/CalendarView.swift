@@ -39,12 +39,8 @@ struct CalendarView: View {
     @State private var sheetEnableBackground: Bool = false
     @State private var sheetOffset: CGFloat = 0
     @State private var sheetPadding: CGFloat = 8
-    @State private var sheetShape = UnevenRoundedRectangle(
-        topLeadingRadius: 24,
-        bottomLeadingRadius: 24,
-        bottomTrailingRadius: 24,
-        topTrailingRadius: 24
-    )
+    @State private var sheetShape = UnevenRoundedRectangle()
+    @State private var sheetShapeRadii: SheetCornerRadii = .init(tl: 0, tr: 0, bl: 0, br: 0)
     
     private let screenSize: CGRect = UIApplication.shared.screenSize
     private var defaultDetents: Set<PresentationDetent> {
@@ -65,12 +61,14 @@ struct CalendarView: View {
                         mainScrollView
                             .overlay(alignment: .bottom) {
                                 CustomSheetView(
+                                    transition: transition,
                                     selectedWeek: $selectedWeek,
                                     selectedMonth: $selectedMonth,
                                     selectedDetent: $selectedDetent,
                                     selectionFraction: $selectionFraction,
                                     loading: $viewModel.loading,
                                     sheetShape: $sheetShape,
+                                    sheetShapeRadii: $sheetShapeRadii,
                                     selectedLesson: $selectedLesson,
                                     openSettings: $openSettings,
                                     settingsSearchFocus: $settingsSearchFocus,
@@ -149,12 +147,14 @@ struct CalendarView: View {
                         
                         if openCalendar {
                             CustomSheetView(
+                                transition: transition,
                                 selectedWeek: $selectedWeek,
                                 selectedMonth: $selectedMonth,
                                 selectedDetent: $selectedDetent,
                                 selectionFraction: $selectionFraction,
                                 loading: $viewModel.loading,
                                 sheetShape: $sheetShape,
+                                sheetShapeRadii: $sheetShapeRadii,
                                 selectedLesson: $selectedLesson,
                                 openSettings: $openSettings,
                                 settingsSearchFocus: $settingsSearchFocus,
@@ -165,7 +165,6 @@ struct CalendarView: View {
                                 sheetPadding: $sheetPadding,
                                 setSheetShape: setSheetShape
                             )
-                            .glassEffect(sheetEnableBackground ? .identity : .regular.interactive(), in: sheetShape)
                             .glassEffectID("calendar", in: transition)
                             .glassEffectTransition(.matchedGeometry)
                             .offset(y: -sheetOffset)
@@ -190,6 +189,7 @@ struct CalendarView: View {
                             .glassEffect(colorScheme == .dark ? .clear.interactive().tint(.black.opacity(0.7)) : .clear.interactive(), in: sheetShape)
                             .glassEffectID("calendar", in: transition)
                             .glassEffectTransition(.matchedGeometry)
+                            .matchedGeometryEffect(id: "calendarBackground", in: transition)
                             .frame(maxWidth: .infinity, alignment: .trailing)
                             .padding(.trailing, 28)
                             .padding(.bottom, 28)
@@ -603,38 +603,44 @@ struct CalendarView: View {
         withAnimation {
             if #available(iOS 26, *) {
                 if UIDevice.isIpad {
-                    sheetShape = UnevenRoundedRectangle(
-                        topLeadingRadius: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.4 / 2 + 8)) - 8 : sheetCornerRadius,
-                        bottomLeadingRadius: (isOpen ? (positionObserver.edges.bottomLeftSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
-                        bottomTrailingRadius: (isOpen ? (positionObserver.edges.bottomRightSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
-                        topTrailingRadius: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.4 / 2 + 8)) - 8 : sheetCornerRadius
+                    sheetShapeRadii = .init(
+                        tl: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.4 / 2 + 8)) - 8 : sheetCornerRadius,
+                        tr: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.4 / 2 + 8)) - 8 : sheetCornerRadius,
+                        bl: (isOpen ? (positionObserver.edges.bottomLeftSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
+                        br: (isOpen ? (positionObserver.edges.bottomRightSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8
                     )
                 } else {
                     let radius: CGFloat = (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8
-                    sheetShape = UnevenRoundedRectangle(
-                        topLeadingRadius: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
-                        bottomLeadingRadius: radius,
-                        bottomTrailingRadius: radius,
-                        topTrailingRadius: sheetCornerRadius == -1 ? radius : sheetCornerRadius
+                    sheetShapeRadii = .init(
+                        tl: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
+                        tr: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
+                        bl: radius,
+                        br: radius
                     )
                 }
             } else {
                 if UIDevice.isIpad {
-                    sheetShape = UnevenRoundedRectangle(
-                        topLeadingRadius: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
-                        bottomLeadingRadius: 0,
-                        bottomTrailingRadius: 0,
-                        topTrailingRadius: sheetCornerRadius == -1 ? 32 : sheetCornerRadius
+                    sheetShapeRadii = .init(
+                        tl: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
+                        tr: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
+                        bl: 0,
+                        br: 0
                     )
                 } else {
-                    sheetShape = UnevenRoundedRectangle(
-                        topLeadingRadius: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
-                        bottomLeadingRadius: 0,
-                        bottomTrailingRadius: 0,
-                        topTrailingRadius: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius
+                    sheetShapeRadii = .init(
+                        tl: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
+                        tr: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
+                        bl: 0,
+                        br: 0
                     )
                 }
             }
+            sheetShape = UnevenRoundedRectangle(
+                topLeadingRadius: sheetShapeRadii.tl,
+                bottomLeadingRadius: sheetShapeRadii.bl,
+                bottomTrailingRadius: sheetShapeRadii.br,
+                topTrailingRadius: sheetShapeRadii.tr
+            )
         }
     }
 }

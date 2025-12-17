@@ -47,7 +47,7 @@ struct FractionDatePickerView: View {
         }
         .frame(maxHeight: .infinity)
         .frame(maxWidth: 500)
-        .padding(20)
+        .padding(.horizontal, 20)
         .ignoresSafeArea()
     }
     
@@ -110,9 +110,7 @@ struct FractionDatePickerContainer: View {
                 }
             }
         }
-        .disableTabViewScrolling(blockTabSwipe)
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .frame(maxWidth: .infinity)
         .background(
             GeometryReader { proxy in
                 Color.clear

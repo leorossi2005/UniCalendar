@@ -18,7 +18,7 @@ enum CustomSheetDetent {
         case .small:  return (((500 - 70) / 7) * 1.35) + 50
         case .medium: return 350 + 75
         case .large:
-            let screenHeight = UIApplication.shared.screenSize.height
+            let screenHeight = UIApplication.shared.windowSize.height
             let topSafeArea = UIApplication.shared.safeAreas.top
             let topMargin = topSafeArea > 0 ? topSafeArea : 20
             
@@ -27,12 +27,9 @@ enum CustomSheetDetent {
     }
 }
 
-enum CustomSheetDraggingDirection {
-    case up, down, left, right, none
-}
-
 struct CustomSheetView: View {
     @Environment(\.colorScheme) var colorScheme
+    var transition: Namespace.ID
     // MARK: - Binding dal Padre
     @Binding var selectedWeek: Date
     @Binding var selectedMonth: Int
@@ -40,6 +37,7 @@ struct CustomSheetView: View {
     @Binding var selectionFraction: String?
     @Binding var loading: Bool
     @Binding var sheetShape: UnevenRoundedRectangle
+    @Binding var sheetShapeRadii: SheetCornerRadii
     
     @Binding var selectedLesson: Lesson?
     @Binding var openSettings: Bool
@@ -57,7 +55,7 @@ struct CustomSheetView: View {
     @State private var basePadding: CGFloat = .zero
     @State private var sheetDetents: [CustomSheetDetent] = [.small, .medium]
     
-    @GestureState private var dragY: CGFloat = .zero
+    @State private var dragY: CGFloat = .zero
     
     @State private var gestureLockedDirection: GestureDirection? = nil
     @State private var blockTabSwipe: Bool = false
@@ -77,11 +75,30 @@ struct CustomSheetView: View {
     
     var body: some View {
         ZStack {
-            if enableBackground {
-                Color(.secondarySystemBackground)
+            if #available(iOS 26, *) {
+                GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2)
+                    .overlay(alignment: .top) {
+                        RoundedRectangle(cornerRadius: 2.5)
+                            .frame(width: 35, height: 5)
+                            .padding(.top, 5)
+                            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
+                            .hoverEffect(.highlight)
+                    }
+                    .matchedGeometryEffect(id: "calendarBackground", in: transition)
             } else {
-                Color.clear
+                Color(.systemBackground)
+                    .clipShape(sheetShape)
+                    .overlay(alignment: .top) {
+                        RoundedRectangle(cornerRadius: 2.5)
+                            .frame(width: 35, height: 5)
+                            .padding(.top, 5)
+                            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
+                            .hoverEffect(.highlight)
+                    }
             }
+            Color(.secondarySystemBackground)
+                .clipShape(sheetShape)
+                .opacity(enableBackground ? 1 : 0)
             
             DynamicSheetContent(
                 selectedWeek: $selectedWeek,
@@ -99,28 +116,31 @@ struct CustomSheetView: View {
                 lockSheet: $lockSheet,
                 draggingDirection: $draggingDirection
             )
-        }
-        .clipShape(sheetShape)
-        .overlay(alignment: .top) {
-            RoundedRectangle(cornerRadius: 2.5)
-                .frame(width: 35, height: 5)
-                .padding(.top, 5)
-                .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
-                .hoverEffect(.highlight)
+            .clipShape(sheetShape)
         }
         .frame(height: liveHeight)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 1, coordinateSpace: .global)
-                .onChanged { value in
-                    handleDragChanged(value)
+        //.simultaneousGesture(
+        //    DragGesture(minimumDistance: 1, coordinateSpace: .global)
+        //        .onChanged { value in
+        //            handleDragChanged(value)
+        //        }
+        //        .updating($dragY) { value, state, _ in
+        //            handleDragUpdating(value: value, state: &state)
+        //        }
+        //        .onEnded { value in
+        //            handleDragEnded(value)
+        //        }
+        //)
+        .overlay {
+            VerticalDragger(
+                onDrag: { translationY, direction in
+                    handleDragUpdating(value: translationY, direction: direction, state: &self.dragY)
+                },
+                onEnded: { translationY, predictedEndTranslation in
+                    handleDragEnded(translationY, predictedEndTranslation)
                 }
-                .updating($dragY) { value, state, _ in
-                    handleDragUpdating(value: value, state: &state)
-                }
-                .onEnded { value in
-                    handleDragEnded(value)
-                }
-        )
+            )
+        }
         .onChange(of: selectedDetent) { oldValue, newValue in
             withAnimation(.interpolatingSpring(
                 mass: 1.0,
@@ -183,8 +203,6 @@ struct CustomSheetView: View {
             let dx = abs(value.translation.width)
             let dy = abs(value.translation.height)
             
-            if dx < 4 && dy < 4 { return }
-            
             let angle = atan2(dy, dx) * 180 / .pi
             gestureLockedDirection = angle > 45 ? .vertical : .horizontal
             blockTabSwipe = (gestureLockedDirection == .vertical)
@@ -216,8 +234,20 @@ struct CustomSheetView: View {
         }
     }
     
-    private func handleDragUpdating(value: DragGesture.Value, state: inout CGFloat) {
-        guard gestureLockedDirection == .vertical && initialIsContentAtTop else {
+    private func handleDragUpdating(value: CGFloat, direction: CustomSheetDraggingDirection, state: inout CGFloat) {
+        if draggingDirection == .none {
+            draggingDirection = direction
+            
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) {
+                baseHeight = liveHeight
+            }
+            
+            initialIsContentAtTop = isContentAtTop
+        }
+        
+        guard initialIsContentAtTop else {
             state = 0
             return
         }
@@ -228,18 +258,18 @@ struct CustomSheetView: View {
                 sheetDetents = [.large]
             }
             
-            if value.translation.height < 0 {
+            if value < 0 {
                 state = 0
                 return
             }
             
-            if value.translation.height > 0 && !isContentAtTop {
+            if value > 0 && !isContentAtTop {
                 state = 0
                 return
             }
         }
         
-        let predictedHeight = baseHeight - value.translation.height
+        let predictedHeight = baseHeight - value
         let minDetent = sheetDetents.first!.value
         let maxDetent = sheetDetents.last!.value
         
@@ -254,7 +284,7 @@ struct CustomSheetView: View {
         }
         
         if predictedHeight >= minDetent && predictedHeight <= maxDetent {
-            state = value.translation.height
+            state = value
 
             if predictedHeight > CustomSheetDetent.large.value * 0.8 {
                 withAnimation(.easeInOut(duration: 0.2)) {
@@ -284,98 +314,98 @@ struct CustomSheetView: View {
         }
     }
     
-    private func handleDragEnded(_ value: DragGesture.Value) {
+    private func handleDragEnded(_ value: CGFloat, _ predictedEndTranslation: CGFloat) {
         draggingDirection = .none
         
-        if gestureLockedDirection == .vertical {
-            if selectedDetent == .large {
-                if value.translation.height < 0 || (value.translation.height > 0 && !isContentAtTop) {
-                    Task { @MainActor in
-                        self.blockTabSwipe = false
-                        self.gestureLockedDirection = nil
-                    }
-                    return
+        if selectedDetent == .large {
+            if value < 0 || (value > 0 && !isContentAtTop) {
+                Task { @MainActor in
+                    self.blockTabSwipe = false
+                    self.gestureLockedDirection = nil
                 }
+                return
             }
-            
-            let rawPredictedHeight = baseHeight - value.translation.height
-            let minDetent = sheetDetents.first!
-            let maxDetent = sheetDetents.last!
-            
-            var effectiveTranslation = rawPredictedHeight
-            
-            if rawPredictedHeight > maxDetent.value {
-                let excess = rawPredictedHeight - maxDetent.value
-                let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent.value - maxDetent.value * 0.75)
-                effectiveTranslation = maxDetent.value + dampedExcess
+        }
+        
+        let rawPredictedHeight = baseHeight - value
+        let minDetent = sheetDetents.first!
+        let maxDetent = sheetDetents.last!
+        
+        var effectiveTranslation = rawPredictedHeight
+        
+        if rawPredictedHeight > maxDetent.value {
+            let excess = rawPredictedHeight - maxDetent.value
+            let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent.value - maxDetent.value * 0.75)
+            effectiveTranslation = maxDetent.value + dampedExcess
+        }
+        else if rawPredictedHeight < minDetent.value {
+            effectiveTranslation = minDetent.value
+        }
+        
+        let currentH = effectiveTranslation
+                
+        let predictedTranslation = predictedEndTranslation
+        let predictedHeight = baseHeight - predictedTranslation
+        var target = sheetDetents.min(by: { abs($0.value - predictedHeight) < abs($1.value - predictedHeight) }) ?? .small
+        
+        if currentH < minDetent.value || rawPredictedHeight < minDetent.value {
+            target = minDetent
+        } else if currentH > maxDetent.value {
+            target = maxDetent
+        }
+        
+        let isGoingDown = target.value < currentH
+        
+        let projectedDelta = predictedTranslation - value
+        let baseVelocityPerSecond = -(projectedDelta * 5.0)
+        
+        var boostFactor: CGFloat = 1.0
+        
+        if !isGoingDown && currentH >= minDetent.value && currentH <= maxDetent.value {
+            let distanceToMove = abs(target.value - currentH)
+            let maxDistance = maxDetent.value - minDetent.value
+            boostFactor = 1.0 + 2.0 * (distanceToMove / maxDistance)
+        }
+        
+        let boostedVelocityPerSecond = baseVelocityPerSecond * boostFactor
+        
+        let distanceToTarget: CGFloat = target.value - currentH
+        let relativeVelocity = abs(distanceToTarget) > 1 ? boostedVelocityPerSecond / distanceToTarget : 0
+        
+        baseHeight = currentH
+        selectedDetent = target
+        
+        if target == .large {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                setSheetShape(true, 36)
+                enableBackground = true
             }
-            else if rawPredictedHeight < minDetent.value {
-                effectiveTranslation = minDetent.value
+        } else {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                setSheetShape(true, -1)
+                enableBackground = false
             }
-            
-            let currentH = effectiveTranslation
-                    
-            let predictedTranslation = value.predictedEndTranslation.height
-            let predictedHeight = baseHeight - predictedTranslation
-            var target = sheetDetents.min(by: { abs($0.value - predictedHeight) < abs($1.value - predictedHeight) }) ?? .small
-            
-            if currentH < minDetent.value || rawPredictedHeight < minDetent.value {
-                target = minDetent
-            } else if currentH > maxDetent.value {
-                target = maxDetent
-            }
-            
-            let isGoingDown = target.value < currentH
-            
-            let projectedDelta = predictedTranslation - value.translation.height
-            let baseVelocityPerSecond = -(projectedDelta * 5.0)
-            
-            var boostFactor: CGFloat = 1.0
-            
-            if !isGoingDown && currentH >= minDetent.value && currentH <= maxDetent.value {
-                let distanceToMove = abs(target.value - currentH)
-                let maxDistance = maxDetent.value - minDetent.value
-                boostFactor = 1.0 + 2.0 * (distanceToMove / maxDistance)
-            }
-            
-            let boostedVelocityPerSecond = baseVelocityPerSecond * boostFactor
-            
-            let distanceToTarget = target.value - currentH
-            let relativeVelocity = abs(distanceToTarget) > 1 ? boostedVelocityPerSecond / distanceToTarget : 0
-            
-            baseHeight = currentH
-            selectedDetent = target
+        }
+        
+        var limit: CGFloat = isGoingDown ? 65 : 65
+        if baseHeight - dragY > sheetDetents.last!.value {
+            limit = 0
+        }
+        
+        dragY = 0
+        withAnimation(.interpolatingSpring(
+            mass: 1.0,
+            stiffness: 300,
+            damping: 25,
+            initialVelocity: min(max(relativeVelocity, -limit), limit)
+        )) {
+            baseHeight = target.value
+            offset = 0
             
             if target == .large {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    setSheetShape(true, 36)
-                    enableBackground = true
-                }
+                sheetPadding = 0
             } else {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    setSheetShape(true, -1)
-                    enableBackground = false
-                }
-            }
-            
-            var limit: CGFloat = isGoingDown ? 65 : 65
-            if baseHeight - dragY > sheetDetents.last!.value {
-                limit = 0
-            }
-            withAnimation(.interpolatingSpring(
-                mass: 1.0,
-                stiffness: 200,
-                damping: 30,
-                initialVelocity: min(max(relativeVelocity, -limit), limit)
-            )) {
-                baseHeight = target.value
-                offset = 0
-                
-                if target == .large {
-                    sheetPadding = 0
-                } else {
-                    sheetPadding = initialPadding
-                }
+                sheetPadding = initialPadding
             }
         }
         
@@ -430,62 +460,67 @@ struct DynamicSheetContent: View {
                 let mediumOpacity = 1.0 - ((currentHeight < mediumHeightHigh ? Double(mediumHeightLow - currentHeight) : Double(currentHeight - mediumHeightHigh)) / Double(fadeRange))
                 let smallOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
         
-                ZStack {
-                    if currentHeight < screenHeight * 0.25 {
-                        FractionDatePickerContainer(
-                            selectedWeek: $selectedWeek,
-                            loading: $loading,
-                            selectionFraction: $selectedFraction,
-                            blockTabSwipe: .constant(false)
-                        )
-                        .opacity(settingsSearchFocus ? 0 : min(max(smallOpacity, 0), 1))
-                        .allowsHitTesting(selectedDetent == .small)
-                    }
-        
-                    if currentHeight > screenHeight * 0.35 && currentHeight < screenHeight * 0.65 && !settingsSearchFocus {
-                        DatePickerContainer(
-                            selectedMonth: $selectedMonth,
-                            selectedWeek: $selectedWeek,
-                            blockTabSwipe: .constant(false)
-                        )
-                        .opacity(settingsSearchFocus ? 0 : min(max(mediumOpacity, 0), 1))
-                        .allowsHitTesting(selectedDetent == .medium)
-                    }
+                ZStack(alignment: .top) {
+                    FractionDatePickerContainer(
+                        selectedWeek: $selectedWeek,
+                        loading: $loading,
+                        selectionFraction: $selectedFraction,
+                        blockTabSwipe: .constant(false)
+                    )
+                    .opacity(settingsSearchFocus ? 0 : min(max(smallOpacity, 0), 1))
+                    .allowsHitTesting(selectedDetent == .small && !settingsSearchFocus)
+                    .frame(height: CustomSheetDetent.small.value)
+                    .glassEffectIfAvailable()
                     
-                    if openSettings {
-                        NavigationStack(path: $path) {
-                            Settings(
-                                selectedYear: $tempSettings.selectedYear,
-                                selectedCourse: $tempSettings.selectedCourse,
-                                selectedAcademicYear: $tempSettings.selectedAcademicYear,
-                                matricola: $tempSettings.matricola,
-                                searchTextFieldFocus: $settingsSearchFocus,
-                                isContentAtTop: $isContentAtTop,
-                                sheetInitialIsContentAtTop: $sheetInitialIsContentAtTop,
-                                lockSheet: $lockSheet,
-                                draggingDirection: $draggingDirection,
-                                navigationPath: $path
-                            )
-                            .frame(
-                                width: UIApplication.shared.screenSize.width - 0.1
-                            )
-                            .toolbar {
-                                ToolbarItem(placement: .principal) {
-                                    Text("Impostazioni")
-                                        .font(.headline)
-                                        .opacity(settingsSearchFocus ? 1 : min(max(largeOpacity, 0), 1))
+                    DatePickerContainer(
+                        selectedMonth: $selectedMonth,
+                        selectedWeek: $selectedWeek,
+                        blockTabSwipe: .constant(false)
+                    )
+                    .opacity(settingsSearchFocus ? 0 : min(max(mediumOpacity, 0), 1))
+                    .allowsHitTesting(selectedDetent == .medium && !settingsSearchFocus)
+                    .frame(height: CustomSheetDetent.medium.value)
+                    .glassEffectIfAvailable()
+                    
+                    Group {
+                        if openSettings {
+                            NavigationStack(path: $path) {
+                                Settings(
+                                    selectedYear: $tempSettings.selectedYear,
+                                    selectedCourse: $tempSettings.selectedCourse,
+                                    selectedAcademicYear: $tempSettings.selectedAcademicYear,
+                                    matricola: $tempSettings.matricola,
+                                    searchTextFieldFocus: $settingsSearchFocus,
+                                    isContentAtTop: $isContentAtTop,
+                                    sheetInitialIsContentAtTop: $sheetInitialIsContentAtTop,
+                                    lockSheet: $lockSheet,
+                                    draggingDirection: $draggingDirection,
+                                    navigationPath: $path
+                                )
+                                .frame(
+                                    width: UIApplication.shared.screenSize.width - 0.1
+                                )
+                                .toolbar {
+                                    ToolbarItem(placement: .principal) {
+                                        Text("Impostazioni")
+                                            .font(.headline)
+                                            .opacity(settingsSearchFocus ? 1 : min(max(largeOpacity, 0), 1))
+                                    }
                                 }
+                                .navigationBarTitleDisplayMode(.inline)
                             }
-                            .navigationBarTitleDisplayMode(.inline)
-                        }
-                        .opacity(settingsSearchFocus ? 1 : min(max(largeOpacity, 0), 1))
-                        .allowsHitTesting(selectedDetent == .large)
-                    } else if currentHeight > screenHeight * 0.75 {
-                        LessonDetailsView(selectedLesson: $selectedLesson)
-                            .padding(.top, 6)
+                            .opacity(settingsSearchFocus ? 1 : min(max(largeOpacity, 0), 1))
+                            .allowsHitTesting(selectedDetent == .large)
+                        } else {
+                            NavigationStack {
+                                LessonDetailsView(selectedLesson: $selectedLesson)
+                                    .background(Color(.secondarySystemBackground))
+                            }
                             .opacity(settingsSearchFocus ? 0 : min(max(largeOpacity, 0), 1))
                             .allowsHitTesting(selectedDetent == .large)
+                        }
                     }
+                    .frame(height: CustomSheetDetent.large.value)
                 }
             }
         }

@@ -101,6 +101,17 @@ extension View {
     }
     
     @ViewBuilder
+    func glassEffectIfAvailable() -> some View {
+        if #available(iOS 26, *) {
+            self
+                .glassEffect(.identity)
+        } else {
+            self
+            
+        }
+    }
+    
+    @ViewBuilder
     func ipadSheetDesign(_ namespace: Namespace.ID, sourceID: String, sheet: Binding<UnevenRoundedRectangle>) -> some View {
         if #available(iOS 26, *) {
             self
@@ -213,6 +224,12 @@ extension UIApplication {
         connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .first?.screen.bounds ?? .zero
+    }
+    
+    var windowSize: CGRect {
+        connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first?.keyWindow?.bounds ?? .zero
     }
 }
 
@@ -354,7 +371,6 @@ extension CGFloat {
             "iPad6,3": 18.0,     //iPad Pro (9.7 inch, WiFi)
         ]
         
-        print(modelIdentifier)
         if let radius = radii[modelIdentifier] {
             return radius
         }
