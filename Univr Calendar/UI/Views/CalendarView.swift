@@ -701,72 +701,7 @@ struct CalendarViewDay: View {
     }
 }
 
-struct temp: View {
-    @State private var show: Bool = true
-    
-    var body: some View {
-        NavigationStack {
-            Rectangle()
-                .ignoresSafeArea()
-                .frame(maxHeight: .infinity)
-                .frame(width: 130)
-                .toolbar {
-                    ToolbarItem(placement: .bottomBar) { Spacer() }
-                    
-                    if !show {
-                        if #available(iOS 26, *) {
-                            ToolbarItem(placement: .bottomBar) {
-                                Button(action: {
-                                }) {
-                                    HStack {
-                                        Image(systemName: "calendar")
-                                        Text("Calendario")
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                .safeAreaInset(edge: .bottom) {
-                    if show {
-                        if #available(iOS 26, *) {
-                            VStack {
-                                HStack {
-                                    Spacer()
-                                    
-                                    calendarButton
-                                    Spacer()
-                                        .frame(width: 28)
-                                }
-                                Spacer()
-                                    .frame(height: 28)
-                            }
-                        }
-                    }
-                }
-                .ignoresSafeArea()
-        }
-    }
-    
-    @available(iOS 26.0, *)
-    var calendarButton: some View {
-        Button(action: {
-        }) {
-            HStack(spacing: 8) {
-                Image(systemName: "calendar")
-                    .font(.title2)
-                Text("Calendario")
-            }
-            .padding(.vertical, 12.2)
-            .padding(.horizontal, 10)
-        }
-        .tint(.primary)
-        .glassEffect(.clear.interactive(), in: .ellipse)
-        .buttonBorderShape(.roundedRectangle(radius: 0))
-    }
-}
-
 #Preview {
-    temp()
+    CalendarView()
         .environment(UserSettings.shared)
 }

@@ -33,9 +33,3 @@ struct UIKitStaticMap: UIViewRepresentable {
         mapView.layoutMargins = UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding)
     }
 }
-
-
-
-#Preview {
-    //SimpleStaticMap()
-}

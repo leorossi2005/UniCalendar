@@ -18,7 +18,6 @@ struct Settings: View {
     
     @State private var viewModel = UniversityDataManager()
     @State private var showDeleteAlert = false
-    @State private var searchText: String = ""
     @State private var initialIsContentAtTop: Bool? = nil
     
     @Binding var selectedYear: String
@@ -51,12 +50,10 @@ struct Settings: View {
                             handleYearChange()
                         }
                 }
-                CourseSelectionView(
-                    searchText: $searchText,
+                CourseSelector(
                     isFocused: $searchTextFieldFocus,
                     selectedCourse: $selectedCourse,
-                    courses: viewModel.courses,
-                    screenSize: screenSize
+                    courses: viewModel.courses
                 )
                 .onChange(of: selectedCourse) {
                     handleCourseChange()

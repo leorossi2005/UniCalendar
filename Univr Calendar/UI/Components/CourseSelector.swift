@@ -1,5 +1,5 @@
 //
-//  CourseSelectionView.swift
+//  CourseSelector.swift
 //  Univr Calendar
 //
 //  Created by Leonardo Rossi on 08/12/25.
@@ -8,16 +8,13 @@
 import SwiftUI
 import UnivrCore
 
-struct CourseSelectionView: View {
-    @Environment(\.colorScheme) var colorScheme
-    
-    @Binding var searchText: String
+struct CourseSelector: View {
     @Binding var isFocused: Bool
     @Binding var selectedCourse: String
     
     let courses: [Corso]
-    let screenSize: CGRect
     
+    @State var searchText: String = ""
     @FocusState private var internalFocus: Bool
     
     private var filteredCourses: [Corso] { Corso.filter(courses, with: searchText) }
@@ -34,12 +31,20 @@ struct CourseSelectionView: View {
                     .padding(.bottom)
             } else {
                 searchResultsList
-                    .padding(.bottom)
                     .padding(.horizontal)
+                    .padding(.bottom)
             }
         }
+        .disabled(courses.isEmpty)
         .onChange(of: internalFocus) { _, newValue in
-            isFocused = newValue
+            if isFocused != newValue {
+                isFocused = newValue
+            }
+        }
+        .onChange(of: isFocused) { _, newValue in
+            if internalFocus != newValue {
+                internalFocus = newValue
+            }
         }
     }
     
@@ -106,15 +111,21 @@ struct CourseSelectionView: View {
                 courseButton(value: course.valore, label: LocalizedStringKey(course.label))
             }
         } label: {
-            Text(courses.first{$0.valore == selectedCourse}?.label ?? String(localized: "Scegli un corso"))
-                .foregroundStyle(colorScheme == .light ? .black : .white)
-                .padding()
-                .frame(height: 100)
-                .frame(maxWidth: .infinity)
-                .background(Color(.tertiarySystemFill))
-                .clipShape(RoundedRectangle(cornerRadius: 25))
+            ZStack {
+                if courses.isEmpty {
+                    ProgressView()
+                } else {
+                    Text(courses.first{$0.valore == selectedCourse}?.label ?? String(localized: "Scegli un corso"))
+                }
+            }
+            .frame(height: 100)
+            .frame(maxWidth: .infinity)
+            .background {
+                RoundedRectangle(cornerRadius: 25)
+                    .fill(Color(.tertiarySystemFill))
+            }
         }
-        .disabled(courses.isEmpty)
+        .tint(.primary)
     }
     
     private var searchResultsList: some View {
@@ -122,17 +133,12 @@ struct CourseSelectionView: View {
             if !filteredCourses.isEmpty {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(filteredCourses, id: \.valore) { course in
-                            Divider()
-                                .if(course.valore == filteredCourses.first?.valore) { view in
-                                    view
-                                        .opacity(0)
-                                }
-                            Button(action: {
+                        ForEach(Array(filteredCourses.enumerated()), id: \.element.valore) { index, course in
+                            Button {
                                 searchText = ""
                                 internalFocus = false
                                 selectedCourse = course.valore
-                            }) {
+                            } label: {
                                 HStack(spacing: 16) {
                                     Image(systemName: "checkmark")
                                         .opacity(selectedCourse == course.valore ? 1 : 0)
@@ -141,28 +147,27 @@ struct CourseSelectionView: View {
                                         .multilineTextAlignment(.leading)
                                 }
                                 .padding(16)
-                                .contentShape(.rect)
-                                .foregroundStyle(colorScheme == .light ? .black : .white)
                             }
                             .buttonStyle(.borderless)
-                            if course.valore == filteredCourses.last?.valore {
+                            .tint(.primary)
+                            if index < filteredCourses.count - 1  {
                                 Divider()
-                                    .opacity(0)
                             }
                         }
                     }
                 }
-                .frame(height: screenSize.height * 0.23)
-                .background(Color(.tertiarySystemFill))
-                .clipShape(RoundedRectangle(cornerRadius: 25))
+                .frame(minHeight: 150)
+                .frame(maxHeight: 250)
             } else {
                 Text("Nessun corso trovato")
                     .padding()
                     .frame(maxWidth: .infinity)
                     .foregroundStyle(.secondary)
-                    .background(Color(.tertiarySystemFill))
-                    .clipShape(RoundedRectangle(cornerRadius: 25))
             }
+        }
+        .background {
+            RoundedRectangle(cornerRadius: 25)
+                .fill(Color(.tertiarySystemFill))
         }
     }
     
@@ -183,10 +188,9 @@ struct CourseSelectionView: View {
 
 #Preview {
     @Previewable @State var selectedCourse: String = "0"
-    @Previewable @State var searchText: String = ""
     @Previewable @State var isFocused: Bool = false
     let courses: [Corso] = []
     
-    CourseSelectionView(searchText: $searchText, isFocused: $isFocused, selectedCourse: $selectedCourse, courses: courses, screenSize: UIApplication.shared.screenSize)
+    CourseSelector(isFocused: $isFocused, selectedCourse: $selectedCourse, courses: courses)
         .environment(UserSettings.shared)
 }

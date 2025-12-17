@@ -8,92 +8,6 @@
 import SwiftUI
 import UnivrCore
 
-private struct OnboardingButton: View {
-    let title: LocalizedStringKey
-    let isLoading: Bool
-    let isDisabled: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            if isLoading {
-                RotatingSemicircleLoader()
-            } else {
-                Text(title)
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-            }
-        }
-        .controlSize(.large)
-        .glassProminentIfAvailable()
-        .disabled(isDisabled || isLoading)
-        .keyboardPadding(10)
-    }
-}
-
-private struct OnboardingPage<Content: View>: View {
-    let title: LocalizedStringKey
-    let subtitle: LocalizedStringKey
-    let isTopContent: Bool
-    @ViewBuilder let content: Content
-    let bottomPadding: CGFloat
-    
-    let buttonTitle: LocalizedStringKey
-    let isLoading: Bool
-    let isButtonDisabled: Bool
-    let buttonAction: () -> Void
-    
-    var body: some View {
-        VStack {
-            Spacer()
-            if isTopContent {
-                content
-                    .multilineTextAlignment(.center)
-            }
-            Text(title)
-                .font(.title)
-                .bold()
-                .multilineTextAlignment(.center)
-            Text(subtitle)
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            if !isTopContent {
-                content
-                    .multilineTextAlignment(.center)
-            }
-            Spacer()
-            OnboardingButton(
-                title: buttonTitle,
-                isLoading: isLoading,
-                isDisabled: isButtonDisabled,
-                action: buttonAction
-            )
-            .padding(.horizontal, bottomPadding)
-        }
-        .containerRelativeFrame(.horizontal)
-    }
-}
-
-private struct RotatingSemicircleLoader: View {
-    @Environment(\.colorScheme) var colorScheme
-    @State private var rotation: Double = 0
-    
-    var body: some View {
-        Circle()
-            .trim(from: 0, to: 0.6)
-            .stroke(colorScheme == .light ? .black : .white, lineWidth: 4)
-            .frame(width: 20, height: 20)
-            .rotationEffect(.degrees(rotation))
-            .onAppear {
-                withAnimation(Animation.linear(duration: 1.0).repeatForever(autoreverses: false)) {
-                    rotation = 360
-                }
-            }
-    }
-}
-
 struct Onboarding: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
@@ -104,7 +18,6 @@ struct Onboarding: View {
     @State private var currentIndex: Int? = 0
     @State private var nextIndexLoading: Int = -1
     
-    @State private var searchText: String = ""
     @State private var searchTextFieldFocus: Bool = false
     
     let animation: Namespace.ID
@@ -173,12 +86,10 @@ struct Onboarding: View {
                     subtitle: "Sono mostrati i corsi per l'anno \(viewModel.years.filter{$0.valore == settings.selectedYear}.first?.label ?? "")",
                     isTopContent: false,
                     content: {
-                        CourseSelectionView(
-                            searchText: $searchText,
+                        CourseSelector(
                             isFocused: $searchTextFieldFocus,
                             selectedCourse: $settings.selectedCourse,
-                            courses: viewModel.courses,
-                            screenSize: screenSize
+                            courses: viewModel.courses
                         )
                     },
                     bottomPadding: safeAreas.bottom,
@@ -286,6 +197,93 @@ struct Onboarding: View {
     
     public func completeOnboarding() {
         settings.onboardingCompleted = true
+    }
+}
+
+// MARK: - Subviews
+private struct OnboardingButton: View {
+    let title: LocalizedStringKey
+    let isLoading: Bool
+    let isDisabled: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            if isLoading {
+                RotatingSemicircleLoader()
+            } else {
+                Text(title)
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+        .controlSize(.large)
+        .glassProminentIfAvailable()
+        .disabled(isDisabled || isLoading)
+        .keyboardPadding(10)
+    }
+}
+
+private struct OnboardingPage<Content: View>: View {
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+    let isTopContent: Bool
+    @ViewBuilder let content: Content
+    let bottomPadding: CGFloat
+    
+    let buttonTitle: LocalizedStringKey
+    let isLoading: Bool
+    let isButtonDisabled: Bool
+    let buttonAction: () -> Void
+    
+    var body: some View {
+        VStack {
+            Spacer()
+            if isTopContent {
+                content
+                    .multilineTextAlignment(.center)
+            }
+            Text(title)
+                .font(.title)
+                .bold()
+                .multilineTextAlignment(.center)
+            Text(subtitle)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            if !isTopContent {
+                content
+                    .multilineTextAlignment(.center)
+            }
+            Spacer()
+            OnboardingButton(
+                title: buttonTitle,
+                isLoading: isLoading,
+                isDisabled: isButtonDisabled,
+                action: buttonAction
+            )
+            .padding(.horizontal, bottomPadding)
+        }
+        .containerRelativeFrame(.horizontal)
+    }
+}
+
+private struct RotatingSemicircleLoader: View {
+    @Environment(\.colorScheme) var colorScheme
+    @State private var rotation: Double = 0
+    
+    var body: some View {
+        Circle()
+            .trim(from: 0, to: 0.6)
+            .stroke(colorScheme == .light ? .black : .white, lineWidth: 4)
+            .frame(width: 20, height: 20)
+            .rotationEffect(.degrees(rotation))
+            .onAppear {
+                withAnimation(Animation.linear(duration: 1.0).repeatForever(autoreverses: false)) {
+                    rotation = 360
+                }
+            }
     }
 }
 
