@@ -247,7 +247,7 @@ struct CalendarView: View {
                     }
                     VStack(spacing: 10) {
                         ForEach(0..<10, id: \.self) { _ in
-                            LessonCardView(lesson: .sample)
+                            LessonCard(lesson: .sample)
                                 .shimmeringPlaceholder(opacity: colorScheme == .light ? 0.5 : 0.7)
                         }
                     }
@@ -670,7 +670,7 @@ struct CalendarViewDay: View {
             VStack(spacing: 10) {
                 ForEach(filteredLessons) { lesson in
                     if lesson.tipo != "pause" && lesson.tipo != "chiusura_type" {
-                        LessonCardView(lesson: lesson)
+                        LessonCard(lesson: lesson)
                             .onTapGesture {
                                 changeOpenCalendar(true)
                                 selectedLesson = lesson
@@ -685,7 +685,7 @@ struct CalendarViewDay: View {
                                 .italic()
                                 .bold()
                         }
-                        .foregroundStyle(Color(white: 0.35))
+                        .foregroundStyle(.secondary)
                     }
                 }
             }

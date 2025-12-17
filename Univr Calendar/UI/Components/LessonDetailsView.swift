@@ -102,7 +102,7 @@ struct LessonDetailsView: View {
         if date == .distantFuture {
             date = lesson.data.toDateModern() ?? Date()
         }
-        if title.isEmpty {
+        if title.isEmpty || title != lesson.cleanName {
             title = lesson.cleanName
         }
     }

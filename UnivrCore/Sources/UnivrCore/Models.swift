@@ -42,7 +42,7 @@ public struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
     public let orario: String
     public let tipo: String
     public let docente: String
-    public let annullato: String
+    public let annullato: Bool
     public let colorIndex: String
     public let codiceInsegnamento: String
     public var color: String
@@ -105,7 +105,7 @@ public struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
         self.orario = try container.decodeOrEmpty(.orario)
         self.tipo = try container.decodeOrEmpty(.tipo)
         self.docente = try container.decodeOrEmpty(.docente)
-        self.annullato = try container.decodeOrEmpty(.annullato)
+        self.annullato = try container.decodeOrEmpty(.annullato) == "1"
         self.colorIndex = try container.decodeOrEmpty(.colorIndex)
         self.codiceInsegnamento = try container.decodeOrEmpty(.codiceInsegnamento)
         self.color = try container.decodeOrEmpty(.color)
@@ -124,7 +124,7 @@ public struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
         orario: String,
         tipo: String,
         docente: String = "",
-        annullato: String = "",
+        annullato: Bool = false,
         colorIndex: String = "",
         codiceInsegnamento: String = "",
         color: String = "",
@@ -229,7 +229,7 @@ extension Lesson {
         orario: "08:30 - 10:30",
         tipo: "Lezione",
         docente: "Prof. Rossi",
-        annullato: "0",
+        annullato: false,
         colorIndex: "",
         codiceInsegnamento: "XYZ",
         color: "#A0A0A0",

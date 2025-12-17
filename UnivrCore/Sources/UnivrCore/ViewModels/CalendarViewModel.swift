@@ -261,7 +261,7 @@ struct CalendarLogic {
         }
         
         for i in processedLessons.indices {
-            if processedLessons[i].annullato == "1" {
+            if processedLessons[i].annullato {
                 processedLessons[i].color = "#FFFFFF"
                 continue
             }
