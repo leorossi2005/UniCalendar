@@ -13,9 +13,9 @@ import UnivrCore
 struct LessonDetailsView: View {
     @Binding var lesson: Lesson?
     
-    @State private var title: String = ""
-    @State private var date: Date = .distantFuture
+    @State private var showOriginalName: Bool = false
     
+    private var date: Date { lesson?.data.toDateModern() ?? Date() }
     private var backgroundColor: Color { Color(hex: lesson?.color ?? "") ?? Color(.systemGray6) }
     
     var body: some View {
@@ -29,8 +29,8 @@ struct LessonDetailsView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
             .ignoresSafeArea(edges: .bottom)
-            .onAppear {
-                setupInitialData(lesson: lesson)
+            .onChange(of: lesson) {
+                showOriginalName = false
             }
         }
     }
@@ -38,12 +38,12 @@ struct LessonDetailsView: View {
     // MARK: - Subviews
     private func headerInfo(lesson: Lesson) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(title)
+            Text(showOriginalName ? lesson.nameOriginal : lesson.cleanName)
                 .font(.title2)
                 .bold()
                 .contentShape(.rect)
                 .onTapGesture {
-                    title = (title == lesson.cleanName) ? lesson.nameOriginal : lesson.cleanName
+                    showOriginalName.toggle()
                 }
             if !lesson.tags.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -92,16 +92,6 @@ struct LessonDetailsView: View {
     private func rowLabel(text: LocalizedStringKey, icon: String) -> some View {
         Label(text, systemImage: icon)
             .font(.headline)
-    }
-    
-    // MARK: - Logic
-    private func setupInitialData(lesson: Lesson) {
-        if date == .distantFuture {
-            date = lesson.data.toDateModern() ?? Date()
-        }
-        if title.isEmpty || title != lesson.cleanName {
-            title = lesson.cleanName
-        }
     }
 }
 

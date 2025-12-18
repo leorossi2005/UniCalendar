@@ -26,7 +26,6 @@ struct CalendarView: View {
     
     @State private var selectedLesson: Lesson? = nil
     @State private var selectedWeek: Date = Date()
-    @State private var selectedMonth: Int = Date().month
     @State private var selection: String? = ""
     @State private var selectionFraction: String? = ""
     
@@ -63,7 +62,6 @@ struct CalendarView: View {
                                 CustomSheetView(
                                     transition: transition,
                                     selectedWeek: $selectedWeek,
-                                    selectedMonth: $selectedMonth,
                                     selectedDetent: $selectedDetent,
                                     selectionFraction: $selectionFraction,
                                     loading: $viewModel.loading,
@@ -93,7 +91,6 @@ struct CalendarView: View {
                 //.sheet(isPresented: $openCalendar) {
                 //    DynamicSheetContent(
                 //        selectedWeek: $selectedWeek,
-                //        selectedMonth: $selectedMonth,
                 //        selectedDetent: $selectedDetent,
                 //        detents: $detents,
                 //        selectedFraction: $selectionFraction,
@@ -149,7 +146,6 @@ struct CalendarView: View {
                             CustomSheetView(
                                 transition: transition,
                                 selectedWeek: $selectedWeek,
-                                selectedMonth: $selectedMonth,
                                 selectedDetent: $selectedDetent,
                                 selectionFraction: $selectionFraction,
                                 loading: $viewModel.loading,
@@ -222,7 +218,6 @@ struct CalendarView: View {
                 if !viewModel.loading && !firstLoading {
                     let newSelection = selectedWeek.formatUnivrStyle()
                     if newSelection != selection { selection = newSelection }
-                    if selectedMonth != selectedWeek.month { selectedMonth = selectedWeek.month }
                 }
             }
             .onChange(of: positionObserver.windowFrame.size.width) { _, _ in
@@ -569,8 +564,6 @@ struct CalendarView: View {
                 }
             } else if oldValue == .large {
                 openCalendar = oldOpenCalendar
-            } else {
-                selectedMonth = selectedWeek.month
             }
             
             selectedLesson = nil

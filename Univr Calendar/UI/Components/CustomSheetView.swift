@@ -32,7 +32,6 @@ struct CustomSheetView: View {
     var transition: Namespace.ID
     // MARK: - Binding dal Padre
     @Binding var selectedWeek: Date
-    @Binding var selectedMonth: Int
     @Binding var selectedDetent: CustomSheetDetent
     @Binding var selectionFraction: String?
     @Binding var loading: Bool
@@ -101,7 +100,6 @@ struct CustomSheetView: View {
             
             DynamicSheetContent(
                 selectedWeek: $selectedWeek,
-                selectedMonth: $selectedMonth,
                 selectedDetent: $selectedDetent,
                 selectedFraction: $selectionFraction,
                 selectedLesson: $selectedLesson,
@@ -422,7 +420,6 @@ struct CustomSheetView: View {
 // MARK: - Subviews
 struct DynamicSheetContent: View {
     @Binding var selectedWeek: Date
-    @Binding var selectedMonth: Int
     @Binding var selectedDetent: CustomSheetDetent
     @Binding var selectedFraction: String?
     @Binding var selectedLesson: Lesson?
@@ -466,7 +463,6 @@ struct DynamicSheetContent: View {
                     .glassEffectIfAvailable()
                     
                     DatePickerContainer(
-                        selectedMonth: $selectedMonth,
                         selectedWeek: $selectedWeek
                     )
                     .opacity(settingsSearchFocus ? 0 : min(max(mediumOpacity, 0), 1))
