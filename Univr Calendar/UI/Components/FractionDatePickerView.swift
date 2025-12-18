@@ -14,7 +14,6 @@ struct FractionDatePickerView: View {
     
     @Binding var selectedWeek: Date
     @Binding var loading: Bool
-    @Binding var blockTabSwipe: Bool
     
     let week: [FractionDay]
     let width: CGFloat
@@ -29,7 +28,7 @@ struct FractionDatePickerView: View {
                 let isSelected = calendar.isDate(day.date, inSameDayAs: selectedWeek)
                 
                 Button {
-                    if !day.isOutOfBounds && !blockTabSwipe {
+                    if !day.isOutOfBounds {
                         withAnimation {
                             selectedWeek = day.date
                         }
@@ -79,7 +78,6 @@ struct FractionDatePickerContainer: View {
     @Binding var selectedWeek: Date
     @Binding var loading: Bool
     @Binding var selectionFraction: String?
-    @Binding var blockTabSwipe: Bool
 
     @State private var isSyncingSelectionFraction: Bool = false
     @State private var lastIsDualMode: Bool? = nil
@@ -93,7 +91,7 @@ struct FractionDatePickerContainer: View {
         TabView(selection: $selectionFraction) {
             if !isDualMode {
                 ForEach(viewModel.academicWeeks, id: \.self) { week in
-                    FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, blockTabSwipe: $blockTabSwipe, week: week, width: screenWidth)
+                    FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, week: week, width: screenWidth)
                         .tag(week.first?.id)
                 }
             } else {
@@ -101,9 +99,9 @@ struct FractionDatePickerContainer: View {
                     let isLast = index != viewModel.academicWeeks.count - 1
                     HStack {
                         Spacer()
-                        FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, blockTabSwipe: $blockTabSwipe, week: viewModel.academicWeeks[index], width: screenWidth)
+                        FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, week: viewModel.academicWeeks[index], width: screenWidth)
                         Spacer()
-                        FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, blockTabSwipe: $blockTabSwipe, week: isLast ? viewModel.academicWeeks[index + 1] : viewModel.additionalWeek, width: screenWidth)
+                        FractionDatePickerView(selectedWeek: $selectedWeek, loading: $loading, week: isLast ? viewModel.academicWeeks[index + 1] : viewModel.additionalWeek, width: screenWidth)
                         Spacer()
                     }
                     .tag(viewModel.academicWeeks[index].first?.id)
@@ -252,7 +250,7 @@ struct FractionDatePickerContainer: View {
     
     Text("")
         .sheet(isPresented: .constant(true)) {
-            FractionDatePickerContainer(selectedWeek: $selectedWeek, loading: $loading, selectionFraction: $selectionFraction, blockTabSwipe: .constant(false))
+            FractionDatePickerContainer(selectedWeek: $selectedWeek, loading: $loading, selectionFraction: $selectionFraction)
                 .presentationDetents([.fraction(0.15)])
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))

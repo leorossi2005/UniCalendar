@@ -11,27 +11,24 @@ import CoreLocation
 import UnivrCore
 
 struct LessonDetailsView: View {
-    @Environment(\.safeAreaInsets) var safeAreas
-    @Environment(\.colorScheme) var colorScheme
-    
-    @Binding var selectedLesson: Lesson?
+    @Binding var lesson: Lesson?
     
     @State private var title: String = ""
     @State private var date: Date = .distantFuture
     
+    private var backgroundColor: Color { Color(hex: lesson?.color ?? "") ?? Color(.systemGray6) }
+    
     var body: some View {
-        if let lesson = selectedLesson {
+        if let lesson = lesson {
             VStack(alignment: .leading, spacing: 20) {
                 headerInfo(lesson: lesson)
                 detailRows(lesson: lesson)
                 StableMapView(lesson: lesson)
             }
-            .frame(
-                width: UIApplication.shared.screenSize.width - 48,
-                height: UIApplication.shared.screenSize.height - safeAreas.top - safeAreas.bottom - 40,
-            )
-            .padding(.horizontal, 24)
             .padding(.top, 40)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 24)
+            .ignoresSafeArea(edges: .bottom)
             .onAppear {
                 setupInitialData(lesson: lesson)
             }
@@ -56,10 +53,10 @@ struct LessonDetailsView: View {
                                 .font(.caption)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
-                                .background(Color(hex: lesson.color).opacity(0.2))
+                                .background(lesson.annullato ? .clear : backgroundColor.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                                 .overlay {
-                                    if Color(hex: lesson.color) == .white && colorScheme == .light {
+                                    if lesson.annullato {
                                         RoundedRectangle(cornerRadius: 7, style: .continuous)
                                             .strokeBorder(Color(white: 0.35), lineWidth: 0.5)
                                     }
@@ -113,6 +110,8 @@ struct StableMapView: View {
     let lesson: Lesson
     @State private var coordinate: CLLocationCoordinate2D?
     @State private var isLoadingMap: Bool = false
+    
+    private var backgroundColor: Color { Color(hex: lesson.color) ?? Color(.systemGray6) }
 
     var body: some View {
         ZStack {
@@ -122,17 +121,15 @@ struct StableMapView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        openInMapsButton(coordinate: coordinate, name: lesson.formattedClassroom, color: Color(hex: lesson.color) ?? .clear)
+                        openInMapsButton(coordinate: coordinate, name: lesson.formattedClassroom, color: backgroundColor)
                     }
                     Spacer()
                 }
             } else if isLoadingMap {
                 ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.gray.opacity(0.1))
             } else {
                 ContentUnavailableView("Posizione non trovata\n\n\(lesson.aula)", systemImage: "mappin.slash")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.gray.opacity(0.1))
             }
         }
@@ -146,7 +143,7 @@ struct StableMapView: View {
         VStack(spacing: 4) {
             ZStack {
                 Circle()
-                    .fill(Color(hex: lesson.color) ?? .black)
+                    .fill(backgroundColor)
                     .frame(width: 30, height: 30)
                     .shadow(radius: 2)
                 Image(systemName: "graduationcap.fill")
@@ -251,7 +248,7 @@ struct StableMapView: View {
     
     Text("")
         .sheet(isPresented: .constant(true)) {
-            LessonDetailsView(selectedLesson: $lesson)
+            LessonDetailsView(lesson: $lesson)
                 //.presentationDetents([.medium, .large], selection: $selectedDetent)
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))

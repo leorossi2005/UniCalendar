@@ -40,7 +40,6 @@ final class GlassContainerView: UIView {
     private func setup() {
         glassView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(glassView)
-        sendSubviewToBack(glassView)
         NSLayoutConstraint.activate([
             glassView.leadingAnchor.constraint(equalTo: leadingAnchor),
             glassView.trailingAnchor.constraint(equalTo: trailingAnchor),

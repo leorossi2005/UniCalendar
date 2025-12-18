@@ -18,7 +18,6 @@ struct DatePickerView: View, Equatable {
     
     @Binding var selection: Date
     @Binding var selectedMonth: Int
-    @Binding var blockTabSwipe: Bool
     
     let date: Date
     private let screenSize: CGRect = UIApplication.shared.screenSize
@@ -79,7 +78,7 @@ struct DatePickerView: View, Equatable {
             Spacer()
             if today.isInAcademicYear(for: settings.selectedYear) {
                 Button("Oggi") {
-                    if selection != today && !blockTabSwipe {
+                    if selection != today {
                         selection = today
                     }
                 }
@@ -116,7 +115,7 @@ struct DatePickerView: View, Equatable {
                 .hoverEffect(showSelectionCircle ? .lift : .highlight)
         }
         .onTapGesture {
-            guard let yearInt = Int(settings.selectedYear), !blockTabSwipe else { return }
+            guard let yearInt = Int(settings.selectedYear) else { return }
             if selection != cell.date && !cell.date.isOutOfAcademicBounds(for: yearInt) {
                 selection = cell.date
             }
@@ -129,7 +128,6 @@ struct DatePickerContainer: View {
     
     @Binding var selectedMonth: Int
     @Binding var selectedWeek: Date
-    @Binding var blockTabSwipe: Bool
     
     // MARK: - Internal State
     @State private var internalIndex: Int = 0
@@ -151,7 +149,6 @@ struct DatePickerContainer: View {
                         DatePickerView(
                             selection: $selectedWeek,
                             selectedMonth: $selectedMonth,
-                            blockTabSwipe: $blockTabSwipe,
                             date: date
                         )
                         .equatable()
@@ -167,7 +164,6 @@ struct DatePickerContainer: View {
                             DatePickerView(
                                 selection: $selectedWeek,
                                 selectedMonth: $selectedMonth,
-                                blockTabSwipe: $blockTabSwipe,
                                 date: dateLeft
                             )
                             .equatable()
@@ -175,7 +171,6 @@ struct DatePickerContainer: View {
                             DatePickerView(
                                 selection: $selectedWeek,
                                 selectedMonth: $selectedMonth,
-                                blockTabSwipe: $blockTabSwipe,
                                 date: dateRight
                             )
                             .equatable()
@@ -282,6 +277,6 @@ struct DatePickerContainer: View {
     @Previewable @State var selectedMonth: Int = 11
     @Previewable @State var selectedWeek: Date = Date()
     
-    DatePickerContainer(selectedMonth: $selectedMonth, selectedWeek: $selectedWeek, blockTabSwipe: .constant(false))
+    DatePickerContainer(selectedMonth: $selectedMonth, selectedWeek: $selectedWeek)
         .environment(UserSettings.shared)
 }

@@ -58,7 +58,6 @@ struct CustomSheetView: View {
     @State private var dragY: CGFloat = .zero
     
     @State private var gestureLockedDirection: GestureDirection? = nil
-    @State private var blockTabSwipe: Bool = false
     @State private var draggingDirection: CustomSheetDraggingDirection = .none
     @State private var isContentAtTop: Bool = true
     @State private var initialIsContentAtTop: Bool = true
@@ -164,10 +163,8 @@ struct CustomSheetView: View {
                     }
                 }
                 
-                if !blockTabSwipe {
-                    baseHeight = newValue.value
-                    offset = 0
-                }
+                baseHeight = newValue.value
+                offset = 0
             }
             
             if oldValue == .large {
@@ -205,7 +202,6 @@ struct CustomSheetView: View {
             
             let angle = atan2(dy, dx) * 180 / .pi
             gestureLockedDirection = angle > 45 ? .vertical : .horizontal
-            blockTabSwipe = (gestureLockedDirection == .vertical)
             
             if gestureLockedDirection == .vertical {
                 let isDraggingUp = value.translation.height > 0
@@ -320,7 +316,6 @@ struct CustomSheetView: View {
         if selectedDetent == .large {
             if value < 0 || (value > 0 && !isContentAtTop) {
                 Task { @MainActor in
-                    self.blockTabSwipe = false
                     self.gestureLockedDirection = nil
                 }
                 return
@@ -419,7 +414,6 @@ struct CustomSheetView: View {
         }
         
         Task { @MainActor in
-            self.blockTabSwipe = false
             self.gestureLockedDirection = nil
         }
     }
@@ -448,38 +442,36 @@ struct DynamicSheetContent: View {
         ZStack {
             GeometryReader { proxy in
                 let currentHeight = proxy.size.height
-                let screenHeight = UIApplication.shared.screenSize.height
+                let windowHeight = UIApplication.shared.windowSize.height
         
                 let largeHeight = CustomSheetDetent.large.value
                 let mediumHeightHigh = CustomSheetDetent.medium.value * 1.05
                 let mediumHeightLow = CustomSheetDetent.medium.value * 0.95
                 let smallHeight = CustomSheetDetent.small.value
-                let fadeRange: CGFloat = screenHeight * 0.05
+                let fadeRange: CGFloat = windowHeight * 0.05
         
                 let largeOpacity = 1.0 - (Double(largeHeight - currentHeight) / Double(fadeRange))
                 let mediumOpacity = 1.0 - ((currentHeight < mediumHeightHigh ? Double(mediumHeightLow - currentHeight) : Double(currentHeight - mediumHeightHigh)) / Double(fadeRange))
                 let smallOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
         
-                ZStack(alignment: .top) {
+                ZStack(alignment: .topLeading) {
                     FractionDatePickerContainer(
                         selectedWeek: $selectedWeek,
                         loading: $loading,
-                        selectionFraction: $selectedFraction,
-                        blockTabSwipe: .constant(false)
+                        selectionFraction: $selectedFraction
                     )
                     .opacity(settingsSearchFocus ? 0 : min(max(smallOpacity, 0), 1))
                     .allowsHitTesting(selectedDetent == .small && !settingsSearchFocus)
-                    .frame(height: CustomSheetDetent.small.value)
+                    .frame(width: UIApplication.shared.windowSize.width - 16, height: CustomSheetDetent.small.value)
                     .glassEffectIfAvailable()
                     
                     DatePickerContainer(
                         selectedMonth: $selectedMonth,
-                        selectedWeek: $selectedWeek,
-                        blockTabSwipe: .constant(false)
+                        selectedWeek: $selectedWeek
                     )
                     .opacity(settingsSearchFocus ? 0 : min(max(mediumOpacity, 0), 1))
                     .allowsHitTesting(selectedDetent == .medium && !settingsSearchFocus)
-                    .frame(height: CustomSheetDetent.medium.value)
+                    .frame(width: UIApplication.shared.windowSize.width - 16, height: CustomSheetDetent.medium.value)
                     .glassEffectIfAvailable()
                     
                     Group {
@@ -497,9 +489,6 @@ struct DynamicSheetContent: View {
                                     draggingDirection: $draggingDirection,
                                     navigationPath: $path
                                 )
-                                .frame(
-                                    width: UIApplication.shared.screenSize.width - 0.1
-                                )
                                 .toolbar {
                                     ToolbarItem(placement: .principal) {
                                         Text("Impostazioni")
@@ -513,14 +502,14 @@ struct DynamicSheetContent: View {
                             .allowsHitTesting(selectedDetent == .large)
                         } else {
                             NavigationStack {
-                                LessonDetailsView(selectedLesson: $selectedLesson)
+                                LessonDetailsView(lesson: $selectedLesson)
                                     .background(Color(.secondarySystemBackground))
                             }
                             .opacity(settingsSearchFocus ? 0 : min(max(largeOpacity, 0), 1))
                             .allowsHitTesting(selectedDetent == .large)
                         }
                     }
-                    .frame(height: CustomSheetDetent.large.value)
+                    .frame(width: UIApplication.shared.windowSize.width, height: CustomSheetDetent.large.value)
                 }
             }
         }

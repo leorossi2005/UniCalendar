@@ -14,7 +14,6 @@ struct LessonCard: View {
     let lesson: Lesson
     
     private var backgroundColor: Color { Color(hex: lesson.color) ?? Color(.systemGray6) }
-    private var isWhiteCard: Bool { backgroundColor == .white && colorScheme == .light }
     
     var body: some View {
         HStack(spacing: 20) {
@@ -32,9 +31,9 @@ struct LessonCard: View {
     // MARK: - Components
     private var backgroundLayer: some View {
         RoundedRectangle(cornerRadius: 35, style: .continuous)
-            .fill(lesson.annullato ? Color(.systemBackground) : backgroundColor)
+            .fill(lesson.annullato ? .clear : backgroundColor)
             .overlay {
-                if isWhiteCard || lesson.annullato {
+                if lesson.annullato {
                     RoundedRectangle(cornerRadius: 35, style: .continuous)
                         .strokeBorder(.secondary, lineWidth: 0.5)
                 }

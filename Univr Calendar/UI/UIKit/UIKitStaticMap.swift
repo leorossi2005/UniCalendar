@@ -19,6 +19,8 @@ struct UIKitStaticMap: UIViewRepresentable {
         mapView.isPitchEnabled = false
         mapView.isRotateEnabled = false
         mapView.isUserInteractionEnabled = false
+        mapView.insetsLayoutMarginsFromSafeArea = false
+        mapView.preservesSuperviewLayoutMargins = false
         mapView.layoutMargins = UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding)
         return mapView
     }
