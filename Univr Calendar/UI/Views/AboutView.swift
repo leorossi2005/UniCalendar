@@ -47,7 +47,7 @@ struct AboutView: View {
                     infoRow(
                         name: LocalizedStringKey(credit.name),
                         role: LocalizedStringKey(credit.role),
-                        link: credit.url
+                        link: /*credit.url*/ nil
                     )
                 }
             } header: {

@@ -105,7 +105,13 @@ public struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
         self.orario = try container.decodeOrEmpty(.orario)
         self.tipo = try container.decodeOrEmpty(.tipo)
         self.docente = try container.decodeOrEmpty(.docente)
-        self.annullato = try container.decodeOrEmpty(.annullato) == "1"
+        if let simpleString = try? container.decodeIfPresent(String.self, forKey: .annullato) {
+            self.annullato = simpleString == "1"
+        } else if let simpleBool = try? container.decodeIfPresent(Bool.self, forKey: .annullato) {
+            self.annullato = simpleBool
+        } else {
+            self.annullato = false
+        }
         self.colorIndex = try container.decodeOrEmpty(.colorIndex)
         self.codiceInsegnamento = try container.decodeOrEmpty(.codiceInsegnamento)
         self.color = try container.decodeOrEmpty(.color)
@@ -242,3 +248,4 @@ extension Lesson {
         tipo: "pause"
     )
 }
+

@@ -13,16 +13,18 @@ enum CustomSheetDetent {
     case medium
     case large
 
-    var value: CGFloat {
+    func value(in windowHeight: CGFloat = UIApplication.shared.windowSize.height, topSafeArea: CGFloat = UIApplication.shared.safeAreas.top) -> CGFloat {
         switch self {
         case .small:  return (((500 - 70) / 7) * 1.35) + 50
         case .medium: return 350 + 75
         case .large:
-            let screenHeight = UIApplication.shared.windowSize.height
-            let topSafeArea = UIApplication.shared.safeAreas.top
             let topMargin = topSafeArea > 0 ? topSafeArea : 20
             
-            return screenHeight - topMargin - 1
+            if UIDevice.isIpad {
+                return windowHeight - 74 - 1
+            } else {
+                return windowHeight - topMargin - 1
+            }
         }
     }
 }
@@ -30,6 +32,9 @@ enum CustomSheetDetent {
 struct CustomSheetView: View {
     @Environment(\.colorScheme) var colorScheme
     var transition: Namespace.ID
+    
+    var positionObserver = WindowPositionObserver.shared
+    
     // MARK: - Binding dal Padre
     @Binding var selectedWeek: Date
     @Binding var selectedDetent: CustomSheetDetent
@@ -50,7 +55,7 @@ struct CustomSheetView: View {
     var setSheetShape: (Bool, CGFloat) -> ()
     
     // Gesture & Layout States
-    @State private var baseHeight: CGFloat = CustomSheetDetent.small.value
+    @State private var baseHeight: CGFloat = CustomSheetDetent.small.value()
     @State private var basePadding: CGFloat = .zero
     @State private var sheetDetents: [CustomSheetDetent] = [.small, .medium]
     
@@ -64,7 +69,7 @@ struct CustomSheetView: View {
     @State private var initialPadding: CGFloat = .zero
     
     private var liveHeight: CGFloat {
-        min(max(baseHeight - dragY, CustomSheetDetent.small.value), CustomSheetDetent.large.value)
+        min(max(baseHeight - dragY, CustomSheetDetent.small.value()), CustomSheetDetent.large.value())
     }
     
     enum GestureDirection {
@@ -161,7 +166,7 @@ struct CustomSheetView: View {
                     }
                 }
                 
-                baseHeight = newValue.value
+                baseHeight = newValue.value()
                 offset = 0
             }
             
@@ -184,6 +189,11 @@ struct CustomSheetView: View {
         .onAppear {
             initialPadding = sheetPadding
             basePadding = sheetPadding
+        }
+        .onChange(of: positionObserver.windowFrame.height) {
+            if selectedDetent == .large {
+                baseHeight = CustomSheetDetent.large.value()
+            }
         }
     }
     
@@ -264,13 +274,13 @@ struct CustomSheetView: View {
         }
         
         let predictedHeight = baseHeight - value
-        let minDetent = sheetDetents.first!.value
-        let maxDetent = sheetDetents.last!.value
+        let minDetent = sheetDetents.first!.value()
+        let maxDetent = sheetDetents.last!.value()
         
-        if maxDetent == CustomSheetDetent.large.value && sheetDetents.contains(.medium) {
-            if predictedHeight >= CustomSheetDetent.medium.value && predictedHeight <= CustomSheetDetent.large.value {
-                sheetPadding = min(max(initialPadding - ((initialPadding * (predictedHeight - CustomSheetDetent.medium.value)) / (CustomSheetDetent.large.value - CustomSheetDetent.medium.value)), 0), initialPadding)
-            } else if predictedHeight > CustomSheetDetent.large.value {
+        if maxDetent == CustomSheetDetent.large.value() && sheetDetents.contains(.medium) {
+            if predictedHeight >= CustomSheetDetent.medium.value() && predictedHeight <= CustomSheetDetent.large.value() {
+                sheetPadding = min(max(initialPadding - ((initialPadding * (predictedHeight - CustomSheetDetent.medium.value())) / (CustomSheetDetent.large.value() - CustomSheetDetent.medium.value())), 0), initialPadding)
+            } else if predictedHeight > CustomSheetDetent.large.value() {
                 sheetPadding = 0
             } else {
                 sheetPadding = 8
@@ -280,7 +290,7 @@ struct CustomSheetView: View {
         if predictedHeight >= minDetent && predictedHeight <= maxDetent {
             state = value
 
-            if predictedHeight > CustomSheetDetent.large.value * 0.8 {
+            if predictedHeight > CustomSheetDetent.large.value() * 0.8 {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     setSheetShape(true, 36)
                     enableBackground = true
@@ -326,43 +336,43 @@ struct CustomSheetView: View {
         
         var effectiveTranslation = rawPredictedHeight
         
-        if rawPredictedHeight > maxDetent.value {
-            let excess = rawPredictedHeight - maxDetent.value
-            let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent.value - maxDetent.value * 0.75)
-            effectiveTranslation = maxDetent.value + dampedExcess
+        if rawPredictedHeight > maxDetent.value() {
+            let excess = rawPredictedHeight - maxDetent.value()
+            let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent.value() - maxDetent.value() * 0.75)
+            effectiveTranslation = maxDetent.value() + dampedExcess
         }
-        else if rawPredictedHeight < minDetent.value {
-            effectiveTranslation = minDetent.value
+        else if rawPredictedHeight < minDetent.value() {
+            effectiveTranslation = minDetent.value()
         }
         
         let currentH = effectiveTranslation
                 
         let predictedTranslation = predictedEndTranslation
         let predictedHeight = baseHeight - predictedTranslation
-        var target = sheetDetents.min(by: { abs($0.value - predictedHeight) < abs($1.value - predictedHeight) }) ?? .small
+        var target = sheetDetents.min(by: { abs($0.value() - predictedHeight) < abs($1.value() - predictedHeight) }) ?? .small
         
-        if currentH < minDetent.value || rawPredictedHeight < minDetent.value {
+        if currentH < minDetent.value() || rawPredictedHeight < minDetent.value() {
             target = minDetent
-        } else if currentH > maxDetent.value {
+        } else if currentH > maxDetent.value() {
             target = maxDetent
         }
         
-        let isGoingDown = target.value < currentH
+        let isGoingDown = target.value() < currentH
         
         let projectedDelta = predictedTranslation - value
         let baseVelocityPerSecond = -(projectedDelta * 5.0)
         
         var boostFactor: CGFloat = 1.0
         
-        if !isGoingDown && currentH >= minDetent.value && currentH <= maxDetent.value {
-            let distanceToMove = abs(target.value - currentH)
-            let maxDistance = maxDetent.value - minDetent.value
+        if !isGoingDown && currentH >= minDetent.value() && currentH <= maxDetent.value() {
+            let distanceToMove = abs(target.value() - currentH)
+            let maxDistance = maxDetent.value() - minDetent.value()
             boostFactor = 1.0 + 2.0 * (distanceToMove / maxDistance)
         }
         
         let boostedVelocityPerSecond = baseVelocityPerSecond * boostFactor
         
-        let distanceToTarget: CGFloat = target.value - currentH
+        let distanceToTarget: CGFloat = target.value() - currentH
         let relativeVelocity = abs(distanceToTarget) > 1 ? boostedVelocityPerSecond / distanceToTarget : 0
         
         baseHeight = currentH
@@ -381,7 +391,7 @@ struct CustomSheetView: View {
         }
         
         var limit: CGFloat = isGoingDown ? 65 : 65
-        if baseHeight - dragY > sheetDetents.last!.value {
+        if baseHeight - dragY > sheetDetents.last!.value() {
             limit = 0
         }
         
@@ -392,7 +402,7 @@ struct CustomSheetView: View {
             damping: 25,
             initialVelocity: min(max(relativeVelocity, -limit), limit)
         )) {
-            baseHeight = target.value
+            baseHeight = target.value()
             offset = 0
             
             if target == .large {
@@ -441,10 +451,10 @@ struct DynamicSheetContent: View {
                 let currentHeight = proxy.size.height
                 let windowHeight = UIApplication.shared.windowSize.height
         
-                let largeHeight = CustomSheetDetent.large.value
-                let mediumHeightHigh = CustomSheetDetent.medium.value * 1.05
-                let mediumHeightLow = CustomSheetDetent.medium.value * 0.95
-                let smallHeight = CustomSheetDetent.small.value
+                let largeHeight = CustomSheetDetent.large.value()
+                let mediumHeightHigh = CustomSheetDetent.medium.value() * 1.05
+                let mediumHeightLow = CustomSheetDetent.medium.value() * 0.95
+                let smallHeight = CustomSheetDetent.small.value()
                 let fadeRange: CGFloat = windowHeight * 0.05
         
                 let largeOpacity = 1.0 - (Double(largeHeight - currentHeight) / Double(fadeRange))
@@ -457,17 +467,17 @@ struct DynamicSheetContent: View {
                         loading: $loading,
                         selectionFraction: $selectedFraction
                     )
-                    .opacity(settingsSearchFocus ? 0 : min(max(smallOpacity, 0), 1))
-                    .allowsHitTesting(selectedDetent == .small && !settingsSearchFocus)
-                    .frame(width: UIApplication.shared.windowSize.width - 16, height: CustomSheetDetent.small.value)
+                    .opacity(settingsSearchFocus || selectedDetent == .large ? 0 : min(max(smallOpacity, 0), 1))
+                    .allowsHitTesting(selectedDetent == .small && !settingsSearchFocus && selectedDetent != .large)
+                    .frame(width: UIApplication.shared.windowSize.width - 16, height: CustomSheetDetent.small.value())
                     .glassEffectIfAvailable()
                     
                     DatePickerContainer(
                         selectedWeek: $selectedWeek
                     )
-                    .opacity(settingsSearchFocus ? 0 : min(max(mediumOpacity, 0), 1))
-                    .allowsHitTesting(selectedDetent == .medium && !settingsSearchFocus)
-                    .frame(width: UIApplication.shared.windowSize.width - 16, height: CustomSheetDetent.medium.value)
+                    .opacity(settingsSearchFocus || selectedDetent == .large ? 0 : min(max(mediumOpacity, 0), 1))
+                    .allowsHitTesting(selectedDetent == .medium && !settingsSearchFocus && selectedDetent != .large)
+                    .frame(width: UIApplication.shared.windowSize.width - 16, height: CustomSheetDetent.medium.value())
                     .glassEffectIfAvailable()
                     
                     Group {
@@ -505,7 +515,7 @@ struct DynamicSheetContent: View {
                             .allowsHitTesting(selectedDetent == .large)
                         }
                     }
-                    .frame(width: UIApplication.shared.windowSize.width, height: CustomSheetDetent.large.value)
+                    .frame(width: UIApplication.shared.windowSize.width, height: CustomSheetDetent.large.value())
                 }
             }
         }

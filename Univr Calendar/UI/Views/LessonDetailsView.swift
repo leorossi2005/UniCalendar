@@ -23,7 +23,7 @@ struct LessonDetailsView: View {
             VStack(alignment: .leading, spacing: 20) {
                 headerInfo(lesson: lesson)
                 detailRows(lesson: lesson)
-                StableMapView(lesson: lesson)
+                StableMapView(lesson: lesson, corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24)
             }
             .padding(.top, 40)
             .padding(.horizontal, 24)
@@ -53,7 +53,7 @@ struct LessonDetailsView: View {
                                 .font(.caption)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
-                                .background(lesson.annullato ? .clear : backgroundColor.opacity(0.2))
+                                .background(lesson.annullato ? Color(.secondarySystemBackground) : backgroundColor.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                                 .overlay {
                                     if lesson.annullato {
@@ -98,6 +98,7 @@ struct LessonDetailsView: View {
 // MARK: - Subviews
 struct StableMapView: View {
     let lesson: Lesson
+    @State var corderRadius: CGFloat
     @State private var coordinate: CLLocationCoordinate2D?
     @State private var isLoadingMap: Bool = false
     
@@ -106,7 +107,7 @@ struct StableMapView: View {
     var body: some View {
         ZStack {
             if let coordinate = coordinate {
-                UIKitStaticMap(coordinate: coordinate, padding: (.deviceCornerRadius - 24) / 2)
+                UIKitStaticMap(coordinate: coordinate, padding: corderRadius / 2)
                 mapAnnotationView(lesson: lesson)
                 VStack {
                     HStack {
@@ -123,7 +124,7 @@ struct StableMapView: View {
                     .background(Color.gray.opacity(0.1))
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 24))
+        .clipShape(RoundedRectangle(cornerRadius: corderRadius))
         .task(id: lesson.id) {
             await findLocation(for: lesson)
         }
@@ -170,7 +171,7 @@ struct StableMapView: View {
                     GlassContainer(radii: .init(tl: 25, tr: 25, bl: 25, br: 25), style: .clear, tint: color.opacity(0.4))
                 }
                 .buttonBorderShape(.circle)
-                .padding((.deviceCornerRadius - 24) / 2)
+                .padding(corderRadius / 2)
             } else {
                 Button(action: {
                     openMaps(coordinate: coordinate, name: name)
@@ -182,7 +183,7 @@ struct StableMapView: View {
                 .background(.ultraThinMaterial)
                 .background(color.opacity(0.4))
                 .clipShape(.circle)
-                .padding((.deviceCornerRadius - 24) / 2)
+                .padding(corderRadius / 2)
             }
         }
     }

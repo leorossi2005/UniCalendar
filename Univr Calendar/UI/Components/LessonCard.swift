@@ -31,7 +31,7 @@ struct LessonCard: View {
     // MARK: - Components
     private var backgroundLayer: some View {
         RoundedRectangle(cornerRadius: 35, style: .continuous)
-            .fill(lesson.annullato ? .clear : backgroundColor)
+            .fill(lesson.annullato ? Color(.systemBackground) : backgroundColor)
             .overlay {
                 if lesson.annullato {
                     RoundedRectangle(cornerRadius: 35, style: .continuous)

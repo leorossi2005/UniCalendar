@@ -49,6 +49,8 @@ struct WindowEdges: Equatable {
 
 @Observable
 final class WindowPositionObserver {
+    static let shared = WindowPositionObserver()
+    
     var edges = WindowEdges()
     var windowFrame: CGRect = .zero
     var screenBounds: CGRect = .zero
@@ -63,7 +65,7 @@ final class WindowPositionObserver {
         observedWindow = window
         
         displayLink = CADisplayLink(target: self, selector: #selector(checkFrame))
-        displayLink?.preferredFrameRateRange = CAFrameRateRange(minimum: 10, maximum: 15, preferred: 15)
+        displayLink?.preferredFrameRateRange = .default
         displayLink?.add(to: .main, forMode: .common)
         
         checkFrame()

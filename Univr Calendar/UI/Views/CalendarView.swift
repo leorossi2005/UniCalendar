@@ -16,9 +16,9 @@ struct CalendarView: View {
     @Environment(UserSettings.self) var settings
     @Namespace var transition
     
+    private var positionObserver = WindowPositionObserver.shared
     @State private var viewModel = CalendarViewModel()
     @State private var tempSettings = TempSettingsState()
-    @State private var positionObserver = WindowPositionObserver()
     
     @State private var selectedDetent: CustomSheetDetent = .small
     @State private var openCalendar: Bool = false
@@ -35,6 +35,7 @@ struct CalendarView: View {
     @State private var openSettings: Bool = false
     @State private var settingsSearchFocus: Bool = false
     
+    @State private var windowSize: CGSize = .zero
     @State private var sheetEnableBackground: Bool = false
     @State private var sheetOffset: CGFloat = 0
     @State private var sheetPadding: CGFloat = 8
@@ -211,6 +212,20 @@ struct CalendarView: View {
                 .multilineTextAlignment(.center)
                 .scrollTargetLayout()
             }
+            .background(
+                GeometryReader { geoProxy in
+                    Color.clear
+                        .onAppear {
+                            // Questa è la posizione Y rispetto alla cima dello schermo
+                            let yOrigin = geoProxy.frame(in: .global).minY
+                            print("La ScrollView inizia a Y: \(yOrigin)")
+                        }
+                        .onChange(of: geoProxy.frame(in: .global).minY) { oldVal, newVal in
+                            // Utile se l'interfaccia si ridimensiona o cambia layout
+                            print("Nuova posizione Y: \(newVal)")
+                        }
+                }
+            )
             .scrollTargetBehavior(.paging)
             .scrollIndicators(.never, axes: .horizontal)
             .scrollPosition(id: $selection, anchor: .center)

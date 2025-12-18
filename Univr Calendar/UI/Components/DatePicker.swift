@@ -173,9 +173,14 @@ struct DatePickerContainer: View {
                 let newIsDualMode = width >= 700
                 if isDualMode != newIsDualMode {
                     if newIsDualMode {
-                        internalIndex = internalIndex / 2
+                        internalIndex /= 2
                     } else {
-                        internalIndex = internalIndex * 2
+                        let newIndex = calculateTargetIndex(for: selectedWeek.month, isDual: newIsDualMode)
+                        if newIndex == internalIndex * 2 + 1 {
+                            internalIndex = newIndex
+                        } else {
+                            internalIndex *= 2
+                        }
                     }
                     isDualMode = newIsDualMode
                 }
