@@ -10,7 +10,6 @@ import UnivrCore
 
 struct DatePicker: View, Equatable {
     @Environment(UserSettings.self) var settings
-    @Environment(\.colorScheme) var colorScheme
     @Environment(\.isEnabled) var isEnabled
     @Environment(\.calendar) var calendar
     

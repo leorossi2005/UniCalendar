@@ -11,8 +11,6 @@ import UnivrCore
 struct CalendarView: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
-    @Environment(\.scenePhase) var scenePhase
-    @Environment(\.horizontalSizeClass) var sizeClass
     @Environment(UserSettings.self) var settings
     @Namespace var transition
     
@@ -20,180 +18,80 @@ struct CalendarView: View {
     @State private var viewModel = CalendarViewModel()
     @State private var tempSettings = TempSettingsState()
     
-    @State private var selectedDetent: CustomSheetDetent = .small
-    @State private var openCalendar: Bool = false
-    @State private var oldOpenCalendar: Bool = false
-    
     @State private var selectedLesson: Lesson? = nil
     @State private var selectedWeek: Date = Date()
     @State private var selection: String? = ""
-    @State private var selectionFraction: String? = ""
     
     @State private var firstLoading: Bool = true
     @State private var scrollUpdateTask: Task<Void, Never>?
     
+    @State private var selectedDetent: CustomSheetDetent = .small
     @State private var openSettings: Bool = false
-    @State private var settingsSearchFocus: Bool = false
+    @State private var openCalendar: Bool = false
+    @State private var oldOpenCalendar: Bool = false
     
-    @State private var windowSize: CGSize = .zero
-    @State private var sheetEnableBackground: Bool = false
-    @State private var sheetOffset: CGFloat = 0
-    @State private var sheetPadding: CGFloat = 8
     @State private var sheetShape = UnevenRoundedRectangle()
     @State private var sheetShapeRadii: SheetCornerRadii = .init(tl: 0, tr: 0, bl: 0, br: 0)
-    
-    private let screenSize: CGRect = UIApplication.shared.screenSize
-    private var defaultDetents: Set<PresentationDetent> {
-        [.fraction(0.15), UIDevice.isIpad ? .fraction(0.75) : .medium]
-    }
-
-    private var detentsWithLarge: Set<PresentationDetent> {
-        [.fraction(0.15), UIDevice.isIpad ? .fraction(0.75) : .medium, .large]
-    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
             NavigationStack {
-                Group {
-                    if #available(iOS 26, *) {
-                        mainScrollView
-                    } else {
-                        mainScrollView
-                            .overlay(alignment: .bottom) {
-                                CustomSheetView(
-                                    transition: transition,
-                                    selectedWeek: $selectedWeek,
-                                    selectedDetent: $selectedDetent,
-                                    selectionFraction: $selectionFraction,
-                                    loading: $viewModel.loading,
-                                    sheetShape: $sheetShape,
-                                    sheetShapeRadii: $sheetShapeRadii,
-                                    selectedLesson: $selectedLesson,
-                                    openSettings: $openSettings,
-                                    settingsSearchFocus: $settingsSearchFocus,
-                                    tempSettings: $tempSettings,
-                                    openCalendar: $openCalendar,
-                                    offset: $sheetOffset,
-                                    enableBackground: $sheetEnableBackground,
-                                    sheetPadding: $sheetPadding,
-                                    setSheetShape: setSheetShape
-                                )
-                            }
+                mainScrollView
+                    .toolbar {
+                        buildToolbar()
                     }
-                }
-                .background(WindowAccessor { window in
-                    if UIDevice.isIpad {
-                        positionObserver.startObserving(window: window)
+                    //.sheet(isPresented: $openCalendar) {
+                    //    DynamicSheetContent(
+                    //        selectedWeek: $selectedWeek,
+                    //        selectedDetent: $selectedDetent,
+                    //        detents: $detents,
+                    //        selectedLesson: $selectedLesson,
+                    //        openSettings: $openSettings,
+                    //        loading: $viewModel.loading,
+                    //        tempSettings: $tempSettings,
+                    //        openCalendar: $openCalendar
+                    //    )
+                    //    .presentationDetents(detents, selection: $selectedDetent)
+                    //    .interactiveDismissDisabled(true)
+                    //    .presentationBackgroundInteraction(.enabled(upThrough: UIDevice.isIpad ? .fraction(0.75) : .medium))
+                    //    .disabled((viewModel.loading || viewModel.noLessonsFound) && !openSettings)
+                    //    .onChange(of: selectedDetent) { oldValue, newValue in
+                    //        handleDetentChange(oldValue: oldValue, newValue: newValue)
+                    //    }
+                    //    .sheetDesign(transition, sourceID: "calendar", detent: $selectedDetent)
+                    //}
+                    .onChange(of: selectedDetent) { oldValue, newValue in
+                        handleDetentChange(oldValue: oldValue, newValue: newValue)
                     }
-                })
-                .toolbar {
-                    buildToolbar()
-                }
-                //.sheet(isPresented: $openCalendar) {
-                //    DynamicSheetContent(
-                //        selectedWeek: $selectedWeek,
-                //        selectedDetent: $selectedDetent,
-                //        detents: $detents,
-                //        selectedFraction: $selectionFraction,
-                //        selectedLesson: $selectedLesson,
-                //        openSettings: $openSettings,
-                //        settingsSearchFocus: $settingsSearchFocus,
-                //        loading: $viewModel.loading,
-                //        tempSettings: $tempSettings,
-                //        openCalendar: $openCalendar
-                //    )
-                //    .presentationDetents(detents, selection: $selectedDetent)
-                //    .interactiveDismissDisabled(true)
-                //    .presentationBackgroundInteraction(.enabled(upThrough: UIDevice.isIpad ? .fraction(0.75) : .medium))
-                //    .disabled((viewModel.loading || viewModel.noLessonsFound) && !openSettings)
-                //    .onChange(of: selectedDetent) { oldValue, newValue in
-                //        handleDetentChange(oldValue: oldValue, newValue: newValue)
-                //    }
-                //    .sheetDesign(transition, sourceID: "calendar", detent: $selectedDetent)
-                //}
-                .onChange(of: selectedDetent) { oldValue, newValue in
-                    handleDetentChange(oldValue: oldValue, newValue: newValue)
-                }
-                .onAppear {
-                    inizializeData()
-                }
-                .onChange(of: selection) {
-                    handleSelectionChange()
-                }
-                .onChange(of: openCalendar) { oldValue, newValue in
-                    oldOpenCalendar = oldValue
-                }
-                .onChange(of: positionObserver.edges) {
-                    setSheetShape(isOpen: openCalendar)
-                }
-                .onChange(of: viewModel.loading) { _, isLoading in
-                    handleLoadingChange(isLoading)
-                }
-                .removeTopSafeArea()
-                .animation(.default, value: viewModel.checkingUpdates)
-                .animation(.default, value: viewModel.showUpdateAlert)
+                    .onAppear {
+                        inizializeData()
+                    }
+                    .onChange(of: selection) {
+                        handleSelectionChange()
+                    }
+                    .onChange(of: openCalendar) { oldValue, newValue in
+                        oldOpenCalendar = oldValue
+                    }
+                    .onChange(of: viewModel.loading) { _, isLoading in
+                        handleLoadingChange(isLoading)
+                    }
+                    .removeTopSafeArea()
+                    .animation(.default, value: viewModel.checkingUpdates)
+                    .animation(.default, value: viewModel.showUpdateAlert)
             }
             
-            
-            if #available(iOS 26, *) {
-                GlassEffectContainer {
-                    ZStack(alignment: .bottom) {
-                        if sheetEnableBackground {
-                            Color.black.opacity(0.5)
-                                .ignoresSafeArea()
-                        }
-                        
-                        if openCalendar {
-                            CustomSheetView(
-                                transition: transition,
-                                selectedWeek: $selectedWeek,
-                                selectedDetent: $selectedDetent,
-                                selectionFraction: $selectionFraction,
-                                loading: $viewModel.loading,
-                                sheetShape: $sheetShape,
-                                sheetShapeRadii: $sheetShapeRadii,
-                                selectedLesson: $selectedLesson,
-                                openSettings: $openSettings,
-                                settingsSearchFocus: $settingsSearchFocus,
-                                tempSettings: $tempSettings,
-                                openCalendar: $openCalendar,
-                                offset: $sheetOffset,
-                                enableBackground: $sheetEnableBackground,
-                                sheetPadding: $sheetPadding,
-                                setSheetShape: setSheetShape
-                            )
-                            .glassEffectID("calendar", in: transition)
-                            .glassEffectTransition(.matchedGeometry)
-                            .offset(y: -sheetOffset)
-                            .padding(.horizontal, sheetPadding)
-                            .padding(.bottom, sheetPadding)
-                        } else {
-                            Button {
-                                changeOpenCalendar(true)
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "calendar")
-                                        .font(.title2)
-                                    Text("Calendario")
-                                }
-                                .padding(.vertical, 12.2)
-                                .padding(.horizontal, 10)
-                            }
-                            .contentShape(.capsule)
-                            .contentShape(.hoverEffect, .capsule)
-                            .hoverEffect(.highlight)
-                            .buttonStyle(.plain)
-                            .glassEffect(colorScheme == .dark ? .clear.interactive().tint(.black.opacity(0.7)) : .clear.interactive(), in: sheetShape)
-                            .glassEffectID("calendar", in: transition)
-                            .glassEffectTransition(.matchedGeometry)
-                            .matchedGeometryEffect(id: "calendarBackground", in: transition)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .padding(.trailing, 28)
-                            .padding(.bottom, 28)
-                        }
-                    }
-                }
-            }
+            CustomSheetView(
+                transition: transition,
+                openSettings: $openSettings,
+                selectedDetent: $selectedDetent,
+                sheetShape: $sheetShape,
+                sheetShapeRadii: $sheetShapeRadii,
+                selectedWeek: $selectedWeek,
+                selectedLesson: $selectedLesson,
+                tempSettings: $tempSettings,
+                openCalendar: $openCalendar
+            )
+            .disabled((viewModel.loading || viewModel.noLessonsFound) && !openSettings)
         }
         .ignoresSafeArea(edges: .bottom)
     }
@@ -236,20 +134,16 @@ struct CalendarView: View {
         Group {
             if settings.selectedCourse != "0" {
                 ScrollView {
-                    if #available(iOS 17, *) {
-                        if #unavailable(iOS 18.0) {
-                            Spacer().frame(height: safeAreas.top * 1.9)
-                        }
-                    }
                     VStack(spacing: 10) {
                         ForEach(0..<10, id: \.self) { _ in
                             LessonCard(lesson: .sample)
                                 .shimmeringPlaceholder(opacity: colorScheme == .light ? 0.5 : 0.7)
                         }
                     }
-                    .scrollViewTopPadding()
-                    Spacer().frame(height: screenSize.height * 0.10)
                 }
+                .scrollViewTopPadding()
+                .contentMargins(.bottom, CustomSheetDetent.small.value(), for: .scrollContent)
+                .contentMargins(.bottom, CustomSheetDetent.small.value(), for: .scrollIndicators)
                 .containerRelativeFrame(.horizontal)
             } else {
                 Text("Devi scegliere un corso")
@@ -531,6 +425,7 @@ struct CalendarView: View {
         }
     }
     
+    // MARK: - Find a way to move
     private func handleDetentChange(oldValue: CustomSheetDetent, newValue: CustomSheetDetent) {
         if newValue != .large {
             if openSettings {
@@ -574,6 +469,7 @@ struct CalendarView: View {
         }
     }
     
+    // MARK: - To remove
     private func changeOpenCalendar(_ toOpen: Bool) {
         guard openCalendar != toOpen else { return }
 
@@ -581,11 +477,6 @@ struct CalendarView: View {
         transaction.disablesAnimations = true
         withTransaction(transaction) {
             setSheetShape(isOpen: toOpen)
-        }
-
-        if toOpen {
-            selectedLesson = nil
-            openSettings = false
         }
 
         withAnimation(.spring(duration: 0.5, bounce: 0.3)) {
@@ -651,16 +542,9 @@ struct CalendarViewDay: View {
     @Binding var firstLoading: Bool
 
     var changeOpenCalendar: ((_ isOpen: Bool) -> Void)
-
-    private let screenSize: CGRect = UIApplication.shared.screenSize
     
     var body: some View {
         ScrollView {
-            if #available(iOS 17, *) {
-                if #unavailable(iOS 18.0) {
-                    Spacer().frame(height: safeAreas.top * 1.9)
-                }
-            }
             VStack(spacing: 10) {
                 ForEach(filteredLessons) { lesson in
                     if lesson.tipo != "pause" && lesson.tipo != "chiusura_type" {
@@ -683,9 +567,10 @@ struct CalendarViewDay: View {
                     }
                 }
             }
-            .scrollViewTopPadding()
-            Spacer().frame(height: screenSize.height * 0.10)
         }
+        .scrollViewTopPadding()
+        .contentMargins(.bottom, CustomSheetDetent.small.value(), for: .scrollContent)
+        .contentMargins(.bottom, CustomSheetDetent.small.value(), for: .scrollIndicators)
         .onScrollGeometry(
             openCalendar: $openCalendar,
             selectedDetent: $selectedDetent,

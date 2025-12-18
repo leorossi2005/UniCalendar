@@ -36,37 +36,37 @@ struct CustomSheetView: View {
     var positionObserver = WindowPositionObserver.shared
     
     // MARK: - Binding dal Padre
-    @Binding var selectedWeek: Date
+    
+    @Binding var openSettings: Bool
     @Binding var selectedDetent: CustomSheetDetent
-    @Binding var selectionFraction: String?
-    @Binding var loading: Bool
     @Binding var sheetShape: UnevenRoundedRectangle
     @Binding var sheetShapeRadii: SheetCornerRadii
     
+    @Binding var selectedWeek: Date
     @Binding var selectedLesson: Lesson?
-    @Binding var openSettings: Bool
-    @Binding var settingsSearchFocus: Bool
     @Binding var tempSettings: TempSettingsState
     @Binding var openCalendar: Bool
     
-    @Binding var offset: CGFloat
-    @Binding var enableBackground: Bool
-    @Binding var sheetPadding: CGFloat
-    var setSheetShape: (Bool, CGFloat) -> ()
-    
     // Gesture & Layout States
+    @State private var enableBackground: Bool = false
+    @State private var detents: [CustomSheetDetent] = [.small, .medium]
     @State private var baseHeight: CGFloat = CustomSheetDetent.small.value()
-    @State private var basePadding: CGFloat = .zero
-    @State private var sheetDetents: [CustomSheetDetent] = [.small, .medium]
     
     @State private var dragY: CGFloat = .zero
     
     @State private var gestureLockedDirection: GestureDirection? = nil
     @State private var draggingDirection: CustomSheetDraggingDirection = .none
+    
     @State private var isContentAtTop: Bool = true
     @State private var initialIsContentAtTop: Bool = true
+    
     @State private var lockSheet: Bool = false
+    
+    @State private var basePadding: CGFloat = .zero
     @State private var initialPadding: CGFloat = .zero
+    @State private var sheetPadding: CGFloat = 8
+    
+    @State private var offset: CGFloat = .zero
     
     private var liveHeight: CGFloat {
         min(max(baseHeight - dragY, CustomSheetDetent.small.value()), CustomSheetDetent.large.value())
@@ -77,6 +77,53 @@ struct CustomSheetView: View {
     }
     
     var body: some View {
+        if #available(iOS 26, *) {
+            GlassEffectContainer {
+                ZStack(alignment: .bottom) {
+                    if enableBackground {
+                        Color.black.opacity(0.5)
+                            .ignoresSafeArea()
+                    }
+                    
+                    if openCalendar {
+                        mainSheet
+                            .glassEffectID("calendar", in: transition)
+                            .glassEffectTransition(.matchedGeometry)
+                            .offset(y: -offset)
+                            .padding(.horizontal, sheetPadding)
+                            .padding(.bottom, sheetPadding)
+                    } else {
+                        Button {
+                            changeOpenCalendar(true)
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "calendar")
+                                    .font(.title2)
+                                Text("Calendario")
+                            }
+                            .padding(.vertical, 12.2)
+                            .padding(.horizontal, 10)
+                        }
+                        .contentShape(.capsule)
+                        .contentShape(.hoverEffect, .capsule)
+                        .hoverEffect(.highlight)
+                        .buttonStyle(.plain)
+                        .glassEffect(colorScheme == .dark ? .clear.interactive().tint(.black.opacity(0.7)) : .clear.interactive(), in: sheetShape)
+                        .glassEffectID("calendar", in: transition)
+                        .glassEffectTransition(.matchedGeometry)
+                        .matchedGeometryEffect(id: "calendarBackground", in: transition)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.trailing, 28)
+                        .padding(.bottom, 28)
+                    }
+                }
+            }
+        } else {
+            mainSheet
+        }
+    }
+    
+    private var mainSheet: some View {
         ZStack {
             if #available(iOS 26, *) {
                 GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2)
@@ -106,11 +153,8 @@ struct CustomSheetView: View {
             DynamicSheetContent(
                 selectedWeek: $selectedWeek,
                 selectedDetent: $selectedDetent,
-                selectedFraction: $selectionFraction,
                 selectedLesson: $selectedLesson,
                 openSettings: $openSettings,
-                settingsSearchFocus: $settingsSearchFocus,
-                loading: $loading,
                 tempSettings: $tempSettings,
                 openCalendar: $openCalendar,
                 isContentAtTop: $isContentAtTop,
@@ -143,6 +187,19 @@ struct CustomSheetView: View {
                 }
             )
         }
+        .background(WindowAccessor { window in
+            if UIDevice.isIpad {
+                positionObserver.startObserving(window: window)
+            }
+        })
+        .onChange(of: positionObserver.edges) {
+            setSheetShape(isOpen: openCalendar)
+        }
+        .onChange(of: positionObserver.windowFrame.height) {
+            if selectedDetent == .large {
+                baseHeight = CustomSheetDetent.large.value()
+            }
+        }
         .onChange(of: selectedDetent) { oldValue, newValue in
             withAnimation(.interpolatingSpring(
                 mass: 1.0,
@@ -152,14 +209,14 @@ struct CustomSheetView: View {
             )) {
                 if newValue == .large {
                     sheetPadding = 0
-                    setSheetShape(true, 36)
+                    setSheetShape(isOpen: true, sheetCornerRadius: 36)
                     
                     withAnimation(.easeInOut(duration: 0.2)) {
                         enableBackground = true
                     }
                 } else {
                     sheetPadding = initialPadding
-                    setSheetShape(true, -1)
+                    setSheetShape(isOpen: true, sheetCornerRadius: -1)
                     
                     withAnimation(.easeInOut(duration: 0.2)) {
                         enableBackground = false
@@ -171,29 +228,24 @@ struct CustomSheetView: View {
             }
             
             if oldValue == .large {
-                sheetDetents = [.small, .medium]
+                detents = [.small, .medium]
             } else if newValue == .large {
-                sheetDetents = [.small, .medium, .large]
+                detents = [.small, .medium, .large]
             }
         }
         .onChange(of: isContentAtTop) {
             if isContentAtTop && draggingDirection == .none {
                 lockSheet = false
                 if selectedDetent == .large {
-                    sheetDetents = [.small, .medium, .large]
+                    detents = [.small, .medium, .large]
                 } else {
-                    sheetDetents = [.small, .medium]
+                    detents = [.small, .medium]
                 }
             }
         }
         .onAppear {
             initialPadding = sheetPadding
             basePadding = sheetPadding
-        }
-        .onChange(of: positionObserver.windowFrame.height) {
-            if selectedDetent == .large {
-                baseHeight = CustomSheetDetent.large.value()
-            }
         }
     }
     
@@ -259,7 +311,7 @@ struct CustomSheetView: View {
         if selectedDetent == .large {
             if !isContentAtTop {
                 lockSheet = true
-                sheetDetents = [.large]
+                detents = [.large]
             }
             
             if value < 0 {
@@ -274,10 +326,10 @@ struct CustomSheetView: View {
         }
         
         let predictedHeight = baseHeight - value
-        let minDetent = sheetDetents.first!.value()
-        let maxDetent = sheetDetents.last!.value()
+        let minDetent = detents.first!.value()
+        let maxDetent = detents.last!.value()
         
-        if maxDetent == CustomSheetDetent.large.value() && sheetDetents.contains(.medium) {
+        if maxDetent == CustomSheetDetent.large.value() && detents.contains(.medium) {
             if predictedHeight >= CustomSheetDetent.medium.value() && predictedHeight <= CustomSheetDetent.large.value() {
                 sheetPadding = min(max(initialPadding - ((initialPadding * (predictedHeight - CustomSheetDetent.medium.value())) / (CustomSheetDetent.large.value() - CustomSheetDetent.medium.value())), 0), initialPadding)
             } else if predictedHeight > CustomSheetDetent.large.value() {
@@ -292,12 +344,12 @@ struct CustomSheetView: View {
 
             if predictedHeight > CustomSheetDetent.large.value() * 0.8 {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    setSheetShape(true, 36)
+                    setSheetShape(isOpen: true, sheetCornerRadius: 36)
                     enableBackground = true
                 }
             } else {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    setSheetShape(true, -1)
+                    setSheetShape(isOpen: true, sheetCornerRadius: -1)
                     enableBackground = false
                 }
             }
@@ -331,8 +383,8 @@ struct CustomSheetView: View {
         }
         
         let rawPredictedHeight = baseHeight - value
-        let minDetent = sheetDetents.first!
-        let maxDetent = sheetDetents.last!
+        let minDetent = detents.first!
+        let maxDetent = detents.last!
         
         var effectiveTranslation = rawPredictedHeight
         
@@ -349,7 +401,7 @@ struct CustomSheetView: View {
                 
         let predictedTranslation = predictedEndTranslation
         let predictedHeight = baseHeight - predictedTranslation
-        var target = sheetDetents.min(by: { abs($0.value() - predictedHeight) < abs($1.value() - predictedHeight) }) ?? .small
+        var target = detents.min(by: { abs($0.value() - predictedHeight) < abs($1.value() - predictedHeight) }) ?? .small
         
         if currentH < minDetent.value() || rawPredictedHeight < minDetent.value() {
             target = minDetent
@@ -380,18 +432,18 @@ struct CustomSheetView: View {
         
         if target == .large {
             withAnimation(.easeInOut(duration: 0.2)) {
-                setSheetShape(true, 36)
+                setSheetShape(isOpen: true, sheetCornerRadius: 36)
                 enableBackground = true
             }
         } else {
             withAnimation(.easeInOut(duration: 0.2)) {
-                setSheetShape(true, -1)
+                setSheetShape(isOpen: true, sheetCornerRadius: -1)
                 enableBackground = false
             }
         }
         
         var limit: CGFloat = isGoingDown ? 65 : 65
-        if baseHeight - dragY > sheetDetents.last!.value() {
+        if baseHeight - dragY > detents.last!.value() {
             limit = 0
         }
         
@@ -415,14 +467,73 @@ struct CustomSheetView: View {
         if isContentAtTop {
             lockSheet = false
             if selectedDetent == .large {
-                sheetDetents = [.small, .medium, .large]
+                detents = [.small, .medium, .large]
             } else {
-                sheetDetents = [.small, .medium]
+                detents = [.small, .medium]
             }
         }
         
         Task { @MainActor in
             self.gestureLockedDirection = nil
+        }
+    }
+    
+    private func changeOpenCalendar(_ toOpen: Bool) {
+        guard openCalendar != toOpen else { return }
+
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            setSheetShape(isOpen: toOpen)
+        }
+
+        withAnimation(.spring(duration: 0.5, bounce: 0.3)) {
+            openCalendar = toOpen
+        }
+    }
+    
+    private func setSheetShape(isOpen: Bool, sheetCornerRadius: CGFloat = -1) {
+        withAnimation {
+            if #available(iOS 26, *) {
+                if UIDevice.isIpad {
+                    sheetShapeRadii = .init(
+                        tl: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.4 / 2 + 8)) - 8 : sheetCornerRadius,
+                        tr: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.4 / 2 + 8)) - 8 : sheetCornerRadius,
+                        bl: (isOpen ? (positionObserver.edges.bottomLeftSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
+                        br: (isOpen ? (positionObserver.edges.bottomRightSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8
+                    )
+                } else {
+                    let radius: CGFloat = (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8
+                    sheetShapeRadii = .init(
+                        tl: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
+                        tr: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
+                        bl: radius,
+                        br: radius
+                    )
+                }
+            } else {
+                if UIDevice.isIpad {
+                    sheetShapeRadii = .init(
+                        tl: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
+                        tr: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
+                        bl: 0,
+                        br: 0
+                    )
+                } else {
+                    sheetShapeRadii = .init(
+                        tl: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
+                        tr: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
+                        bl: 0,
+                        br: 0
+                    )
+                }
+            }
+            sheetShape = UnevenRoundedRectangle(
+                topLeadingRadius: sheetShapeRadii.tl,
+                bottomLeadingRadius: sheetShapeRadii.bl,
+                bottomTrailingRadius: sheetShapeRadii.br,
+                topTrailingRadius: sheetShapeRadii.tr
+            )
         }
     }
 }
@@ -431,11 +542,8 @@ struct CustomSheetView: View {
 struct DynamicSheetContent: View {
     @Binding var selectedWeek: Date
     @Binding var selectedDetent: CustomSheetDetent
-    @Binding var selectedFraction: String?
     @Binding var selectedLesson: Lesson?
     @Binding var openSettings: Bool
-    @Binding var settingsSearchFocus: Bool
-    @Binding var loading: Bool
     @Binding var tempSettings: TempSettingsState
     @Binding var openCalendar: Bool
     @Binding var isContentAtTop: Bool
@@ -444,6 +552,7 @@ struct DynamicSheetContent: View {
     @Binding var draggingDirection: CustomSheetDraggingDirection
     
     @State private var path = NavigationPath()
+    @State private var settingsSearchFocus: Bool = false
     
     var body: some View {
         ZStack {
@@ -462,23 +571,17 @@ struct DynamicSheetContent: View {
                 let smallOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
         
                 ZStack(alignment: .topLeading) {
-                    FractionDatePickerContainer(
-                        selectedWeek: $selectedWeek,
-                        loading: $loading,
-                        selectionFraction: $selectedFraction
-                    )
-                    .opacity(settingsSearchFocus || currentHeight > smallHeight + fadeRange ? 0 : min(max(smallOpacity, 0), 1))
-                    .allowsHitTesting(selectedDetent == .small && !settingsSearchFocus)
-                    .glassEffectIfAvailable()
-                    .frame(width: UIApplication.shared.windowSize.width - 16, height: currentHeight == largeHeight ? 0 : CustomSheetDetent.small.value())
+                    FractionDatePickerContainer(selectedWeek: $selectedWeek)
+                        .opacity(settingsSearchFocus || currentHeight > smallHeight + fadeRange ? 0 : min(max(smallOpacity, 0), 1))
+                        .allowsHitTesting(selectedDetent == .small && !settingsSearchFocus)
+                        .glassEffectIfAvailable()
+                        .frame(width: UIApplication.shared.windowSize.width - 16, height: currentHeight == largeHeight ? 1 : CustomSheetDetent.small.value())
                     
-                    DatePickerContainer(
-                        selectedWeek: $selectedWeek
-                    )
-                    .opacity(settingsSearchFocus || currentHeight > mediumHeightHigh + fadeRange ? 0 : min(max(mediumOpacity, 0), 1))
-                    .allowsHitTesting(selectedDetent == .medium && !settingsSearchFocus)
-                    .glassEffectIfAvailable()
-                    .frame(width: UIApplication.shared.windowSize.width - 16, height: currentHeight == largeHeight ? 0 : CustomSheetDetent.medium.value())
+                    DatePickerContainer(selectedWeek: $selectedWeek)
+                        .opacity(settingsSearchFocus || currentHeight > mediumHeightHigh + fadeRange ? 0 : min(max(mediumOpacity, 0), 1))
+                        .allowsHitTesting(selectedDetent == .medium && !settingsSearchFocus)
+                        .glassEffectIfAvailable()
+                        .frame(width: UIApplication.shared.windowSize.width - 16, height: currentHeight == largeHeight ? 1 : CustomSheetDetent.medium.value())
                     
                     Group {
                         if openSettings {
