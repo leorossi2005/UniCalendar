@@ -467,18 +467,18 @@ struct DynamicSheetContent: View {
                         loading: $loading,
                         selectionFraction: $selectedFraction
                     )
-                    .opacity(settingsSearchFocus || selectedDetent == .large ? 0 : min(max(smallOpacity, 0), 1))
-                    .allowsHitTesting(selectedDetent == .small && !settingsSearchFocus && selectedDetent != .large)
-                    .frame(width: UIApplication.shared.windowSize.width - 16, height: CustomSheetDetent.small.value())
+                    .opacity(settingsSearchFocus || currentHeight > smallHeight + fadeRange ? 0 : min(max(smallOpacity, 0), 1))
+                    .allowsHitTesting(selectedDetent == .small && !settingsSearchFocus)
                     .glassEffectIfAvailable()
+                    .frame(width: UIApplication.shared.windowSize.width - 16, height: currentHeight == largeHeight ? 0 : CustomSheetDetent.small.value())
                     
                     DatePickerContainer(
                         selectedWeek: $selectedWeek
                     )
-                    .opacity(settingsSearchFocus || selectedDetent == .large ? 0 : min(max(mediumOpacity, 0), 1))
-                    .allowsHitTesting(selectedDetent == .medium && !settingsSearchFocus && selectedDetent != .large)
-                    .frame(width: UIApplication.shared.windowSize.width - 16, height: CustomSheetDetent.medium.value())
+                    .opacity(settingsSearchFocus || currentHeight > mediumHeightHigh + fadeRange ? 0 : min(max(mediumOpacity, 0), 1))
+                    .allowsHitTesting(selectedDetent == .medium && !settingsSearchFocus)
                     .glassEffectIfAvailable()
+                    .frame(width: UIApplication.shared.windowSize.width - 16, height: currentHeight == largeHeight ? 0 : CustomSheetDetent.medium.value())
                     
                     Group {
                         if openSettings {

@@ -135,14 +135,9 @@ struct VerticalDragger: UIViewRepresentable {
         
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
             
-            if let view = otherGestureRecognizer.view {
-                print(type(of: view))
-            }
             if otherGestureRecognizer.view is UIControl {
-                print("ciao")
                 return true
             }
-            print("ciao ciao")
             return false
         }
     }

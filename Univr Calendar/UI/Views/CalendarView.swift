@@ -212,20 +212,6 @@ struct CalendarView: View {
                 .multilineTextAlignment(.center)
                 .scrollTargetLayout()
             }
-            .background(
-                GeometryReader { geoProxy in
-                    Color.clear
-                        .onAppear {
-                            // Questa è la posizione Y rispetto alla cima dello schermo
-                            let yOrigin = geoProxy.frame(in: .global).minY
-                            print("La ScrollView inizia a Y: \(yOrigin)")
-                        }
-                        .onChange(of: geoProxy.frame(in: .global).minY) { oldVal, newVal in
-                            // Utile se l'interfaccia si ridimensiona o cambia layout
-                            print("Nuova posizione Y: \(newVal)")
-                        }
-                }
-            )
             .scrollTargetBehavior(.paging)
             .scrollIndicators(.never, axes: .horizontal)
             .scrollPosition(id: $selection, anchor: .center)
