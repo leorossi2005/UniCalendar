@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-// 1. Il Coordinatore (Corretto: Solo NSObject)
 class ScrollDelegate: NSObject {
     var isAtTop: Binding<Bool>
     weak var scrollView: UIScrollView?
@@ -18,17 +17,14 @@ class ScrollDelegate: NSObject {
     }
 
     func attach(to view: UIView) {
-        // Se siamo già agganciati, usciamo
         if scrollView != nil { return }
         
-        // Usiamo la nuova ricerca aggressiva
         guard let foundScrollView = view.findListScrollView() else {
             return
         }
         
         self.scrollView = foundScrollView
         
-        // Osserviamo
         observer = foundScrollView.observe(\.contentOffset, options: [.new]) { [weak self] scrollView, _ in
             DispatchQueue.main.async {
                 let visibleOffset = scrollView.contentOffset.y + scrollView.adjustedContentInset.top
@@ -46,8 +42,6 @@ class ScrollDelegate: NSObject {
     }
 }
 
-
-// 2. Il wrapper UIViewRepresentable
 struct ListScrollOffsetReader: UIViewRepresentable {
     @Binding var isAtTop: Bool
 
@@ -59,7 +53,6 @@ struct ListScrollOffsetReader: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: UIView, context: Context) {
-        // Un piccolo ritardo aiuta a trovare la gerarchia completa
         DispatchQueue.main.async {
             context.coordinator.attach(to: uiView)
         }
@@ -70,14 +63,10 @@ struct ListScrollOffsetReader: UIViewRepresentable {
     }
 }
 
-// 3. Estensione sicura per trovare la ScrollView
 extension UIView {
     func findListScrollView() -> UIScrollView? {
-        // Funzione helper per cercare ricorsivamente nei figli
         func searchSubviews(in view: UIView) -> UIScrollView? {
-            // Se è la view che cerchiamo (Le List sono spesso UICollectionView)
             if let scrollView = view as? UIScrollView {
-                // Filtriamo scrollview piccolissime o nascoste che a volte SwiftUI crea
                 if view.bounds.height > 0 { return scrollView }
             }
             
@@ -89,16 +78,10 @@ extension UIView {
             return nil
         }
         
-        // Algoritmo:
-        // 1. Partiamo da "self" (la view invisibile)
-        // 2. Risaliamo di un genitore alla volta
-        // 3. Per ogni genitore, cerchiamo in TUTTI i suoi sotto-alberi (tranne il ramo da cui veniamo)
-        
         var currentParent = self.superview
         var levels = 0
         
-        while let parent = currentParent, levels < 10 { // Limite a 10 livelli per sicurezza
-            // Cerca nei discendenti di questo genitore
+        while let parent = currentParent, levels < 10 {
             if let found = searchSubviews(in: parent) {
                 return found
             }
@@ -110,19 +93,13 @@ extension UIView {
     }
 }
 
-
-// Estensione per lanciare la ricerca dal basso verso l'alto
-// Questa va usata SOLO sulla view sonda iniziale
 extension UIView {
     func searchHierarchyForScrollView() -> UIScrollView? {
-        // Cerca in se stesso e figli
         if let found = self.findListScrollView() { return found }
         
-        // Risale la gerarchia e cerca nei fratelli/padri
         var current = self.superview
         while let p = current {
             for subview in p.subviews {
-                // Non ricontrollare il ramo da cui veniamo (opzionale ma ottimizza)
                 if subview !== self, let found = subview.findListScrollView() {
                     return found
                 }

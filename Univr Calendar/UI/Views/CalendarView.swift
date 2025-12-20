@@ -14,7 +14,8 @@ struct CalendarView: View {
     @Environment(UserSettings.self) var settings
     @Namespace var transition
     
-    private var positionObserver = WindowPositionObserver.shared
+    private let positionObserver = WindowPositionObserver.shared
+    private let net: NetworkMonitor = .shared
     @State private var viewModel = CalendarViewModel()
     @State private var tempSettings = TempSettingsState()
     
@@ -75,9 +76,23 @@ struct CalendarView: View {
                     .onChange(of: viewModel.loading) { _, isLoading in
                         handleLoadingChange(isLoading)
                     }
+                    .onChange(of: net.status) { _, newStatus in
+                        if newStatus == .connected {
+                            Task {
+                                await viewModel.loadLessons(
+                                    corso: settings.selectedCourse,
+                                    anno: settings.selectedAcademicYear,
+                                    selYear: settings.selectedYear,
+                                    matricola: settings.matricola,
+                                    updating: false
+                                )
+                            }
+                        }
+                    }
                     .removeTopSafeArea()
                     .animation(.default, value: viewModel.checkingUpdates)
                     .animation(.default, value: viewModel.showUpdateAlert)
+                    .animation(.default, value: net.status)
             }
             
             CustomSheetView(
@@ -91,7 +106,7 @@ struct CalendarView: View {
                 tempSettings: $tempSettings,
                 openCalendar: $openCalendar
             )
-            .disabled((viewModel.loading || viewModel.noLessonsFound) && !openSettings)
+            .disabled((viewModel.loading || viewModel.noLessonsFound || viewModel.days.isEmpty) && !openSettings)
         }
         .ignoresSafeArea(edges: .bottom)
     }
@@ -142,9 +157,14 @@ struct CalendarView: View {
                     }
                 }
                 .scrollViewTopPadding()
-                .contentMargins(.bottom, CustomSheetDetent.small.value(), for: .scrollContent)
-                .contentMargins(.bottom, CustomSheetDetent.small.value(), for: .scrollIndicators)
+                .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
+                .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
                 .containerRelativeFrame(.horizontal)
+            } else if net.status != .connected {
+                Text("Connettiti a internet per scegliere un corso")
+                    .bold()
+                    .font(.title2)
+                    .containerRelativeFrame(.horizontal)
             } else {
                 Text("Devi scegliere un corso")
                     .bold()
@@ -156,7 +176,7 @@ struct CalendarView: View {
     
     private var loadedContent: some View {
         Group {
-            if !viewModel.noLessonsFound {
+            if !viewModel.noLessonsFound && !viewModel.isOffline {
                 ForEach(viewModel.days.indices, id: \.self) { i in
                     if !viewModel.days[i].isEmpty {
                         CalendarViewDay(
@@ -177,8 +197,13 @@ struct CalendarView: View {
                             .containerRelativeFrame(.horizontal)
                     }
                 }
-            } else {
+            } else if viewModel.noLessonsFound {
                 Text("Nessuna lezione trovata per questo corso")
+                    .bold()
+                    .font(.title2)
+                    .containerRelativeFrame(.horizontal)
+            } else {
+                Text("Connettiti a internet per scaricare le lezioni")
                     .bold()
                     .font(.title2)
                     .containerRelativeFrame(.horizontal)
@@ -209,6 +234,30 @@ struct CalendarView: View {
                     modernUpdateStatus
                 } else {
                     legacyUpdateStatus
+                }
+            }
+        } else if net.status == .disconnected {
+            ToolbarItem {
+                if #available(iOS 26, *) {
+                    Button {} label: {
+                        Text("Modalità offline")
+                            .foregroundStyle(.black)
+                            .font(.caption)
+                            .bold()
+                    }
+                    .tint(.yellow.opacity(0.7))
+                    .buttonStyle(.glassProminent)
+                } else {
+                    Text("Modalità offline")
+                        .blur(radius: net.status != .connected ? 0 : 20)
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background {
+                            RoundedRectangle(cornerRadius: 25)
+                                .fill(colorScheme == .light ? .yellow : Color(hex: "#CCAA00")!)
+                                .strokeBorder(colorScheme == .light ? Color(hex: "#CCAA00")! : Color(hex: "#B39500")!, lineWidth: 2)
+                        }
                 }
             }
         }
@@ -569,8 +618,8 @@ struct CalendarViewDay: View {
             }
         }
         .scrollViewTopPadding()
-        .contentMargins(.bottom, CustomSheetDetent.small.value(), for: .scrollContent)
-        .contentMargins(.bottom, CustomSheetDetent.small.value(), for: .scrollIndicators)
+        .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
+        .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
         .onScrollGeometry(
             openCalendar: $openCalendar,
             selectedDetent: $selectedDetent,

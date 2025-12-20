@@ -30,6 +30,7 @@ public class CalendarViewModel {
     public var showUpdateAlert: Bool = false
     public var errorMessage: String? = nil
     public var noLessonsFound: Bool = false
+    public var isOffline: Bool = false
     
     private var pendingNewLessons: [Lesson]? = nil
     private var currentPalette: [String] = []
@@ -60,6 +61,7 @@ public class CalendarViewModel {
     
     public func loadLessons(corso: String, anno: String, selYear: String, matricola: String, updating: Bool) async {
         guard corso != "0" else { return }
+        isOffline = false
         
         if !updating && lessons.isEmpty {
             await loadFromCache(selYear: selYear, matricola: matricola)
@@ -73,6 +75,7 @@ public class CalendarViewModel {
         self.errorMessage = nil
         
         do {
+            await clearCache()
             let response = try await service.fetchOrario(corso: corso, anno: anno, selyear: selYear)
             self.currentPalette = response.colori
             
@@ -157,11 +160,19 @@ public class CalendarViewModel {
         await self.organizeData(selectedYear: selectedYear, matricola: matricola)
     }
     
+    private func clearCache() async {
+        await CacheManager.shared.clear(fileName: cacheKey)
+    }
+    
     private func handleError(_ error: Error) {
         if let netError = error as? NetworkError {
+            if case .offline = netError {
+                isOffline = lessons.isEmpty
+            }
+            
             self.errorMessage = netError.localizedDescription
         } else {
-            self.errorMessage = "Errore generico: \(error.localizedDescription)"
+            self.errorMessage = NSLocalizedString("Errore generico: \(error.localizedDescription)", comment: "")
         }
         print("Debug Error: \(error)")
     }

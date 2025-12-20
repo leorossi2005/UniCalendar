@@ -13,10 +13,15 @@ struct Onboarding: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
     
+    private let net: NetworkMonitor = .shared
     @State private var viewModel = UniversityDataManager()
     
     @State private var currentIndex: Int? = 0
     @State private var nextIndexLoading: Int = -1
+    @State private var errorText: String = "nope"
+    
+    @State private var offlineScale: CGFloat = 1
+    @State private var offlineOffset: CGPoint = .zero
     
     @State private var searchTextFieldFocus: Bool = false
     
@@ -33,6 +38,7 @@ struct Onboarding: View {
                 OnboardingPage(
                     title: "Benvenuto!",
                     subtitle: "Non capisci mai che lezioni hai? Non hai voglia di aprire il sito ogni volta o usare app obsolete? Ora puoi fare tutto qui!",
+                    errorMessage: $errorText,
                     isTopContent: true,
                     content: {
                         if !showSplash {
@@ -46,10 +52,10 @@ struct Onboarding: View {
                     bottomPadding: safeAreas.bottom,
                     buttonTitle: "Continua",
                     isLoading: nextIndexLoading > 0,
-                    isButtonDisabled: false,
+                    isButtonDisabled: net.status != .connected,
                     buttonAction: {
                         handlePageTransition(to: 1) {
-                            await viewModel.loadYears()
+                            try await viewModel.loadYears()
                         }
                     }
                 )
@@ -57,6 +63,7 @@ struct Onboarding: View {
                 OnboardingPage(
                     title: "Scegli un anno",
                     subtitle: "Seleziona un anno precedente per vedere l'archivio, sennò procedi pure con l'ultimo ;)",
+                    errorMessage: $errorText,
                     isTopContent: false,
                     content: {
                         Picker(selection: $settings.selectedYear) {
@@ -70,13 +77,13 @@ struct Onboarding: View {
                     bottomPadding: safeAreas.bottom,
                     buttonTitle: "Continua",
                     isLoading: nextIndexLoading > 1,
-                    isButtonDisabled: false,
+                    isButtonDisabled: net.status != .connected,
                     buttonAction: {
                         viewModel.courses = []
                         settings.selectedCourse = "0"
                         
                         handlePageTransition(to: 2) {
-                            await viewModel.loadCourses(year: settings.selectedYear)
+                            try await viewModel.loadCourses(year: settings.selectedYear)
                         }
                     }
                 )
@@ -84,6 +91,7 @@ struct Onboarding: View {
                 OnboardingPage(
                     title: "Bene! Ora scegli un corso",
                     subtitle: "Sono mostrati i corsi per l'anno \(viewModel.years.filter{$0.valore == settings.selectedYear}.first?.label ?? "")",
+                    errorMessage: $errorText,
                     isTopContent: false,
                     content: {
                         CourseSelector(
@@ -118,6 +126,7 @@ struct Onboarding: View {
                 OnboardingPage(
                     title: "Che anno frequenti?",
                     subtitle: "Se vedi solo un anno allora lascia così, non puoi sbagliare!",
+                    errorMessage: $errorText,
                     isTopContent: false,
                     content: {
                         Picker(selection: $settings.selectedAcademicYear) {
@@ -148,6 +157,7 @@ struct Onboarding: View {
                 OnboardingPage(
                     title: "Sei matricola pari o dispari?",
                     subtitle: "O il tuo amico, ovvio",
+                    errorMessage: $errorText,
                     isTopContent: false,
                     content: {
                         Picker(selection: $settings.matricola) {
@@ -168,6 +178,39 @@ struct Onboarding: View {
                 .id(4)
             }
         }
+        .overlay(alignment: .top) {
+            if #available(iOS 26, *) {
+                Text("Al momento sei offline.")
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background {
+                        RoundedRectangle(cornerRadius: 25)
+                    }
+                    .glassEffect(.regular.interactive().tint(.yellow.opacity(0.7)))
+                    .blur(radius: net.status != .connected ? 0 : 20)
+                    .offset(y: net.status != .connected ? safeAreas.top : safeAreas.top / 2)
+                    .scaleEffect(net.status != .connected ? 1 : 0)
+                    .animation(.bouncy(extraBounce: 0.1), value: net.status)
+                    .ignoresSafeArea()
+            } else {
+                Text("Al momento sei offline.")
+                    .blur(radius: net.status != .connected ? 0 : 20)
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background {
+                        RoundedRectangle(cornerRadius: 25)
+                            .fill(colorScheme == .light ? .yellow : Color(hex: "#CCAA00")!)
+                            .strokeBorder(colorScheme == .light ? Color(hex: "#CCAA00")! : Color(hex: "#B39500")!, lineWidth: 2)
+                    }
+                    .blur(radius: net.status != .connected ? 0 : 20)
+                    .offset(y: net.status != .connected ? safeAreas.top : safeAreas.top / 2)
+                    .scaleEffect(net.status != .connected ? 1 : 0)
+                    .animation(.bouncy(extraBounce: 0.1), value: net.status)
+                    .ignoresSafeArea()
+            }
+        }
         .onAppear {
             viewModel.loadFromCache()
         }
@@ -179,17 +222,29 @@ struct Onboarding: View {
     }
     
     // MARK: - Helpers
-    private func handlePageTransition(to targetIndex: Int, operation: @escaping () async -> Void) {
+    private func handlePageTransition(to targetIndex: Int, operation: @escaping () async throws -> Void) {
         withAnimation {
             nextIndexLoading = targetIndex
         }
         
         Task {
-            await operation()
-            
-            await MainActor.run {
-                withAnimation {
-                    currentIndex = targetIndex
+            do {
+                try await operation()
+                
+                await MainActor.run {
+                    withAnimation {
+                        currentIndex = targetIndex
+                    }
+                }
+            } catch {
+                if let errorMessage = viewModel.errorMessage {
+                    self.errorText = errorMessage
+                }
+                
+                await MainActor.run {
+                    withAnimation {
+                        nextIndexLoading = currentIndex ?? 0
+                    }
                 }
             }
         }
@@ -227,6 +282,7 @@ private struct OnboardingButton: View {
 private struct OnboardingPage<Content: View>: View {
     let title: LocalizedStringKey
     let subtitle: LocalizedStringKey
+    @Binding var errorMessage: String
     let isTopContent: Bool
     @ViewBuilder let content: Content
     let bottomPadding: CGFloat
@@ -257,6 +313,17 @@ private struct OnboardingPage<Content: View>: View {
                     .multilineTextAlignment(.center)
             }
             Spacer()
+            Text(errorMessage)
+                .font(.caption)
+                .foregroundStyle(.red)
+                .opacity(errorMessage == "nope" ? 0 : 1)
+                .task(id: errorMessage) {
+                    do {
+                        try await Task.sleep(for: .seconds(3))
+                        
+                        errorMessage = "nope"
+                    } catch {}
+                }
             OnboardingButton(
                 title: buttonTitle,
                 isLoading: isLoading,

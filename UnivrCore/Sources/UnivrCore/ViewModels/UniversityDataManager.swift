@@ -40,8 +40,8 @@ public final class UniversityDataManager {
         await CacheManager.shared.clear(fileName: "calendar_cache.json")
     }
     
-    public func loadYears() async {
-        await fetchAndRefresh(
+    public func loadYears() async throws {
+        try await fetchAndRefresh(
             currentData: NetworkCache.shared.years,
             fetchOperation: { try await self.service.getYears() },
             updateState: { [weak self] newYears in
@@ -51,11 +51,11 @@ public final class UniversityDataManager {
         )
     }
     
-    public func loadCourses(year: String) async {
+    public func loadCourses(year: String) async throws {
         self.loading = true
         defer { self.loading = false }
         
-        await fetchAndRefresh(
+        try await fetchAndRefresh(
             currentData: NetworkCache.shared.courses[year],
             fetchOperation: { try await self.service.getCourses(year: year) },
             updateState: { [weak self] newCourses in
@@ -83,24 +83,40 @@ public final class UniversityDataManager {
         currentData: T?,
         fetchOperation: @escaping @Sendable () async throws -> T,
         updateState: @escaping @MainActor (T) -> Void
-    ) async {
-        if let currentData, (currentData as? [Any])?.isEmpty == false {
+    ) async throws {
+        let hasCache = (currentData as? [Any])?.isEmpty == false
+                
+        if let currentData, hasCache {
             updateState(currentData)
+            
+            Task {
+                do {
+                    let newData = try await fetchOperation()
+                    
+                    if currentData != newData {
+                        updateState(newData)
+                        await saveCache()
+                    }
+                } catch {
+                    print("Background refresh failed: \(error)")
+                }
+            }
+            
+            return
         }
         
-        Task {
-            do {
-                let newData = try await fetchOperation()
-                if currentData != newData {
-                    updateState(newData)
-                    await saveCache()
-                }
-            } catch {
-                if currentData == nil || (currentData as? [Any])?.isEmpty == true {
-                    self.errorMessage = "Errore generico: \(error.localizedDescription)"
-                }
-                print(error)
+        do {
+            let newData = try await fetchOperation()
+            updateState(newData)
+            await saveCache()
+        } catch {
+            if let NError = error as? NetworkError, case .offline = NError {
+                self.errorMessage = NError.errorDescription
+            } else {
+                self.errorMessage = NSLocalizedString("Errore generico: \(error.localizedDescription)", comment: "")
             }
+            
+            throw error
         }
     }
     

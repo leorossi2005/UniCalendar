@@ -16,6 +16,7 @@ struct Settings: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
     
+    private let net: NetworkMonitor = .shared
     @State private var viewModel = UniversityDataManager()
     @State private var showDeleteAlert = false
     @State private var initialIsContentAtTop: Bool? = nil
@@ -86,9 +87,17 @@ struct Settings: View {
                     }
                 }
             } footer: {
-                Text("Usa questa sezione per modificare le impostazioni dell'app, cambia pure l'anno, il corso, l'anno di corso o la matricola se presente.")
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Usa questa sezione per modificare le impostazioni dell'app, cambia pure l'anno, il corso, l'anno di corso o la matricola se presente.")
+                    
+                    if net.status != .connected {
+                        Text("In modalità offline non puoi modificare queste opzioni.")
+                            .foregroundStyle(.yellow)
+                    }
+                }
             }
             .listRowBackground(Color(.tertiarySystemBackground))
+            .disabled(net.status != .connected)
             Section {
                 Link(destination: AppConstants.URLs.donation) {
                     HStack {
@@ -175,7 +184,7 @@ struct Settings: View {
         selectedAcademicYear = "0"
         
         Task {
-            await viewModel.loadCourses(year: selectedYear)
+            try await viewModel.loadCourses(year: selectedYear)
         }
     }
     
@@ -215,13 +224,13 @@ struct Settings: View {
         
         if viewModel.years.isEmpty {
             Task {
-                await viewModel.loadYears()
+                try await viewModel.loadYears()
             }
         }
         
         if viewModel.courses.isEmpty {
             Task {
-                await viewModel.loadCourses(year: selectedYear)
+                try await viewModel.loadCourses(year: selectedYear)
                 
                 await MainActor.run {
                     if !["pari", "dispari"].contains(matricola) {

@@ -1,12 +1,52 @@
 {
   "sourceLanguage" : "it",
   "strings" : {
+    "Aiuto Sviluppo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Development Help"
+          }
+        }
+      }
+    },
+    "Aiuto Testing" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Testing Help"
+          }
+        }
+      }
+    },
+    "Calendario per UniVR" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calendar for UniVR"
+          }
+        }
+      }
+    },
     "Errore generico: %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Generic Error: %@"
+          }
+        }
+      }
+    },
+    "Sviluppatore" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Developer"
           }
         }
       }

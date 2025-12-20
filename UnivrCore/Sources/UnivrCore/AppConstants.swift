@@ -14,7 +14,7 @@ public struct AppConstants: Sendable {
     }
     
     public struct AppInfo {
-        public static let appName = "UniVR Calendar"
+        public static let appName = NSLocalizedString("Calendario per UniVR", bundle: .module, comment: "")
         public static let developerName = "Leonardo Rossi"
     }
     
@@ -34,10 +34,10 @@ public struct AppConstants: Sendable {
     
     public struct Credits {
         public static let contributors: [Contributor] = [
-            Contributor(name: "Leonardo Rossi", role: "Sviluppatore", url: URLs.portfolio),
-            Contributor(name: "Gaia", role: "Aiuto Sviluppo", url: nil),
-            Contributor(name: "Nicola", role: "Aiuto Testing", url: nil),
-            Contributor(name: "Edoardo", role: "Aiuto Testing", url: nil)
+            Contributor(name: "Leonardo Rossi", role: NSLocalizedString("Sviluppatore", bundle: .module, comment: ""), url: URLs.portfolio),
+            Contributor(name: "Gaia", role: NSLocalizedString("Aiuto Sviluppo", bundle: .module, comment: ""), url: nil),
+            Contributor(name: "Nicola", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: ""), url: nil),
+            Contributor(name: "Edoardo", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: ""), url: nil)
         ]
     }
 }

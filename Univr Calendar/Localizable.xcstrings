@@ -11,17 +11,6 @@
         }
       }
     },
-    "%@" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@"
-          }
-        }
-      }
-    },
     "%@ (%@)" : {
       "localizations" : {
         "en" : {
@@ -70,17 +59,6 @@
         }
       }
     },
-    "%lld" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld"
-          }
-        }
-      }
-    },
     "%lld %@" : {
       "localizations" : {
         "en" : {
@@ -117,24 +95,12 @@
         }
       }
     },
-    "Aiuto Sviluppo" : {
-      "extractionState" : "stale",
+    "Al momento sei offline." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Development Help"
-          }
-        }
-      }
-    },
-    "Aiuto Testing" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Testing Help"
+            "value" : "You’re offline at the moment."
           }
         }
       }
@@ -279,6 +245,26 @@
         }
       }
     },
+    "Connettiti a internet per scaricare le lezioni" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect to the internet to download lessons"
+          }
+        }
+      }
+    },
+    "Connettiti a internet per scegliere un corso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect to the internet to choose a course"
+          }
+        }
+      }
+    },
     "Continua" : {
       "localizations" : {
         "en" : {
@@ -339,34 +325,12 @@
         }
       }
     },
-    "Edoardo" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edoardo"
-          }
-        }
-      }
-    },
     "Fammi un regalino" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Make me a little gift"
-          }
-        }
-      }
-    },
-    "Gaia" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gaia"
           }
         }
       }
@@ -391,6 +355,16 @@
         }
       }
     },
+    "In modalità offline non puoi modificare queste opzioni." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In offline mode you can’t change this options"
+          }
+        }
+      }
+    },
     "Informazioni" : {
       "localizations" : {
         "en" : {
@@ -401,23 +375,22 @@
         }
       }
     },
-    "Leonardo Rossi" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Leonardo Rossi"
-          }
-        }
-      }
-    },
     "Matricola" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Freshman"
+          }
+        }
+      }
+    },
+    "Modalità offline" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offline mode"
           }
         }
       }
@@ -438,17 +411,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No classes found for this course"
-          }
-        }
-      }
-    },
-    "Nicola" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nicola"
           }
         }
       }
@@ -609,28 +571,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The courses for the year %@ are shown"
-          }
-        }
-      }
-    },
-    "Sviluppatore" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Developer"
-          }
-        }
-      }
-    },
-    "UniVR Calendar" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "UniVR Calendar"
           }
         }
       }

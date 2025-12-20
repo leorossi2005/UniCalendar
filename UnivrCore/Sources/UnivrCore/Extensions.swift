@@ -119,4 +119,9 @@ extension Bundle {
         let build = object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "N/A"
         return "v\(version) (\(build))"
     }
+    
+    public var clearAppVersion: String {
+        let version = object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "N/A"
+        return version
+    }
 }
