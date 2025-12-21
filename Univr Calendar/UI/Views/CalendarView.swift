@@ -35,66 +35,65 @@ struct CalendarView: View {
     @State private var sheetShapeRadii: SheetCornerRadii = .init(tl: 0, tr: 0, bl: 0, br: 0)
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            NavigationStack {
-                mainScrollView
-                    .toolbar {
-                        buildToolbar()
-                    }
-                    //.sheet(isPresented: $openCalendar) {
-                    //    DynamicSheetContent(
-                    //        selectedWeek: $selectedWeek,
-                    //        selectedDetent: $selectedDetent,
-                    //        detents: $detents,
-                    //        selectedLesson: $selectedLesson,
-                    //        openSettings: $openSettings,
-                    //        loading: $viewModel.loading,
-                    //        tempSettings: $tempSettings,
-                    //        openCalendar: $openCalendar
-                    //    )
-                    //    .presentationDetents(detents, selection: $selectedDetent)
-                    //    .interactiveDismissDisabled(true)
-                    //    .presentationBackgroundInteraction(.enabled(upThrough: UIDevice.isIpad ? .fraction(0.75) : .medium))
-                    //    .disabled((viewModel.loading || viewModel.noLessonsFound) && !openSettings)
-                    //    .onChange(of: selectedDetent) { oldValue, newValue in
-                    //        handleDetentChange(oldValue: oldValue, newValue: newValue)
-                    //    }
-                    //    .sheetDesign(transition, sourceID: "calendar", detent: $selectedDetent)
-                    //}
-                    .onChange(of: selectedDetent) { oldValue, newValue in
-                        handleDetentChange(oldValue: oldValue, newValue: newValue)
-                    }
-                    .onAppear {
-                        inizializeData()
-                    }
-                    .onChange(of: selection) {
-                        handleSelectionChange()
-                    }
-                    .onChange(of: openCalendar) { oldValue, newValue in
-                        oldOpenCalendar = oldValue
-                    }
-                    .onChange(of: viewModel.loading) { _, isLoading in
-                        handleLoadingChange(isLoading)
-                    }
-                    .onChange(of: net.status) { _, newStatus in
-                        if newStatus == .connected {
-                            Task {
-                                await viewModel.loadLessons(
-                                    corso: settings.selectedCourse,
-                                    anno: settings.selectedAcademicYear,
-                                    selYear: settings.selectedYear,
-                                    matricola: settings.matricola,
-                                    updating: false
-                                )
-                            }
+        NavigationStack {
+            mainScrollView
+                .toolbar {
+                    buildToolbar()
+                }
+                //.sheet(isPresented: $openCalendar) {
+                //    DynamicSheetContent(
+                //        selectedWeek: $selectedWeek,
+                //        selectedDetent: $selectedDetent,
+                //        detents: $detents,
+                //        selectedLesson: $selectedLesson,
+                //        openSettings: $openSettings,
+                //        loading: $viewModel.loading,
+                //        tempSettings: $tempSettings,
+                //        openCalendar: $openCalendar
+                //    )
+                //    .presentationDetents(detents, selection: $selectedDetent)
+                //    .interactiveDismissDisabled(true)
+                //    .presentationBackgroundInteraction(.enabled(upThrough: UIDevice.isIpad ? .fraction(0.75) : .medium))
+                //    .disabled((viewModel.loading || viewModel.noLessonsFound) && !openSettings)
+                //    .onChange(of: selectedDetent) { oldValue, newValue in
+                //        handleDetentChange(oldValue: oldValue, newValue: newValue)
+                //    }
+                //    .sheetDesign(transition, sourceID: "calendar", detent: $selectedDetent)
+                //}
+                .onChange(of: selectedDetent) { oldValue, newValue in
+                    handleDetentChange(oldValue: oldValue, newValue: newValue)
+                }
+                .onAppear {
+                    inizializeData()
+                }
+                .onChange(of: selection) {
+                    handleSelectionChange()
+                }
+                .onChange(of: openCalendar) { oldValue, newValue in
+                    oldOpenCalendar = oldValue
+                }
+                .onChange(of: viewModel.loading) { _, isLoading in
+                    handleLoadingChange(isLoading)
+                }
+                .onChange(of: net.status) { _, newStatus in
+                    if newStatus == .connected {
+                        Task {
+                            await viewModel.loadLessons(
+                                corso: settings.selectedCourse,
+                                anno: settings.selectedAcademicYear,
+                                selYear: settings.selectedYear,
+                                matricola: settings.matricola,
+                                updating: false
+                            )
                         }
                     }
-                    .removeTopSafeArea()
-                    .animation(.default, value: viewModel.checkingUpdates)
-                    .animation(.default, value: viewModel.showUpdateAlert)
-                    .animation(.default, value: net.status)
-            }
-            
+                }
+                .removeTopSafeArea()
+                .animation(.default, value: viewModel.checkingUpdates)
+                .animation(.default, value: viewModel.showUpdateAlert)
+                .animation(.default, value: net.status)
+        }
+        .overlay(alignment: .bottom) {
             CustomSheetView(
                 transition: transition,
                 openSettings: $openSettings,
@@ -395,13 +394,14 @@ struct CalendarView: View {
     }
     
     private func inizializeData() {
+        setSheetShape(isOpen: false)
         updateDate()
         
         tempSettings.sync(with: settings)
         
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.2))
-            openCalendar = true
+            changeOpenCalendar(true)
             oldOpenCalendar = true
         }
         

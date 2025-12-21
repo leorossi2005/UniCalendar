@@ -53,7 +53,6 @@ struct CustomSheetView: View {
     
     @State private var dragY: CGFloat = .zero
     
-    @State private var gestureLockedDirection: GestureDirection? = nil
     @State private var draggingDirection: CustomSheetDraggingDirection = .none
     
     @State private var isContentAtTop: Bool = true
@@ -67,9 +66,7 @@ struct CustomSheetView: View {
     
     @State private var offset: CGFloat = .zero
     
-    private var liveHeight: CGFloat {
-        min(max(baseHeight - dragY, CustomSheetDetent.small.value), CustomSheetDetent.large.value)
-    }
+    private var liveHeight: CGFloat { baseHeight - dragY }
     
     enum GestureDirection {
         case horizontal, vertical
@@ -136,6 +133,7 @@ struct CustomSheetView: View {
                     .matchedGeometryEffect(id: "calendarBackground", in: transition)
             } else {
                 Color(.systemBackground)
+                    .clipShape(sheetShape)
                     .overlay(alignment: .top) {
                         RoundedRectangle(cornerRadius: 2.5)
                             .frame(width: 35, height: 5)
@@ -145,6 +143,7 @@ struct CustomSheetView: View {
                     }
             }
             Color(.secondarySystemBackground)
+                .clipShape(sheetShape)
                 .opacity(enableBackground ? 1 : 0)
             
             DynamicSheetContent(
@@ -157,10 +156,10 @@ struct CustomSheetView: View {
                 isContentAtTop: $isContentAtTop,
                 sheetInitialIsContentAtTop: $initialIsContentAtTop,
                 lockSheet: $lockSheet,
-                draggingDirection: $draggingDirection
+                draggingDirection: $draggingDirection,
+                sheetShape: sheetShape
             )
         }
-        .clipShape(sheetShape)
         .frame(height: liveHeight)
         .overlay {
             VerticalDragger(
@@ -238,41 +237,6 @@ struct CustomSheetView: View {
     func rubberBandDistance(offset: CGFloat, dimension: CGFloat) -> CGFloat {
         let coefficient: CGFloat = 0.55
         return (1.0 - (1.0 / ((offset * coefficient / dimension) + 1.0))) * dimension
-    }
-    
-    private func handleDragChanged(_ value: DragGesture.Value) {
-        if gestureLockedDirection == nil {
-            let dx = abs(value.translation.width)
-            let dy = abs(value.translation.height)
-            
-            let angle = atan2(dy, dx) * 180 / .pi
-            gestureLockedDirection = angle > 45 ? .vertical : .horizontal
-            
-            if gestureLockedDirection == .vertical {
-                let isDraggingUp = value.translation.height > 0
-                let isDraggingDown = value.translation.height < 0
-                let isDraggingLeft = value.translation.width < 0
-                let isDraggingRight = value.translation.width > 0
-                
-                if isDraggingUp {
-                    draggingDirection = .up
-                } else if isDraggingDown {
-                    draggingDirection = .down
-                } else if isDraggingLeft {
-                    draggingDirection = .left
-                } else if isDraggingRight {
-                    draggingDirection = .right
-                }
-                
-                var transaction = Transaction()
-                transaction.disablesAnimations = true
-                withTransaction(transaction) {
-                    baseHeight = liveHeight
-                }
-            }
-            
-            initialIsContentAtTop = isContentAtTop
-        }
     }
     
     private func handleDragUpdating(value: CGFloat, direction: CustomSheetDraggingDirection, state: inout CGFloat) {
@@ -360,9 +324,6 @@ struct CustomSheetView: View {
         
         if selectedDetent == .large {
             if value < 0 || (value > 0 && !isContentAtTop) {
-                Task { @MainActor in
-                    self.gestureLockedDirection = nil
-                }
                 return
             }
         }
@@ -413,7 +374,6 @@ struct CustomSheetView: View {
         let relativeVelocity = abs(distanceToTarget) > 1 ? boostedVelocityPerSecond / distanceToTarget : 0
         
         baseHeight = currentH
-        selectedDetent = target
         
         if target == .large {
             withAnimation(.easeInOut(duration: 0.2)) {
@@ -427,12 +387,14 @@ struct CustomSheetView: View {
             }
         }
         
-        var limit: CGFloat = isGoingDown ? 65 : 65
+        var limit: CGFloat = isGoingDown ? selectedDetent == .large ? 30 : 45 : 45
         if baseHeight - dragY > detents.last!.value {
             limit = 0
         }
         
+        selectedDetent = target
         dragY = 0
+        
         withAnimation(.interpolatingSpring(
             mass: 1.0,
             stiffness: 300,
@@ -456,10 +418,6 @@ struct CustomSheetView: View {
             } else {
                 detents = [.small, .medium]
             }
-        }
-        
-        Task { @MainActor in
-            self.gestureLockedDirection = nil
         }
     }
     
@@ -536,6 +494,8 @@ struct DynamicSheetContent: View {
     @Binding var lockSheet: Bool
     @Binding var draggingDirection: CustomSheetDraggingDirection
     
+    let sheetShape: UnevenRoundedRectangle
+    
     @State private var path = NavigationPath()
     @State private var settingsSearchFocus: Bool = false
     
@@ -555,18 +515,26 @@ struct DynamicSheetContent: View {
                 let mediumOpacity = 1.0 - ((currentHeight < mediumHeightHigh ? Double(mediumHeightLow - currentHeight) : Double(currentHeight - mediumHeightHigh)) / Double(fadeRange))
                 let smallOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
         
+                let smallIsHidden = settingsSearchFocus || currentHeight > smallHeight + fadeRange
+                let mediumIsHidden = settingsSearchFocus || currentHeight > mediumHeightHigh + fadeRange
                 ZStack(alignment: .topLeading) {
                     FractionDatePickerContainer(selectedWeek: $selectedWeek)
-                        .opacity(settingsSearchFocus || currentHeight > smallHeight + fadeRange ? 0 : min(max(smallOpacity, 0), 1))
+                        .clipShape(sheetShape)
+                        .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == .small && !settingsSearchFocus)
                         .glassEffectIfAvailable()
-                        .frame(width: UIApplication.shared.windowSize.width - 16, height: currentHeight == largeHeight ? 1 : CustomSheetDetent.small.value)
+                        .frame(width: UIApplication.shared.windowSize.width - 16)
+                        //.frame(height: smallIsHidden ? 1 : nil, alignment: .top)
+                        //.clipped()
                     
                     DatePickerContainer(selectedWeek: $selectedWeek)
-                        .opacity(settingsSearchFocus || currentHeight > mediumHeightHigh + fadeRange ? 0 : min(max(mediumOpacity, 0), 1))
+                        .clipShape(sheetShape)
+                        .opacity(mediumIsHidden ? 0 : min(max(mediumOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == .medium && !settingsSearchFocus)
                         .glassEffectIfAvailable()
-                        .frame(width: UIApplication.shared.windowSize.width - 16, height: currentHeight == largeHeight ? 1 : CustomSheetDetent.medium.value)
+                        .frame(width: UIApplication.shared.windowSize.width - 16)
+                        //.frame(height: mediumIsHidden ? 1 : nil, alignment: .top)
+                        //.clipped()
                     
                     Group {
                         if openSettings {
@@ -583,6 +551,9 @@ struct DynamicSheetContent: View {
                                     draggingDirection: $draggingDirection,
                                     navigationPath: $path
                                 )
+                                .padding(.top, UIApplication.shared.safeAreas.top)
+                                .ignoresSafeArea(.keyboard)
+                                .ignoresSafeArea(edges: .top)
                                 .toolbar {
                                     ToolbarItem(placement: .principal) {
                                         Text("Impostazioni")
@@ -598,17 +569,20 @@ struct DynamicSheetContent: View {
                             NavigationStack {
                                 LessonDetailsView(lesson: $selectedLesson)
                                     .background(Color(.secondarySystemBackground))
+                                    .ignoresSafeArea(edges: .top)
                             }
                             .opacity(settingsSearchFocus ? 0 : min(max(largeOpacity, 0), 1))
                             .allowsHitTesting(selectedDetent == .large)
                         }
                     }
-                    .frame(width: UIApplication.shared.windowSize.width, height: CustomSheetDetent.large.value)
+                    .clipShape(sheetShape)
+                    .frame(width: UIApplication.shared.windowSize.width, height: currentHeight > mediumHeightHigh + fadeRange ? CustomSheetDetent.large.value : nil)
                 }
             }
         }
         .onChange(of: openSettings) {
             if !openSettings {
+                settingsSearchFocus = false
                 path = NavigationPath()
             }
         }

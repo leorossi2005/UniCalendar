@@ -70,6 +70,7 @@ public class CalendarViewModel {
         if !updating && !lessons.isEmpty {
             self.checkingUpdates = true
         } else {
+            await clearAll()
             self.loading = true
         }
         self.errorMessage = nil
@@ -88,10 +89,6 @@ public class CalendarViewModel {
             
             self.loading = false
         } catch {
-            if updating {
-                await clearAll()
-            }
-            
             self.handleError(error)
         }
         

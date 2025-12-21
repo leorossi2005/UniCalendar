@@ -9,7 +9,7 @@ import SwiftUI
 import UIKit
 
 enum CustomSheetDraggingDirection {
-    case up, down, left, right, none
+    case up, down, none
 }
 
 struct VerticalDragger: UIViewRepresentable {
@@ -116,17 +116,11 @@ struct VerticalDragger: UIViewRepresentable {
                 
                 let isDraggingUp = translation.y > 0
                 let isDraggingDown = translation.y < 0
-                let isDraggingLeft = translation.x < 0
-                let isDraggingRight = translation.x > 0
                 
                 if isDraggingUp {
                     parent.direction = .up
                 } else if isDraggingDown {
                     parent.direction = .down
-                } else if isDraggingLeft {
-                    parent.direction = .left
-                } else if isDraggingRight {
-                    parent.direction = .right
                 }
             }
             
