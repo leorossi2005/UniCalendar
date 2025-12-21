@@ -116,7 +116,9 @@ struct CalendarView: View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal) {
                 LazyHStack(spacing: 0) {
-                    if viewModel.loading || firstLoading {
+                    if net.status != .connected && viewModel.days.isEmpty {
+                        offlineContent
+                    } else if viewModel.loading || firstLoading {
                         loadingPlaceholder
                     } else {
                         loadedContent
@@ -124,6 +126,7 @@ struct CalendarView: View {
                 }
                 .multilineTextAlignment(.center)
                 .scrollTargetLayout()
+                .id(viewModel.loading ? "loading-state" : "content-state")
             }
             .scrollTargetBehavior(.paging)
             .scrollIndicators(.never, axes: .horizontal)
@@ -160,11 +163,6 @@ struct CalendarView: View {
                 .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
                 .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
                 .containerRelativeFrame(.horizontal)
-            } else if net.status != .connected {
-                Text("Connettiti a internet per scegliere un corso")
-                    .bold()
-                    .font(.title2)
-                    .containerRelativeFrame(.horizontal)
             } else {
                 Text("Devi scegliere un corso")
                     .bold()
@@ -176,7 +174,7 @@ struct CalendarView: View {
     
     private var loadedContent: some View {
         Group {
-            if !viewModel.noLessonsFound && !viewModel.isOffline {
+            if !viewModel.noLessonsFound {
                 ForEach(viewModel.days.indices, id: \.self) { i in
                     if !viewModel.days[i].isEmpty {
                         CalendarViewDay(
@@ -197,17 +195,26 @@ struct CalendarView: View {
                             .containerRelativeFrame(.horizontal)
                     }
                 }
-            } else if viewModel.noLessonsFound {
+            } else {
                 Text("Nessuna lezione trovata per questo corso")
                     .bold()
                     .font(.title2)
                     .containerRelativeFrame(.horizontal)
-            } else {
-                Text("Connettiti a internet per scaricare le lezioni")
-                    .bold()
-                    .font(.title2)
-                    .containerRelativeFrame(.horizontal)
             }
+        }
+    }
+    
+    private var offlineContent: some View {
+        if settings.selectedCourse == "0" {
+            Text("Connettiti a internet per scegliere un corso")
+                .bold()
+                .font(.title2)
+                .containerRelativeFrame(.horizontal)
+        } else {
+            Text("Connettiti a internet per scaricare le lezioni")
+                .bold()
+                .font(.title2)
+                .containerRelativeFrame(.horizontal)
         }
     }
     
@@ -349,7 +356,6 @@ struct CalendarView: View {
         Button(action: openSettingsAction) {
             Label("", systemImage: "gearshape.fill")
         }
-        .disabled(viewModel.loading && settings.selectedCourse != "0")
     }
     
     var legacySettingsButton: some View {
@@ -365,7 +371,6 @@ struct CalendarView: View {
         .tint(colorScheme == .light ? .white.opacity(0.7) : .black.opacity(0.7))
         .clipShape(.circle)
         .overlay(Circle().stroke(colorScheme == .light ? .black.opacity(0.1) : .white.opacity(0.1), lineWidth: 2))
-        .disabled(viewModel.loading && settings.selectedCourse != "0")
     }
     
     var calendarButton: some View {
@@ -443,7 +448,9 @@ struct CalendarView: View {
                             selectedWeek = date
                         }
                         
-                        selectedDetent = .small
+                        if !openSettings {
+                            selectedDetent = .small
+                        }
                     }
                 }
             }
@@ -496,6 +503,10 @@ struct CalendarView: View {
                                 matricola: settings.matricola,
                                 updating: true
                             )
+                        }
+                    } else {
+                        Task {
+                            await viewModel.clearAll()
                         }
                     }
                 } else if tempSettings.matricola != settings.matricola {

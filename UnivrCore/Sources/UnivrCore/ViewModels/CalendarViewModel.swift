@@ -75,8 +75,8 @@ public class CalendarViewModel {
         self.errorMessage = nil
         
         do {
-            await clearCache()
             let response = try await service.fetchOrario(corso: corso, anno: anno, selyear: selYear)
+            
             self.currentPalette = response.colori
             
             var fetchedLessons = response.celle
@@ -85,11 +85,16 @@ public class CalendarViewModel {
             }
             
             try await handleNewData(fetchedLessons, selectedYear: selYear, matricola: matricola, update: updating)
+            
+            self.loading = false
         } catch {
+            if updating {
+                await clearAll()
+            }
+            
             self.handleError(error)
         }
         
-        self.loading = false
         self.checkingUpdates = false
     }
     
@@ -162,6 +167,15 @@ public class CalendarViewModel {
     
     private func clearCache() async {
         await CacheManager.shared.clear(fileName: cacheKey)
+    }
+    
+    public func clearAll() async {
+        self.loading = true
+        await Task.yield()
+        await clearCache()
+        clearPendingUpdate()
+        self.lessons.removeAll()
+        self.days.removeAll()
     }
     
     private func handleError(_ error: Error) {

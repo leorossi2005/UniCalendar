@@ -26,6 +26,7 @@ struct DatePicker: View, Equatable {
     
     static func == (lhs: DatePicker, rhs: DatePicker) -> Bool {
         if lhs.date != rhs.date { return false }
+        if lhs.isEnabled != rhs.isEnabled { return false }
         
         let lhsIsSelectedMonth = Calendar.current.isDate(lhs.selection, equalTo: lhs.date, toGranularity: .month)
         let rhsIsSelectedMonth = Calendar.current.isDate(rhs.selection, equalTo: rhs.date, toGranularity: .month)
