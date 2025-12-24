@@ -73,50 +73,91 @@ struct CustomSheetView: View {
     }
     
     var body: some View {
-        if #available(iOS 26, *) {
-            GlassEffectContainer {
-                ZStack(alignment: .bottom) {
-                    if enableBackground {
-                        Color.black.opacity(0.5)
-                            .ignoresSafeArea()
-                    }
-                    
-                    if openCalendar {
-                        mainSheet
+        Group {
+            if #available(iOS 26, *) {
+                GlassEffectContainer {
+                    ZStack(alignment: .bottom) {
+                        if enableBackground {
+                            Color.black.opacity(0.5)
+                                .ignoresSafeArea()
+                        }
+                        
+                        if openCalendar {
+                            mainSheet
+                                .glassEffectID("calendar", in: transition)
+                                .glassEffectTransition(.matchedGeometry)
+                                .offset(y: -offset)
+                                .padding(.horizontal, sheetPadding)
+                                .padding(.bottom, sheetPadding)
+                        } else {
+                            Button {
+                                changeOpenCalendar(true)
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "calendar")
+                                        .font(.title2)
+                                    Text("Calendario")
+                                        .fixedSize()
+                                }
+                                .padding(.vertical, 12.2)
+                                .padding(.horizontal, 10)
+                            }
+                            .contentShape(.capsule)
+                            .contentShape(.hoverEffect, .capsule)
+                            .hoverEffect(.highlight)
+                            .buttonStyle(.plain)
+                            .glassEffect(colorScheme == .dark ? .clear.interactive().tint(.black.opacity(0.7)) : .clear.interactive(), in: sheetShape)
                             .glassEffectID("calendar", in: transition)
                             .glassEffectTransition(.matchedGeometry)
-                            .offset(y: -offset)
-                            .padding(.horizontal, sheetPadding)
-                            .padding(.bottom, sheetPadding)
-                    } else {
-                        Button {
-                            changeOpenCalendar(true)
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "calendar")
-                                    .font(.title2)
-                                Text("Calendario")
-                                    .fixedSize()
-                            }
-                            .padding(.vertical, 12.2)
-                            .padding(.horizontal, 10)
+                            .matchedGeometryEffect(id: "calendarBackground", in: transition)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .padding(.trailing, 28)
+                            .padding(.bottom, 28)
                         }
-                        .contentShape(.capsule)
-                        .contentShape(.hoverEffect, .capsule)
-                        .hoverEffect(.highlight)
-                        .buttonStyle(.plain)
-                        .glassEffect(colorScheme == .dark ? .clear.interactive().tint(.black.opacity(0.7)) : .clear.interactive(), in: sheetShape)
-                        .glassEffectID("calendar", in: transition)
-                        .glassEffectTransition(.matchedGeometry)
-                        .matchedGeometryEffect(id: "calendarBackground", in: transition)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .padding(.trailing, 28)
-                        .padding(.bottom, 28)
                     }
                 }
+            } else {
+                mainSheet
             }
-        } else {
-            mainSheet
+        }
+        .onChange(of: selectedDetent) { oldValue, newValue in
+            changeOpenCalendar(true)
+            
+            if oldValue == .large {
+                detents = [.small, .medium]
+            } else if newValue == .large {
+                detents = [.small, .medium, .large]
+            }
+            
+            withAnimation(.interpolatingSpring(
+                mass: 1.0,
+                stiffness: 300,
+                damping: 25,
+                initialVelocity: 0
+            )) {
+                if newValue == .large {
+                    sheetPadding = 0
+                    setSheetShape(isOpen: true, sheetCornerRadius: 36)
+                    
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        enableBackground = true
+                    }
+                } else {
+                    sheetPadding = initialPadding
+                    setSheetShape(isOpen: true, sheetCornerRadius: -1)
+                    
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        enableBackground = false
+                    }
+                }
+                
+                baseHeight = newValue.value
+                offset = 0
+            }
+        }
+        .onAppear {
+            initialPadding = sheetPadding
+            basePadding = sheetPadding
         }
     }
     
@@ -126,6 +167,7 @@ struct CustomSheetView: View {
                 GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2)
                     .overlay(alignment: .top) {
                         RoundedRectangle(cornerRadius: 2.5)
+                            .fill(.tertiary)
                             .frame(width: 35, height: 5)
                             .padding(.top, 5)
                             .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
@@ -137,6 +179,7 @@ struct CustomSheetView: View {
                     .clipShape(sheetShape)
                     .overlay(alignment: .top) {
                         RoundedRectangle(cornerRadius: 2.5)
+                            .fill(.tertiary)
                             .frame(width: 35, height: 5)
                             .padding(.top, 5)
                             .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
@@ -160,6 +203,16 @@ struct CustomSheetView: View {
                 draggingDirection: $draggingDirection,
                 sheetShape: sheetShape
             )
+            .overlay(alignment: .top) {
+                if selectedDetent == .large {
+                    RoundedRectangle(cornerRadius: 2.5)
+                        .fill(.tertiary)
+                        .frame(width: 35, height: 5)
+                        .padding(.top, 5)
+                        .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
+                        .hoverEffect(.highlight)
+                }
+            }
         }
         .frame(height: liveHeight)
         .overlay {
@@ -185,39 +238,6 @@ struct CustomSheetView: View {
                 baseHeight = CustomSheetDetent.large.value
             }
         }
-        .onChange(of: selectedDetent) { oldValue, newValue in
-            withAnimation(.interpolatingSpring(
-                mass: 1.0,
-                stiffness: 200,
-                damping: 30,
-                initialVelocity: 0
-            )) {
-                if newValue == .large {
-                    sheetPadding = 0
-                    setSheetShape(isOpen: true, sheetCornerRadius: 36)
-                    
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        enableBackground = true
-                    }
-                } else {
-                    sheetPadding = initialPadding
-                    setSheetShape(isOpen: true, sheetCornerRadius: -1)
-                    
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        enableBackground = false
-                    }
-                }
-                
-                baseHeight = newValue.value
-                offset = 0
-            }
-            
-            if oldValue == .large {
-                detents = [.small, .medium]
-            } else if newValue == .large {
-                detents = [.small, .medium, .large]
-            }
-        }
         .onChange(of: isContentAtTop) {
             if isContentAtTop && draggingDirection == .none {
                 lockSheet = false
@@ -227,10 +247,6 @@ struct CustomSheetView: View {
                     detents = [.small, .medium]
                 }
             }
-        }
-        .onAppear {
-            initialPadding = sheetPadding
-            basePadding = sheetPadding
         }
     }
     

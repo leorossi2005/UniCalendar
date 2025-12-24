@@ -279,14 +279,6 @@ struct CalendarView: View {
                 legacySettingsButton
             }
         }
-        
-        //if #available(iOS 26, *) {
-        //    ToolbarItem(placement: .bottomBar) { Spacer() }
-        //    ToolbarItem(id: "calendarButton", placement: .bottomBar) {
-        //        calendarButton
-        //            .matchedTransitionSource(id: "calendar", in: transition)
-        //    }
-        //}
     }
     
     // MARK: - Toolbar Components
@@ -372,24 +364,9 @@ struct CalendarView: View {
         .overlay(Circle().stroke(colorScheme == .light ? .black.opacity(0.1) : .white.opacity(0.1), lineWidth: 2))
     }
     
-    var calendarButton: some View {
-        Button {
-            withAnimation {
-                selectedLesson = nil
-                openCalendar = true
-            }
-        } label: {
-            HStack {
-                Image(systemName: "calendar")
-                Text("Calendario")
-            }
-        }
-    }
-    
     // MARK: - Logic Methods
     private func openSettingsAction() {
         openSettings = true
-        openCalendar = true
         selectedDetent = .large
     }
     
@@ -490,7 +467,7 @@ struct CalendarView: View {
                 if hasChanged {
                     tempSettings.apply(to: settings)
                     
-                    openCalendar = true
+                    changeOpenCalendar(true)
                     
                     if settings.selectedCourse != "0" {
                         updateDate()
@@ -511,15 +488,15 @@ struct CalendarView: View {
                     }
                 } else if tempSettings.matricola != settings.matricola {
                     settings.matricola = tempSettings.matricola
-                    openCalendar = true
+                    changeOpenCalendar(true)
                     Task {
                         await viewModel.organizeData(selectedYear: settings.selectedYear, matricola: settings.matricola)
                     }
                 } else {
-                    openCalendar = oldOpenCalendar
+                    changeOpenCalendar(oldOpenCalendar)
                 }
             } else if oldValue == .large {
-                openCalendar = oldOpenCalendar
+                changeOpenCalendar(oldOpenCalendar)
             }
             
             selectedLesson = nil
@@ -610,7 +587,6 @@ struct CalendarViewDay: View {
                     if lesson.tipo != "pause" && lesson.tipo != "chiusura_type" {
                         LessonCard(lesson: lesson)
                             .onTapGesture {
-                                changeOpenCalendar(true)
                                 selectedLesson = lesson
                                 selectedDetent = .large
                             }
