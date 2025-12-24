@@ -107,7 +107,7 @@ struct StableMapView: View {
     var body: some View {
         ZStack {
             if let coordinate = coordinate {
-                UIKitStaticMap(coordinate: coordinate, padding: corderRadius / 2)
+                UIKitStaticMap(coordinate: coordinate, padding: corderRadius / 2, altitude: 600)
                 mapAnnotationView(lesson: lesson)
                 VStack {
                     HStack {

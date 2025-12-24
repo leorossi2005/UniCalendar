@@ -96,6 +96,7 @@ struct CustomSheetView: View {
                                 Image(systemName: "calendar")
                                     .font(.title2)
                                 Text("Calendario")
+                                    .fixedSize()
                             }
                             .padding(.vertical, 12.2)
                             .padding(.horizontal, 10)

@@ -11,6 +11,7 @@ import MapKit
 struct UIKitStaticMap: UIViewRepresentable {
     var coordinate: CLLocationCoordinate2D
     var padding: CGFloat = 0
+    var altitude: CLLocationDistance = 1000
     
     func makeUIView(context: Context) -> MKMapView {
         let mapView = MKMapView()
@@ -22,15 +23,20 @@ struct UIKitStaticMap: UIViewRepresentable {
         mapView.insetsLayoutMarginsFromSafeArea = false
         mapView.preservesSuperviewLayoutMargins = false
         mapView.layoutMargins = UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding)
+        
+        let zoomnRange = MKMapView.CameraZoomRange(minCenterCoordinateDistance: altitude, maxCenterCoordinateDistance: altitude)
+        mapView.setCameraZoomRange(zoomnRange, animated: false)
         return mapView
     }
     
     func updateUIView(_ mapView: MKMapView, context: Context) {
-        let region = MKCoordinateRegion(
-            center: coordinate,
-            span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
+        let camera = MKMapCamera(
+            lookingAtCenter: coordinate,
+            fromDistance: altitude,
+            pitch: 0,
+            heading: 0
         )
-        mapView.setRegion(region, animated: false)
+        mapView.setCamera(camera, animated: false)
         
         mapView.layoutMargins = UIEdgeInsets(top: padding, left: padding, bottom: padding, right: padding)
     }
