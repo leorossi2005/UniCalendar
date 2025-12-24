@@ -118,12 +118,12 @@ struct StableMapView: View {
                 }
             } else if isLoadingMap {
                 ProgressView()
-                    .background(Color.gray.opacity(0.1))
             } else {
                 ContentUnavailableView("Posizione non trovata\n\n\(lesson.aula)", systemImage: "mappin.slash")
-                    .background(Color.gray.opacity(0.1))
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.gray.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: corderRadius))
         .task(id: lesson.id) {
             await findLocation(for: lesson)
