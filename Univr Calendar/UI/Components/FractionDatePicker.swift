@@ -43,8 +43,7 @@ struct FractionDatePickerView: View {
                 }
             }
         }
-        .frame(maxHeight: .infinity)
-        .frame(maxWidth: 500)
+        .frame(maxWidth: 500, maxHeight: .infinity)
         .padding(.horizontal, 20)
         .ignoresSafeArea()
     }
@@ -112,6 +111,7 @@ struct FractionDatePickerContainer: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(height: CustomSheetDetent.small.value)
             .id(isDualMode)
             .task {
                 await viewModel.generateAcademicWeeks(selectedYear: settings.selectedYear)

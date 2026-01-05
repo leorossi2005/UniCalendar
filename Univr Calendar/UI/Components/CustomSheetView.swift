@@ -75,21 +75,19 @@ struct CustomSheetView: View {
     var body: some View {
         Group {
             if #available(iOS 26, *) {
-                GlassEffectContainer {
-                    ZStack(alignment: .bottom) {
-                        if enableBackground {
-                            Color.black.opacity(0.5)
-                                .ignoresSafeArea()
-                        }
-                        
-                        if openCalendar {
-                            mainSheet
-                                .glassEffectID("calendar", in: transition)
-                                .glassEffectTransition(.matchedGeometry)
-                                .offset(y: -offset)
-                                .padding(.horizontal, sheetPadding)
-                                .padding(.bottom, sheetPadding)
-                        } else {
+                ZStack(alignment: .bottom) {
+                    Color.black.opacity(0.5)
+                        .ignoresSafeArea()
+                        .opacity(enableBackground ? 1 : 0)
+                        .animation(.easeInOut(duration: 0.2), value: enableBackground)
+                    
+                    if openCalendar {
+                        mainSheet
+                            .offset(y: -offset)
+                            .padding(.horizontal, sheetPadding)
+                            .padding(.bottom, sheetPadding)
+                    } else {
+                        GlassContainerr(radii: sheetShapeRadii, animationDuration: 0.2) {
                             Button {
                                 changeOpenCalendar(true)
                             } label: {
@@ -106,14 +104,13 @@ struct CustomSheetView: View {
                             .contentShape(.hoverEffect, .capsule)
                             .hoverEffect(.highlight)
                             .buttonStyle(.plain)
-                            .glassEffect(colorScheme == .dark ? .clear.interactive().tint(.black.opacity(0.7)) : .clear.interactive(), in: sheetShape)
-                            .glassEffectID("calendar", in: transition)
-                            .glassEffectTransition(.matchedGeometry)
-                            .matchedGeometryEffect(id: "calendarBackground", in: transition)
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .padding(.trailing, 28)
-                            .padding(.bottom, 28)
+                            .blur(radius: openCalendar ? 20 : 0)
                         }
+                        .frame(width: 123.3, height: 47.7)
+                        .matchedGeometryEffect(id: "glass", in: transition)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .padding(.trailing, UIApplication.shared.safeAreas.bottom)
+                        .padding(.bottom, UIApplication.shared.safeAreas.bottom)
                     }
                 }
             } else {
@@ -138,22 +135,16 @@ struct CustomSheetView: View {
                 if newValue == .large {
                     sheetPadding = 0
                     setSheetShape(isOpen: true, sheetCornerRadius: 36)
-                    
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        enableBackground = true
-                    }
                 } else {
                     sheetPadding = initialPadding
                     setSheetShape(isOpen: true, sheetCornerRadius: -1)
-                    
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        enableBackground = false
-                    }
                 }
                 
                 baseHeight = newValue.value
                 offset = 0
             }
+            
+            enableBackground = newValue == .large
         }
         .onAppear {
             initialPadding = sheetPadding
@@ -163,8 +154,24 @@ struct CustomSheetView: View {
     
     private var mainSheet: some View {
         ZStack {
+            Color(.secondarySystemBackground)
+                .clipShape(sheetShape)
+                .opacity(enableBackground ? 1 : 0)
             if #available(iOS 26, *) {
-                GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2)
+                GlassContainerr(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground) {
+                    DynamicSheetContent(
+                        selectedWeek: $selectedWeek,
+                        selectedDetent: $selectedDetent,
+                        selectedLesson: $selectedLesson,
+                        openSettings: $openSettings,
+                        tempSettings: $tempSettings,
+                        openCalendar: $openCalendar,
+                        isContentAtTop: $isContentAtTop,
+                        sheetInitialIsContentAtTop: $initialIsContentAtTop,
+                        lockSheet: $lockSheet,
+                        draggingDirection: $draggingDirection,
+                        sheetShape: sheetShape
+                    )
                     .overlay(alignment: .top) {
                         RoundedRectangle(cornerRadius: 2.5)
                             .fill(.tertiary)
@@ -173,7 +180,9 @@ struct CustomSheetView: View {
                             .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
                             .hoverEffect(.highlight)
                     }
-                    .matchedGeometryEffect(id: "calendarBackground", in: transition)
+                    .ignoresSafeArea(edges: .bottom)
+                }
+                .matchedGeometryEffect(id: "glass", in: transition)
             } else {
                 Color(.systemBackground)
                     .clipShape(sheetShape)
@@ -185,33 +194,6 @@ struct CustomSheetView: View {
                             .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
                             .hoverEffect(.highlight)
                     }
-            }
-            Color(.secondarySystemBackground)
-                .clipShape(sheetShape)
-                .opacity(enableBackground ? 1 : 0)
-            
-            DynamicSheetContent(
-                selectedWeek: $selectedWeek,
-                selectedDetent: $selectedDetent,
-                selectedLesson: $selectedLesson,
-                openSettings: $openSettings,
-                tempSettings: $tempSettings,
-                openCalendar: $openCalendar,
-                isContentAtTop: $isContentAtTop,
-                sheetInitialIsContentAtTop: $initialIsContentAtTop,
-                lockSheet: $lockSheet,
-                draggingDirection: $draggingDirection,
-                sheetShape: sheetShape
-            )
-            .overlay(alignment: .top) {
-                if selectedDetent == .large {
-                    RoundedRectangle(cornerRadius: 2.5)
-                        .fill(.tertiary)
-                        .frame(width: 35, height: 5)
-                        .padding(.top, 5)
-                        .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
-                        .hoverEffect(.highlight)
-                }
             }
         }
         .frame(height: liveHeight)
@@ -311,13 +293,13 @@ struct CustomSheetView: View {
             if predictedHeight > CustomSheetDetent.large.value * 0.8 {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     setSheetShape(isOpen: true, sheetCornerRadius: 36)
-                    enableBackground = true
                 }
+                enableBackground = true
             } else {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     setSheetShape(isOpen: true, sheetCornerRadius: -1)
-                    enableBackground = false
                 }
+                enableBackground = false
             }
             
             offset = 0
@@ -395,13 +377,13 @@ struct CustomSheetView: View {
         if target == .large {
             withAnimation(.easeInOut(duration: 0.2)) {
                 setSheetShape(isOpen: true, sheetCornerRadius: 36)
-                enableBackground = true
             }
+            enableBackground = true
         } else {
             withAnimation(.easeInOut(duration: 0.2)) {
                 setSheetShape(isOpen: true, sheetCornerRadius: -1)
-                enableBackground = false
             }
+            enableBackground = false
         }
         
         var limit: CGFloat = isGoingDown ? selectedDetent == .large ? 30 : 45 : 45
@@ -539,19 +521,13 @@ struct DynamicSheetContent: View {
                         .clipShape(sheetShape)
                         .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == .small && !settingsSearchFocus)
-                        .glassEffectIfAvailable()
                         .frame(width: UIApplication.shared.windowSize.width - 16)
-                        //.frame(height: smallIsHidden ? 1 : nil, alignment: .top)
-                        //.clipped()
                     
                     DatePickerContainer(selectedWeek: $selectedWeek)
                         .clipShape(sheetShape)
                         .opacity(mediumIsHidden ? 0 : min(max(mediumOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == .medium && !settingsSearchFocus)
-                        .glassEffectIfAvailable()
                         .frame(width: UIApplication.shared.windowSize.width - 16)
-                        //.frame(height: mediumIsHidden ? 1 : nil, alignment: .top)
-                        //.clipped()
                     
                     Group {
                         if openSettings {
@@ -593,7 +569,7 @@ struct DynamicSheetContent: View {
                         }
                     }
                     .clipShape(sheetShape)
-                    .frame(width: UIApplication.shared.windowSize.width, height: currentHeight > mediumHeightHigh + fadeRange ? CustomSheetDetent.large.value : nil)
+                    .frame(width: UIApplication.shared.windowSize.width, height: CustomSheetDetent.large.value)
                 }
             }
         }

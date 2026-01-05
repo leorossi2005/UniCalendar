@@ -160,17 +160,16 @@ struct StableMapView: View {
     private func openInMapsButton(coordinate: CLLocationCoordinate2D, name: String, color: Color) -> some View {
         Group {
             if #available(iOS 26.0, *) {
-                Button(action: {
-                    openMaps(coordinate: coordinate, name: name)
-                }) {
-                    Image(systemName: "map.fill")
-                        .frame(width: 50, height: 50)
+                GlassContainerr(radii: .init(tl: 25, tr: 25, bl: 25, br: 25), tint: color.opacity(0.4)) {
+                    Button(action: {
+                        openMaps(coordinate: coordinate, name: name)
+                    }) {
+                        Image(systemName: "map.fill")
+                    }
+                    .tint(.black)
+                    .buttonBorderShape(.circle)
                 }
-                .tint(.black)
-                .background {
-                    GlassContainer(radii: .init(tl: 25, tr: 25, bl: 25, br: 25), style: .clear, tint: color.opacity(0.4))
-                }
-                .buttonBorderShape(.circle)
+                .frame(width: 50, height: 50)
                 .padding(corderRadius / 2)
             } else {
                 Button(action: {

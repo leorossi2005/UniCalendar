@@ -161,6 +161,7 @@ struct DatePickerContainer: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(height: CustomSheetDetent.medium.value)
             .id(isDualMode)
             .onAppear {
                 isDualMode = width >= 700
