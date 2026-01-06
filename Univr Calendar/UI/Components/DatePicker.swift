@@ -26,7 +26,6 @@ struct DatePicker: View, Equatable {
     
     static func == (lhs: DatePicker, rhs: DatePicker) -> Bool {
         if lhs.date != rhs.date { return false }
-        if lhs.isEnabled != rhs.isEnabled { return false }
         
         let lhsIsSelectedMonth = Calendar.current.isDate(lhs.selection, equalTo: lhs.date, toGranularity: .month)
         let rhsIsSelectedMonth = Calendar.current.isDate(rhs.selection, equalTo: rhs.date, toGranularity: .month)
@@ -58,8 +57,7 @@ struct DatePicker: View, Equatable {
                                         cell: cell,
                                         isSelected: calendar.isDate(selection, inSameDayAs: cell.date),
                                         isToday: calendar.isDateInToday(cell.date),
-                                        isOutsideBounds: cell.date.isOutOfAcademicBounds(for: Int(settings.selectedYear) ?? 0),
-                                        isEnabled: isEnabled
+                                        isOutsideBounds: cell.date.isOutOfAcademicBounds(for: Int(settings.selectedYear) ?? 0)
                                     ) {
                                         handleSelection(for: cell)
                                     }
@@ -204,12 +202,12 @@ struct DatePickerContainer: View {
 // MARK: - Subviews
 private struct DayCellView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.isEnabled) var isEnabled
     
     let cell: CalendarCell
     let isSelected: Bool
     let isToday: Bool
     let isOutsideBounds: Bool
-    let isEnabled: Bool
     let action: () -> ()
     
     var body: some View {

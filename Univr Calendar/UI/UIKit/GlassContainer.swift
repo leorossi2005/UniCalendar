@@ -123,6 +123,9 @@ final class GlassContainerVieww: UIView {
     var isEnabled = true {
         didSet { updateEffect() }
     }
+    var resetTrigger: Int = 0 {
+        didSet { resetEffect() }
+    }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -143,6 +146,8 @@ final class GlassContainerVieww: UIView {
             glassView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
         
+        glassView.clipsToBounds = true
+        
         updateEffect()
     }
     
@@ -157,7 +162,14 @@ final class GlassContainerVieww: UIView {
         }
     }
     
-    // Esponi il contentView per aggiungere le view DENTRO il container
+    private func resetEffect() {
+        glassView.effect = nil
+        
+        DispatchQueue.main.async {
+            self.updateEffect()
+        }
+    }
+    
     public var contentView: UIView {
         return glassView.contentView
     }
@@ -190,6 +202,8 @@ struct GlassContainerr<Content: View>: UIViewControllerRepresentable {
     var tint: Color? = nil
     var animationDuration: TimeInterval = 0.2
     var isEnabled: Bool = true
+    var lockGesture: Bool = false
+    var resetGlassEffect: Int = 0
     private let content: Content
     
     init(
@@ -198,6 +212,8 @@ struct GlassContainerr<Content: View>: UIViewControllerRepresentable {
         tint: Color? = nil,
         animationDuration: TimeInterval = 0.2,
         isEnabled: Bool = true,
+        lockGesture: Bool = false,
+        resetGlassEffect: Int = 0,
         @ViewBuilder content: @escaping () -> Content
     ) {
         self.radii = radii
@@ -205,6 +221,8 @@ struct GlassContainerr<Content: View>: UIViewControllerRepresentable {
         self.tint = tint
         self.animationDuration = animationDuration
         self.isEnabled = isEnabled
+        self.lockGesture = lockGesture
+        self.resetGlassEffect = resetGlassEffect
         self.content = content()
     }
     
@@ -221,6 +239,7 @@ struct GlassContainerr<Content: View>: UIViewControllerRepresentable {
             glassContainer.tint = nil
         }
         glassContainer.isEnabled = isEnabled
+        glassContainer.resetTrigger = resetGlassEffect
         
         controller.view.addSubview(glassContainer)
         glassContainer.translatesAutoresizingMaskIntoConstraints = false
@@ -235,6 +254,7 @@ struct GlassContainerr<Content: View>: UIViewControllerRepresentable {
         let hosting = UIHostingController(rootView: content)
         hosting.view.backgroundColor = .clear
         hosting.view.insetsLayoutMarginsFromSafeArea = false
+        if lockGesture { hosting.view.tag = 422 }
         
         // Aggiungi il contenuto SwiftUI DENTRO il glass container
         glassContainer.contentView.addSubview(hosting.view)
@@ -251,27 +271,24 @@ struct GlassContainerr<Content: View>: UIViewControllerRepresentable {
         
         // Store per update
         context.coordinator.glassContainer = glassContainer
+        context.coordinator.hostingController = hosting
         
         return controller
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
         let shouldAnimate = (context.transaction.animation != nil)
-        if context.coordinator.glassContainer?.cornerRadii != radii {
-            context.coordinator.glassContainer?.cornerRadii = radii
+        if let glass = context.coordinator.glassContainer {
+            if glass.cornerRadii != radii { glass.cornerRadii = radii }
+            if glass.style != style { glass.style = style }
+            glass.tint = tint.map { UIColor($0) }
+            if glass.isEnabled != isEnabled { glass.isEnabled = isEnabled }
+            if glass.resetTrigger != resetGlassEffect { glass.resetTrigger = resetGlassEffect }
+            glass.applyCorners(animated: shouldAnimate, duration: animationDuration)
+            
+            context.coordinator.hostingController?.rootView = content
+            context.coordinator.hostingController?.view.setNeedsLayout()
         }
-        if context.coordinator.glassContainer?.style != style {
-            context.coordinator.glassContainer?.style = style
-        }
-        if let tint {
-            context.coordinator.glassContainer?.tint = UIColor(tint)
-        } else {
-            context.coordinator.glassContainer?.tint = nil
-        }
-        if context.coordinator.glassContainer?.isEnabled != isEnabled {
-            context.coordinator.glassContainer?.isEnabled = isEnabled
-        }
-        context.coordinator.glassContainer?.applyCorners(animated: shouldAnimate, duration: animationDuration)
     }
     
     func makeCoordinator() -> Coordinator {
@@ -280,5 +297,6 @@ struct GlassContainerr<Content: View>: UIViewControllerRepresentable {
     
     class Coordinator {
         var glassContainer: GlassContainerVieww?
+        var hostingController: UIHostingController<Content>?
     }
 }

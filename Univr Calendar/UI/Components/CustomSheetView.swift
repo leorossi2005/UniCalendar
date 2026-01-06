@@ -48,6 +48,7 @@ struct CustomSheetView: View {
     
     // Gesture & Layout States
     @State private var enableBackground: Bool = false
+    @State private var trigger: Int = 0
     @State private var detents: [CustomSheetDetent] = [.small, .medium]
     @State private var baseHeight: CGFloat = CustomSheetDetent.small.value
     
@@ -81,40 +82,45 @@ struct CustomSheetView: View {
                         .opacity(enableBackground ? 1 : 0)
                         .animation(.easeInOut(duration: 0.2), value: enableBackground)
                     
-                    if openCalendar {
-                        mainSheet
-                            .offset(y: -offset)
-                            .padding(.horizontal, sheetPadding)
-                            .padding(.bottom, sheetPadding)
-                    } else {
-                        GlassContainerr(radii: sheetShapeRadii, animationDuration: 0.2) {
-                            Button {
-                                changeOpenCalendar(true)
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "calendar")
-                                        .font(.title2)
-                                    Text("Calendario")
-                                        .fixedSize()
+                    GlassContainerr(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground, resetGlassEffect: trigger) {
+                        if openCalendar {
+                            mainSheet
+                                .transition(.blurReplace)
+                                .ignoresSafeArea(edges: .bottom)
+                        } else {
+                                Button {
+                                    changeOpenCalendar(true)
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "calendar")
+                                            .font(.title2)
+                                        Text("Calendario")
+                                            .fixedSize()
+                                    }
+                                    .padding(.vertical, 12.2)
+                                    .padding(.horizontal, 10)
                                 }
-                                .padding(.vertical, 12.2)
-                                .padding(.horizontal, 10)
-                            }
-                            .contentShape(.capsule)
-                            .contentShape(.hoverEffect, .capsule)
-                            .hoverEffect(.highlight)
-                            .buttonStyle(.plain)
-                            .blur(radius: openCalendar ? 20 : 0)
+                                .contentShape(.capsule)
+                                .contentShape(.hoverEffect, .capsule)
+                                .hoverEffect(.highlight)
+                                .buttonStyle(.plain)
+                                .transition(.blurReplace)
                         }
-                        .frame(width: 123.3, height: 47.7)
-                        .matchedGeometryEffect(id: "glass", in: transition)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .padding(.trailing, UIApplication.shared.safeAreas.bottom)
-                        .padding(.bottom, UIApplication.shared.safeAreas.bottom)
                     }
+                    .frame(width: openCalendar ? nil : 123.3, height: openCalendar ? liveHeight : 47.7)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .offset(y: -offset)
+                    .padding(.horizontal, openCalendar ? sheetPadding : UIApplication.shared.safeAreas.bottom)
+                    .padding(.bottom, openCalendar ? sheetPadding : UIApplication.shared.safeAreas.bottom)
+                    .ignoresSafeArea(edges: .bottom)
                 }
             } else {
                 mainSheet
+            }
+        }
+        .onChange(of: openCalendar) { oldValue, newValue in
+            if newValue {
+                trigger += 1
             }
         }
         .onChange(of: selectedDetent) { oldValue, newValue in
@@ -157,46 +163,29 @@ struct CustomSheetView: View {
             Color(.secondarySystemBackground)
                 .clipShape(sheetShape)
                 .opacity(enableBackground ? 1 : 0)
-            if #available(iOS 26, *) {
-                GlassContainerr(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground) {
-                    DynamicSheetContent(
-                        selectedWeek: $selectedWeek,
-                        selectedDetent: $selectedDetent,
-                        selectedLesson: $selectedLesson,
-                        openSettings: $openSettings,
-                        tempSettings: $tempSettings,
-                        openCalendar: $openCalendar,
-                        isContentAtTop: $isContentAtTop,
-                        sheetInitialIsContentAtTop: $initialIsContentAtTop,
-                        lockSheet: $lockSheet,
-                        draggingDirection: $draggingDirection,
-                        sheetShape: sheetShape
-                    )
-                    .overlay(alignment: .top) {
-                        RoundedRectangle(cornerRadius: 2.5)
-                            .fill(.tertiary)
-                            .frame(width: 35, height: 5)
-                            .padding(.top, 5)
-                            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
-                            .hoverEffect(.highlight)
-                    }
-                    .ignoresSafeArea(edges: .bottom)
-                }
-                .matchedGeometryEffect(id: "glass", in: transition)
-            } else {
-                Color(.systemBackground)
-                    .clipShape(sheetShape)
-                    .overlay(alignment: .top) {
-                        RoundedRectangle(cornerRadius: 2.5)
-                            .fill(.tertiary)
-                            .frame(width: 35, height: 5)
-                            .padding(.top, 5)
-                            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
-                            .hoverEffect(.highlight)
-                    }
+            
+            DynamicSheetContent(
+                selectedWeek: $selectedWeek,
+                selectedDetent: $selectedDetent,
+                selectedLesson: $selectedLesson,
+                openSettings: $openSettings,
+                tempSettings: $tempSettings,
+                openCalendar: $openCalendar,
+                isContentAtTop: $isContentAtTop,
+                sheetInitialIsContentAtTop: $initialIsContentAtTop,
+                lockSheet: $lockSheet,
+                draggingDirection: $draggingDirection
+            )
+            .overlay(alignment: .top) {
+                RoundedRectangle(cornerRadius: 2.5)
+                    .fill(.tertiary)
+                    .frame(width: 35, height: 5)
+                    .padding(.top, 5)
+                    .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
+                    .hoverEffect(.highlight)
             }
+            .clipShape(sheetShape)
         }
-        .frame(height: liveHeight)
         .overlay {
             VerticalDragger(
                 onDrag: { translationY, direction in
@@ -493,8 +482,6 @@ struct DynamicSheetContent: View {
     @Binding var lockSheet: Bool
     @Binding var draggingDirection: CustomSheetDraggingDirection
     
-    let sheetShape: UnevenRoundedRectangle
-    
     @State private var path = NavigationPath()
     @State private var settingsSearchFocus: Bool = false
     
@@ -518,13 +505,11 @@ struct DynamicSheetContent: View {
                 let mediumIsHidden = settingsSearchFocus || currentHeight > mediumHeightHigh + fadeRange
                 ZStack(alignment: .topLeading) {
                     FractionDatePickerContainer(selectedWeek: $selectedWeek)
-                        .clipShape(sheetShape)
                         .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == .small && !settingsSearchFocus)
                         .frame(width: UIApplication.shared.windowSize.width - 16)
                     
                     DatePickerContainer(selectedWeek: $selectedWeek)
-                        .clipShape(sheetShape)
                         .opacity(mediumIsHidden ? 0 : min(max(mediumOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == .medium && !settingsSearchFocus)
                         .frame(width: UIApplication.shared.windowSize.width - 16)
@@ -568,7 +553,6 @@ struct DynamicSheetContent: View {
                             .allowsHitTesting(selectedDetent == .large)
                         }
                     }
-                    .clipShape(sheetShape)
                     .frame(width: UIApplication.shared.windowSize.width, height: CustomSheetDetent.large.value)
                 }
             }

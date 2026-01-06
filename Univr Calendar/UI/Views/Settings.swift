@@ -140,7 +140,7 @@ struct Settings: View {
             }
             .listRowBackground(Color.clear)
         }
-        .scrollDisabled(sheetInitialIsContentAtTop && draggingDirection == .up)
+        //.scrollDisabled(sheetInitialIsContentAtTop && draggingDirection == .up)
         .scrollContentBackground(.hidden)
         .background(Color(.secondarySystemBackground))
         .navigationTitle("Impostazioni")
@@ -169,10 +169,10 @@ struct Settings: View {
                 self.initialIsContentAtTop = nil
             }
         }
-        .overlay {
-            ListScrollOffsetReader(isAtTop: $isContentAtTop)
-                .frame(width: 0, height: 0)
-        }
+        //.overlay {
+        //    ListScrollOffsetReader(isAtTop: $isContentAtTop)
+        //        .frame(width: 0, height: 0)
+        //}
     }
     
     // MARK: - Logic Methods

@@ -56,6 +56,8 @@ struct VerticalDragger: UIViewRepresentable {
         var parent: VerticalDragger
         weak var targetView: UIView?
         weak var window: UIWindow?
+        weak var trackedScrollView: UIScrollView?
+        var initialIsAtTop: Bool?
         var gesture: UIPanGestureRecognizer?
         
         init(parent: VerticalDragger) {
@@ -85,9 +87,26 @@ struct VerticalDragger: UIViewRepresentable {
             let translation = gesture.translation(in: targetView)
             let velocity = gesture.velocity(in: targetView)
             
+            if let scrollView = trackedScrollView {
+                if initialIsAtTop == nil {
+                    initialIsAtTop = scrollView.contentOffset.y <= 0
+                }
+                let isPullingDown = translation.y > 0
+                
+                if isPullingDown && initialIsAtTop! {
+                    scrollView.panGestureRecognizer.isEnabled = false
+                }
+            }
+            
             if gesture.state == .changed {
                 parent.onDrag(translation.y, parent.direction)
             } else if gesture.state == .ended || gesture.state == .cancelled {
+                if let scrollView = trackedScrollView {
+                    scrollView.panGestureRecognizer.isEnabled = true
+                    trackedScrollView = nil
+                    initialIsAtTop = nil
+                }
+                
                 let decelerationRate = 0.994
                 let extra = (velocity.y / 1000.0) * decelerationRate / (1 - decelerationRate)
                 let predictedEndTranslation = translation.y + extra
@@ -98,6 +117,7 @@ struct VerticalDragger: UIViewRepresentable {
         
         func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
             guard let pan = gestureRecognizer as? UIPanGestureRecognizer,
+                  let window = window,
                   let targetView = targetView else { return false }
             
             let location = pan.location(in: targetView)
@@ -109,6 +129,31 @@ struct VerticalDragger: UIViewRepresentable {
             
             if abs(velocity.x) > abs(velocity.y) {
                 return false
+            }
+            
+            let locationInWindow = pan.location(in: window)
+            
+            var viewToCheck = window.hitTest(locationInWindow, with: nil)
+            var foundScrollView: UIScrollView? = nil
+            
+            while let view = viewToCheck {
+                if let sv = view as? UIScrollView {
+                    if !sv.isPagingEnabled {
+                        foundScrollView = sv
+                        break
+                    }
+                }
+                viewToCheck = view.superview
+                
+                if view == window { break }
+            }
+            
+            if let scrollView = foundScrollView {
+                self.trackedScrollView = scrollView
+                
+                if scrollView.contentOffset.y + scrollView.adjustedContentInset.top > 0 {
+                    return false
+                }
             }
             
             if parent.direction == .none {
@@ -127,9 +172,24 @@ struct VerticalDragger: UIViewRepresentable {
             return true
         }
         
-        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+            guard let touchedView = touch.view else { return true }
             
+            if touchedView.tag == 422 {
+                return false
+            }
+            
+            return true
+        }
+        
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
             if otherGestureRecognizer.view is UIControl {
+                return true
+            }
+            
+            if let scrollView = otherGestureRecognizer.view as? UIScrollView {
+                if scrollView.isPagingEnabled { return false }
+                
                 return true
             }
             return false
