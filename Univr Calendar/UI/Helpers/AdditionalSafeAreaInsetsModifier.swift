@@ -9,7 +9,10 @@ import SwiftUI
 
 /// Un wrapper che crea un ambiente isolato con i propri SafeAreaInsets
 struct IsolatedSafeAreaWrapper<Content: View>: UIViewControllerRepresentable {
-    var topInset: CGFloat
+    var topInset: CGFloat = 0
+    var leftInset: CGFloat = 0
+    var bottomInset: CGFloat = 0
+    var rightInset: CGFloat = 0
     @ViewBuilder var content: Content
 
     func makeUIViewController(context: Context) -> UIViewController {
@@ -22,7 +25,7 @@ struct IsolatedSafeAreaWrapper<Content: View>: UIViewControllerRepresentable {
         hostingController.view.backgroundColor = .clear
         
         // 👇 Qui avviene la magia: applichiamo l'inset SOLO a questo controller interno
-        hostingController.additionalSafeAreaInsets = UIEdgeInsets(top: topInset, left: 0, bottom: 0, right: 0)
+        hostingController.additionalSafeAreaInsets = UIEdgeInsets(top: topInset, left: leftInset, bottom: bottomInset, right: rightInset)
         
         // Aggiungiamo l'hosting come figlio
         viewController.addChild(hostingController)

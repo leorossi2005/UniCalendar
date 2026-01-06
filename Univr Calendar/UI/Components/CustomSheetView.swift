@@ -70,37 +70,41 @@ struct CustomSheetView: View {
     
     var body: some View {
         Group {
-            if #available(iOS 26, *) {
-                ZStack(alignment: .bottom) {
-                    Color.black.opacity(0.37)
-                        .ignoresSafeArea()
-                        .opacity(enableBackground ? 1 : 0)
-                        .animation(.easeInOut(duration: 0.2), value: enableBackground)
-                    
+            ZStack(alignment: .bottom) {
+                ZStack {
+                    if enableBackground {
+                        Color.black.opacity(0.37)
+                            .ignoresSafeArea()
+                            .transition(.opacity)
+                    }
+                }
+                .animation(.easeInOut(duration: 0.2), value: enableBackground)
+                
+                if #available(iOS 26, *) {
                     GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground, resetGlassEffect: trigger) {
                         if openCalendar {
                             mainSheet
                                 .ignoresSafeArea()
                                 .transition(.blurReplace)
                         } else {
-                                Button {
-                                    changeOpenCalendar(true)
-                                } label: {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "calendar")
-                                            .font(.title2)
-                                        Text("Calendario")
-                                            .fixedSize()
-                                    }
-                                    .padding(.vertical, 12.2)
-                                    .padding(.horizontal, 10)
+                            Button {
+                                changeOpenCalendar(true)
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "calendar")
+                                        .font(.title2)
+                                    Text("Calendario")
+                                        .fixedSize()
                                 }
-                                .contentShape(.capsule)
-                                .contentShape(.hoverEffect, .capsule)
-                                .hoverEffect(.highlight)
-                                .buttonStyle(.plain)
-                                .ignoresSafeArea()
-                                .transition(.blurReplace)
+                                .padding(.vertical, 12.2)
+                                .padding(.horizontal, 10)
+                            }
+                            .contentShape(.capsule)
+                            .contentShape(.hoverEffect, .capsule)
+                            .hoverEffect(.highlight)
+                            .buttonStyle(.plain)
+                            .ignoresSafeArea()
+                            .transition(.blurReplace)
                         }
                     }
                     .frame(width: openCalendar ? nil : 123.3, height: openCalendar ? liveHeight : 47.7)
@@ -109,19 +113,11 @@ struct CustomSheetView: View {
                     .padding(.horizontal, openCalendar ? sheetPadding : UIApplication.shared.safeAreas.bottom)
                     .padding(.bottom, openCalendar ? sheetPadding : UIApplication.shared.safeAreas.bottom)
                     .ignoresSafeArea()
-                }
-            } else {
-                ZStack(alignment: .bottom) {
-                    Color.black.opacity(0.5)
-                        .ignoresSafeArea()
-                        .opacity(enableBackground ? 1 : 0)
-                        .animation(.easeInOut(duration: 0.2), value: enableBackground)
-                    
+                } else {
                     GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground, resetGlassEffect: trigger) {
                         mainSheet
                             .ignoresSafeArea()
                     }
-                    .transition(.blurReplace)
                     .frame(height: liveHeight)
                     .offset(y: -offset)
                     .padding(.horizontal, sheetPadding)
@@ -130,6 +126,11 @@ struct CustomSheetView: View {
                 }
             }
         }
+        .background(WindowAccessor { window in
+            if UIDevice.isIpad {
+                positionObserver.startObserving(window: window)
+            }
+        })
         .onChange(of: openCalendar) { oldValue, newValue in
             if newValue {
                 trigger += 1
@@ -147,8 +148,8 @@ struct CustomSheetView: View {
             
             withAnimation(.interpolatingSpring(
                 mass: 1.0,
-                stiffness: 300,
-                damping: 25,
+                stiffness: 200,
+                damping: 30,
                 initialVelocity: 0
             )) {
                 if newValue == .large {
@@ -207,15 +208,10 @@ struct CustomSheetView: View {
             )
             .allowsHitTesting(false)
         }
-        .background(WindowAccessor { window in
-            if UIDevice.isIpad {
-                positionObserver.startObserving(window: window)
-            }
-        })
         .onChange(of: positionObserver.edges) {
             setSheetShape(isOpen: openCalendar)
         }
-        .onChange(of: positionObserver.windowFrame.height) {
+        .onChange(of: positionObserver.windowFrame) {
             if selectedDetent == .large {
                 baseHeight = CustomSheetDetent.large.value
             }
@@ -452,7 +448,7 @@ struct DynamicSheetContent: View {
                         .allowsHitTesting(selectedDetent == .medium)
                         .frame(width: UIApplication.shared.windowSize.width - 16)
                     
-                    IsolatedSafeAreaWrapper(topInset: 16) {
+                    IsolatedSafeAreaWrapper(topInset: 16, leftInset: UIDevice.isIpad ? 6 : 0, rightInset: UIDevice.isIpad ? 6 : 0) {
                         NavigationStack {
                             if openSettings {
                                 Settings(
@@ -469,6 +465,7 @@ struct DynamicSheetContent: View {
                                     .allowsHitTesting(selectedDetent == .large)
                             }
                         }
+                        .id(openSettings)
                     }
                     .opacity(min(max(largeOpacity, 0), 1))
                     .allowsHitTesting(selectedDetent == .large)

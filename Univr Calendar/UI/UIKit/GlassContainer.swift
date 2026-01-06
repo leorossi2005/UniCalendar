@@ -36,18 +36,19 @@ enum GlassEffectStyle {
 }
 
 final class GlassContainerView: UIView {
+    private let shadowView = UIView()
     private let glassView = UIVisualEffectView()
     var style: GlassEffectStyle = .regular {
-        didSet { updateEffect() }
+        didSet { updateAppearance() }
     }
     var tint: UIColor? = nil {
-        didSet { updateEffect() }
+        didSet { updateAppearance() }
     }
     var cornerRadii: SheetCornerRadii = .init(tl: 0, tr: 0, bl: 0, br: 0) {
         didSet { applyCorners(animated: true, duration: 0.2)  }
     }
     var isEnabled = true {
-        didSet { updateEffect() }
+        didSet { updateAppearance() }
     }
     var resetTrigger: Int = 0 {
         didSet { resetEffect() }
@@ -63,8 +64,27 @@ final class GlassContainerView: UIView {
     }
     
     private func setup() {
+        if #unavailable(iOS 26) {
+            shadowView.translatesAutoresizingMaskIntoConstraints = false
+            shadowView.backgroundColor = .clear
+            shadowView.layer.shadowColor = UIColor.black.cgColor
+            shadowView.layer.shadowOffset = CGSize(width: 0, height: 0)
+            shadowView.layer.shadowRadius = 2
+            addSubview(shadowView)
+        }
+        
         glassView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(glassView)
+        
+        if #unavailable(iOS 26) {
+            NSLayoutConstraint.activate([
+                shadowView.leadingAnchor.constraint(equalTo: leadingAnchor),
+                shadowView.trailingAnchor.constraint(equalTo: trailingAnchor),
+                shadowView.topAnchor.constraint(equalTo: topAnchor),
+                shadowView.bottomAnchor.constraint(equalTo: bottomAnchor)
+            ])
+        }
+        
         NSLayoutConstraint.activate([
             glassView.leadingAnchor.constraint(equalTo: leadingAnchor),
             glassView.trailingAnchor.constraint(equalTo: trailingAnchor),
@@ -74,15 +94,26 @@ final class GlassContainerView: UIView {
         
         glassView.clipsToBounds = true
         
-        updateEffect()
+        if #unavailable(iOS 26) {
+            registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: GlassContainerView, previousTraitCollection: UITraitCollection) in
+                self.updateAppearance()
+            }
+        }
+        
+        updateAppearance()
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        
-        // Solo su iOS 17-18, riapplica i corner quando cambiano i bounds
         if #unavailable(iOS 26) {
             applyCornerMask()
+        }
+    }
+    
+    private func updateAppearance() {
+        updateEffect()
+        if #unavailable(iOS 26) {
+            updateShadow()
         }
     }
     
@@ -95,10 +126,20 @@ final class GlassContainerView: UIView {
                 glassView.effect = effect
             } else {
                 glassView.effect = nil
-                glassView.backgroundColor = .secondarySystemBackground
+                glassView.backgroundColor = traitCollection.userInterfaceStyle == .dark ?
+                    .secondarySystemBackground :
+                    .systemBackground
             }
         } else {
             glassView.effect = nil
+        }
+    }
+    
+    private func updateShadow() {
+        let shouldShowShadow = traitCollection.userInterfaceStyle != .dark
+        
+        UIView.animate(withDuration: 0.2) {
+            self.shadowView.layer.shadowOpacity = shouldShowShadow ? 0.12 : 0.0
         }
     }
     
@@ -127,6 +168,7 @@ final class GlassContainerView: UIView {
                     self.glassView.cornerConfiguration = corners
                 }
             } else {
+                self.updateShadowPath()
                 self.applyCornerMask()
             }
         }
@@ -138,11 +180,8 @@ final class GlassContainerView: UIView {
         }
     }
     
-    private func applyCornerMask() {
+    private func generatePath(rect: CGRect) -> UIBezierPath {
         let path = UIBezierPath()
-        let rect = glassView.bounds
-        
-        // Crea un path con corner radii diversi per ogni angolo
         path.move(to: CGPoint(x: rect.minX + cornerRadii.tl, y: rect.minY))
         path.addLine(to: CGPoint(x: rect.maxX - cornerRadii.tr, y: rect.minY))
         path.addQuadCurve(to: CGPoint(x: rect.maxX, y: rect.minY + cornerRadii.tr),
@@ -157,7 +196,17 @@ final class GlassContainerView: UIView {
         path.addQuadCurve(to: CGPoint(x: rect.minX + cornerRadii.tl, y: rect.minY),
                           controlPoint: CGPoint(x: rect.minX, y: rect.minY))
         path.close()
-        
+        return path
+    }
+    
+    // 3. Nuova funzione per disegnare l'ombra seguendo i corner
+    private func updateShadowPath() {
+        let path = generatePath(rect: bounds)
+        shadowView.layer.shadowPath = path.cgPath
+    }
+    
+    private func applyCornerMask() {
+        let path = generatePath(rect: glassView.bounds)
         let mask = CAShapeLayer()
         mask.path = path.cgPath
         glassView.layer.mask = mask
@@ -254,12 +303,11 @@ struct GlassContainer<Content: View>: UIViewControllerRepresentable {
             if glass.resetTrigger != resetGlassEffect { glass.resetTrigger = resetGlassEffect }
             glass.applyCorners(animated: shouldAnimate, duration: animationDuration)
             
-            if let animation = context.transaction.animation {
-                withAnimation(animation) {
+            let transaction = context.transaction
+            DispatchQueue.main.async {
+                withTransaction(transaction) {
                     context.coordinator.content = content
                 }
-            } else {
-                context.coordinator.content = content
             }
             context.coordinator.hostingController?.view.setNeedsLayout()
         }
