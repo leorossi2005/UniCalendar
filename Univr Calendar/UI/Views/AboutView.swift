@@ -9,12 +9,6 @@ import SwiftUI
 import UnivrCore
 
 struct AboutView: View {
-    @Environment(\.dismiss) var dismiss
-    
-    @Binding var isContentAtTop: Bool
-    @Binding var sheetInitialIsContentAtTop: Bool
-    @Binding var draggingDirection: CustomSheetDraggingDirection
-    
     private static let iconSize: CGFloat = 100
     
     var body: some View {
@@ -60,20 +54,9 @@ struct AboutView: View {
                         .opacity(0.15)
                 }
             }
-            .listRowBackground(Color(.tertiarySystemBackground))
         }
         .navigationTitle("Informazioni")
         .navigationBarTitleDisplayMode(.inline)
-        .scrollDisabled(sheetInitialIsContentAtTop && draggingDirection == .up)
-        .scrollContentBackground(.hidden)
-        .background(Color(.secondarySystemBackground))
-        .overlay {
-            ListScrollOffsetReader(isAtTop: $isContentAtTop)
-                .frame(width: 0, height: 0)
-        }
-        .onAppear {
-            isContentAtTop = true
-        }
     }
     
     // MARK: - Components
@@ -100,6 +83,6 @@ struct AboutView: View {
 
 #Preview {
     NavigationStack {
-        AboutView(isContentAtTop: .constant(false), sheetInitialIsContentAtTop: .constant(false), draggingDirection: .constant(.none))
+        AboutView()
     }
 }

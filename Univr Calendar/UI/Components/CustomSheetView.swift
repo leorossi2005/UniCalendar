@@ -160,7 +160,7 @@ struct CustomSheetView: View {
     
     private var mainSheet: some View {
         ZStack {
-            Color(.secondarySystemBackground)
+            Color(.systemBackground)
                 .clipShape(sheetShape)
                 .opacity(enableBackground ? 1 : 0)
             
@@ -482,9 +482,6 @@ struct DynamicSheetContent: View {
     @Binding var lockSheet: Bool
     @Binding var draggingDirection: CustomSheetDraggingDirection
     
-    @State private var path = NavigationPath()
-    @State private var settingsSearchFocus: Bool = false
-    
     var body: some View {
         ZStack {
             GeometryReader { proxy in
@@ -501,66 +498,47 @@ struct DynamicSheetContent: View {
                 let mediumOpacity = 1.0 - ((currentHeight < mediumHeightHigh ? Double(mediumHeightLow - currentHeight) : Double(currentHeight - mediumHeightHigh)) / Double(fadeRange))
                 let smallOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
         
-                let smallIsHidden = settingsSearchFocus || currentHeight > smallHeight + fadeRange
-                let mediumIsHidden = settingsSearchFocus || currentHeight > mediumHeightHigh + fadeRange
+                let smallIsHidden = currentHeight > smallHeight + fadeRange
+                let mediumIsHidden = currentHeight > mediumHeightHigh + fadeRange
                 ZStack(alignment: .topLeading) {
                     FractionDatePickerContainer(selectedWeek: $selectedWeek)
                         .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
-                        .allowsHitTesting(selectedDetent == .small && !settingsSearchFocus)
+                        .allowsHitTesting(selectedDetent == .small)
                         .frame(width: UIApplication.shared.windowSize.width - 16)
                     
                     DatePickerContainer(selectedWeek: $selectedWeek)
                         .opacity(mediumIsHidden ? 0 : min(max(mediumOpacity, 0), 1))
-                        .allowsHitTesting(selectedDetent == .medium && !settingsSearchFocus)
+                        .allowsHitTesting(selectedDetent == .medium)
                         .frame(width: UIApplication.shared.windowSize.width - 16)
                     
-                    Group {
+                    NavigationStack {
                         if openSettings {
-                            NavigationStack(path: $path) {
-                                Settings(
-                                    selectedYear: $tempSettings.selectedYear,
-                                    selectedCourse: $tempSettings.selectedCourse,
-                                    selectedAcademicYear: $tempSettings.selectedAcademicYear,
-                                    matricola: $tempSettings.matricola,
-                                    searchTextFieldFocus: $settingsSearchFocus,
-                                    isContentAtTop: $isContentAtTop,
-                                    sheetInitialIsContentAtTop: $sheetInitialIsContentAtTop,
-                                    lockSheet: $lockSheet,
-                                    draggingDirection: $draggingDirection,
-                                    navigationPath: $path
-                                )
-                                .padding(.top, UIApplication.shared.safeAreas.top)
-                                .ignoresSafeArea(.keyboard)
-                                .ignoresSafeArea(edges: .top)
-                                .toolbar {
-                                    ToolbarItem(placement: .principal) {
-                                        Text("Impostazioni")
-                                            .font(.headline)
-                                            .opacity(settingsSearchFocus ? 1 : min(max(largeOpacity, 0), 1))
-                                    }
-                                }
-                                .navigationBarTitleDisplayMode(.inline)
-                            }
-                            .opacity(settingsSearchFocus ? 1 : min(max(largeOpacity, 0), 1))
-                            .allowsHitTesting(selectedDetent == .large)
+                            Settings(
+                                selectedYear: $tempSettings.selectedYear,
+                                selectedCourse: $tempSettings.selectedCourse,
+                                selectedAcademicYear: $tempSettings.selectedAcademicYear,
+                                matricola: $tempSettings.matricola,
+                                lockSheet: $lockSheet
+                            )
+                            .ignoresSafeArea(.keyboard)
+                            //.toolbar {
+                            //    ToolbarItem(placement: .principal) {
+                            //        Text("Impostazioni")
+                            //            .font(.headline)
+                            //            .opacity(min(max(largeOpacity, 0), 1))
+                            //    }
+                            //}
+                            //.navigationBarTitleDisplayMode(.inline)
                         } else {
-                            NavigationStack {
-                                LessonDetailsView(lesson: $selectedLesson)
-                                    .background(Color(.secondarySystemBackground))
-                                    .ignoresSafeArea(edges: .top)
-                            }
-                            .opacity(settingsSearchFocus ? 0 : min(max(largeOpacity, 0), 1))
-                            .allowsHitTesting(selectedDetent == .large)
+                            LessonDetailsView(lesson: $selectedLesson)
+                                .opacity(min(max(largeOpacity, 0), 1))
+                                .allowsHitTesting(selectedDetent == .large)
                         }
                     }
+                    .opacity(min(max(largeOpacity, 0), 1))
+                    .allowsHitTesting(selectedDetent == .large)
                     .frame(width: UIApplication.shared.windowSize.width, height: CustomSheetDetent.large.value)
                 }
-            }
-        }
-        .onChange(of: openSettings) {
-            if !openSettings {
-                settingsSearchFocus = false
-                path = NavigationPath()
             }
         }
     }

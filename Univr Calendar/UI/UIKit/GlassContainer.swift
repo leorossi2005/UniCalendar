@@ -254,6 +254,7 @@ struct GlassContainerr<Content: View>: UIViewControllerRepresentable {
         let hosting = UIHostingController(rootView: content)
         hosting.view.backgroundColor = .clear
         hosting.view.insetsLayoutMarginsFromSafeArea = false
+        hosting.traitOverrides.userInterfaceLevel = .elevated
         if lockGesture { hosting.view.tag = 422 }
         
         // Aggiungi il contenuto SwiftUI DENTRO il glass container

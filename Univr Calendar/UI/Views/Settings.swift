@@ -8,10 +8,6 @@
 import SwiftUI
 import UnivrCore
 
-enum SettingsRoute: Hashable {
-    case about
-}
-
 struct Settings: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
@@ -20,17 +16,13 @@ struct Settings: View {
     @State private var viewModel = UniversityDataManager()
     @State private var showDeleteAlert = false
     @State private var initialIsContentAtTop: Bool? = nil
+    @State private var searchTextFieldFocus: Bool = false
     
     @Binding var selectedYear: String
     @Binding var selectedCourse: String
     @Binding var selectedAcademicYear: String
     @Binding var matricola: String
-    @Binding var searchTextFieldFocus: Bool
-    @Binding var isContentAtTop: Bool
-    @Binding var sheetInitialIsContentAtTop: Bool
     @Binding var lockSheet: Bool
-    @Binding var draggingDirection: CustomSheetDraggingDirection
-    @Binding var navigationPath: NavigationPath
     
     private let screenSize: CGRect = UIApplication.shared.screenSize
     
@@ -96,7 +88,6 @@ struct Settings: View {
                     }
                 }
             }
-            .listRowBackground(Color(.tertiarySystemBackground))
             .disabled(net.status != .connected)
             Section {
                 Link(destination: AppConstants.URLs.donation) {
@@ -109,14 +100,13 @@ struct Settings: View {
                     }
                 }
                 .tint(.primary)
-                NavigationLink(value: SettingsRoute.about) {
+                NavigationLink(destination: AboutView()) {
                     Label("Informazioni", systemImage: .infoPageDynamic)
                         .foregroundStyle(.primary)
                 }
             } footer: {
                 Text("Ps. Se non si fosse capito il regalino è una donazione, e ti ringrazio di cuore se mi darai un po' di sostegno per aver creato questa app.")
             }
-            .listRowBackground(Color(.tertiarySystemBackground))
             Section("DANGER ZONE") {
                 Button {
                     showDeleteAlert.toggle()
@@ -131,7 +121,6 @@ struct Settings: View {
                     Text("Confermando cancellerai le impostazioni e tornerai al benvenuto iniziale.")
                 }
             }
-            .listRowBackground(Color(.tertiarySystemBackground))
             Section {
                 Text("Buono studio!")
                     .font(.caption)
@@ -140,20 +129,8 @@ struct Settings: View {
             }
             .listRowBackground(Color.clear)
         }
-        //.scrollDisabled(sheetInitialIsContentAtTop && draggingDirection == .up)
-        .scrollContentBackground(.hidden)
-        .background(Color(.secondarySystemBackground))
         .navigationTitle("Impostazioni")
-        .navigationDestination(for: SettingsRoute.self) { route in
-            switch route {
-            case .about: AboutView(isContentAtTop: $isContentAtTop, sheetInitialIsContentAtTop: $sheetInitialIsContentAtTop, draggingDirection: $draggingDirection)
-            }
-        }
-        .onChange(of: navigationPath) { _, newPath in
-            if newPath.count > 0 {
-                initialIsContentAtTop = isContentAtTop
-            }
-        }
+        .navigationBarTitleDisplayMode(.inline)
         .onChange(of: searchTextFieldFocus) {
             if searchTextFieldFocus {
                 lockSheet = true
@@ -163,16 +140,7 @@ struct Settings: View {
         }
         .onAppear {
             loadInitialData()
-            
-            if let initialIsContentAtTop {
-                isContentAtTop = initialIsContentAtTop
-                self.initialIsContentAtTop = nil
-            }
         }
-        //.overlay {
-        //    ListScrollOffsetReader(isAtTop: $isContentAtTop)
-        //        .frame(width: 0, height: 0)
-        //}
     }
     
     // MARK: - Logic Methods
@@ -271,11 +239,10 @@ struct Settings: View {
     @Previewable @State var selectedAcademicYear: String = "0"
     @Previewable @State var matricola: String = "pari"
     @Previewable @State var isFocused: Bool = false
-    @Previewable @State var isContentAtTop: Bool = false
     @Previewable @State var lockSheet: Bool = false
     
     NavigationStack {
-        Settings(selectedYear: $selectedYear, selectedCourse: $selectedCourse, selectedAcademicYear: $selectedAcademicYear, matricola: $matricola, searchTextFieldFocus: $isFocused, isContentAtTop: $isContentAtTop, sheetInitialIsContentAtTop: .constant(false), lockSheet: $lockSheet, draggingDirection: .constant(.none), navigationPath: .constant(NavigationPath()))
+        Settings(selectedYear: $selectedYear, selectedCourse: $selectedCourse, selectedAcademicYear: $selectedAcademicYear, matricola: $matricola, lockSheet: $lockSheet)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("Impostazioni")
