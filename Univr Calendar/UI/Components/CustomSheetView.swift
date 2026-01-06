@@ -136,6 +136,7 @@ struct CustomSheetView: View {
             }
         }
         .onChange(of: selectedDetent) { oldValue, newValue in
+            enableBackground = newValue == .large
             changeOpenCalendar(true)
             
             if oldValue == .large {
@@ -161,8 +162,6 @@ struct CustomSheetView: View {
                 baseHeight = newValue.value
                 offset = 0
             }
-            
-            enableBackground = newValue == .large
         }
         .onAppear {
             if #available(iOS 26, *) {
@@ -473,7 +472,7 @@ struct DynamicSheetContent: View {
                     }
                     .opacity(min(max(largeOpacity, 0), 1))
                     .allowsHitTesting(selectedDetent == .large)
-                    .frame(width: UIApplication.shared.windowSize.width)
+                    .frame(width: UIApplication.shared.windowSize.width, height: CustomSheetDetent.large.value)
                 }
             }
         }
