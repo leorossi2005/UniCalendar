@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+internal import Combine
 
 struct SheetCornerRadii: Equatable {
     var tl: CGFloat
@@ -217,14 +218,13 @@ struct GlassContainer<Content: View>: UIViewControllerRepresentable {
             glassContainer.bottomAnchor.constraint(equalTo: controller.view.bottomAnchor)
         ])
         
-        // Crea l'hosting controller per SwiftUI
-        let hosting = UIHostingController(rootView: content)
+        let bridge = BridgeView(coordinator: context.coordinator)
+        let hosting = UIHostingController(rootView: bridge)
         hosting.view.backgroundColor = .clear
         hosting.view.insetsLayoutMarginsFromSafeArea = false
         hosting.traitOverrides.userInterfaceLevel = .elevated
         if lockGesture { hosting.view.tag = 422 }
         
-        // Aggiungi il contenuto SwiftUI DENTRO il glass container
         glassContainer.contentView.addSubview(hosting.view)
         hosting.view.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -254,17 +254,37 @@ struct GlassContainer<Content: View>: UIViewControllerRepresentable {
             if glass.resetTrigger != resetGlassEffect { glass.resetTrigger = resetGlassEffect }
             glass.applyCorners(animated: shouldAnimate, duration: animationDuration)
             
-            context.coordinator.hostingController?.rootView = content
+            if let animation = context.transaction.animation {
+                withAnimation(animation) {
+                    context.coordinator.content = content
+                }
+            } else {
+                context.coordinator.content = content
+            }
             context.coordinator.hostingController?.view.setNeedsLayout()
         }
     }
     
     func makeCoordinator() -> Coordinator {
-        Coordinator()
+        Coordinator(content: content)
     }
     
-    class Coordinator {
+    class Coordinator: ObservableObject {
+        @Published var content: Content
+        
         var glassContainer: GlassContainerView?
-        var hostingController: UIHostingController<Content>?
+        var hostingController: UIHostingController<BridgeView>?
+        
+        init(content: Content) {
+            self.content = content
+        }
+    }
+    
+    struct BridgeView: View {
+        @ObservedObject var coordinator: Coordinator
+        
+        var body: some View {
+            coordinator.content
+        }
     }
 }

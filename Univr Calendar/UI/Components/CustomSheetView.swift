@@ -72,7 +72,7 @@ struct CustomSheetView: View {
         Group {
             if #available(iOS 26, *) {
                 ZStack(alignment: .bottom) {
-                    Color.black.opacity(0.5)
+                    Color.black.opacity(0.37)
                         .ignoresSafeArea()
                         .opacity(enableBackground ? 1 : 0)
                         .animation(.easeInOut(duration: 0.2), value: enableBackground)
@@ -152,10 +152,10 @@ struct CustomSheetView: View {
             )) {
                 if newValue == .large {
                     sheetPadding = 0
-                    setSheetShape(isOpen: true, sheetCornerRadius: 36)
+                    setSheetShape(isOpen: true, sheetCornerRadius: 37)
                 } else {
                     sheetPadding = initialPadding
-                    setSheetShape(isOpen: true, sheetCornerRadius: -1)
+                    setSheetShape(isOpen: true)
                 }
                 
                 baseHeight = newValue.value
@@ -185,7 +185,6 @@ struct CustomSheetView: View {
                 selectedLesson: $selectedLesson,
                 openSettings: $openSettings,
                 tempSettings: $tempSettings,
-                openCalendar: $openCalendar,
                 lockSheet: $lockSheet
             )
             .overlay(alignment: .top) {
@@ -257,7 +256,7 @@ struct CustomSheetView: View {
 
             if predictedHeight > CustomSheetDetent.large.value * 0.8 {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    setSheetShape(isOpen: true, sheetCornerRadius: 36)
+                    setSheetShape(isOpen: true, sheetCornerRadius: 37)
                 }
                 enableBackground = true
             } else {
@@ -339,7 +338,7 @@ struct CustomSheetView: View {
         
         if target == .large {
             withAnimation(.easeInOut(duration: 0.2)) {
-                setSheetShape(isOpen: true, sheetCornerRadius: 36)
+                setSheetShape(isOpen: true, sheetCornerRadius: 37)
             }
             enableBackground = true
         } else {
@@ -423,7 +422,6 @@ struct DynamicSheetContent: View {
     @Binding var selectedLesson: Lesson?
     @Binding var openSettings: Bool
     @Binding var tempSettings: TempSettingsState
-    @Binding var openCalendar: Bool
     @Binding var lockSheet: Bool
     
     var body: some View {
@@ -455,20 +453,22 @@ struct DynamicSheetContent: View {
                         .allowsHitTesting(selectedDetent == .medium)
                         .frame(width: UIApplication.shared.windowSize.width - 16)
                     
-                    NavigationStack {
-                        if openSettings {
-                            Settings(
-                                selectedYear: $tempSettings.selectedYear,
-                                selectedCourse: $tempSettings.selectedCourse,
-                                selectedAcademicYear: $tempSettings.selectedAcademicYear,
-                                matricola: $tempSettings.matricola,
-                                lockSheet: $lockSheet
-                            )
-                            .ignoresSafeArea(.keyboard)
-                        } else {
-                            LessonDetailsView(lesson: $selectedLesson)
-                                .opacity(min(max(largeOpacity, 0), 1))
-                                .allowsHitTesting(selectedDetent == .large)
+                    IsolatedSafeAreaWrapper(topInset: 16) {
+                        NavigationStack {
+                            if openSettings {
+                                Settings(
+                                    selectedYear: $tempSettings.selectedYear,
+                                    selectedCourse: $tempSettings.selectedCourse,
+                                    selectedAcademicYear: $tempSettings.selectedAcademicYear,
+                                    matricola: $tempSettings.matricola,
+                                    lockSheet: $lockSheet
+                                )
+                                .ignoresSafeArea(.keyboard)
+                            } else {
+                                LessonDetailsView(lesson: $selectedLesson)
+                                    .opacity(min(max(largeOpacity, 0), 1))
+                                    .allowsHitTesting(selectedDetent == .large)
+                            }
                         }
                     }
                     .opacity(min(max(largeOpacity, 0), 1))
