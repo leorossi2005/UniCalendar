@@ -14,11 +14,29 @@ struct SheetCornerRadii: Equatable {
     var br: CGFloat
 }
 
-@available(iOS 26.0, *)
+enum GlassEffectStyle {
+    case regular
+    case clear
+    
+    @available(iOS 26, *)
+    var glassStyle: UIGlassEffect.Style {
+        switch self {
+        case .regular: return .regular
+        case .clear: return .clear
+        }
+    }
+    
+    var blurStyle: UIBlurEffect.Style {
+        switch self {
+        case .regular: return .regular
+        case .clear: return .regular
+        }
+    }
+}
+
 final class GlassContainerView: UIView {
     private let glassView = UIVisualEffectView()
-    private let glassEffect = UIGlassEffect()
-    var style: UIGlassEffect.Style = .regular {
+    var style: GlassEffectStyle = .regular {
         didSet { updateEffect() }
     }
     var tint: UIColor? = nil {
@@ -58,12 +76,26 @@ final class GlassContainerView: UIView {
         updateEffect()
     }
     
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        // Solo su iOS 17-18, riapplica i corner quando cambiano i bounds
+        if #unavailable(iOS 26) {
+            applyCornerMask()
+        }
+    }
+    
     private func updateEffect() {
         if isEnabled {
-            let effect = UIGlassEffect(style: style)
-            effect.isInteractive = true
-            effect.tintColor = tint
-            glassView.effect = effect
+            if #available(iOS 26, *) {
+                let effect = UIGlassEffect(style: style.glassStyle)
+                effect.isInteractive = true
+                effect.tintColor = tint
+                glassView.effect = effect
+            } else {
+                glassView.effect = nil
+                glassView.backgroundColor = .secondarySystemBackground
+            }
         } else {
             glassView.effect = nil
         }
@@ -83,14 +115,18 @@ final class GlassContainerView: UIView {
     
     func applyCorners(animated: Bool, duration: TimeInterval) {
         let block = {
-            let corners: UICornerConfiguration = .corners(
-                topLeftRadius: .fixed(self.cornerRadii.tl),
-                topRightRadius: .fixed(self.cornerRadii.tr),
-                bottomLeftRadius: .fixed(self.cornerRadii.bl),
-                bottomRightRadius: .fixed(self.cornerRadii.br)
-            )
-            if self.glassView.cornerConfiguration != corners {
-                self.glassView.cornerConfiguration = corners
+            if #available(iOS 26, *) {
+                let corners: UICornerConfiguration = .corners(
+                    topLeftRadius: .fixed(self.cornerRadii.tl),
+                    topRightRadius: .fixed(self.cornerRadii.tr),
+                    bottomLeftRadius: .fixed(self.cornerRadii.bl),
+                    bottomRightRadius: .fixed(self.cornerRadii.br)
+                )
+                if self.glassView.cornerConfiguration != corners {
+                    self.glassView.cornerConfiguration = corners
+                }
+            } else {
+                self.applyCornerMask()
             }
         }
         
@@ -100,12 +136,36 @@ final class GlassContainerView: UIView {
             block()
         }
     }
+    
+    private func applyCornerMask() {
+        let path = UIBezierPath()
+        let rect = glassView.bounds
+        
+        // Crea un path con corner radii diversi per ogni angolo
+        path.move(to: CGPoint(x: rect.minX + cornerRadii.tl, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX - cornerRadii.tr, y: rect.minY))
+        path.addQuadCurve(to: CGPoint(x: rect.maxX, y: rect.minY + cornerRadii.tr),
+                          controlPoint: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - cornerRadii.br))
+        path.addQuadCurve(to: CGPoint(x: rect.maxX - cornerRadii.br, y: rect.maxY),
+                          controlPoint: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX + cornerRadii.bl, y: rect.maxY))
+        path.addQuadCurve(to: CGPoint(x: rect.minX, y: rect.maxY - cornerRadii.bl),
+                          controlPoint: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + cornerRadii.tl))
+        path.addQuadCurve(to: CGPoint(x: rect.minX + cornerRadii.tl, y: rect.minY),
+                          controlPoint: CGPoint(x: rect.minX, y: rect.minY))
+        path.close()
+        
+        let mask = CAShapeLayer()
+        mask.path = path.cgPath
+        glassView.layer.mask = mask
+    }
 }
 
-@available(iOS 26.0, *)
 struct GlassContainer<Content: View>: UIViewControllerRepresentable {
     var radii: SheetCornerRadii
-    var style: UIGlassEffect.Style = .regular
+    var style: GlassEffectStyle = .regular
     var tint: Color? = nil
     var animationDuration: TimeInterval = 0.2
     var isEnabled: Bool = true
@@ -115,7 +175,7 @@ struct GlassContainer<Content: View>: UIViewControllerRepresentable {
     
     init(
         radii: SheetCornerRadii,
-        style: UIGlassEffect.Style = .regular,
+        style: GlassEffectStyle = .regular,
         tint: Color? = nil,
         animationDuration: TimeInterval = 0.2,
         isEnabled: Bool = true,

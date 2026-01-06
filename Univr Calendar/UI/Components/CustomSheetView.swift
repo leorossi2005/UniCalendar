@@ -58,7 +58,7 @@ struct CustomSheetView: View {
     
     @State private var basePadding: CGFloat = .zero
     @State private var initialPadding: CGFloat = .zero
-    @State private var sheetPadding: CGFloat = 8
+    @State private var sheetPadding: CGFloat = .zero
     
     @State private var offset: CGFloat = .zero
     
@@ -111,7 +111,23 @@ struct CustomSheetView: View {
                     .ignoresSafeArea()
                 }
             } else {
-                mainSheet
+                ZStack(alignment: .bottom) {
+                    Color.black.opacity(0.5)
+                        .ignoresSafeArea()
+                        .opacity(enableBackground ? 1 : 0)
+                        .animation(.easeInOut(duration: 0.2), value: enableBackground)
+                    
+                    GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground, resetGlassEffect: trigger) {
+                        mainSheet
+                            .ignoresSafeArea()
+                    }
+                    .transition(.blurReplace)
+                    .frame(height: liveHeight)
+                    .offset(y: -offset)
+                    .padding(.horizontal, sheetPadding)
+                    .padding(.bottom, sheetPadding)
+                    .ignoresSafeArea()
+                }
             }
         }
         .onChange(of: openCalendar) { oldValue, newValue in
@@ -149,6 +165,9 @@ struct CustomSheetView: View {
             enableBackground = newValue == .large
         }
         .onAppear {
+            if #available(iOS 26, *) {
+                sheetPadding = 8
+            }
             initialPadding = sheetPadding
             basePadding = sheetPadding
             setSheetShape(isOpen: false)
@@ -188,6 +207,7 @@ struct CustomSheetView: View {
                     handleDragEnded(translationY, predictedEndTranslation)
                 }
             )
+            .allowsHitTesting(false)
         }
         .background(WindowAccessor { window in
             if UIDevice.isIpad {
