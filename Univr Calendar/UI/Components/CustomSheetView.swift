@@ -21,9 +21,9 @@ enum CustomSheetDetent {
             let topMargin = topSafeArea > 0 ? topSafeArea : 20
             
             if UIDevice.isIpad {
-                return windowHeight - 74 - 1
+                return windowHeight - 75
             } else {
-                return windowHeight - topMargin - 1
+                return windowHeight - topMargin - 10
             }
         }
     }
@@ -54,11 +54,6 @@ struct CustomSheetView: View {
     
     @State private var dragY: CGFloat = .zero
     
-    @State private var draggingDirection: CustomSheetDraggingDirection = .none
-    
-    @State private var isContentAtTop: Bool = true
-    @State private var initialIsContentAtTop: Bool = true
-    
     @State private var lockSheet: Bool = false
     
     @State private var basePadding: CGFloat = .zero
@@ -82,11 +77,11 @@ struct CustomSheetView: View {
                         .opacity(enableBackground ? 1 : 0)
                         .animation(.easeInOut(duration: 0.2), value: enableBackground)
                     
-                    GlassContainerr(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground, resetGlassEffect: trigger) {
+                    GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground, resetGlassEffect: trigger) {
                         if openCalendar {
                             mainSheet
+                                .ignoresSafeArea()
                                 .transition(.blurReplace)
-                                .ignoresSafeArea(edges: .bottom)
                         } else {
                                 Button {
                                     changeOpenCalendar(true)
@@ -104,6 +99,7 @@ struct CustomSheetView: View {
                                 .contentShape(.hoverEffect, .capsule)
                                 .hoverEffect(.highlight)
                                 .buttonStyle(.plain)
+                                .ignoresSafeArea()
                                 .transition(.blurReplace)
                         }
                     }
@@ -112,7 +108,7 @@ struct CustomSheetView: View {
                     .offset(y: -offset)
                     .padding(.horizontal, openCalendar ? sheetPadding : UIApplication.shared.safeAreas.bottom)
                     .padding(.bottom, openCalendar ? sheetPadding : UIApplication.shared.safeAreas.bottom)
-                    .ignoresSafeArea(edges: .bottom)
+                    .ignoresSafeArea()
                 }
             } else {
                 mainSheet
@@ -155,13 +151,13 @@ struct CustomSheetView: View {
         .onAppear {
             initialPadding = sheetPadding
             basePadding = sheetPadding
+            setSheetShape(isOpen: false)
         }
     }
     
     private var mainSheet: some View {
         ZStack {
             Color(.systemBackground)
-                .clipShape(sheetShape)
                 .opacity(enableBackground ? 1 : 0)
             
             DynamicSheetContent(
@@ -171,10 +167,7 @@ struct CustomSheetView: View {
                 openSettings: $openSettings,
                 tempSettings: $tempSettings,
                 openCalendar: $openCalendar,
-                isContentAtTop: $isContentAtTop,
-                sheetInitialIsContentAtTop: $initialIsContentAtTop,
-                lockSheet: $lockSheet,
-                draggingDirection: $draggingDirection
+                lockSheet: $lockSheet
             )
             .overlay(alignment: .top) {
                 RoundedRectangle(cornerRadius: 2.5)
@@ -184,8 +177,8 @@ struct CustomSheetView: View {
                     .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
                     .hoverEffect(.highlight)
             }
-            .clipShape(sheetShape)
         }
+        .clipShape(sheetShape)
         .overlay {
             VerticalDragger(
                 onDrag: { translationY, direction in
@@ -209,16 +202,6 @@ struct CustomSheetView: View {
                 baseHeight = CustomSheetDetent.large.value
             }
         }
-        .onChange(of: isContentAtTop) {
-            if isContentAtTop && draggingDirection == .none {
-                lockSheet = false
-                if selectedDetent == .large {
-                    detents = [.small, .medium, .large]
-                } else {
-                    detents = [.small, .medium]
-                }
-            }
-        }
     }
     
     // MARK: - Logic
@@ -228,35 +211,8 @@ struct CustomSheetView: View {
     }
     
     private func handleDragUpdating(value: CGFloat, direction: CustomSheetDraggingDirection, state: inout CGFloat) {
-        if draggingDirection == .none {
-            draggingDirection = direction
-            
-            var transaction = Transaction()
-            transaction.disablesAnimations = true
-            withTransaction(transaction) {
-                baseHeight = liveHeight
-            }
-            
-            initialIsContentAtTop = isContentAtTop
-        }
-        
-        guard initialIsContentAtTop else {
-            state = 0
-            return
-        }
-        
         if selectedDetent == .large {
-            if !isContentAtTop {
-                lockSheet = true
-                detents = [.large]
-            }
-            
             if value < 0 {
-                state = 0
-                return
-            }
-            
-            if value > 0 && !isContentAtTop {
                 state = 0
                 return
             }
@@ -272,7 +228,7 @@ struct CustomSheetView: View {
             } else if predictedHeight > CustomSheetDetent.large.value {
                 sheetPadding = 0
             } else {
-                sheetPadding = 8
+                sheetPadding = initialPadding
             }
         }
         
@@ -286,7 +242,7 @@ struct CustomSheetView: View {
                 enableBackground = true
             } else {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    setSheetShape(isOpen: true, sheetCornerRadius: -1)
+                    setSheetShape(isOpen: true)
                 }
                 enableBackground = false
             }
@@ -308,10 +264,8 @@ struct CustomSheetView: View {
     }
     
     private func handleDragEnded(_ value: CGFloat, _ predictedEndTranslation: CGFloat) {
-        draggingDirection = .none
-        
         if selectedDetent == .large {
-            if value < 0 || (value > 0 && !isContentAtTop) {
+            if value < 0 {
                 return
             }
         }
@@ -370,7 +324,7 @@ struct CustomSheetView: View {
             enableBackground = true
         } else {
             withAnimation(.easeInOut(duration: 0.2)) {
-                setSheetShape(isOpen: true, sheetCornerRadius: -1)
+                setSheetShape(isOpen: true)
             }
             enableBackground = false
         }
@@ -398,15 +352,6 @@ struct CustomSheetView: View {
                 sheetPadding = initialPadding
             }
         }
-        
-        if isContentAtTop {
-            lockSheet = false
-            if selectedDetent == .large {
-                detents = [.small, .medium, .large]
-            } else {
-                detents = [.small, .medium]
-            }
-        }
     }
     
     private func changeOpenCalendar(_ toOpen: Bool) {
@@ -425,39 +370,21 @@ struct CustomSheetView: View {
     
     private func setSheetShape(isOpen: Bool, sheetCornerRadius: CGFloat = -1) {
         withAnimation {
-            if #available(iOS 26, *) {
-                if UIDevice.isIpad {
-                    sheetShapeRadii = .init(
-                        tl: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.4 / 2 + 8)) - 8 : sheetCornerRadius,
-                        tr: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.4 / 2 + 8)) - 8 : sheetCornerRadius,
-                        bl: (isOpen ? (positionObserver.edges.bottomLeftSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
-                        br: (isOpen ? (positionObserver.edges.bottomRightSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8
-                    )
-                } else {
-                    let radius: CGFloat = (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8
-                    sheetShapeRadii = .init(
-                        tl: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
-                        tr: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
-                        bl: radius,
-                        br: radius
-                    )
-                }
+            if UIDevice.isIpad {
+                sheetShapeRadii = .init(
+                    tl: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.7 / 2 + initialPadding)) - initialPadding : sheetCornerRadius,
+                    tr: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.7 / 2 + initialPadding)) - initialPadding : sheetCornerRadius,
+                    bl: initialPadding == 0 ? 0 : (isOpen ? (positionObserver.edges.bottomLeftSquare ? 18 : 32) : (47.7 / 2 + initialPadding)) - initialPadding,
+                    br: initialPadding == 0 ? 0 : (isOpen ? (positionObserver.edges.bottomRightSquare ? 18 : 32) : (47.7 / 2 + initialPadding)) - initialPadding
+                )
             } else {
-                if UIDevice.isIpad {
-                    sheetShapeRadii = .init(
-                        tl: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
-                        tr: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
-                        bl: 0,
-                        br: 0
-                    )
-                } else {
-                    sheetShapeRadii = .init(
-                        tl: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
-                        tr: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
-                        bl: 0,
-                        br: 0
-                    )
-                }
+                let radius: CGFloat = (isOpen ? .deviceCornerRadius : (47.7 / 2 + initialPadding)) - initialPadding
+                sheetShapeRadii = .init(
+                    tl: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
+                    tr: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
+                    bl: initialPadding == 0 ? 0 : radius,
+                    br: initialPadding == 0 ? 0 : radius
+                )
             }
             sheetShape = UnevenRoundedRectangle(
                 topLeadingRadius: sheetShapeRadii.tl,
@@ -477,10 +404,7 @@ struct DynamicSheetContent: View {
     @Binding var openSettings: Bool
     @Binding var tempSettings: TempSettingsState
     @Binding var openCalendar: Bool
-    @Binding var isContentAtTop: Bool
-    @Binding var sheetInitialIsContentAtTop: Bool
     @Binding var lockSheet: Bool
-    @Binding var draggingDirection: CustomSheetDraggingDirection
     
     var body: some View {
         ZStack {
@@ -521,14 +445,6 @@ struct DynamicSheetContent: View {
                                 lockSheet: $lockSheet
                             )
                             .ignoresSafeArea(.keyboard)
-                            //.toolbar {
-                            //    ToolbarItem(placement: .principal) {
-                            //        Text("Impostazioni")
-                            //            .font(.headline)
-                            //            .opacity(min(max(largeOpacity, 0), 1))
-                            //    }
-                            //}
-                            //.navigationBarTitleDisplayMode(.inline)
                         } else {
                             LessonDetailsView(lesson: $selectedLesson)
                                 .opacity(min(max(largeOpacity, 0), 1))
@@ -537,13 +453,9 @@ struct DynamicSheetContent: View {
                     }
                     .opacity(min(max(largeOpacity, 0), 1))
                     .allowsHitTesting(selectedDetent == .large)
-                    .frame(width: UIApplication.shared.windowSize.width, height: CustomSheetDetent.large.value)
+                    .frame(width: UIApplication.shared.windowSize.width)
                 }
             }
         }
     }
-}
-
-#Preview {
-    //CustomSheetView()
 }

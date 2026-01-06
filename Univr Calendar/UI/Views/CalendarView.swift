@@ -371,7 +371,6 @@ struct CalendarView: View {
     }
     
     private func inizializeData() {
-        setSheetShape(isOpen: false)
         updateDate()
         
         tempSettings.sync(with: settings)

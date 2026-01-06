@@ -101,31 +101,6 @@ extension View {
     }
     
     @ViewBuilder
-    func glassEffectIfAvailable() -> some View {
-        if #available(iOS 26, *) {
-            self
-                .glassEffect(.identity)
-        } else {
-            self
-            
-        }
-    }
-    
-    @ViewBuilder
-    func ipadSheetDesign(_ namespace: Namespace.ID, sourceID: String, sheet: Binding<UnevenRoundedRectangle>) -> some View {
-        if #available(iOS 26, *) {
-            self
-                .navigationTransition(.zoom(sourceID: sourceID, in: namespace))
-                .glassEffect(.regular.interactive(), in: sheet.wrappedValue)
-                .padding(.horizontal, 8)
-                .padding(.bottom, 8)
-        } else {
-            self
-            
-        }
-    }
-    
-    @ViewBuilder
     func sheetDesign(_ namespace: Namespace.ID, sourceID: String, detent: Binding<PresentationDetent>) -> some View {
         if #available(iOS 26, *) {
             self
