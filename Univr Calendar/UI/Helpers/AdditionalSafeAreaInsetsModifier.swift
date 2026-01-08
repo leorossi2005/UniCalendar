@@ -8,54 +8,94 @@
 //
 
 import SwiftUI
+import UIKit
 
-/// Un wrapper che crea un ambiente isolato con i propri SafeAreaInsets
-struct IsolatedSafeAreaWrapper<Content: View>: UIViewControllerRepresentable {
-    var topInset: CGFloat = 0
-    var leftInset: CGFloat = 0
-    var bottomInset: CGFloat = 0
-    var rightInset: CGFloat = 0
+// MARK: - Extension per uso facile in SwiftUI
+extension View {
+    /// Applica inset personalizzati alla Safe Area e protegge dai gesture di sistema indesiderati (Window Drag su iPad).
+    func customSafeAreaInsets(top: CGFloat = 0, leading: CGFloat = 0, bottom: CGFloat = 0, trailing: CGFloat = 0, isEnabled: Bool = true) -> some View {
+        modifier(AdditionalSafeAreaInsetsModifier(
+            insets: UIEdgeInsets(top: top, left: leading, bottom: bottom, right: trailing),
+            isEnabled: isEnabled
+        ))
+    }
+}
+
+// MARK: - ViewModifier
+struct AdditionalSafeAreaInsetsModifier: ViewModifier {
+    var insets: UIEdgeInsets
+    var isEnabled: Bool
+    
+    func body(content: Content) -> some View {
+        if isEnabled {
+            // Se attivo, usiamo il container che gestisce gli insets E protegge dai drag
+            SafeAreaControllerWrapper(insets: insets) {
+                content
+            }
+            .ignoresSafeArea() // Importante per lasciare che sia il controller a gestire gli spazi
+        } else {
+            // Se disattivato, ritorniamo il contenuto liscio
+            content
+        }
+    }
+}
+
+// MARK: - UIViewControllerRepresentable
+private struct SafeAreaControllerWrapper<Content: View>: UIViewControllerRepresentable {
+    var insets: UIEdgeInsets
     @ViewBuilder var content: Content
-
-    func makeUIViewController(context: Context) -> UIViewController {
-        // Creiamo un controller contenitore trasparente
-        let viewController = UIViewController()
-        viewController.view.backgroundColor = .clear
+    
+    func makeUIViewController(context: Context) -> SafeContainerViewController {
+        let vc = SafeContainerViewController()
+        vc.view.backgroundColor = .clear
         
-        // Creiamo l'HostingController per il contenuto
-        let hostingController = UIHostingController(rootView: content)
-        hostingController.view.backgroundColor = .clear
+        let hosting = UIHostingController(rootView: content)
+        hosting.view.backgroundColor = .clear
+        // Applichiamo gli inset iniziali
+        hosting.additionalSafeAreaInsets = insets
         
-        // 👇 Qui avviene la magia: applichiamo l'inset SOLO a questo controller interno
-        hostingController.additionalSafeAreaInsets = UIEdgeInsets(top: topInset, left: leftInset, bottom: bottomInset, right: rightInset)
+        vc.addChild(hosting)
+        vc.view.addSubview(hosting.view)
         
-        // Aggiungiamo l'hosting come figlio
-        viewController.addChild(hostingController)
-        viewController.view.addSubview(hostingController.view)
-        
-        // Layout
-        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+        hosting.view.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            hostingController.view.leadingAnchor.constraint(equalTo: viewController.view.leadingAnchor),
-            hostingController.view.trailingAnchor.constraint(equalTo: viewController.view.trailingAnchor),
-            hostingController.view.topAnchor.constraint(equalTo: viewController.view.topAnchor),
-            hostingController.view.bottomAnchor.constraint(equalTo: viewController.view.bottomAnchor)
+            hosting.view.leadingAnchor.constraint(equalTo: vc.view.leadingAnchor),
+            hosting.view.trailingAnchor.constraint(equalTo: vc.view.trailingAnchor),
+            hosting.view.topAnchor.constraint(equalTo: vc.view.topAnchor),
+            hosting.view.bottomAnchor.constraint(equalTo: vc.view.bottomAnchor)
         ])
         
-        hostingController.didMove(toParent: viewController)
-        
-        return viewController
+        hosting.didMove(toParent: vc)
+        return vc
     }
-
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        // Aggiorniamo il contenuto SwiftUI quando cambia lo stato
+    
+    func updateUIViewController(_ uiViewController: SafeContainerViewController, context: Context) {
         if let hosting = uiViewController.children.first as? UIHostingController<Content> {
             hosting.rootView = content
-            
-            // Aggiorniamo l'inset se dovesse cambiare dinamicamente
-            if hosting.additionalSafeAreaInsets.top != topInset {
-                hosting.additionalSafeAreaInsets = UIEdgeInsets(top: topInset, left: 0, bottom: 0, right: 0)
+            // Aggiorniamo gli inset solo se cambiati
+            if hosting.additionalSafeAreaInsets != insets {
+                hosting.additionalSafeAreaInsets = insets
             }
         }
+    }
+}
+
+// MARK: - Safe Container Controller (API Pubbliche)
+// Questo controller serve a due scopi:
+// 1. Contenere l'UIHostingController con gli inset modificati.
+// 2. Dichiarare preferenze di sistema per evitare conflitti di gesture (API Pubbliche).
+class SafeContainerViewController: UIViewController {
+    
+    // API PUBBLICA UIViewController:
+    // Chiede al sistema di dare priorità ai gesture dell'app rispetto a quelli di sistema (es. Control Center, Window Drag)
+    // sui bordi specificati.
+    override var preferredScreenEdgesDeferringSystemGestures: UIRectEdge {
+        return .top
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // Opzionale: Se deferringSystemGestures non basta, si può aggiungere qui logica extra,
+        // ma proviamo prima con la sola proprietà nativa che è la via "Apple way".
     }
 }
