@@ -459,24 +459,26 @@ struct DynamicSheetContent: View {
                         .allowsHitTesting(selectedDetent == .medium)
                         .frame(width: UIApplication.shared.windowSize.width - 16)
                     
-                    IsolatedSafeAreaWrapper(topInset: 16, leftInset: UIDevice.isIpad ? 6 : 0, rightInset: UIDevice.isIpad ? 6 : 0) {
-                        NavigationStack {
-                            if openSettings {
-                                Settings(
-                                    selectedYear: $tempSettings.selectedYear,
-                                    selectedCourse: $tempSettings.selectedCourse,
-                                    selectedAcademicYear: $tempSettings.selectedAcademicYear,
-                                    matricola: $tempSettings.matricola,
-                                    lockSheet: $lockSheet
-                                )
-                                .ignoresSafeArea(.keyboard)
-                            } else {
-                                LessonDetailsView(lesson: $selectedLesson)
-                                    .opacity(min(max(largeOpacity, 0), 1))
-                                    .allowsHitTesting(selectedDetent == .large)
-                            }
+                    NavigationStack {
+                        if openSettings {
+                            Settings(
+                                selectedYear: $tempSettings.selectedYear,
+                                selectedCourse: $tempSettings.selectedCourse,
+                                selectedAcademicYear: $tempSettings.selectedAcademicYear,
+                                matricola: $tempSettings.matricola,
+                                lockSheet: $lockSheet
+                            )
+                            .ignoresSafeArea(.keyboard)
+                        } else {
+                            LessonDetailsView(lesson: $selectedLesson)
+                                .opacity(min(max(largeOpacity, 0), 1))
+                                .allowsHitTesting(selectedDetent == .large)
                         }
-                        .id(openSettings)
+                    }
+                    .id(openSettings)
+                    .if(!UIDevice.isIpad) { view in
+                        view
+                            .customSafeAreaInsets(top: 16)
                     }
                     .opacity(min(max(largeOpacity, 0), 1))
                     .allowsHitTesting(selectedDetent == .large)
