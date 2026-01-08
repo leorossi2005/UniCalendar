@@ -8,9 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		A72DAEED2EE0B35300F86639 /* UnivrCore in Frameworks */ = {isa = PBXBuildFile; productRef = A72DAEEC2EE0B35300F86639 /* UnivrCore */; };
+		A74222E62F0FA567006BAF57 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = A74222E52F0FA563006BAF57 /* .gitignore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A74222E52F0FA563006BAF57 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		A74C008D2E960653001AB35D /* Univr Calendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Univr Calendar.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -37,6 +39,7 @@
 		A74C00842E960653001AB35D = {
 			isa = PBXGroup;
 			children = (
+				A74222E52F0FA563006BAF57 /* .gitignore */,
 				A74C008F2E960653001AB35D /* Univr Calendar */,
 				A74C008E2E960653001AB35D /* Products */,
 			);
@@ -119,6 +122,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A74222E62F0FA567006BAF57 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -268,7 +272,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2184;
+				CURRENT_PROJECT_VERSION = 2186;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = KP9752B26L;
 				ENABLE_APP_SANDBOX = YES;
@@ -323,7 +327,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2184;
+				CURRENT_PROJECT_VERSION = 2186;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = KP9752B26L;
 				ENABLE_APP_SANDBOX = YES;

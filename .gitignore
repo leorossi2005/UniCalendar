@@ -1,0 +1,23 @@
+## Xcode Core
+.DS_Store
+*/build/
+*.derivedData
+*.xcuserstate
+*.xcuserdata/
+
+## Xcode Patch
+*.xccheckout
+*.moved-aside
+*.xcscmblueprint
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+## Swift Package Manager
+.build/
+Packages/
+Package.resolved
+
+## CocoaPods
+Pods/
