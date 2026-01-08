@@ -187,6 +187,8 @@ struct StableMapView: View {
                 .padding(corderRadius / 2)
             }
         }
+        .contentShape(.hoverEffect, .circle.inset(by: 7))
+        .hoverEffect(.highlight)
     }
     
     private func findLocation(for lesson: Lesson) async {
@@ -236,14 +238,11 @@ struct StableMapView: View {
 #Preview {
     @Previewable @Namespace var transition
     @Previewable @State var lesson: Lesson? = Lesson.sample
-    //@Previewable @State var selectedDetent: PresentationDetent = .large
     
     Text("")
         .sheet(isPresented: .constant(true)) {
             LessonDetailsView(lesson: $lesson)
-                //.presentationDetents([.medium, .large], selection: $selectedDetent)
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                //.sheetDesign(transition, sourceID: "", detent: $selectedDetent)
         }
 }
