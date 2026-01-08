@@ -1,42 +1,42 @@
-# Contribuire a UniCalendar
+# Contributing to UniCalendar
 
-Grazie per l'interesse nel contribuire a UniCalendar! 🎉
-Questo progetto è open source e ogni tipo di contributo è benvenuto: segnalazione di bug, nuove funzionalità, miglioramenti alla documentazione o semplici fix.
+Thanks for your interest in contributing to UniCalendar! 🎉
+This project is open source and any kind of contribution is welcome: bug reports, new features, documentation improvements, or simple fixes.
 
-## 🛠 Come iniziare
+## 🛠 How to Start
 
-1.  **Forka la repository**: Crea una tua copia del progetto sul tuo account GitHub.
-2.  **Clona il progetto**: Scarica il tuo fork in locale.
-3.  **Apri in Xcode**: Usa sempre l'ultima versione stabile di Xcode (o quella indicata nel README).
+1.  **Fork the repository**: Create a copy of the project on your GitHub account.
+2.  **Clone the project**: Download your fork locally.
+3.  **Open in Xcode**: Always use the latest stable version of Xcode (or the one indicated in the README).
 
-## 🐛 Segnalare Bug
+## 🐛 Reporting Bugs
 
-Usa la sezione **Issues** di GitHub.
-Quando apri una issue, cerca di includere:
-*   Il modello del tuo dispositivo (es. iPhone 15 Pro).
-*   La versione di iOS (es. iOS 18.2).
-*   Passi precisi per riprodurre l'errore.
-*   Screenshot o video (se applicabile).
+Use the GitHub **Issues** section.
+When opening an issue, please try to include:
+*   Your device model (e.g., iPhone 15 Pro).
+*   The iOS version (e.g., iOS 18.2).
+*   Precise steps to reproduce the error.
+*   Screenshots or videos (if applicable).
 
-## 💻 Sviluppo e Pull Request
+## 💻 Development & Pull Requests
 
-1.  **Crea un Branch**: Non lavorare mai direttamente sul `main`. Crea un branch per la tua feature o fix:
+1.  **Create a Branch**: Never work directly on `main`. Create a branch for your feature or fix:
     ```bash
-    git checkout -b feature/nuova-funzionalita
-    # oppure
-    git checkout -b fix/correzione-bug
+    git checkout -b feature/new-feature
+    # or
+    git checkout -b fix/bug-fix
     ```
-2.  **Stile del Codice**:
-    *   Segui le convenzioni standard di Swift.
-    *   Mantieni il codice pulito e leggibile.
-    *   Se modifichi l'interfaccia utente (SwiftUI/UIKit), controlla sempre il risultato sia in modalità Chiara che Scura.
-3.  **Testa**: Verifica che l'app compili e funzioni correttamente sul simulatore prima di inviare le modifiche.
-4.  **Invia la Pull Request**:
-    *   Descrivi chiaramente cosa hai modificato.
-    *   Collega la PR a una Issue esistente se presente (es. "Fixes #12").
+2.  **Code Style**:
+    *   Follow standard Swift conventions.
+    *   Keep code clean and readable.
+    *   If modifying the UI (SwiftUI/UIKit), always check the result in both Light and Dark modes.
+3.  **Test**: Verify that the app compiles and functions correctly on the simulator before submitting changes.
+4.  **Submit Pull Request**:
+    *   Clearly describe what you have changed.
+    *   Link the PR to an existing Issue if present (e.g., "Fixes #12").
 
-## 📄 Licenza
+## 📄 License
 
-Contribuendo a UniCalendar, accetti che il tuo codice venga rilasciato sotto la licenza **GNU GPLv3** del progetto.
+By contributing to UniCalendar, you agree that your code will be released under the project's **GNU GPLv3** license.
 
-Grazie per il tuo aiuto! ❤️
+Thanks for your help! ❤️
