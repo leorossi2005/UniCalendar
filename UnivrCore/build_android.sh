@@ -1,5 +1,6 @@
-
 #!/bin/bash
+#  Copyright (C) 2026 Leonardo Rossi
+#  SPDX-License-Identifier: GPL-3.0-or-later
 
 clear
 # 1. Definisci le variabili per non ripeterle

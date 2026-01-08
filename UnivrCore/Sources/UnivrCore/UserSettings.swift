@@ -3,6 +3,8 @@
 //  Univr Core
 //
 //  Created by Leonardo Rossi on 21/11/25.
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
 //
 
 import Foundation
