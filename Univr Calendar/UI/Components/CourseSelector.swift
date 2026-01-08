@@ -40,6 +40,9 @@ struct CourseSelector: View {
         .disabled(courses.isEmpty)
         .onChange(of: internalFocus) { _, newValue in
             if isFocused != newValue {
+                if newValue == true {
+                    Haptics.play(.impact(weight: .light))
+                }
                 isFocused = newValue
             }
         }
@@ -67,8 +70,10 @@ struct CourseSelector: View {
                     if !searchText.isEmpty {
                         let size = 17.5
                         Button {
+                            Haptics.play(.impact(flexibility: .rigid, intensity: 1))
                             withAnimation(nil) {
                                 searchText = ""
+                                internalFocus = true
                             }
                         } label: {
                             ZStack {
@@ -89,7 +94,9 @@ struct CourseSelector: View {
                 }
             if internalFocus {
                 Button(action: {
+                    Haptics.play(.impact(flexibility: .solid, intensity: 1))
                     withAnimation(nil) {
+                        searchText = ""
                         internalFocus = false
                     }
                 }) {
@@ -137,9 +144,12 @@ struct CourseSelector: View {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(Array(filteredCourses.enumerated()), id: \.element.valore) { index, course in
                             Button {
-                                searchText = ""
-                                internalFocus = false
-                                selectedCourse = course.valore
+                                if course.valore != selectedCourse {
+                                    Haptics.play(.selection)
+                                    searchText = ""
+                                    internalFocus = false
+                                    selectedCourse = course.valore
+                                }
                             } label: {
                                 HStack(spacing: 16) {
                                     Image(systemName: "checkmark")

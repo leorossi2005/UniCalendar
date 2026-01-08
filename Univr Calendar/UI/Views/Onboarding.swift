@@ -265,7 +265,10 @@ private struct OnboardingButton: View {
     let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
+        Button {
+            Haptics.play(.impact(weight: .medium))
+            action()
+        } label: {
             if isLoading {
                 RotatingSemicircleLoader()
             } else {
