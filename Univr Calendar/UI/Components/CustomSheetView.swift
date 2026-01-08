@@ -33,6 +33,8 @@ enum CustomSheetDetent {
 
 struct CustomSheetView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.verticalSizeClass) var verticalSizeClass
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     var transition: Namespace.ID
     
     var positionObserver = WindowPositionObserver.shared
@@ -216,6 +218,13 @@ struct CustomSheetView: View {
         .onChange(of: positionObserver.windowFrame) {
             if selectedDetent == .large {
                 baseHeight = CustomSheetDetent.large.value
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+            DispatchQueue.main.async {
+                if selectedDetent == .large {
+                    baseHeight = CustomSheetDetent.large.value
+                }
             }
         }
     }
