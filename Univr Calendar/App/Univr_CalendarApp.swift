@@ -17,6 +17,7 @@ struct Univr_CalendarApp: App {
             RootView()
                 .environment(UserSettings.shared)
                 .environment(\.safeAreaInsets, UIApplication.shared.safeAreas)
+                .enableGlobalHaptics()
         }
     }
 }
