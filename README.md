@@ -1,63 +1,63 @@
 # UniCalendar
 
-**UniCalendar** è un'applicazione iOS nativa (SwiftUI + UIKit) progettata per semplificare la vita degli studenti dell'Università di Verona (UniVR). Offre un'interfaccia moderna, fluida e reattiva per consultare gli orari delle lezioni, aiutando gli studenti a organizzarsi meglio e liberare la mente per lo studio.
+**UniCalendar** is a native iOS application (SwiftUI + UIKit) designed to simplify the lives of University of Verona (UniVR) students. It offers a modern, fluid, and responsive interface for viewing class schedules, helping students organize themselves better and free their minds for studying.
 
-> 🚧 **Stato del progetto**: In sviluppo attivo (v0.9)
+> 🚧 **Project Status**: Active development (v0.9)
 
-## ✨ Funzionalità Principali
+## ✨ Key Features
 
-### 📅 Gestione Orari Avanzata
-*   **Visualizzazione Settimanale Fluid**: Navigazione intuitiva tra le settimane con supporto allo scrolling frazionato.
-*   **Custom Sheet Interattivo**: Un pannello inferiore personalizzato (basato su UIKit) con supporto a detent multipli (medium/large) e transizioni "liquid glass" fluide.
-*   **Dettagli Lezione Completi**: Visualizza orario, aula e posizione approssimativa sulla mappa integrata.
-*   **Supporto Offline**: Rileva automaticamente lo stato della connessione e permette la consultazione della cache locale quando sei offline.
+### 📅 Advanced Schedule Management
+*   **Fluid Weekly View**: Intuitive navigation between weeks with fractional scrolling support.
+*   **Interactive Custom Sheet**: A custom bottom panel (UIKit-based) supporting multiple detents (medium/large) and fluid "liquid glass" transitions.
+*   **Complete Lesson Details**: View time, classroom, and approximate location on the integrated map.
+*   **Offline Support**: Automatically detects connection status and allows viewing of local cache when offline.
 
-### 🎨 Design e UX
-*   **Interfaccia Adattiva**: Ottimizzata sia per iPhone che per iPad (con supporto SplitView e rotazione).
-*   **Animazioni Curate**: Transizioni "snappy", effetti glass/blur dinamici e animazioni personalizzate per l'apertura del calendario.
-*   **Localizzazione**: Completamente tradotta in **Italiano** e **Inglese**.
-*   **Modalità Scura**: Supporto nativo per il tema scuro con adattamento automatico dei colori.
+### 🎨 Design & UX
+*   **Adaptive Interface**: Optimized for both iPhone and iPad (with SplitView and rotation support).
+*   **Polished Animations**: "Snappy" transitions, dynamic glass/blur effects, and custom animations for calendar opening.
+*   **Localization**: Fully translated into **Italian** and **English**.
+*   **Dark Mode**: Native support for dark theme with automatic color adaptation.
 
-### ⚙️ Aspetti Tecnici
-*   **Architettura Ibrida**: Core condiviso multi-piattaforma (predisposto per Android) e UI nativa Apple.
-*   **Caching Intelligente**: Sistema di caching avanzato per ridurre i tempi di caricamento (da ~500ms a <50ms) e risparmiare dati.
-*   **Network Resiliente**: Gestione robusta delle chiamate API con background refresh.
+### ⚙️ Technical Aspects
+*   **Hybrid Architecture**: Shared multi-platform core (ready for Android) and native Apple UI.
+*   **Smart Caching**: Advanced caching system to reduce loading times (from ~500ms to <50ms) and save data.
+*   **Resilient Network**: Robust API call management with background refresh.
 
-## 🛠 Requisiti
+## 🛠 Requirements
 *   **iOS**: 17.0+
-*   **Xcode**: 26.0+ (Testato su 26.2)
-*   **Linguaggio**: Swift 5.9+
+*   **Xcode**: 26.0+ (Tested on 26.2)
+*   **Language**: Swift 5.9+
 
-## 🚀 Installazione
+## 🚀 Installation
 
-1.  **Clona il repository**:
+1.  **Clone the repository**:
     ```bash
     git clone https://github.com/leorossi2005/UniCalendar.git
     ```
-2.  **Apri il progetto**:
-    Fai doppio clic su `Univr Calendar.xcodeproj` nella cartella scaricata.
-3.  **Attendi i pacchetti**:
-    Lascia che Xcode risolva le dipendenze tramite Swift Package Manager.
-4.  **Esegui**:
-    Seleziona un simulatore (es. iPhone 15 Pro) e premi `Cmd + R` per avviare l'app.
+2.  **Open the project**:
+    Double-click on `Univr Calendar.xcodeproj` in the downloaded folder.
+3.  **Wait for packages**:
+    Let Xcode resolve dependencies via Swift Package Manager.
+4.  **Run**:
+    Select a simulator (e.g., iPhone 15 Pro) and press `Cmd + R` to start the app.
 
-## 🧩 Struttura del Progetto
+## 🧩 Project Structure
 
-Il progetto è diviso in due moduli principali per favorire la portabilità e l'ordine:
+The project is divided into two main modules to promote portability and order:
 
-*   **Univr App** (Codice specifico Apple):
-    *   `App/`: File base dell'app.
-    *   `UI/Components/`: Componenti SwiftUI indipendenti.
-    *   `UI/Helpers/`: Componenti UIKit che assistono SwiftUI.
-    *   `UI/UIKit/`: View e componenti UIKit.
-    *   `UI/Views/`: View SwiftUI principali dell'app.
-*   **Univr Core** (Logica condivisa):
-    *   `ViewModels/`: Codice computazionale per le view.
-    *   `/`: File generali del package.
+*   **Univr App** (Apple-specific code):
+    *   `App/`: Base app files.
+    *   `UI/Components/`: Independent SwiftUI components.
+    *   `UI/Helpers/`: UIKit components assisting SwiftUI.
+    *   `UI/UIKit/`: UIKit views and components.
+    *   `UI/Views/`: Main SwiftUI views of the app.
+*   **Univr Core** (Shared logic):
+    *   `ViewModels/`: Computational code for views.
+    *   `/`: General package files.
 
-## 📄 Licenza
+## 📄 License
 
-Questo progetto è distribuito sotto licenza **GNU GPLv3**.
-Vedi il file [LICENSE](LICENSE) per maggiori dettagli.
+This project is distributed under the **GNU GPLv3** license.
+See the [LICENSE](LICENSE) file for more details.
 
-Software libero: puoi usarlo, studiarlo e modificarlo, ma le derivazioni devono rimanere open source.
+Free software: you can use it, study it, and modify it, but derivatives must remain open source.
