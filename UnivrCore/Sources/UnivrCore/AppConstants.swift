@@ -13,6 +13,10 @@ public struct AppConstants: Sendable {
     public struct URLs {
         public static let donation = URL(string: "https://revolut.me/leorossi05?currency=EUR&amount=100")!
         public static let portfolio = URL(string: "https://www.leonardorossi.dev")!
+        public static let email = URL(string: "mailto:tuo.email@dominio.com")!
+        public static let twitter = URL(string: "https://x.com/tuo_username")!
+        // Link mailto precompilato per il feedback
+        public static let feedback = URL(string: "mailto:tuo.email@dominio.com?subject=Feedback%20App%20Univr")!
     }
     
     public struct AppInfo {

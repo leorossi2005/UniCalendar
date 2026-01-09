@@ -106,6 +106,10 @@ struct Settings: View {
                     Label("Informazioni", systemImage: .infoPageDynamic)
                         .foregroundStyle(.primary)
                 }
+                NavigationLink(destination: ProfileView()) {
+                    Label("Informazioni", systemImage: .infoPageDynamic)
+                        .foregroundStyle(.primary)
+                }
             } footer: {
                 Text("Ps. Se non si fosse capito il regalino è una donazione, e ti ringrazio di cuore se mi darai un po' di sostegno per aver creato questa app.")
             }

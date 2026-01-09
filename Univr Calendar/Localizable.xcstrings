@@ -325,6 +325,9 @@
         }
       }
     },
+    "Dona qualcosina se vuoi aiutare" : {
+
+    },
     "Fammi un regalino" : {
       "localizations" : {
         "en" : {
@@ -335,6 +338,9 @@
         }
       }
     },
+    "Grazie ❤️" : {
+
+    },
     "Grazie amore mio, ti amo tanto." : {
       "localizations" : {
         "en" : {
@@ -344,6 +350,9 @@
           }
         }
       }
+    },
+    "I miei lavori" : {
+
     },
     "Impostazioni" : {
       "localizations" : {
@@ -374,6 +383,18 @@
           }
         }
       }
+    },
+    "Invia Feedback o Segnalazione" : {
+
+    },
+    "Leonardo Rossi" : {
+
+    },
+    "LEONARDO ROSSI" : {
+
+    },
+    "Mandami una mail" : {
+
     },
     "Matricola" : {
       "localizations" : {
@@ -505,6 +526,9 @@
         }
       }
     },
+    "Questo sono io ↓" : {
+
+    },
     "Resetta l'app" : {
       "localizations" : {
         "en" : {
@@ -535,6 +559,9 @@
         }
       }
     },
+    "Scrivimi!" : {
+
+    },
     "Se vedi solo un anno allora lascia così, non puoi sbagliare!" : {
       "localizations" : {
         "en" : {
@@ -544,6 +571,12 @@
           }
         }
       }
+    },
+    "Segnala un problema" : {
+
+    },
+    "Seguimi" : {
+
     },
     "Sei matricola pari o dispari?" : {
       "localizations" : {
@@ -575,6 +608,15 @@
         }
       }
     },
+    "Sviluppato da" : {
+
+    },
+    "Sviluppatore" : {
+
+    },
+    "SVILUPPATORE" : {
+
+    },
     "Usa questa sezione per modificare le impostazioni dell'app, cambia pure l'anno, il corso, l'anno di corso o la matricola se presente." : {
       "localizations" : {
         "en" : {
@@ -594,6 +636,9 @@
           }
         }
       }
+    },
+    "Work in Progress" : {
+
     }
   },
   "version" : "1.1"
