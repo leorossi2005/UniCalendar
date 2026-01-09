@@ -120,7 +120,7 @@ struct ProfileView: View {
                         
                         
                         VStack(spacing: 4) {
-                            Text("LEONARDO ROSSI")
+                            Text(AppConstants.AppInfo.developerName.uppercased())
                                 .font(.system(size: 24, weight: .bold, design: .monospaced))
                                 .foregroundStyle(.white)
                                 .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 2)
@@ -147,61 +147,48 @@ struct ProfileView: View {
 
                     Spacer(minLength: 40)
                     
-                    // --- DASHBOARD GRID ---
-                    Grid {
-                        GridRow {
-                            Button(action: { open(AppConstants.URLs.portfolio) }) {
-                                HUDCard(title: "PORTFOLIO", icon: "globe.europe.africa.fill", color: .cyan) {
-                                    HStack {
-                                        Text("I miei lavori")
-                                            .font(.caption)
-                                            .foregroundStyle(.gray)
-                                        Spacer()
-                                    }
-                                }
-                                .overlay(alignment: .topTrailing) {
-                                    Text("Work in Progress")
-                                        .font(.custom("Noteworthy-Bold", size: 14))
-                                        .foregroundStyle(.red)
-                                        .rotationEffect(.degrees(10))
-                                        .offset(x: 10, y: -15)
-                                }
-                            }
-                            .gridCellColumns(2)
+                    // --- UNIFIED DASHBOARD PANEL ---
+                    VStack(spacing: 0) {
+                        
+                        // ROW 1: Portfolio
+                        Button(action: { open(AppConstants.URLs.portfolio) }) {
+                            SettingsRow(icon: "globe.europe.africa.fill", color: .cyan, title: "Portfolio", subtitle: "I miei lavori")
+                        }
+                        .overlay(alignment: .topTrailing) {
+                            Text("WIP")
+                                .font(.custom("Noteworthy-Bold", size: 10))
+                                .foregroundStyle(.red)
+                                .rotationEffect(.degrees(10))
+                                .offset(x: -10, y: 8)
                         }
                         
-                        GridRow {
-                            Button(action: { open(AppConstants.URLs.twitter) }) {
-                                HUDCard(title: "X / TWITTER", icon: "at", color: .white) {
-                                    HStack {
-                                        Text("Seguimi")
-                                            .font(.caption)
-                                            .foregroundStyle(.gray)
-                                        Spacer()
-                                    }
-                                }
-                            }
-                            
-                            Button(action: { open(AppConstants.URLs.email) }) {
-                                HUDCard(title: "CONTATTAMI", icon: "envelope.fill", color: .purple) {
-                                    HStack {
-                                        Text("Mandami una mail")
-                                            .font(.caption)
-                                            .foregroundStyle(.gray)
-                                        Spacer()
-                                    }
-                                }
-                                .overlay(alignment: .topLeading) {
-                                    Text("Scrivimi!")
-                                        .font(.custom("Noteworthy-Light", size: 14))
-                                        .foregroundStyle(accentHand)
-                                        .rotationEffect(.degrees(-15))
-                                        .offset(x: -5, y: -12)
-                                }
-                            }
+                        Divider().background(Color.white.opacity(0.1)).padding(.leading, 50)
+                        
+                        // ROW 2: Twitter
+                        Button(action: { open(AppConstants.URLs.twitter) }) {
+                            SettingsRow(icon: "at", color: .white, title: "X / Twitter", subtitle: "Seguimi per aggiornamenti")
+                        }
+                        
+                        Divider().background(Color.white.opacity(0.1)).padding(.leading, 50)
+                        
+                        // ROW 3: Email
+                        Button(action: { open(AppConstants.URLs.email) }) {
+                            SettingsRow(icon: "envelope.fill", color: .purple, title: "Contattami", subtitle: "Mandami una mail")
+                        }
+                        .overlay(alignment: .topLeading) {
+                            Text("Scrivimi!")
+                                .font(.custom("Noteworthy-Light", size: 12))
+                                .foregroundStyle(accentHand)
+                                .rotationEffect(.degrees(-15))
+                                .offset(x: 10, y: 5)
                         }
                     }
-                    .gridCellColumns(2)
+                    .background(glassBg)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
                     .padding(.horizontal, 20)
                     .opacity(appear ? 1 : 0)
                     .offset(y: appear ? 0 : 50)
@@ -273,54 +260,45 @@ struct ProfileView: View {
     }
 }
 
-// MARK: - Componente Card "Vetro" (HUD)
-struct HUDCard<Content: View>: View {
-    let title: String
+// MARK: - Nuova Riga Stile Settings
+struct SettingsRow: View {
     let icon: String
     let color: Color
-    let content: () -> Content
+    let title: String
+    let subtitle: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.2))
-                        .frame(width: 36, height: 36)
-                        .blur(radius: 5)
-                    
-                    Image(systemName: icon)
-                        .foregroundStyle(color)
-                        .font(.system(size: 18, weight: .bold))
-                }
-                Spacer()
+        HStack(spacing: 15) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.2))
+                    .frame(width: 32, height: 32)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(color)
+            }
+            .frame(width: 32, height: 32)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold, design: .default))
+                    .foregroundStyle(.white)
+                
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.5))
             }
             
-            Text(title)
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
-                .foregroundStyle(.white)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+            Spacer()
             
-            content()
+            Image(systemName: "chevron.right")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.2))
         }
-        .padding(16)
-        .background(
-            Color.black.opacity(0.4)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(
-                    LinearGradient(
-                        colors: [color.opacity(0.4), .clear, .clear, color.opacity(0.1)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1.5
-                )
-        )
-        .shadow(color: .black.opacity(0.5), radius: 10, x: 0, y: 5)
+        .padding(.vertical, 16)
+        .padding(.horizontal, 16)
+        .contentShape(Rectangle()) // Rende cliccabile tutta la riga
     }
 }
 

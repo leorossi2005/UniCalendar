@@ -351,9 +351,6 @@
         }
       }
     },
-    "I miei lavori" : {
-
-    },
     "Impostazioni" : {
       "localizations" : {
         "en" : {
@@ -383,18 +380,6 @@
           }
         }
       }
-    },
-    "Invia Feedback o Segnalazione" : {
-
-    },
-    "Leonardo Rossi" : {
-
-    },
-    "LEONARDO ROSSI" : {
-
-    },
-    "Mandami una mail" : {
-
     },
     "Matricola" : {
       "localizations" : {
@@ -575,9 +560,6 @@
     "Segnala un problema" : {
 
     },
-    "Seguimi" : {
-
-    },
     "Sei matricola pari o dispari?" : {
       "localizations" : {
         "en" : {
@@ -608,12 +590,6 @@
         }
       }
     },
-    "Sviluppato da" : {
-
-    },
-    "Sviluppatore" : {
-
-    },
     "SVILUPPATORE" : {
 
     },
@@ -637,7 +613,7 @@
         }
       }
     },
-    "Work in Progress" : {
+    "WIP" : {
 
     }
   },
