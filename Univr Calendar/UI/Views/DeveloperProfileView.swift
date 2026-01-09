@@ -22,7 +22,6 @@ struct TwinklingStar: View {
             .opacity(isGlowing ? 1.0 : 0.2)
             .shadow(color: .white, radius: isGlowing ? 2 : 0)
             .onAppear {
-                // Animazione casuale per ogni stella
                 withAnimation(
                     .easeInOut(duration: Double.random(in: 1.0...3.0))
                     .repeatForever(autoreverses: true)
@@ -47,7 +46,7 @@ struct ProfileView: View {
     let accentHand = Color(red: 1.0, green: 0.9, blue: 0.4)
     
     // Generazione posizioni stelle (statiche ma con animazione interna)
-    private let starPositions: [(CGPoint, CGFloat)] = (0..<60).map { _ in
+    private static let starPositions: [(CGPoint, CGFloat)] = (0..<60).map { _ in
         (
             CGPoint(x: CGFloat.random(in: 0...400), y: CGFloat.random(in: 0...900)),
             CGFloat.random(in: 1.5...3.5)
@@ -61,10 +60,10 @@ struct ProfileView: View {
             
             // Stelle Scintillanti
             GeometryReader { _ in
-                ForEach(0..<starPositions.count, id: \.self) { index in
+                ForEach(0..<ProfileView.starPositions.count, id: \.self) { index in
                     TwinklingStar(
-                        position: starPositions[index].0,
-                        size: starPositions[index].1
+                        position: ProfileView.starPositions[index].0,
+                        size: ProfileView.starPositions[index].1
                     )
                 }
             }
