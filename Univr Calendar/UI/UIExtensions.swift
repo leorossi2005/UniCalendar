@@ -70,6 +70,26 @@ extension View {
         }
     }
     
+    @ViewBuilder
+    func textOverlay(
+        text: String,
+        rotation: Double,
+        offset: CGSize,
+        alignment: Alignment = .topTrailing,
+        font: String = "Noteworthy-Light",
+        fontSize: CGFloat = 14,
+        color: Color = Color(red: 1.0, green: 0.9, blue: 0.4)
+    ) -> some View {
+        self
+            .overlay(alignment: alignment) {
+                Text(text)
+                    .font(.custom(font, size: fontSize))
+                    .foregroundStyle(color)
+                    .rotationEffect(.degrees(rotation))
+                    .offset(offset)
+            }
+    }
+    
     func keyboardPadding(_ value: CGFloat) -> some View {
         self.safeAreaPadding(.bottom, value)
             .ignoresSafeArea(.keyboard, edges: .bottom)

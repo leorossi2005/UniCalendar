@@ -106,7 +106,7 @@ struct Settings: View {
                     Label("Informazioni", systemImage: .infoPageDynamic)
                         .foregroundStyle(.primary)
                 }
-                NavigationLink(destination: ProfileView()) {
+                NavigationLink(destination: DeveloperProfileView()) {
                     Label("Informazioni", systemImage: .infoPageDynamic)
                         .foregroundStyle(.primary)
                 }

@@ -9,7 +9,7 @@ import SwiftUI
 import UnivrCore
 
 // MARK: - Stella Scintillante (Componente Indipendente)
-struct TwinklingStar: View {
+private struct TwinklingStar: View {
     let position: CGPoint
     let size: CGFloat
     @State private var isGlowing = false
@@ -33,7 +33,7 @@ struct TwinklingStar: View {
     }
 }
 
-struct ProfileView: View {
+struct DeveloperProfileView: View {
     // Animazioni
     @State private var appear = false
     @State private var rotateRings = false
@@ -60,10 +60,10 @@ struct ProfileView: View {
             
             // Stelle Scintillanti
             GeometryReader { _ in
-                ForEach(0..<ProfileView.starPositions.count, id: \.self) { index in
+                ForEach(0..<DeveloperProfileView.starPositions.count, id: \.self) { index in
                     TwinklingStar(
-                        position: ProfileView.starPositions[index].0,
-                        size: ProfileView.starPositions[index].1
+                        position: DeveloperProfileView.starPositions[index].0,
+                        size: DeveloperProfileView.starPositions[index].1
                     )
                 }
             }
@@ -148,109 +148,159 @@ struct ProfileView: View {
                     Spacer(minLength: 40)
                     
                     // --- UNIFIED DASHBOARD PANEL ---
-                    VStack(spacing: 0) {
-                        
-                        // ROW 1: Portfolio
-                        Button(action: { open(AppConstants.URLs.portfolio) }) {
-                            SettingsRow(icon: "globe.europe.africa.fill", color: .cyan, title: "Portfolio", subtitle: "I miei lavori")
-                        }
-                        .overlay(alignment: .topTrailing) {
-                            Text("WIP")
-                                .font(.custom("Noteworthy-Bold", size: 10))
-                                .foregroundStyle(.red)
-                                .rotationEffect(.degrees(10))
-                                .offset(x: -10, y: 8)
-                        }
-                        
-                        Divider().background(Color.white.opacity(0.1)).padding(.leading, 50)
-                        
-                        // ROW 2: Twitter
-                        Button(action: { open(AppConstants.URLs.twitter) }) {
-                            SettingsRow(icon: "at", color: .white, title: "X / Twitter", subtitle: "Seguimi per aggiornamenti")
-                        }
-                        
-                        Divider().background(Color.white.opacity(0.1)).padding(.leading, 50)
-                        
-                        // ROW 3: Email
-                        Button(action: { open(AppConstants.URLs.email) }) {
-                            SettingsRow(icon: "envelope.fill", color: .purple, title: "Contattami", subtitle: "Mandami una mail")
-                        }
-                        .overlay(alignment: .topLeading) {
-                            Text("Scrivimi!")
-                                .font(.custom("Noteworthy-Light", size: 12))
-                                .foregroundStyle(accentHand)
-                                .rotationEffect(.degrees(-15))
-                                .offset(x: 10, y: 5)
-                        }
-                    }
-                    .background(glassBg)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                    )
-                    .padding(.horizontal, 20)
+                    CustomList(customListItems: [
+                        CustomListItem(
+                            url: AppConstants.URLs.portfolio,
+                            icon: "globe.europe.africa.fill",
+                            color: .cyan,
+                            title: "Portfolio",
+                            subtitle: "I miei lavori",
+                            overlayText: HandWrittenOverlayText(
+                                text: "WIP",
+                                rotation: 10,
+                                offset: .init(width: -10, height: 8),
+                                font: "Noteworthy-Bold",
+                                fontSize: 10,
+                                color: .red
+                            )
+                        ),
+                        CustomListItem(
+                            url: AppConstants.URLs.twitter,
+                            icon: "at",
+                            color: .white,
+                            title: "X / Twitter",
+                            subtitle: "Seguimi per aggiornamenti"
+                        ),
+                        CustomListItem(
+                            url: AppConstants.URLs.email,
+                            icon: "envelope.fill",
+                            color: .purple,
+                            title: "Contattami",
+                            subtitle: "Mandami una mail",
+                            overlayText: HandWrittenOverlayText(
+                                text: "Scrivimi!",
+                                rotation: -15,
+                                offset: .init(width: 10, height: 5),
+                                alignment: .topLeading,
+                                fontSize: 12
+                            )
+                        )
+                    ])
                     .opacity(appear ? 1 : 0)
                     .offset(y: appear ? 0 : 50)
                     .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.2), value: appear)
                     
                     // --- DONATION BAR ---
-                    Button(action: { open(AppConstants.URLs.donation) }) {
-                        HStack {
-                            Image(systemName: "cup.and.saucer.fill")
-                                .font(.title3)
-                                .foregroundStyle(.orange)
-                    
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Fammi un regalino")
-                                    .font(.system(.subheadline, design: .monospaced))
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.white)
-                    
-                                Text("Dona qualcosina se vuoi aiutare")
-                                    .font(.caption)
-                                    .foregroundStyle(.gray)
-                            }
-                            Spacer()
-                            Image(systemName: "arrow.up.forward.square")
-                                .foregroundStyle(.white.opacity(0.2))
-                        }
-                        .padding()
-                        .background(glassBg)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.orange.opacity(0.3), lineWidth: 1))
-                    }
-                    .padding(.horizontal, 20)
-                    .overlay(alignment: .topTrailing) {
-                        Text("Grazie ❤️")
-                            .font(.custom("Noteworthy-Bold", size: 14))
-                            .foregroundStyle(accentHand)
-                            .rotationEffect(.degrees(5))
-                            .offset(x: -20, y: -10)
-                    }
+                    CustomList(
+                        important: true,
+                        customListItems: [
+                            CustomListItem(
+                                url: AppConstants.URLs.donation,
+                                icon: "cup.and.saucer.fill",
+                                color: .orange,
+                                title: "Fammi un regalino",
+                                subtitle: "Dona qualcosina se vuoi aiutare",
+                                overlayText: HandWrittenOverlayText(
+                                    text: "Grazie ❤️",
+                                    rotation: 5,
+                                    offset: .init(width: -5, height: 2),
+                                    alignment: .topTrailing,
+                                    font: "Noteworthy-Bold"
+                                )
+                            )
+                        ]
+                    )
                     .opacity(appear ? 1 : 0)
                     .offset(y: appear ? 0 : 50)
                     .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.3), value: appear)
                     
                     // Footer
-                    Button(action: { open(AppConstants.URLs.feedback) }) {
+                    Button(action: { UIApplication.shared.open(AppConstants.URLs.feedback) }) {
                         Text("Segnala un problema")
                             .font(.caption)
                             .underline()
                             .foregroundStyle(.white.opacity(0.4))
                     }
-                    .padding(.bottom, 30)
                     .opacity(appear ? 1 : 0)
                     .offset(y: appear ? 0 : 50)
                     .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.4), value: appear)
                 }
             }
+            .padding(.horizontal, 20)
         }
         .preferredColorScheme(.dark)
         .onAppear {
             appear = true
             rotateRings = true
         }
+    }
+}
+
+private struct CustomList: View {
+    var important: Bool = false
+    var glassBg = Color.white.opacity(0.08)
+    let customListItems: [CustomListItem]
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(customListItems) { item in
+                Button(action: { if let url = item.url { open(url) } }) {
+                    HStack(spacing: 15) {
+                        if important {
+                            Image(systemName: item.icon)
+                                .font(.title3)
+                                .foregroundStyle(.orange)
+                        } else {
+                            ZStack {
+                                Circle()
+                                    .fill(item.color.opacity(0.2))
+                                    .frame(width: 32, height: 32)
+                                
+                                Image(systemName: item.icon)
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundStyle(item.color)
+                            }
+                            .frame(width: 32, height: 32)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.title)
+                                .font(.system(size: 15, weight: .semibold, design: .default))
+                                .foregroundStyle(.white)
+                            
+                            Text(item.subtitle)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "arrow.up.forward.square")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(16)
+                    .contentShape(Rectangle())
+                }
+                .tint(.primary)
+                .textOverlay(
+                    text: item.overlayText.text,
+                    rotation: item.overlayText.rotation,
+                    offset: item.overlayText.offset,
+                    alignment: item.overlayText.alignment,
+                    font: item.overlayText.font,
+                    fontSize: item.overlayText.fontSize,
+                    color: item.overlayText.color
+                )
+            }
+        }
+        .background(glassBg)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(important ? customListItems.first?.color.opacity(0.3) ?? Color.white.opacity(0.1) : Color.white.opacity(0.1), lineWidth: 1)
+        )
+        .drawingGroup()
     }
     
     func open(_ url: URL) {
@@ -260,48 +310,27 @@ struct ProfileView: View {
     }
 }
 
-// MARK: - Nuova Riga Stile Settings
-struct SettingsRow: View {
+private struct CustomListItem: Identifiable {
+    let id: UUID = UUID()
+    
+    var url: URL?
     let icon: String
     let color: Color
     let title: String
     let subtitle: String
-    
-    var body: some View {
-        HStack(spacing: 15) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.2))
-                    .frame(width: 32, height: 32)
-                
-                Image(systemName: icon)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(color)
-            }
-            .frame(width: 32, height: 32)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 15, weight: .semibold, design: .default))
-                    .foregroundStyle(.white)
-                
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.5))
-            }
-            
-            Spacer()
-            
-            Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.2))
-        }
-        .padding(.vertical, 16)
-        .padding(.horizontal, 16)
-        .contentShape(Rectangle()) // Rende cliccabile tutta la riga
-    }
+    var overlayText: HandWrittenOverlayText = HandWrittenOverlayText(text: "", rotation: 0, offset: .init(width: 0, height: 0))
+}
+
+private struct HandWrittenOverlayText {
+    let text: String
+    let rotation: Double
+    let offset: CGSize
+    var alignment: Alignment = .topTrailing
+    var font: String = "Noteworthy-Light"
+    var fontSize: CGFloat = 14
+    var color: Color = Color(red: 1.0, green: 0.9, blue: 0.4)
 }
 
 #Preview {
-    ProfileView()
+    DeveloperProfileView()
 }

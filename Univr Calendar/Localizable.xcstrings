@@ -325,9 +325,6 @@
         }
       }
     },
-    "Dona qualcosina se vuoi aiutare" : {
-
-    },
     "Fammi un regalino" : {
       "localizations" : {
         "en" : {
@@ -337,9 +334,6 @@
           }
         }
       }
-    },
-    "Grazie ❤️" : {
-
     },
     "Grazie amore mio, ti amo tanto." : {
       "localizations" : {
@@ -544,9 +538,6 @@
         }
       }
     },
-    "Scrivimi!" : {
-
-    },
     "Se vedi solo un anno allora lascia così, non puoi sbagliare!" : {
       "localizations" : {
         "en" : {
@@ -612,9 +603,6 @@
           }
         }
       }
-    },
-    "WIP" : {
-
     }
   },
   "version" : "1.1"
