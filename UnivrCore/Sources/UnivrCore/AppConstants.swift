@@ -15,8 +15,7 @@ public struct AppConstants: Sendable {
         public static let portfolio = URL(string: "https://www.leonardorossi.dev")!
         public static let email = URL(string: "mailto:tuo.email@dominio.com")!
         public static let twitter = URL(string: "https://x.com/tuo_username")!
-        // Link mailto precompilato per il feedback
-        public static let feedback = URL(string: "mailto:tuo.email@dominio.com?subject=Feedback%20App%20Univr")!
+        public static let feedback = URL(string: "mailto:leonardo.rossi1922005@gmail.com?subject=Feedback%20App%20Univr")!
     }
     
     public struct AppInfo {
@@ -40,7 +39,6 @@ public struct AppConstants: Sendable {
     
     public struct Credits {
         public static let contributors: [Contributor] = [
-            //Contributor(name: "Leonardo Rossi", role: NSLocalizedString("Sviluppatore", bundle: .module, comment: ""), url: URLs.portfolio),
             Contributor(name: "Gaia", role: NSLocalizedString("Aiuto Sviluppo", bundle: .module, comment: ""), url: nil),
             Contributor(name: "Nicola", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: ""), url: nil),
             Contributor(name: "Edoardo", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: ""), url: nil)

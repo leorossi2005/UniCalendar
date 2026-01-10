@@ -3,35 +3,12 @@
 //  Univr Calendar
 //
 //  Created by Leonardo Rossi on 08/01/26.
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
 //
 
 import SwiftUI
 import UnivrCore
-
-// MARK: - Stella Scintillante (Componente Indipendente)
-private struct TwinklingStar: View {
-    let position: CGPoint
-    let size: CGFloat
-    @State private var isGlowing = false
-    
-    var body: some View {
-        Circle()
-            .fill(Color.white)
-            .frame(width: size, height: size)
-            .position(position)
-            .opacity(isGlowing ? 1.0 : 0.2)
-            .shadow(color: .white, radius: isGlowing ? 2 : 0)
-            .onAppear {
-                withAnimation(
-                    .easeInOut(duration: Double.random(in: 1.0...3.0))
-                    .repeatForever(autoreverses: true)
-                    .delay(Double.random(in: 0...2.0))
-                ) {
-                    isGlowing = true
-                }
-            }
-    }
-}
 
 struct DeveloperProfileView: View {
     // Animazioni
@@ -233,6 +210,30 @@ struct DeveloperProfileView: View {
             appear = true
             rotateRings = true
         }
+    }
+}
+
+private struct TwinklingStar: View {
+    let position: CGPoint
+    let size: CGFloat
+    @State private var isGlowing = false
+    
+    var body: some View {
+        Circle()
+            .fill(Color.white)
+            .frame(width: size, height: size)
+            .position(position)
+            .opacity(isGlowing ? 1.0 : 0.2)
+            .shadow(color: .white, radius: isGlowing ? 2 : 0)
+            .onAppear {
+                withAnimation(
+                    .easeInOut(duration: Double.random(in: 1.0...3.0))
+                    .repeatForever(autoreverses: true)
+                    .delay(Double.random(in: 0...2.0))
+                ) {
+                    isGlowing = true
+                }
+            }
     }
 }
 

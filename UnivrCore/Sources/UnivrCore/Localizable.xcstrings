@@ -42,6 +42,7 @@
       }
     },
     "Sviluppatore" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

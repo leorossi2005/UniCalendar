@@ -326,6 +326,7 @@
       }
     },
     "Fammi un regalino" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -374,6 +375,9 @@
           }
         }
       }
+    },
+    "Lo Sviluppatore" : {
+
     },
     "Matricola" : {
       "localizations" : {
@@ -496,6 +500,7 @@
       }
     },
     "Ps. Se non si fosse capito il regalino è una donazione, e ti ringrazio di cuore se mi darai un po' di sostegno per aver creato questa app." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
