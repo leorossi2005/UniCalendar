@@ -72,7 +72,7 @@ extension View {
     
     @ViewBuilder
     func textOverlay(
-        text: String,
+        text: LocalizedStringKey,
         rotation: Double,
         offset: CGSize,
         alignment: Alignment = .topTrailing,

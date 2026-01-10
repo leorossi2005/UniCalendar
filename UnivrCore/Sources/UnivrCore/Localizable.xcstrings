@@ -40,17 +40,6 @@
           }
         }
       }
-    },
-    "Sviluppatore" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Developer"
-          }
-        }
-      }
     }
   },
   "version" : "1.1"

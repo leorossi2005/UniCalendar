@@ -265,6 +265,16 @@
         }
       }
     },
+    "Contattami" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contact me"
+          }
+        }
+      }
+    },
     "Continua" : {
       "localizations" : {
         "en" : {
@@ -325,13 +335,32 @@
         }
       }
     },
+    "Dona qualcosina se vuoi aiutare" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Donate something if you want to help"
+          }
+        }
+      }
+    },
     "Fammi un regalino" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Make me a little gift"
+          }
+        }
+      }
+    },
+    "Grazie ❤️" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thank u ❤️"
           }
         }
       }
@@ -342,6 +371,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Thank you my love, I love U so much."
+          }
+        }
+      }
+    },
+    "I miei progetti" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My projects"
           }
         }
       }
@@ -377,7 +416,24 @@
       }
     },
     "Lo Sviluppatore" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Developer"
+          }
+        }
+      }
+    },
+    "Mandami una mail" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send me a mail"
+          }
+        }
+      }
     },
     "Matricola" : {
       "localizations" : {
@@ -479,6 +535,16 @@
         }
       }
     },
+    "Portfolio" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Portfolio"
+          }
+        }
+      }
+    },
     "Posizione non trovata\n\n%@" : {
       "localizations" : {
         "en" : {
@@ -499,19 +565,15 @@
         }
       }
     },
-    "Ps. Se non si fosse capito il regalino è una donazione, e ti ringrazio di cuore se mi darai un po' di sostegno per aver creato questa app." : {
-      "extractionState" : "stale",
+    "Questo sono io ↓" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ps. If you didn't understand the gift is a donation, and I sincerely thank you if you give me a little support for creating this app."
+            "value" : "This is me ↓"
           }
         }
       }
-    },
-    "Questo sono io ↓" : {
-
     },
     "Resetta l'app" : {
       "localizations" : {
@@ -543,6 +605,16 @@
         }
       }
     },
+    "Scrivimi!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Write to me!"
+          }
+        }
+      }
+    },
     "Se vedi solo un anno allora lascia così, non puoi sbagliare!" : {
       "localizations" : {
         "en" : {
@@ -554,7 +626,24 @@
       }
     },
     "Segnala un problema" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leave a feedback"
+          }
+        }
+      }
+    },
+    "Seguimi per aggiornamenti" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Follow me for updates"
+          }
+        }
+      }
     },
     "Sei matricola pari o dispari?" : {
       "localizations" : {
@@ -587,7 +676,14 @@
       }
     },
     "SVILUPPATORE" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DEVELOPER"
+          }
+        }
+      }
     },
     "Usa questa sezione per modificare le impostazioni dell'app, cambia pure l'anno, il corso, l'anno di corso o la matricola se presente." : {
       "localizations" : {
@@ -605,6 +701,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Do you want to reset the app?"
+          }
+        }
+      }
+    },
+    "WIP" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "WIP"
+          }
+        }
+      }
+    },
+    "X / Twitter" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "X / Twitter"
           }
         }
       }

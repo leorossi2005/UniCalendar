@@ -131,7 +131,7 @@ struct DeveloperProfileView: View {
                             icon: "globe.europe.africa.fill",
                             color: .cyan,
                             title: "Portfolio",
-                            subtitle: "I miei lavori",
+                            subtitle: "I miei progetti",
                             overlayText: HandWrittenOverlayText(
                                 text: "WIP",
                                 rotation: 10,
@@ -317,13 +317,13 @@ private struct CustomListItem: Identifiable {
     var url: URL?
     let icon: String
     let color: Color
-    let title: String
-    let subtitle: String
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
     var overlayText: HandWrittenOverlayText = HandWrittenOverlayText(text: "", rotation: 0, offset: .init(width: 0, height: 0))
 }
 
 private struct HandWrittenOverlayText {
-    let text: String
+    let text: LocalizedStringKey
     let rotation: Double
     let offset: CGSize
     var alignment: Alignment = .topTrailing
