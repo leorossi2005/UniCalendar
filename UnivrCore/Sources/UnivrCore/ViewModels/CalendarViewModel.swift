@@ -131,6 +131,16 @@ public class CalendarViewModel {
         }
         self.daysString = newStructure.days
         self.days = organizedDays
+        
+        let activeDates = Set(
+            organizedDays.indices
+                .filter { !organizedDays[$0].isEmpty }
+                .map { newStructure.days[$0] }
+        )
+        
+        await MainActor.run {
+            DatePickerCache.shared.updateActivities(dates: activeDates)
+        }
     }
     
     private func handleNewData(_ fetchedLessons: [Lesson], selectedYear: String, matricola: String, update: Bool) async throws {

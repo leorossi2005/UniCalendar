@@ -14,6 +14,7 @@ public struct CalendarCell: Identifiable, Equatable, Sendable {
     public var id: Date { date }
     public let dayNumber: String
     public let isCurrentMonth: Bool
+    public var hasActivity: Bool
     public let date: Date
 }
 
@@ -39,10 +40,26 @@ public class DatePickerCache {
     public var additionalWeek: [FractionDay] = []
     public var currentYear: String = ""
     
+    private var activeDatesCache: Set<String> = []
+    
+    public func updateActivities(dates: Set<String>) {
+        self.activeDatesCache = dates
+        
+        for (monthKey, cells) in monthGrids {
+            monthGrids[monthKey] = cells.map { cell in
+                var newCell = cell
+                    
+                let dateKey = cell.date.formatUnivrStyle()
+                newCell.hasActivity = dates.contains(dateKey)
+                return newCell
+            }
+        }
+    }
+    
     public func generateMonthGrid(for date: Date, monthName: String) async {
         guard monthGrids["\(monthName)-\(date.yearSymbol)"] == nil else { return }
         
-        let cells: [CalendarCell] = await Task.detached(priority: .userInitiated) {
+        let cells: [CalendarCell] = await Task.detached(priority: .userInitiated) { [activeDatesCache] in
             var newGrid: [CalendarCell] = []
             let calendar = Calendar.autoupdatingCurrent
             
@@ -82,9 +99,12 @@ public class DatePickerCache {
                     cellDate = calendar.date(byAdding: .day, value: dayValue - 1, to: startOfMonth) ?? date
                 }
                 
+                let dateKey = cellDate.formatUnivrStyle()
+                
                 newGrid.append(CalendarCell(
                     dayNumber: "\(dayValue)",
                     isCurrentMonth: isCurrentMonth,
+                    hasActivity: activeDatesCache.contains(dateKey),
                     date: cellDate
                 ))
             }

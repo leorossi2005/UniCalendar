@@ -223,6 +223,13 @@ private struct DayCellView: View {
                         .fill(colorScheme == .light ? .black : .white)
                 }
             }
+            .overlay(alignment: .topTrailing) {
+                if cell.hasActivity {
+                    Circle()
+                        .fill(.red)
+                        .frame(width: 5, height: 5)
+                }
+            }
             .opacity(opacityLevel)
             .contentShape(.rect)
             .if(!isOutsideBounds) { view in
