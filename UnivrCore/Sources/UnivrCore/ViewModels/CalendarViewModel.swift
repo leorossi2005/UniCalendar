@@ -134,7 +134,13 @@ public class CalendarViewModel {
         
         let activeDates = Set(
             organizedDays.indices
-                .filter { !organizedDays[$0].isEmpty }
+                .filter { index in
+                    let lessons = organizedDays[index]
+                    
+                    return lessons.contains { lesson in
+                        !lesson.annullato
+                    }
+                }
                 .map { newStructure.days[$0] }
         )
         
