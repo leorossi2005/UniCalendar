@@ -355,6 +355,16 @@
         }
       }
     },
+    "GitHub" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GitHub"
+          }
+        }
+      }
+    },
     "Grazie ❤️" : {
       "localizations" : {
         "en" : {
@@ -411,6 +421,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "About"
+          }
+        }
+      }
+    },
+    "Instagram" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Instagram"
           }
         }
       }
@@ -625,6 +645,16 @@
         }
       }
     },
+    "Se vuoi darmi una mano" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If you want to help"
+          }
+        }
+      }
+    },
     "Segnala un problema" : {
       "localizations" : {
         "en" : {
@@ -635,12 +665,12 @@
         }
       }
     },
-    "Seguimi per aggiornamenti" : {
+    "Seguimi" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Follow me for updates"
+            "value" : "Follow me"
           }
         }
       }
@@ -711,16 +741,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "WIP"
-          }
-        }
-      }
-    },
-    "X / Twitter" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "X / Twitter"
           }
         }
       }

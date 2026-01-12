@@ -128,6 +128,7 @@ struct DeveloperProfileView: View {
                     CustomList(customListItems: [
                         CustomListItem(
                             url: AppConstants.URLs.portfolio,
+                            enabled: false,
                             icon: "globe.europe.africa.fill",
                             color: .cyan,
                             title: "Portfolio",
@@ -142,11 +143,18 @@ struct DeveloperProfileView: View {
                             )
                         ),
                         CustomListItem(
-                            url: AppConstants.URLs.twitter,
-                            icon: "at",
+                            url: AppConstants.URLs.github,
+                            icon: "githubLogoWhite",
                             color: .white,
-                            title: "X / Twitter",
-                            subtitle: "Seguimi per aggiornamenti"
+                            title: "GitHub",
+                            subtitle: "Se vuoi darmi una mano"
+                        ),
+                        CustomListItem(
+                            url: AppConstants.URLs.instagram,
+                            icon: "InstagramLogoWhite",
+                            color: .pink,
+                            title: "Instagram",
+                            subtitle: "Seguimi"
                         ),
                         CustomListItem(
                             url: AppConstants.URLs.email,
@@ -245,7 +253,7 @@ private struct CustomList: View {
     var body: some View {
         VStack(spacing: 0) {
             ForEach(customListItems) { item in
-                Button(action: { if let url = item.url { open(url) } }) {
+                Button(action: { if let url = item.url, item.enabled { open(url) } }) {
                     HStack(spacing: 15) {
                         if important {
                             Image(systemName: item.icon)
@@ -257,9 +265,18 @@ private struct CustomList: View {
                                     .fill(item.color.opacity(0.2))
                                     .frame(width: 32, height: 32)
                                 
-                                Image(systemName: item.icon)
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundStyle(item.color)
+                                Group {
+                                    if let _ = UIImage(systemName: item.icon) {
+                                        Image(systemName: item.icon)
+                                    } else {
+                                        Image(item.icon)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 18, height: 18)
+                                    }
+                                }
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(item.color)
                             }
                             .frame(width: 32, height: 32)
                         }
@@ -284,6 +301,7 @@ private struct CustomList: View {
                     .contentShape(Rectangle())
                 }
                 .tint(.primary)
+                .opacity(item.enabled ? 1 : 0.3)
                 .textOverlay(
                     text: item.overlayText.text,
                     rotation: item.overlayText.rotation,
@@ -315,6 +333,7 @@ private struct CustomListItem: Identifiable {
     let id: UUID = UUID()
     
     var url: URL?
+    var enabled: Bool = true
     let icon: String
     let color: Color
     let title: LocalizedStringKey
