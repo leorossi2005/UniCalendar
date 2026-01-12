@@ -29,20 +29,22 @@ public struct AppConstants: Sendable {
         public let name: String
         public let role: String
         public let url: URL?
+        public let image: String
         
-        public init(name: String, role: String, url: URL? = nil) {
+        public init(name: String, role: String, url: URL? = nil, image: String = "") {
             self.id = name
             self.name = name
             self.role = role
             self.url = url
+            self.image = image
         }
     }
     
     public struct Credits {
         public static let contributors: [Contributor] = [
-            Contributor(name: "Gaia", role: NSLocalizedString("Aiuto Sviluppo", bundle: .module, comment: ""), url: nil),
-            Contributor(name: "Nicola", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: ""), url: nil),
-            Contributor(name: "Edoardo", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: ""), url: nil)
+            Contributor(name: "Gaia", role: NSLocalizedString("Aiuto Sviluppo", bundle: .module, comment: "")),
+            Contributor(name: "Nicola", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: "")),
+            Contributor(name: "Edoardo", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: ""))
         ]
     }
 }

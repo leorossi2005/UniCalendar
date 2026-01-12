@@ -265,18 +265,16 @@ private struct CustomList: View {
                                     .fill(item.color.opacity(0.2))
                                     .frame(width: 32, height: 32)
                                 
-                                Group {
-                                    if let _ = UIImage(systemName: item.icon) {
-                                        Image(systemName: item.icon)
-                                    } else {
-                                        Image(item.icon)
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(width: 18, height: 18)
-                                    }
+                                if let _ = UIImage(systemName: item.icon) {
+                                    Image(systemName: item.icon)
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundStyle(item.color)
+                                } else {
+                                    Image(item.icon)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 18, height: 18)
                                 }
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundStyle(item.color)
                             }
                             .frame(width: 32, height: 32)
                         }

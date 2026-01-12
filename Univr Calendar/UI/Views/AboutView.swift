@@ -43,7 +43,8 @@ struct AboutView: View {
                     infoRow(
                         name: LocalizedStringKey(credit.name),
                         role: LocalizedStringKey(credit.role),
-                        link: credit.url
+                        link: credit.url,
+                        image: credit.image
                     )
                 }
             } header: {
@@ -62,7 +63,7 @@ struct AboutView: View {
     }
     
     // MARK: - Components
-    private func infoRow(name: LocalizedStringKey, role: LocalizedStringKey, link: URL? = nil) -> some View {
+    private func infoRow(name: LocalizedStringKey, role: LocalizedStringKey, link: URL?, image: String) -> some View {
         HStack {
             VStack(alignment: .leading) {
                 Text(name)
@@ -72,9 +73,15 @@ struct AboutView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            // Avatar o Memoji opzionale qui
-            Image(systemName: "person.crop.circle.fill")
-                .font(.system(size: 40))
+            if image.isEmpty {
+                Image(systemName: "person.crop.circle.fill")
+                    .font(.system(size: 40))
+            } else {
+                Image(image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 18, height: 18)
+            }
         }
     }
 }
