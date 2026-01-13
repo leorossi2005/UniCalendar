@@ -164,6 +164,7 @@ struct StableMapView: View {
             if #available(iOS 26.0, *) {
                 GlassContainer(radii: .init(tl: 25, tr: 25, bl: 25, br: 25), tint: color.opacity(0.4), lockGesture: true) {
                     Button(action: {
+                        Haptics.play(.impact(weight: .light))
                         openMaps(coordinate: coordinate, name: name)
                     }) {
                         Image(systemName: "map.fill")
@@ -175,6 +176,7 @@ struct StableMapView: View {
                 .padding(corderRadius / 2)
             } else {
                 Button(action: {
+                    Haptics.play(.impact(weight: .light))
                     openMaps(coordinate: coordinate, name: name)
                 }) {
                     Image(systemName: "map.fill")

@@ -42,26 +42,6 @@ struct CalendarView: View {
                 .toolbar {
                     buildToolbar()
                 }
-                //.sheet(isPresented: $openCalendar) {
-                //    DynamicSheetContent(
-                //        selectedWeek: $selectedWeek,
-                //        selectedDetent: $selectedDetent,
-                //        detents: $detents,
-                //        selectedLesson: $selectedLesson,
-                //        openSettings: $openSettings,
-                //        loading: $viewModel.loading,
-                //        tempSettings: $tempSettings,
-                //        openCalendar: $openCalendar
-                //    )
-                //    .presentationDetents(detents, selection: $selectedDetent)
-                //    .interactiveDismissDisabled(true)
-                //    .presentationBackgroundInteraction(.enabled(upThrough: UIDevice.isIpad ? .fraction(0.75) : .medium))
-                //    .disabled((viewModel.loading || viewModel.noLessonsFound) && !openSettings)
-                //    .onChange(of: selectedDetent) { oldValue, newValue in
-                //        handleDetentChange(oldValue: oldValue, newValue: newValue)
-                //    }
-                //    .sheetDesign(transition, sourceID: "calendar", detent: $selectedDetent)
-                //}
                 .onChange(of: selectedDetent) { oldValue, newValue in
                     handleDetentChange(oldValue: oldValue, newValue: newValue)
                 }
@@ -316,6 +296,7 @@ struct CalendarView: View {
             if viewModel.showUpdateAlert {
                 HStack {
                     Button("Aggiorna") {
+                        Haptics.play(.start)
                         Task { @MainActor in
                             viewModel.confirmUpdate(selectedYear: settings.selectedYear, matricola: settings.matricola)
                         }
@@ -368,6 +349,7 @@ struct CalendarView: View {
     
     // MARK: - Logic Methods
     private func openSettingsAction() {
+        Haptics.play(.impact(weight: .light))
         openSettings = true
         selectedDetent = .large
     }
@@ -430,13 +412,19 @@ struct CalendarView: View {
                             selectedDetent = .small
                         }
                     }
+                    if selection != nil {
+                        Haptics.play(.selection, state: "selection")
+                    }
                 }
+                try? await Task.sleep(for: .seconds(0.2))
+                GlobalHaptics.shared.state = ""
             }
         }
     }
     
     private func handleLoadingChange(_ isLoading: Bool) {
         if isLoading {
+            Haptics.play(.start)
             selection = nil
             firstLoading = true
         } else {
@@ -454,6 +442,7 @@ struct CalendarView: View {
                         }
                     }
                     firstLoading = false
+                    Haptics.play(.success)
                 }
             }
         }
@@ -588,6 +577,7 @@ struct CalendarViewDay: View {
                     if lesson.tipo != "pause" && lesson.tipo != "chiusura_type" {
                         LessonCard(lesson: lesson)
                             .onTapGesture {
+                                Haptics.play(.impact(weight: .light, intensity: 0.5))
                                 selectedLesson = lesson
                                 selectedDetent = .large
                             }
