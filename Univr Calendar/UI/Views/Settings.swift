@@ -103,6 +103,7 @@ struct Settings: View {
             }
             Section("DANGER ZONE") {
                 Button {
+                    Haptics.play(.warning)
                     showDeleteAlert.toggle()
                 } label: {
                     Label("Resetta l'app", systemImage: "trash")
@@ -174,6 +175,7 @@ struct Settings: View {
     }
     
     private func performReset() {
+        Haptics.play(.impact(weight: .heavy))
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.1))
             await viewModel.clearCalendarCache()
