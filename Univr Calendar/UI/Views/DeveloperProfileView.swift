@@ -83,8 +83,7 @@ struct DeveloperProfileView: View {
                             )
                             .shadow(color: accentTech.opacity(0.5), radius: 20)
                             .onTapGesture {
-                                //Haptics.play(.impact(.medium))
-                                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                                Haptics.play(.impact(weight: .medium))
                             }
                         
                         
@@ -310,8 +309,7 @@ private struct CustomList: View {
     }
     
     func open(_ url: URL) {
-        //Haptics.play(.impact(.light))
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        Haptics.play(.impact(weight: .light))
         UIApplication.shared.open(url)
     }
 }
