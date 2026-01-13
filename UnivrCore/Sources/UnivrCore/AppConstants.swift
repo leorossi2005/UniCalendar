@@ -13,6 +13,10 @@ public struct AppConstants: Sendable {
     public struct URLs {
         public static let donation = URL(string: "https://revolut.me/leorossi05?currency=EUR&amount=100")!
         public static let portfolio = URL(string: "https://www.leonardorossi.dev")!
+        public static let github = URL(string: "https://github.com/leorossi2005")!
+        public static let instagram = URL(string: "https://www.instagram.com/leorossi05")!
+        public static let feedback = URL(string: "mailto:leonardo.rossi1922005@gmail.com?subject=Feedback%20App%20Univr")!
+        public static let email = URL(string: "mailto:leonardo.rossi1922005@gmail.com")!
     }
     
     public struct AppInfo {
@@ -25,21 +29,22 @@ public struct AppConstants: Sendable {
         public let name: String
         public let role: String
         public let url: URL?
+        public let image: String
         
-        public init(name: String, role: String, url: URL? = nil) {
+        public init(name: String, role: String, url: URL? = nil, image: String = "") {
             self.id = name
             self.name = name
             self.role = role
             self.url = url
+            self.image = image
         }
     }
     
     public struct Credits {
         public static let contributors: [Contributor] = [
-            Contributor(name: "Leonardo Rossi", role: NSLocalizedString("Sviluppatore", bundle: .module, comment: ""), url: URLs.portfolio),
-            Contributor(name: "Gaia", role: NSLocalizedString("Aiuto Sviluppo", bundle: .module, comment: ""), url: nil),
-            Contributor(name: "Nicola", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: ""), url: nil),
-            Contributor(name: "Edoardo", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: ""), url: nil)
+            Contributor(name: "Gaia", role: NSLocalizedString("Aiuto Sviluppo", bundle: .module, comment: "")),
+            Contributor(name: "Nicola", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: "")),
+            Contributor(name: "Edoardo", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: ""))
         ]
     }
 }

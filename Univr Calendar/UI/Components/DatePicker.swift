@@ -90,7 +90,8 @@ struct DatePicker: View, Equatable {
             Spacer()
             if today.isInAcademicYear(for: settings.selectedYear) {
                 Button("Oggi") {
-                    if selection != today {
+                    if selection.formatUnivrStyle() != today.formatUnivrStyle() {
+                        Haptics.play(.impact(weight: .medium), state: "selection")
                         selection = today
                     }
                 }
@@ -184,6 +185,13 @@ struct DatePickerContainer: View {
                         }
                     }
                     isDualMode = newIsDualMode
+                }
+            }
+            .onChange(of: internalIndex) {
+                if GlobalHaptics.shared.state != "selection" {
+                    Haptics.play(.selection)
+                } else {
+                    GlobalHaptics.shared.state = ""
                 }
             }
         }
