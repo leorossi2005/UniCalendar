@@ -42,8 +42,8 @@ public struct AppConstants: Sendable {
     
     public struct Credits {
         public static let contributors: [Contributor] = [
-            Contributor(name: "Gaia", role: NSLocalizedString("Aiuto Sviluppo", bundle: .module, comment: "")),
-            Contributor(name: "Nicola", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: "")),
+            Contributor(name: "Gaia", role: NSLocalizedString("Aiuto Sviluppo", bundle: .module, comment: ""), image: "GaiaPhoto"),
+            Contributor(name: "Nicola", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: ""), image: "NicolaPhoto"),
             Contributor(name: "Edoardo", role: NSLocalizedString("Aiuto Testing", bundle: .module, comment: ""))
         ]
     }
