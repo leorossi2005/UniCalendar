@@ -43,7 +43,8 @@ struct AboutView: View {
                     infoRow(
                         name: LocalizedStringKey(credit.name),
                         role: LocalizedStringKey(credit.role),
-                        link: /*credit.url*/ nil
+                        link: credit.url,
+                        image: credit.image
                     )
                 }
             } header: {
@@ -62,23 +63,28 @@ struct AboutView: View {
     }
     
     // MARK: - Components
-    private func infoRow(name: LocalizedStringKey, role: LocalizedStringKey, link: URL? = nil) -> some View {
+    private func infoRow(name: LocalizedStringKey, role: LocalizedStringKey, link: URL?, image: String) -> some View {
         HStack {
-            Label(name, systemImage: "person")
-                .foregroundStyle(.primary)
-            if link != nil {
-                Image(systemName: "arrow.up.forward.square")
+            VStack(alignment: .leading) {
+                Text(name)
+                    .font(.headline)
+                Text(role)
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Text(role)
-                .foregroundStyle(.secondary)
-        }
-        .contentShape(.rect)
-        .onTapGesture {
-            if let link {
-                UIApplication.shared.open(link)
+            Group {
+                if image.isEmpty {
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                } else {
+                    Image(image)
+                        .resizable()
+                }
             }
+            .scaledToFit()
+            .clipShape(.circle)
+            .frame(width: 40, height: 40)
         }
     }
 }

@@ -92,22 +92,14 @@ struct Settings: View {
             }
             .disabled(net.status != .connected)
             Section {
-                Link(destination: AppConstants.URLs.donation) {
-                    HStack {
-                        Label("Fammi un regalino", systemImage: "cup.and.saucer")
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Image(systemName: "arrow.up.forward.square")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .tint(.primary)
                 NavigationLink(destination: AboutView()) {
                     Label("Informazioni", systemImage: .infoPageDynamic)
                         .foregroundStyle(.primary)
                 }
-            } footer: {
-                Text("Ps. Se non si fosse capito il regalino è una donazione, e ti ringrazio di cuore se mi darai un po' di sostegno per aver creato questa app.")
+                NavigationLink(destination: DeveloperProfileView()) {
+                    Label("Lo Sviluppatore", systemImage: "chevron.left.forwardslash.chevron.right")
+                        .foregroundStyle(.primary)
+                }
             }
             Section("DANGER ZONE") {
                 Button {
