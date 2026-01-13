@@ -11,18 +11,15 @@ import SwiftUI
 import UnivrCore
 
 struct DeveloperProfileView: View {
-    // Animazioni
     @State private var appear = false
     @State private var rotateRings = false
     
-    // Colori
     let deepBg = Color(red: 0.02, green: 0.02, blue: 0.08)
     let glassBg = Color.white.opacity(0.08)
     let glassBorder = Color.white.opacity(0.2)
     let accentTech = Color.cyan
     let accentHand = Color(red: 1.0, green: 0.9, blue: 0.4)
     
-    // Generazione posizioni stelle (statiche ma con animazione interna)
     private static let starPositions: [(CGPoint, CGFloat)] = (0..<60).map { _ in
         (
             CGPoint(x: CGFloat.random(in: 0...400), y: CGFloat.random(in: 0...900)),
@@ -32,10 +29,8 @@ struct DeveloperProfileView: View {
 
     var body: some View {
         ZStack {
-            // MARK: - 1. BACKGROUND (SPAZIO PROFONDO)
             deepBg.ignoresSafeArea()
             
-            // Stelle Scintillanti
             GeometryReader { _ in
                 ForEach(0..<DeveloperProfileView.starPositions.count, id: \.self) { index in
                     TwinklingStar(
@@ -46,25 +41,22 @@ struct DeveloperProfileView: View {
             }
             .ignoresSafeArea()
             
-            // Nebulose Ambientali
             ZStack {
-                Circle() // Blu in basso a destra
+                Circle()
                     .fill(Color.blue.opacity(0.2))
                     .frame(width: 400, height: 400)
                     .blur(radius: 100)
                     .offset(x: 150, y: 350)
             
-                Circle() // Viola in alto a sinistra
+                Circle()
                     .fill(Color.purple.opacity(0.15))
                     .frame(width: 350, height: 350)
                     .blur(radius: 90)
                     .offset(x: -150, y: -300)
             }
             
-            // MARK: - 2. CONTENUTO (HUD STYLE)
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 30) {
-                    // --- SEZIONE PROFILE ---
                     ZStack {
                         Group {
                             Circle()
@@ -124,7 +116,6 @@ struct DeveloperProfileView: View {
 
                     Spacer(minLength: 40)
                     
-                    // --- UNIFIED DASHBOARD PANEL ---
                     CustomList(customListItems: [
                         CustomListItem(
                             url: AppConstants.URLs.portfolio,
@@ -144,7 +135,7 @@ struct DeveloperProfileView: View {
                         ),
                         CustomListItem(
                             url: AppConstants.URLs.github,
-                            icon: "githubLogoWhite",
+                            icon: "GitHubLogoWhite",
                             color: .white,
                             title: "GitHub",
                             subtitle: "Se vuoi darmi una mano"
@@ -175,7 +166,6 @@ struct DeveloperProfileView: View {
                     .offset(y: appear ? 0 : 50)
                     .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.2), value: appear)
                     
-                    // --- DONATION BAR ---
                     CustomList(
                         important: true,
                         customListItems: [
@@ -199,7 +189,6 @@ struct DeveloperProfileView: View {
                     .offset(y: appear ? 0 : 50)
                     .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.3), value: appear)
                     
-                    // Footer
                     Button(action: { UIApplication.shared.open(AppConstants.URLs.feedback) }) {
                         Text("Segnala un problema")
                             .font(.caption)

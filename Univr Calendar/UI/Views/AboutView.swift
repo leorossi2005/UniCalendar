@@ -73,15 +73,18 @@ struct AboutView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            if image.isEmpty {
-                Image(systemName: "person.crop.circle.fill")
-                    .font(.system(size: 40))
-            } else {
-                Image(image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 18, height: 18)
+            Group {
+                if image.isEmpty {
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                } else {
+                    Image(image)
+                        .resizable()
+                }
             }
+            .scaledToFit()
+            .clipShape(.circle)
+            .frame(width: 40, height: 40)
         }
     }
 }
