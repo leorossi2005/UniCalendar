@@ -132,20 +132,45 @@ public class CalendarViewModel {
         self.daysString = newStructure.days
         self.days = organizedDays
         
-        let activeDates = Set(
-            organizedDays.indices
-                .filter { index in
-                    let lessons = organizedDays[index]
+        let activeActivities = organizedDays.indices.reduce(into: [String: Double]()) { dict, index in
+            let date = newStructure.days[index]
+            let lessons = organizedDays[index]
+            
+            // Filtra: solo lezioni valide (non annullate e non pause)
+            let validLessons = lessons.filter { !$0.annullato && $0.tipo != "pause" }
+            
+            if !validLessons.isEmpty {
+                let totalMinutes = validLessons.reduce(0) { sum, lesson in
+                    // Gestisce spazi extra es: "08:30 - 10:30"
+                    let times = lesson.orario.split(separator: "-").map { $0.trimmingCharacters(in: .whitespaces) }
+                    guard times.count == 2 else { return sum }
                     
-                    return lessons.contains { lesson in
-                        !lesson.annullato
+                    func toMinutes(_ time: String) -> Int {
+                        let parts = time.split(separator: ":")
+                        guard parts.count == 2,
+                              let h = Int(parts[0]),
+                              let m = Int(parts[1]) else { return 0 }
+                        return h * 60 + m
                     }
+                    
+                    let start = toMinutes(times[0])
+                    let end = toMinutes(times[1])
+                    
+                    return sum + (end - start)
                 }
-                .map { newStructure.days[$0] }
-        )
+                
+                // Calcola le ore come Double
+                let hours = Double(totalMinutes) / 60.0
+                
+                // Salva solo se le ore sono > 0 (puoi anche mettere una soglia minima tipo 0.1)
+                if hours > 0 {
+                    dict[date] = hours
+                }
+            }
+        }
         
         await MainActor.run {
-            DatePickerCache.shared.updateActivities(dates: activeDates)
+            DatePickerCache.shared.updateActivities(dates: activeActivities)
         }
     }
     

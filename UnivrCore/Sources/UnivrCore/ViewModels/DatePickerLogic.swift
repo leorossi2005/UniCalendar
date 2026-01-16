@@ -15,6 +15,7 @@ public struct CalendarCell: Identifiable, Equatable, Sendable {
     public let dayNumber: String
     public let isCurrentMonth: Bool
     public var hasActivity: Bool
+    public var activityQuantity: Double
     public let date: Date
 }
 
@@ -40,17 +41,25 @@ public class DatePickerCache {
     public var additionalWeek: [FractionDay] = []
     public var currentYear: String = ""
     
-    private var activeDatesCache: Set<String> = []
+    private var activeDatesCache: [String: Double] = [:]
     
-    public func updateActivities(dates: Set<String>) {
+    public func updateActivities(dates: [String: Double]) {
         self.activeDatesCache = dates
+        print("🔄 Updating Activities in Cache: \(dates.count) items") // DEBUG
         
         for (monthKey, cells) in monthGrids {
             monthGrids[monthKey] = cells.map { cell in
                 var newCell = cell
-                    
                 let dateKey = cell.date.formatUnivrStyle()
-                newCell.hasActivity = dates.contains(dateKey)
+                
+                if let quantity = dates[dateKey] {
+                    newCell.hasActivity = true
+                    newCell.activityQuantity = quantity
+                } else {
+                    newCell.hasActivity = false
+                    newCell.activityQuantity = 0.0
+                }
+                
                 return newCell
             }
         }
@@ -104,7 +113,8 @@ public class DatePickerCache {
                 newGrid.append(CalendarCell(
                     dayNumber: "\(dayValue)",
                     isCurrentMonth: isCurrentMonth,
-                    hasActivity: activeDatesCache.contains(dateKey),
+                    hasActivity: activeDatesCache[dateKey] != nil,
+                    activityQuantity: activeDatesCache[dateKey] ?? 0,
                     date: cellDate
                 ))
             }
@@ -167,3 +177,4 @@ public class DatePickerCache {
         self.currentYear = selectedYear
     }
 }
+

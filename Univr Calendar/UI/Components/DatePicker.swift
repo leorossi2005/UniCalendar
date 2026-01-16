@@ -69,6 +69,7 @@ struct DatePicker: View, Equatable {
                     }
                 }
             }
+            .drawingGroup()
         }
         .frame(maxWidth: 328, maxHeight: .infinity)
         .ignoresSafeArea()
@@ -220,6 +221,18 @@ private struct DayCellView: View {
     let isOutsideBounds: Bool
     let action: () -> ()
     
+    var progressColor: Color {
+        if cell.activityQuantity >= 8 {
+            return .red
+        } else if cell.activityQuantity >= 5 {
+            return .orange
+        } else if cell.activityQuantity > 2 {
+            return .yellow
+        } else {
+            return .green
+        }
+    }
+    
     var body: some View {
         Text(cell.dayNumber)
             .frame(width: 40, height: 40)
@@ -231,15 +244,60 @@ private struct DayCellView: View {
                         .fill(colorScheme == .light ? .black : .white)
                 }
             }
-            .overlay(alignment: .topTrailing) {
-                if cell.hasActivity {
+            //.overlay {
+            //    if cell.hasActivity && isEnabled {
+            //        Circle()
+            //            .fill(progressColor)
+            //            .frame(width: 7.5, height: 7.5)
+            //            .offset(x: 10, y: 8)
+            //    }
+            //}
+            //.overlay {
+            //    if cell.hasActivity && isEnabled {
+            //        ZStack {
+            //            Circle()
+            //                .stroke(progressColor, style: .init(lineWidth: 4, lineCap: .round))
+            //                .frame(width: 30, height: 30)
+            //                .opacity(0.2)
+            //            Circle()
+            //                .trim(from: 0.0, to: min(8, cell.activityQuantity) / 8)
+            //                .stroke(progressColor, style: .init(lineWidth: 4, lineCap: .round))
+            //                .rotationEffect(.degrees(-90))
+            //                .frame(width: 30, height: 30)
+            //        }
+            //    }
+            //}
+            //.overlay(alignment: .bottom) {
+            //    if cell.hasActivity && isEnabled {
+            //        RadialGradient(stops: [
+            //            .init(color: progressColor, location: 0),
+            //            .init(color: progressColor.opacity(0.2), location: 0.75),
+            //            .init(color: .clear, location: 1)
+            //        ], center: .bottom, startRadius: 3, endRadius: 20)
+            //    }
+            //}
+            .overlay(alignment: .bottom) {
+                if cell.hasActivity && isEnabled && !isSelected {
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(progressColor)
+                        .frame(width: 20, height: 4)
+                        .opacity(0.2)
+                        .overlay(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 2, style: .continuous)
+                                .fill(progressColor)
+                                .frame(width: (min(8, cell.activityQuantity) * 20) / 8, height: 4)
+                        }
+                        .padding(.bottom, 4)
+                } else if cell.hasActivity && isEnabled {
                     Circle()
-                        .fill(.red)
-                        .frame(width: 5, height: 5)
+                        .fill(progressColor)
+                        .frame(width: 4, height: 4)
+                        .padding(.bottom, 4)
                 }
             }
             .opacity(opacityLevel)
             .contentShape(.rect)
+            .clipShape(.circle)
             .if(!isOutsideBounds) { view in
                 view
                     .contentShape(.hoverEffect, .circle)
