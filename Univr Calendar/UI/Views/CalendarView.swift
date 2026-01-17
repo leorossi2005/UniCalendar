@@ -581,6 +581,21 @@ struct CalendarViewDay: View {
                                 selectedLesson = lesson
                                 selectedDetent = .large
                             }
+                            .contextMenu(
+                                menuItems: {
+                                    Button(action: {
+                                        // To Add
+                                        Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                        selectedLesson = lesson
+                                        selectedDetent = .large
+                                    }) {
+                                        Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
+                                    }
+                                },
+                                preview: {
+                                    LessonCardPreview(lesson: lesson)
+                                }
+                            )
                     } else {
                         HStack(alignment: .bottom) {
                             Image(systemName: .cupDynamic)

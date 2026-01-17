@@ -85,6 +85,9 @@
         }
       }
     },
+    "+%lld" : {
+
+    },
     "Aggiorna" : {
       "localizations" : {
         "en" : {
@@ -94,6 +97,9 @@
           }
         }
       }
+    },
+    "Aggiungi al calendario" : {
+
     },
     "Al momento sei offline." : {
       "localizations" : {

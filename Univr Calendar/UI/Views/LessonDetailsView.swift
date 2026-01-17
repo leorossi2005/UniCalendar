@@ -55,7 +55,7 @@ struct LessonDetailsView: View {
                                 .font(.caption)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
-                                .background(lesson.annullato ? Color(.secondarySystemBackground) : backgroundColor.opacity(0.2))
+                                .background(lesson.annullato ? Color(.systemBackground) : backgroundColor.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                                 .overlay {
                                     if lesson.annullato {
