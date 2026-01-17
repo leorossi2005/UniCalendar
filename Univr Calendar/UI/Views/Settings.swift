@@ -129,7 +129,7 @@ struct Settings: View {
         .onChange(of: searchTextFieldFocus) {
             if searchTextFieldFocus {
                 lockSheet = true
-            } else {
+            } else if selectedCourse != "0" {
                 lockSheet = false
             }
         }

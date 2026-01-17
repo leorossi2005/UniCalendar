@@ -20,6 +20,7 @@ struct CalendarEventWrapper: Identifiable, Equatable {
 
 struct LessonDetailsView: View {
     @Binding var lesson: Lesson?
+    @Binding var lockSheet: Bool
     
     @State private var showOriginalName: Bool = false
     @State private var calendarSheetWrapper: CalendarEventWrapper?
@@ -67,6 +68,9 @@ struct LessonDetailsView: View {
                 }
             }
             .animation(.easeInOut, value: calendarSheetWrapper)
+            .onChange(of: calendarSheetWrapper) { _, newValue in
+                lockSheet = newValue != nil
+            }
         }
     }
     
@@ -319,10 +323,11 @@ struct StableMapView: View {
 #Preview {
     @Previewable @Namespace var transition
     @Previewable @State var lesson: Lesson? = Lesson.sample
+    @Previewable @State var lockSheet: Bool = false
     
     Text("")
         .sheet(isPresented: .constant(true)) {
-            LessonDetailsView(lesson: $lesson)
+            LessonDetailsView(lesson: $lesson, lockSheet: $lockSheet)
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
         }
