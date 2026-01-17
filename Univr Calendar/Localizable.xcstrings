@@ -86,7 +86,14 @@
       }
     },
     "+%lld" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%lld"
+          }
+        }
+      }
     },
     "Aggiorna" : {
       "localizations" : {
@@ -99,7 +106,14 @@
       }
     },
     "Aggiungi al calendario" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add to calendar"
+          }
+        }
+      }
     },
     "Al momento sei offline." : {
       "localizations" : {
