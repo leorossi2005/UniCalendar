@@ -245,20 +245,25 @@ private struct DayCellView: View {
                 }
             }
             .overlay(alignment: .bottom) {
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(progressColor)
-                    .frame(width: 15, height: 4)
-                    .opacity(0.2)
-                    .if (isSelected && colorScheme == .dark) { view in
-                        view
-                            .shadow(color: .black, radius: 1, x: 0, y: 0)
-                    }
-                    .overlay(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 2, style: .continuous)
-                            .fill(progressColor)
-                            .frame(width: (min(8, cell.activityQuantity) * 15) / 8, height: 4)
-                    }
-                    .padding(.bottom, 4)
+                if cell.hasActivity && isEnabled {
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(progressColor)
+                        .frame(width: 15, height: 4)
+                        .opacity(0.2)
+                        .overlay(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 2, style: .continuous)
+                                .fill(progressColor)
+                                .frame(width: (min(8, cell.activityQuantity) * 15) / 8, height: 4)
+                        }
+                        .background {
+                            if isSelected  {
+                                RoundedRectangle(cornerRadius: 2, style: .continuous)
+                                    .fill(colorScheme == .dark ? .black : .white)
+                                    .opacity(progressColor != .yellow ? 0.1 : 0.05)
+                            }
+                        }
+                        .padding(.bottom, 4)
+                }
             }
             .opacity(opacityLevel)
             .contentShape(.rect)
