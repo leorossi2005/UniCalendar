@@ -443,6 +443,14 @@ struct DynamicSheetContent: View {
     @Binding var lockSheet: Bool
     let isGoingLarge: Bool
     
+    var padding: CGFloat {
+        if #available(iOS 26, *) {
+            8
+        } else {
+            0
+        }
+    }
+    
     var body: some View {
         ZStack {
             GeometryReader { proxy in
@@ -465,12 +473,12 @@ struct DynamicSheetContent: View {
                     FractionDatePickerContainer(selectedWeek: $selectedWeek)
                         .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == .small)
-                        .frame(width: UIApplication.shared.windowSize.width - 16)
+                        .frame(width: UIApplication.shared.windowSize.width - padding * 2)
                     
                     DatePickerContainer(selectedWeek: $selectedWeek)
                         .opacity(mediumIsHidden ? 0 : min(max(mediumOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == .medium)
-                        .frame(width: UIApplication.shared.windowSize.width - 16)
+                        .frame(width: UIApplication.shared.windowSize.width - padding * 2)
                     
                     NavigationStack {
                         if openSettings {
