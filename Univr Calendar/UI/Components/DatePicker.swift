@@ -69,6 +69,7 @@ struct DatePicker: View, Equatable {
                     }
                 }
             }
+            .drawingGroup()
         }
         .frame(maxWidth: 328, maxHeight: .infinity)
         .ignoresSafeArea()
@@ -220,6 +221,18 @@ private struct DayCellView: View {
     let isOutsideBounds: Bool
     let action: () -> ()
     
+    var progressColor: Color {
+        if cell.activityQuantity >= 8 {
+            return .red
+        } else if cell.activityQuantity >= 5 {
+            return .orange
+        } else if cell.activityQuantity > 2 {
+            return .yellow
+        } else {
+            return .green
+        }
+    }
+    
     var body: some View {
         Text(cell.dayNumber)
             .frame(width: 40, height: 40)
@@ -231,8 +244,30 @@ private struct DayCellView: View {
                         .fill(colorScheme == .light ? .black : .white)
                 }
             }
+            .overlay(alignment: .bottom) {
+                if cell.hasActivity && isEnabled {
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .fill(progressColor)
+                        .frame(width: 15, height: 4)
+                        .opacity(0.2)
+                        .overlay(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 2, style: .continuous)
+                                .fill(progressColor)
+                                .frame(width: (min(8, cell.activityQuantity) * 15) / 8, height: 4)
+                        }
+                        .background {
+                            if isSelected  {
+                                RoundedRectangle(cornerRadius: 2, style: .continuous)
+                                    .fill(colorScheme == .dark ? .black : .white)
+                                    .opacity(progressColor != .yellow ? 0.1 : 0.05)
+                            }
+                        }
+                        .padding(.bottom, 4)
+                }
+            }
             .opacity(opacityLevel)
             .contentShape(.rect)
+            .clipShape(.circle)
             .if(!isOutsideBounds) { view in
                 view
                     .contentShape(.hoverEffect, .circle)

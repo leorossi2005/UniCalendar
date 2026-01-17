@@ -14,6 +14,8 @@ public struct CalendarCell: Identifiable, Equatable, Sendable {
     public var id: Date { date }
     public let dayNumber: String
     public let isCurrentMonth: Bool
+    public var hasActivity: Bool
+    public var activityQuantity: Double
     public let date: Date
 }
 
@@ -39,10 +41,34 @@ public class DatePickerCache {
     public var additionalWeek: [FractionDay] = []
     public var currentYear: String = ""
     
+    private var activeDatesCache: [String: Double] = [:]
+    
+    public func updateActivities(dates: [String: Double]) {
+        self.activeDatesCache = dates
+        print("🔄 Updating Activities in Cache: \(dates.count) items") // DEBUG
+        
+        for (monthKey, cells) in monthGrids {
+            monthGrids[monthKey] = cells.map { cell in
+                var newCell = cell
+                let dateKey = cell.date.formatUnivrStyle()
+                
+                if let quantity = dates[dateKey] {
+                    newCell.hasActivity = true
+                    newCell.activityQuantity = quantity
+                } else {
+                    newCell.hasActivity = false
+                    newCell.activityQuantity = 0.0
+                }
+                
+                return newCell
+            }
+        }
+    }
+    
     public func generateMonthGrid(for date: Date, monthName: String) async {
         guard monthGrids["\(monthName)-\(date.yearSymbol)"] == nil else { return }
         
-        let cells: [CalendarCell] = await Task.detached(priority: .userInitiated) {
+        let cells: [CalendarCell] = await Task.detached(priority: .userInitiated) { [activeDatesCache] in
             var newGrid: [CalendarCell] = []
             let calendar = Calendar.autoupdatingCurrent
             
@@ -82,9 +108,13 @@ public class DatePickerCache {
                     cellDate = calendar.date(byAdding: .day, value: dayValue - 1, to: startOfMonth) ?? date
                 }
                 
+                let dateKey = cellDate.formatUnivrStyle()
+                
                 newGrid.append(CalendarCell(
                     dayNumber: "\(dayValue)",
                     isCurrentMonth: isCurrentMonth,
+                    hasActivity: activeDatesCache[dateKey] != nil,
+                    activityQuantity: activeDatesCache[dateKey] ?? 0,
                     date: cellDate
                 ))
             }
@@ -147,3 +177,4 @@ public class DatePickerCache {
         self.currentYear = selectedYear
     }
 }
+
