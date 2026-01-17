@@ -26,6 +26,7 @@ struct LessonDetailsView: View {
     @State private var calendarSheetWrapper: CalendarEventWrapper?
     @State private var eventStore = EKEventStore()
     @State private var currentLessonCoordinate: CLLocationCoordinate2D?
+    @State private var eventSaved: Bool = false
     
     private var date: Date { lesson?.data.toDateModern() ?? Date() }
     private var backgroundColor: Color { Color(hex: lesson?.color ?? "") ?? Color(.systemGray6) }
@@ -34,11 +35,20 @@ struct LessonDetailsView: View {
         if let lesson = lesson {
             ZStack {
                 if let wrapper = calendarSheetWrapper {
-                    EventEditViewController(event: wrapper.event, eventStore: eventStore) {
-                        calendarSheetWrapper = nil
-                    }
+                    EventEditViewController(
+                        event: wrapper.event,
+                        eventStore: eventStore,
+                        onSaved: {
+                            Task { @MainActor in
+                                eventSaved = true
+                            }
+                        },
+                        onCanceled: {},
+                        onDismiss: {
+                            calendarSheetWrapper = nil
+                        }
+                    )
                     .ignoresSafeArea()
-                    .transition(.opacity)
                 } else {
                     VStack(alignment: .leading, spacing: 20) {
                         headerInfo(lesson: lesson)
@@ -58,18 +68,25 @@ struct LessonDetailsView: View {
                     .toolbar {
                         ToolbarItem(placement: .primaryAction) {
                             Button {
-                                prepareAndShowEvent(for: lesson, coordinate: currentLessonCoordinate)
+                                if !eventSaved {
+                                    prepareAndShowEvent(for: lesson, coordinate: currentLessonCoordinate)
+                                }
                             } label: {
-                                Image(systemName: "calendar.badge.plus")
+                                Image(systemName: eventSaved ? "checkmark" : "calendar.badge.plus")
+                                    .symbolReplace()
                             }
                         }
                     }
-                    .transition(.opacity)
                 }
             }
-            .animation(.easeInOut, value: calendarSheetWrapper)
             .onChange(of: calendarSheetWrapper) { _, newValue in
                 lockSheet = newValue != nil
+            }
+            .task(id: eventSaved) {
+                if eventSaved {
+                    try? await Task.sleep(for: .seconds(2))
+                    eventSaved = false
+                }
             }
         }
     }

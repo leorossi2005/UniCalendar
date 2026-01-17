@@ -13,6 +13,8 @@ import EventKitUI
 struct EventEditViewController: UIViewControllerRepresentable {
     let event: EKEvent
     let eventStore: EKEventStore
+    var onSaved: () -> Void
+    var onCanceled: () -> Void
     var onDismiss: () -> Void
     
     func makeUIViewController(context: Context) -> EKEventEditViewController {
@@ -38,10 +40,19 @@ struct EventEditViewController: UIViewControllerRepresentable {
         
         func eventEditViewController(_ controller: EKEventEditViewController, didCompleteWith action: EKEventEditViewAction) {
             controller.dismiss(animated: true) {
+                switch action {
+                case .saved:
+                    self.parent.onSaved()
+                case .canceled:
+                    self.parent.onCanceled()
+                case .deleted:
+                    break
+                @unknown default:
+                    break
+                }
+                
                 self.parent.onDismiss()
             }
-            
-            if action == .saved {}
         }
     }
 }
