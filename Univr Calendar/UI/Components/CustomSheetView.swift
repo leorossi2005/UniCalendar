@@ -72,6 +72,9 @@ struct CustomSheetView: View {
         case horizontal, vertical
     }
     
+    // TEMP
+    @State private var isGoingLarge: Bool = false
+    
     var body: some View {
         Group {
             ZStack(alignment: .bottom) {
@@ -145,8 +148,10 @@ struct CustomSheetView: View {
             changeOpenCalendar(true)
             
             if oldValue == .large {
+                isGoingLarge = false
                 detents = [.small, .medium]
             } else if newValue == .large {
+                isGoingLarge = true
                 detents = [.small, .medium, .large]
             }
             
@@ -189,7 +194,8 @@ struct CustomSheetView: View {
                 selectedLesson: $selectedLesson,
                 openSettings: $openSettings,
                 tempSettings: $tempSettings,
-                lockSheet: $lockSheet
+                lockSheet: $lockSheet,
+                isGoingLarge: isGoingLarge
             )
             .overlay(alignment: .top) {
                 RoundedRectangle(cornerRadius: 2.5)
@@ -236,6 +242,10 @@ struct CustomSheetView: View {
     }
     
     private func handleDragUpdating(value: CGFloat, direction: CustomSheetDraggingDirection, state: inout CGFloat) {
+        if isGoingLarge {
+            isGoingLarge = false
+        }
+        
         if selectedDetent == .large {
             if value < 0 {
                 state = 0
@@ -428,7 +438,10 @@ struct DynamicSheetContent: View {
     @Binding var selectedLesson: Lesson?
     @Binding var openSettings: Bool
     @Binding var tempSettings: TempSettingsState
+    
+    // TEMP
     @Binding var lockSheet: Bool
+    let isGoingLarge: Bool
     
     var body: some View {
         ZStack {
@@ -446,8 +459,8 @@ struct DynamicSheetContent: View {
                 let mediumOpacity = 1.0 - ((currentHeight < mediumHeightHigh ? Double(mediumHeightLow - currentHeight) : Double(currentHeight - mediumHeightHigh)) / Double(fadeRange))
                 let smallOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
         
-                let smallIsHidden = currentHeight > smallHeight + fadeRange
-                let mediumIsHidden = currentHeight > mediumHeightHigh + fadeRange
+                let smallIsHidden = currentHeight > smallHeight + fadeRange || isGoingLarge
+                let mediumIsHidden = currentHeight > mediumHeightHigh + fadeRange || isGoingLarge
                 ZStack(alignment: .topLeading) {
                     FractionDatePickerContainer(selectedWeek: $selectedWeek)
                         .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
