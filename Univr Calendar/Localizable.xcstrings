@@ -335,6 +335,26 @@
         }
       }
     },
+    "Docente: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teacher: %@"
+          }
+        }
+      }
+    },
+    "Docenti: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teachers: %@"
+          }
+        }
+      }
+    },
     "Dona qualcosina se vuoi aiutare" : {
       "localizations" : {
         "en" : {

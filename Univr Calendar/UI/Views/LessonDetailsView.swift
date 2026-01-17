@@ -11,29 +11,62 @@ import SwiftUI
 import MapKit
 import CoreLocation
 import UnivrCore
+import EventKit
+
+struct CalendarEventWrapper: Identifiable, Equatable {
+    let id = UUID()
+    let event: EKEvent
+}
 
 struct LessonDetailsView: View {
     @Binding var lesson: Lesson?
     
     @State private var showOriginalName: Bool = false
+    @State private var calendarSheetWrapper: CalendarEventWrapper?
+    @State private var eventStore = EKEventStore()
+    @State private var currentLessonCoordinate: CLLocationCoordinate2D?
     
     private var date: Date { lesson?.data.toDateModern() ?? Date() }
     private var backgroundColor: Color { Color(hex: lesson?.color ?? "") ?? Color(.systemGray6) }
     
     var body: some View {
         if let lesson = lesson {
-            VStack(alignment: .leading, spacing: 20) {
-                headerInfo(lesson: lesson)
-                detailRows(lesson: lesson)
-                StableMapView(lesson: lesson, corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24)
+            ZStack {
+                if let wrapper = calendarSheetWrapper {
+                    EventEditViewController(event: wrapper.event, eventStore: eventStore) {
+                        calendarSheetWrapper = nil
+                    }
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                } else {
+                    VStack(alignment: .leading, spacing: 20) {
+                        headerInfo(lesson: lesson)
+                        detailRows(lesson: lesson)
+                        StableMapView(
+                            lesson: lesson,
+                            externalCoordinate: $currentLessonCoordinate,
+                            corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
+                        )
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 24)
+                    .ignoresSafeArea(edges: .bottom)
+                    .onChange(of: lesson) {
+                        showOriginalName = false
+                    }
+                    .toolbar {
+                        ToolbarItem(placement: .primaryAction) {
+                            Button {
+                                prepareAndShowEvent(for: lesson, coordinate: currentLessonCoordinate)
+                            } label: {
+                                Image(systemName: "calendar.badge.plus")
+                            }
+                        }
+                    }
+                    .transition(.opacity)
+                }
             }
-            .padding(.top, 40)
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
-            .ignoresSafeArea(edges: .bottom)
-            .onChange(of: lesson) {
-                showOriginalName = false
-            }
+            .animation(.easeInOut, value: calendarSheetWrapper)
         }
     }
     
@@ -95,20 +128,67 @@ struct LessonDetailsView: View {
         Label(text, systemImage: icon)
             .font(.headline)
     }
+    
+    // MARK: - Logic
+    private func combineDateAndTime(date: Date, timeString: String) -> Date? {
+        let calendar = Calendar.current
+        
+        let timeComponents = timeString.split(separator: ":").compactMap { Int($0) }
+        
+        if timeComponents.count >= 2 {
+            return calendar.date(
+                bySettingHour: timeComponents[0],
+                minute: timeComponents[1],
+                second: 0,
+                of: date
+            )
+        }
+        return date
+    }
+    
+    private func prepareAndShowEvent(for lesson: Lesson, coordinate: CLLocationCoordinate2D? = nil) {
+        let newEvent = EKEvent(eventStore: eventStore)
+        
+        newEvent.title = lesson.cleanName
+        newEvent.notes = lesson.docente.contains(",") ? String(localized: "Docenti: \(lesson.docente)") : String(localized: "Docente: \(lesson.docente)")
+        newEvent.availability = .busy
+        
+        if let coordinate = coordinate {
+            let structuredLocation = EKStructuredLocation(title: lesson.formattedClassroom)
+            structuredLocation.geoLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+            newEvent.structuredLocation = structuredLocation
+        } else {
+            newEvent.location = lesson.formattedClassroom
+        }
+        
+        let baseDate = lesson.data.toDateModern() ?? Date()
+        let startTime = lesson.startTime
+        let endTime = String(lesson.orario.split(separator: " - ").last ?? "")
+        if let startDate = combineDateAndTime(date: baseDate, timeString: startTime), let endDate = combineDateAndTime(date: baseDate, timeString: endTime) {
+            newEvent.startDate = startDate
+            newEvent.endDate = endDate
+        } else {
+            newEvent.startDate = Date()
+            newEvent.endDate = Date().addingTimeInterval(3600)
+        }
+        
+        calendarSheetWrapper = CalendarEventWrapper(event: newEvent)
+    }
 }
 
 // MARK: - Subviews
 struct StableMapView: View {
     let lesson: Lesson
+    @Binding var externalCoordinate: CLLocationCoordinate2D?
+    
     @State var corderRadius: CGFloat
-    @State private var coordinate: CLLocationCoordinate2D?
     @State private var isLoadingMap: Bool = false
     
     private var backgroundColor: Color { Color(hex: lesson.color) ?? Color(.systemGray6) }
 
     var body: some View {
         ZStack {
-            if let coordinate = coordinate {
+            if let coordinate = externalCoordinate {
                 UIKitStaticMap(coordinate: coordinate, padding: corderRadius / 2, altitude: 600)
                 mapAnnotationView(lesson: lesson)
                 VStack {
@@ -199,7 +279,7 @@ struct StableMapView: View {
         if let cachedCoord = await CoordinateCache.shared.coordinate(for: address) {
             let clCoord = CLLocationCoordinate2D(latitude: cachedCoord.latitude, longitude: cachedCoord.longitude)
             await MainActor.run {
-                self.coordinate = clCoord
+                self.externalCoordinate = clCoord
                 self.isLoadingMap = false
             }
             return
@@ -217,7 +297,7 @@ struct StableMapView: View {
                 
                 await CoordinateCache.shared.save(cacheCoord, for: address)
                 await MainActor.run {
-                    self.coordinate = coord
+                    self.externalCoordinate = coord
                     self.isLoadingMap = false
                 }
             } else {
@@ -235,7 +315,6 @@ struct StableMapView: View {
         mapItem.openInMaps()
     }
 }
-
 
 #Preview {
     @Previewable @Namespace var transition
