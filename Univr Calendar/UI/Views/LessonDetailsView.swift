@@ -40,6 +40,7 @@ struct LessonDetailsView: View {
                         eventStore: eventStore,
                         onSaved: {
                             Task { @MainActor in
+                                try? await Task.sleep(for: .seconds(0.1))
                                 eventSaved = true
                             }
                         },
@@ -73,7 +74,9 @@ struct LessonDetailsView: View {
                                 }
                             } label: {
                                 Image(systemName: eventSaved ? "checkmark" : "calendar.badge.plus")
+                                    .frame(width: 24, height: 24)
                                     .symbolReplace()
+                                    .animation(.snappy, value: eventSaved)
                             }
                         }
                     }
