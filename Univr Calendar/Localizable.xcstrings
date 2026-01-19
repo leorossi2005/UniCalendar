@@ -225,6 +225,9 @@
         }
       }
     },
+    "Comprimi tutto" : {
+
+    },
     "Conferma" : {
       "localizations" : {
         "en" : {
@@ -344,6 +347,9 @@
           }
         }
       }
+    },
+    "Espandi tutto" : {
+
     },
     "Fammi un regalino" : {
       "localizations" : {
@@ -514,6 +520,9 @@
           }
         }
       }
+    },
+    "Novità " : {
+
     },
     "O il tuo amico, ovvio" : {
       "localizations" : {

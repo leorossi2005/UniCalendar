@@ -362,6 +362,7 @@ struct CalendarView: View {
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.2))
             changeOpenCalendar(true)
+            selectedDetent = .large
             oldOpenCalendar = true
         }
         

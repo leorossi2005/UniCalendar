@@ -474,18 +474,20 @@ struct DynamicSheetContent: View {
                     
                     NavigationStack {
                         if openSettings {
-                            Settings(
-                                selectedYear: $tempSettings.selectedYear,
-                                selectedCourse: $tempSettings.selectedCourse,
-                                selectedAcademicYear: $tempSettings.selectedAcademicYear,
-                                matricola: $tempSettings.matricola,
-                                lockSheet: $lockSheet
-                            )
-                            .ignoresSafeArea(.keyboard)
+                            //Settings(
+                            //    selectedYear: $tempSettings.selectedYear,
+                            //    selectedCourse: $tempSettings.selectedCourse,
+                            //    selectedAcademicYear: $tempSettings.selectedAcademicYear,
+                            //    matricola: $tempSettings.matricola,
+                            //    lockSheet: $lockSheet
+                            //)
+                            //.ignoresSafeArea(.keyboard)
                         } else {
-                            LessonDetailsView(lesson: $selectedLesson)
-                                .opacity(min(max(largeOpacity, 0), 1))
-                                .allowsHitTesting(selectedDetent == .large)
+                            //LessonDetailsView(lesson: $selectedLesson)
+                            //    .opacity(min(max(largeOpacity, 0), 1))
+                            //    .allowsHitTesting(selectedDetent == .large)
+                            
+                            WhatsNewView()
                         }
                     }
                     .id(openSettings)

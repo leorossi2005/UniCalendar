@@ -202,6 +202,18 @@ extension View {
             self.ignoresSafeArea(edges: .top)
         }
     }
+    
+    @ViewBuilder
+    func symbolReplace() -> some View {
+        if #available(iOS 18, *) {
+            self
+                .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
+        } else {
+            self
+                .contentTransition(.symbolEffect(.replace))
+            
+        }
+    }
 }
 
 extension ToolbarItem {
