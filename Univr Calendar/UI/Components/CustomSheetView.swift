@@ -41,6 +41,7 @@ struct CustomSheetView: View {
     
     // MARK: - Binding dal Padre
     @Binding var openSettings: Bool
+    @Binding var openWhatsNew: Bool
     @Binding var selectedDetent: CustomSheetDetent
     @Binding var sheetShape: UnevenRoundedRectangle
     @Binding var sheetShapeRadii: SheetCornerRadii
@@ -193,6 +194,7 @@ struct CustomSheetView: View {
                 selectedDetent: $selectedDetent,
                 selectedLesson: $selectedLesson,
                 openSettings: $openSettings,
+                openWhatsNew: $openWhatsNew,
                 tempSettings: $tempSettings,
                 lockSheet: $lockSheet,
                 isGoingLarge: isGoingLarge
@@ -437,6 +439,7 @@ struct DynamicSheetContent: View {
     @Binding var selectedDetent: CustomSheetDetent
     @Binding var selectedLesson: Lesson?
     @Binding var openSettings: Bool
+    @Binding var openWhatsNew: Bool
     @Binding var tempSettings: TempSettingsState
     
     // TEMP
@@ -473,21 +476,19 @@ struct DynamicSheetContent: View {
                         .frame(width: UIApplication.shared.windowSize.width - 16)
                     
                     NavigationStack {
-                        if openSettings {
-                            //Settings(
-                            //    selectedYear: $tempSettings.selectedYear,
-                            //    selectedCourse: $tempSettings.selectedCourse,
-                            //    selectedAcademicYear: $tempSettings.selectedAcademicYear,
-                            //    matricola: $tempSettings.matricola,
-                            //    lockSheet: $lockSheet
-                            //)
-                            //.ignoresSafeArea(.keyboard)
-                        } else {
-                            //LessonDetailsView(lesson: $selectedLesson)
-                            //    .opacity(min(max(largeOpacity, 0), 1))
-                            //    .allowsHitTesting(selectedDetent == .large)
-                            
+                        if openWhatsNew {
                             WhatsNewView()
+                        } else if openSettings {
+                            Settings(
+                                selectedYear: $tempSettings.selectedYear,
+                                selectedCourse: $tempSettings.selectedCourse,
+                                selectedAcademicYear: $tempSettings.selectedAcademicYear,
+                                matricola: $tempSettings.matricola,
+                                lockSheet: $lockSheet
+                            )
+                            .ignoresSafeArea(.keyboard)
+                        } else {
+                            LessonDetailsView(lesson: $selectedLesson)
                         }
                     }
                     .id(openSettings)

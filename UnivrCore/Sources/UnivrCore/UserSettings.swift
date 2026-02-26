@@ -22,6 +22,7 @@ public class UserSettings {
     private enum Key: String {
         case selectedYear, selectedCourse, selectedAcademicYear
         case foundMatricola, matricola, onboardingCompleted
+        case latestVersion
     }
     
     private enum Default {
@@ -29,6 +30,7 @@ public class UserSettings {
         static let course = "0"
         static let academicYear = "0"
         static let matricola = "pari"
+        static let latestVersion: String = ""
         static let boolFalse = false
     }
     
@@ -56,6 +58,10 @@ public class UserSettings {
         didSet { save(onboardingCompleted, key: .onboardingCompleted) }
     }
     
+    public var latestVersion: String {
+        didSet { save(latestVersion, key: .latestVersion) }
+    }
+    
     private init() {
         self.selectedYear = Self.load(.selectedYear, fallback: Default.year)
         self.selectedCourse = Self.load(.selectedCourse, fallback: Default.course)
@@ -63,6 +69,7 @@ public class UserSettings {
         self.foundMatricola = Self.load(.foundMatricola, fallback: Default.boolFalse)
         self.matricola = Self.load(.matricola, fallback: Default.matricola)
         self.onboardingCompleted = Self.load(.onboardingCompleted, fallback: Default.boolFalse)
+        self.latestVersion = Self.load(.latestVersion, fallback: Default.latestVersion)
     }
     
     public func reset() {
@@ -72,6 +79,7 @@ public class UserSettings {
         foundMatricola = Default.boolFalse
         matricola = Default.matricola
         onboardingCompleted =  Default.boolFalse
+        latestVersion =  Default.latestVersion
     }
     
     private func save(_ value: Any, key: Key) {

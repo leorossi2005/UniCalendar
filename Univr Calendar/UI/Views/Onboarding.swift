@@ -253,6 +253,7 @@ struct Onboarding: View {
     }
     
     public func completeOnboarding() {
+        settings.latestVersion = Bundle.main.clearAppVersion
         settings.onboardingCompleted = true
     }
 }

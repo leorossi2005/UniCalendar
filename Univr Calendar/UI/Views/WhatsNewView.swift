@@ -160,12 +160,6 @@ struct WhatsNewView: View {
         selectedVersionIndex < WhatsNewData.versions.count - 1
     }
     
-    private var cardBackground: Color {
-        colorScheme == .dark
-            ? Color.white.opacity(0.08)
-            : Color.black.opacity(0.05)
-    }
-    
     private let animation: Animation = .interactiveSpring(response: 0.25, dampingFraction: 1)
     
     var body: some View {
@@ -254,7 +248,7 @@ struct WhatsNewView: View {
                 Button {
                     guard let version = currentVersion else { return }
                     
-                    Haptics.play(.selection)
+                    Haptics.play(.impact(flexibility: .soft, intensity: 0.6))
                     if showAllExpanded {
                         expandedFeatures.removeAll()
                     } else {
@@ -275,11 +269,12 @@ struct WhatsNewView: View {
                             .contentTransition(.numericText())
                     }
                     .foregroundStyle(.primary)
-                    .padding(8)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
                     .background(
                         Capsule()
-                            .fill(cardBackground)
-                            .strokeBorder(.primary.opacity(0.08), lineWidth: 1)
+                            .fill(.background)
+                            .strokeBorder(.tertiary, lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -288,7 +283,6 @@ struct WhatsNewView: View {
                     FeatureCard(
                         feature: feature,
                         isExpanded: expandedFeatures.contains(feature.id),
-                        cardBackground: cardBackground,
                         animation: animation,
                         onToggle: {
                             if expandedFeatures.contains(feature.id) {
@@ -354,7 +348,6 @@ struct WhatsNewView: View {
 struct FeatureCard: View {
     let feature: WhatsNewFeature
     let isExpanded: Bool
-    let cardBackground: Color
     let animation: Animation
     let onToggle: () -> Void
     
@@ -369,7 +362,7 @@ struct FeatureCard: View {
                     .symbolEffect(.bounce, value: isExpanded)
                     .frame(width: 48, height: 48)
                     .background {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .fill(feature.iconColor.opacity(0.12))
                     }
                 
@@ -388,7 +381,7 @@ struct FeatureCard: View {
                 
                 // Expand indicator
                 if feature.hasDetails {
-                    Image(systemName: "chevron.down.circle.fill")
+                    Image(systemName: "chevron.down.circle")
                         .font(.title3)
                         .foregroundStyle(.tertiary)
                         .rotationEffect(.degrees(isExpanded ? 180 : 0))
@@ -397,9 +390,9 @@ struct FeatureCard: View {
             
             // Expanded details
             if isExpanded, let details = feature.detailedDescription {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 14) {
                     Rectangle()
-                        .fill(.quaternary)
+                        .fill(.tertiary)
                         .frame(height: 1)
                     
                     Text(details)
@@ -410,14 +403,14 @@ struct FeatureCard: View {
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(cardBackground)
-                .strokeBorder(.primary.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 32, style: .continuous)
+                .fill(.background)
+                .strokeBorder(.tertiary, lineWidth: 1)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
         .onTapGesture {
             if feature.hasDetails {
-                Haptics.play(.impact(flexibility: .soft))
+                Haptics.play(.impact(flexibility: .soft, intensity: 0.6))
                 onToggle()
             }
         }
