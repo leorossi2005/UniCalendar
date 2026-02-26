@@ -351,9 +351,10 @@ struct CalendarView: View {
     
     // MARK: - Logic Methods
     private func openSettingsAction() {
-        Haptics.play(.impact(weight: .light))
-        openSettings = true
+        //Haptics.play(.impact(weight: .light))
+        //openSettings = true
         selectedDetent = .large
+        openWhatsNew = true
     }
     
     private func inizializeData() {
@@ -368,8 +369,6 @@ struct CalendarView: View {
             
             if settings.latestVersion != Bundle.main.clearAppVersion {
                 try? await Task.sleep(for: .seconds(0.2))
-                openWhatsNew = true
-                selectedDetent = .large
             }
         }
         
