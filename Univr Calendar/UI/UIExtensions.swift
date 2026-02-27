@@ -91,6 +91,11 @@ extension View {
     }
     
     @ViewBuilder
+    func modify<Content: View>(@ViewBuilder _ transform: (Self) -> Content) -> some View {
+        transform(self)
+    }
+    
+    @ViewBuilder
     func textOverlay(
         text: LocalizedStringKey,
         rotation: Double,
@@ -232,6 +237,21 @@ extension View {
             self
                 .contentTransition(.symbolEffect(.replace))
             
+        }
+    }
+    
+    @ViewBuilder
+    func backgroundVisibility(_ visibility: Color) -> some View {
+        if #unavailable(iOS 26) {
+            if #available(iOS 18, *) {
+                self
+                    .toolbarBackgroundVisibility(.visible, for: .bottomBar)
+                    .toolbarBackground(visibility, for: .bottomBar)
+            } else {
+                self
+            }
+        } else {
+            self
         }
     }
 }

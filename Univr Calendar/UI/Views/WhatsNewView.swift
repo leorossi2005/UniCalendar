@@ -13,9 +13,7 @@ struct WhatsNewView: View {
     @Environment(\.colorScheme) private var colorScheme
     
     @State private var previousVersionIndex: Int = 0
-    @State private var selectedVersionIndex: Int = 0 {
-        didSet { previousVersionIndex = oldValue }
-    }
+    @State private var selectedVersionIndex: Int = 0
     @State private var expandedFeatures: Set<UUID> = []
     @State private var showAllExpanded: Bool = false
     @State private var dotWindowStart: Int = 0
@@ -35,16 +33,31 @@ struct WhatsNewView: View {
     
     private let animation: Animation = .interactiveSpring(response: 0.25, dampingFraction: 1)
     
+    @State var isScrolling: Bool = false
+    @State private var scrollUpdateTask: Task<Void, Never>?
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
                 ForEach(Array(AppConstants.WhatsNewData.versions.enumerated()), id: \.element.id) { index, version in
-                    versionContent(version)
+                    if #available(iOS 18, *) {
+                        versionContent(version)
+                            .containerRelativeFrame(.horizontal)
+                            .id(index)
+                    } else {
+                        GeometryReader { geo in
+                            versionContent(version)
+                                .onChange(of: geo.frame(in: .global).midX) { _, midX in
+                                    let screenMid = UIScreen.main.bounds.width / 2
+                                    if abs(midX - screenMid) < 50 {
+                                        if index != selectedVersionIndex && !isScrolling {
+                                            selectedVersionIndex = index
+                                        }
+                                    }
+                                }
+                        }
                         .containerRelativeFrame(.horizontal)
-                        .contentMargins(.top, 126)
-                        .contentMargins(.bottom, 86)
                         .id(index)
-                        .ignoresSafeArea()
+                    }
                 }
             }
             .scrollTargetLayout()
@@ -54,6 +67,7 @@ struct WhatsNewView: View {
             get: { selectedVersionIndex },
             set: { newValue in
                 if let val = newValue {
+                    previousVersionIndex = selectedVersionIndex
                     selectedVersionIndex = val
                 }
             }
@@ -72,15 +86,22 @@ struct WhatsNewView: View {
             } else if posInWindow > 2 {
                 dotWindowStart = min(selectedVersionIndex - 2, maxStart)
             }
+            
+            if #unavailable(iOS 18) {
+                isScrolling = true
+                scrollUpdateTask?.cancel()
+                scrollUpdateTask = Task {
+                    try? await Task.sleep(for: .seconds(0.2))
+                    if !Task.isCancelled {
+                        isScrolling = false
+                    }
+                }
+            }
         }
         .onChange(of: expandedFeatures) {
             showAllExpanded = expandedFeatures.count == AppConstants.WhatsNewData.versions[selectedVersionIndex].features.count
         }
         .toolbar {
-            ToolbarItem(placement: .principal) {
-                headerView
-            }
-            
             ToolbarItem(placement: .bottomBar) {
                 navigatorArrow(direction: .left)
             }
@@ -101,6 +122,26 @@ struct WhatsNewView: View {
                 navigatorArrow(direction: .right)
             }
         }
+        .backgroundVisibility(Color(.systemGroupedBackground))
+        .modify { view in
+            if #available(iOS 26, *) {
+                view
+                    .safeAreaBar(edge: .top) {
+                        headerView
+                            .padding(.top, 70)
+                            .padding(.bottom, 20)
+                    }
+            } else {
+                view
+                    .safeAreaInset(edge: .top) {
+                        headerView
+                            .padding(.top, 70)
+                            .padding(.bottom, 20)
+                            .background(Color(.systemGroupedBackground))
+                    }
+            }
+        }
+        .ignoresSafeArea(edges: .top)
     }
     
     // MARK: - Header
@@ -124,7 +165,6 @@ struct WhatsNewView: View {
                 .animation(animation, value: selectedVersionIndex)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 70)
         .contentTransition(.numericText(countsDown: previousVersionIndex < selectedVersionIndex))
     }
     
@@ -184,7 +224,6 @@ struct WhatsNewView: View {
             .padding()
         }
         .scrollIndicators(.hidden)
-        .scrollTargetBehavior(.viewAligned)
         .animation(animation, value: expandedFeatures)
     }
     

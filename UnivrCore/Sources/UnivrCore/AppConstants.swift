@@ -106,7 +106,7 @@ public struct AppConstants: Sendable {
                         detailedDescription: "L'interfaccia di selezione del corso è stata completamente riscritta in un componente dedicato condiviso tra onboarding e impostazioni. La barra di ricerca ora ha un pulsante per cancellare il testo, i risultati si caricano in modo più fluido e lo stile è stato uniformato con sfondi adattivi al tema del sistema."
                     ),
                     WhatsNewFeature(
-                        icon: "bolt.fill",
+                        icon: "square.3.layers.3d.bottom.filled",
                         accentColor: .purple,
                         title: "Prestazioni in Background",
                         shortDescription: "L'elaborazione dei dati avviene ora interamente in background.",
@@ -169,14 +169,14 @@ public struct AppConstants: Sendable {
                         detailedDescription: "I nomi delle lezioni vengono ora formattati in modo intelligente: parole come \"Laboratorio\" o \"Teoria\" diventano tag colorati sotto il nome, le parentesi e le informazioni tecniche vengono estratte e semplificate. Il risultato è un nome più corto e leggibile a colpo d'occhio."
                     ),
                     WhatsNewFeature(
-                        icon: "rectangle.grid.1x2",
+                        icon: "sparkles.rectangle.stack",
                         accentColor: .orange,
                         title: "Card Lezione Ridisegnata",
                         shortDescription: "Nuovo layout con orario a sinistra, dettagli a destra e tag colorati.",
                         detailedDescription: "La scheda di ogni lezione ha un aspetto completamente nuovo: l'orario di inizio e la durata sono a sinistra, il nome del corso, l'aula e i tag a destra. Il gradiente è stato sostituito da un colore pieno proveniente dall'università, per un look più pulito e coerente."
                     ),
                     WhatsNewFeature(
-                        icon: "app.badge",
+                        icon: "app.grid",
                         accentColor: .purple,
                         title: "Prima Icona dell'App",
                         shortDescription: "Univr Calendar ha finalmente la sua icona personalizzata.",
@@ -204,14 +204,14 @@ public struct AppConstants: Sendable {
                         detailedDescription: "Ora puoi toccare qualsiasi lezione per aprire una schermata dettagliata con orario, docente, aula e una mappa interattiva che mostra la posizione approssimativa dell'edificio. Puoi anche toccare il titolo per vedere il nome completo del corso."
                     ),
                     WhatsNewFeature(
-                        icon: "hare",
+                        icon: "chart.line.uptrend.xyaxis",
                         accentColor: .orange,
                         title: "Performance Migliorate",
                         shortDescription: "Caricamento più veloce del 40% e transizioni fluide nella sheet.",
                         detailedDescription: "L'organizzazione dei dati è stata ottimizzata con un miglioramento di circa il 40% nei tempi di elaborazione. Molti valori vengono ora pre-calcolati al primo caricamento, così le schermate si aprono istantaneamente. Anche la sheet in basso ha nuove animazioni di opacità dinamiche che rendono le transizioni più naturali."
                     ),
                     WhatsNewFeature(
-                        icon: "arrow.triangle.2.circlepath",
+                        icon: "cylinder.split.1x2",
                         accentColor: .purple,
                         title: "Cache di Rete",
                         shortDescription: "I dati scaricati vengono salvati e aggiornati in automatico.",
@@ -232,14 +232,14 @@ public struct AppConstants: Sendable {
                 headline: "Avvio più veloce e design adattivo",
                 features: [
                     WhatsNewFeature(
-                        icon: "bolt.fill",
+                        icon: "hare",
                         accentColor: .blue,
                         title: "Avvio Rapido con la Cache",
                         shortDescription: "L'app carica i dati salvati e controlla aggiornamenti in automatico.",
                         detailedDescription: "Ora all'apertura l'app carica istantaneamente le lezioni salvate in precedenza, senza attendere la rete. In background viene verificata la disponibilità di aggiornamenti: se ci sono novità, un avviso ti permette di aggiornare i dati quando preferisci."
                     ),
                     WhatsNewFeature(
-                        icon: "antenna.radiowaves.left.and.right",
+                        icon: "network.badge.shield.half.filled",
                         accentColor: .orange,
                         title: "Rete Più Affidabile",
                         shortDescription: "Messaggi di errore chiari e una connessione più stabile.",
@@ -267,14 +267,14 @@ public struct AppConstants: Sendable {
                 headline: "Nuovo benvenuto e compatibilità iOS",
                 features: [
                     WhatsNewFeature(
-                        icon: "hand.point.up.left.and.text",
+                        icon: "rectangle.portrait.on.rectangle.portrait.angled",
                         accentColor: .blue,
                         title: "Pagina di Benvenuto",
                         shortDescription: "Una nuova schermata introduttiva apre l'onboarding.",
                         detailedDescription: "L'onboarding ora inizia con una pagina di benvenuto che presenta l'app e il suo scopo. Un modo più accogliente per guidarti nella configurazione iniziale, con la possibilità in futuro di includere un'animazione dedicata."
                     ),
                     WhatsNewFeature(
-                        icon: "arrow.left.arrow.right",
+                        icon: "hand.draw",
                         accentColor: .orange,
                         title: "Scorri le Settimane",
                         shortDescription: "Cambia settimana con uno swipe dal calendario compatto.",
@@ -323,7 +323,7 @@ public struct AppConstants: Sendable {
                         detailedDescription: "Il calendario di sistema è stato sostituito con uno personalizzato, pensato per adattarsi meglio all'app. Puoi navigare tra i mesi e selezionare qualsiasi giorno in modo più rapido e intuitivo."
                     ),
                     WhatsNewFeature(
-                        icon: "bolt.horizontal",
+                        icon: "network.badge.shield.half.filled",
                         accentColor: .orange,
                         title: "Rete più Moderna",
                         shortDescription: "Le chiamate di rete ora usano async/await per una maggiore affidabilità.",
@@ -351,7 +351,7 @@ public struct AppConstants: Sendable {
                         detailedDescription: "Univr Calendar nasce con tutto il necessario per partire: una schermata principale che mostra le lezioni del giorno, un onboarding guidato per scegliere anno accademico e corso di laurea, e le impostazioni per cambiare le tue preferenze in qualsiasi momento."
                     ),
                     WhatsNewFeature(
-                        icon: "calendar.badge.clock",
+                        icon: "calendar",
                         accentColor: .green,
                         title: "Pulsante Calendario",
                         shortDescription: "Si apre e chiude in automatico mentre scorri le lezioni.",
@@ -366,14 +366,14 @@ public struct AppConstants: Sendable {
                     ),
                     WhatsNewFeature(
                         icon: "person.text.rectangle",
-                        accentColor: .orange,
+                        accentColor: .purple,
                         title: "Matricola Intelligente",
                         shortDescription: "La scelta pari/dispari appare solo quando il corso lo richiede.",
                         detailedDescription: "L'app rileva automaticamente se il tuo corso prevede la distinzione tra matricole pari e dispari. Se non serve, la pagina viene saltata nell'onboarding e nascosta nelle impostazioni, rendendo tutto più semplice e veloce."
                     ),
                     WhatsNewFeature(
                         icon: "bolt.fill",
-                        accentColor: .purple,
+                        accentColor: .orange,
                         title: "Caricamenti Più Veloci",
                         shortDescription: "I dati vengono caricati una sola volta e riutilizzati ovunque.",
                         detailedDescription: "Anni, corsi e anni accademici vengono scaricati una volta e condivisi tra tutte le schermate. Le impostazioni non ricaricano più i dati se sono già disponibili, rendendo la navigazione più fluida e riducendo i tempi di attesa."
