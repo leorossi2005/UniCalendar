@@ -10,6 +10,26 @@
 import SwiftUI
 import UnivrCore
 
+extension AppColor {
+    var color: Color {
+        switch self {
+        case .blue: .blue
+        case .orange: .orange
+        case .purple: .purple
+        case .gray: .gray
+        case .green: .green
+        case .red: .red
+        case .teal: .teal
+        case .pink: .pink
+        case .yellow: .yellow
+        case .indigo: .indigo
+        case .mint: .mint
+        case .cyan: .cyan
+        case .brown: .brown
+        }
+    }
+}
+
 extension Color {
     init?(hex: String) {
         guard let components = HexColorParser.parse(hex) else { return nil }

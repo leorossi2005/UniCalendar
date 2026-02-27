@@ -251,3 +251,38 @@ extension Lesson {
     )
 }
 
+public enum AppColor: String, Sendable {
+    case blue, orange, purple, gray, green, red, teal, pink, yellow, indigo, mint, cyan, brown
+}
+
+public struct WhatsNewFeature: Identifiable, Sendable {
+    public let id = UUID()
+    public let icon: String
+    public let accentColor: AppColor
+    public let title: String
+    public let shortDescription: String
+    public let detailedDescription: String
+    
+    init(icon: String, accentColor: AppColor, title: String, shortDescription: String, detailedDescription: String) {
+        self.icon = icon
+        self.accentColor = accentColor
+        self.title = title
+        self.shortDescription = shortDescription
+        self.detailedDescription = detailedDescription
+    }
+}
+
+public struct WhatsNewVersion: Identifiable, Sendable {
+    public let id = UUID()
+    public let version: String
+    public let date: Date
+    public let headline: String
+    public let features: [WhatsNewFeature]
+    
+    init(version: String, date: String, headline: String, features: [WhatsNewFeature]) {
+        self.version = version
+        self.date = date.toDateModern() ?? Date()
+        self.headline = headline
+        self.features = features
+    }
+}
