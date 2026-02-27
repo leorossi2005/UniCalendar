@@ -405,6 +405,7 @@ struct WhatsNewView: View {
     }
     @State private var expandedFeatures: Set<UUID> = []
     @State private var showAllExpanded: Bool = false
+    @State private var dotWindowStart: Int = 0
     
     private var currentVersion: WhatsNewVersion? {
         guard WhatsNewData.versions.indices.contains(selectedVersionIndex) else { return nil }
@@ -444,10 +445,20 @@ struct WhatsNewView: View {
                 }
             }
         ))
+        .background(Color(.systemGroupedBackground))
         .animation(animation, value: selectedVersionIndex)
         .onChange(of: selectedVersionIndex) {
             expandedFeatures.removeAll()
             showAllExpanded = false
+            
+            let count = WhatsNewData.versions.count
+            let maxStart = max(0, count - 4)
+            let posInWindow = selectedVersionIndex - dotWindowStart
+            if posInWindow < 1 {
+                dotWindowStart = max(0, selectedVersionIndex - 1)
+            } else if posInWindow > 2 {
+                dotWindowStart = min(selectedVersionIndex - 2, maxStart)
+            }
         }
         .onChange(of: expandedFeatures) {
             showAllExpanded = expandedFeatures.count == WhatsNewData.versions[selectedVersionIndex].features.count
@@ -535,8 +546,7 @@ struct WhatsNewView: View {
                     .padding(.horizontal, 12)
                     .background(
                         Capsule()
-                            .fill(.background)
-                            .strokeBorder(.tertiary, lineWidth: 1)
+                            .fill(Color(.secondarySystemGroupedBackground))
                     )
                 }
                 .buttonStyle(.plain)
@@ -586,17 +596,24 @@ struct WhatsNewView: View {
         ZStack {
             if let version = currentVersion {
                 VStack(spacing: 6) {
-                    HStack(spacing: 8) {
-                        ForEach(Array(WhatsNewData.versions.enumerated()), id: \.element.id) { index, v in
+                    HStack(spacing: 0) {
+                        ForEach(Array(WhatsNewData.versions.enumerated()), id: \.element.id) { index, _ in
+                            let posInWindow = index - dotWindowStart
+                            let isVisible = posInWindow >= 0 && posInWindow <= 3
+                            let isEdgeSmall = (posInWindow == 0 && dotWindowStart > 0) || (posInWindow == 3 && dotWindowStart + 3 < WhatsNewData.versions.count - 1)
+                            let dotSize: CGFloat = isVisible ? (isEdgeSmall ? 5 : 7) : 0
+                            
                             Circle()
                                 .fill(index == selectedVersionIndex ? Color.primary : Color.secondary.opacity(0.3))
-                                .frame(width: index == selectedVersionIndex ? 8 : 6, height: index == selectedVersionIndex ? 8 : 6)
+                                .frame(width: dotSize, height: dotSize)
+                                .padding(.horizontal, isVisible ? 4 : 0)
                         }
                     }
+                    .animation(animation, value: dotWindowStart)
                     
                     Text(version.date, format: .dateTime.day().month(.abbreviated).year())
                         .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.primary)
                         .contentTransition(.numericText(countsDown: previousVersionIndex < selectedVersionIndex))
                 }
             }
@@ -609,6 +626,8 @@ struct WhatsNewView: View {
 // MARK: - Feature Card
 
 struct FeatureCard: View {
+    @Namespace var namespace
+    
     let feature: WhatsNewFeature
     let isExpanded: Bool
     let animation: Animation
@@ -616,7 +635,7 @@ struct FeatureCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 14) {
+            HStack(alignment: isExpanded ? .center : .top, spacing: 14) {
                 // Icon
                 Image(systemName: feature.icon)
                     .font(.title3)
@@ -635,9 +654,13 @@ struct FeatureCard: View {
                         .font(.headline)
                         .fontWeight(.semibold)
                     
-                    Text(feature.shortDescription)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                    if !isExpanded {
+                        Text(feature.shortDescription)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .matchedGeometryEffect(id: "text", in: namespace, properties: .position, anchor: .topLeading)
+                            .transition(.blurReplace.combined(with: .scale(2)))
+                    }
                 }
                 
                 Spacer(minLength: 0)
@@ -653,22 +676,17 @@ struct FeatureCard: View {
             
             // Expanded details
             if isExpanded, let details = feature.detailedDescription {
-                VStack(alignment: .leading, spacing: 14) {
-                    Rectangle()
-                        .fill(.tertiary)
-                        .frame(height: 1)
-                    
-                    Text(details)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+                Text(details)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .matchedGeometryEffect(id: "text", in: namespace, properties: .position, anchor: .topLeading)
+                    .transition(.blurReplace.combined(with: .scale(0.6)))
             }
         }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .fill(.background)
-                .strokeBorder(.tertiary, lineWidth: 1)
+                .fill(Color(.secondarySystemGroupedBackground))
         )
         .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
         .onTapGesture {
