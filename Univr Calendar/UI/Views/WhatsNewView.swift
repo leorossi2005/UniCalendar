@@ -592,9 +592,10 @@ struct WhatsNewView: View {
         .sensoryFeedback(.selection, trigger: selectedVersionIndex)
     }
     
+    @State var fixAppearWidth: Bool = true
     private var navigator: some View {
         ZStack {
-            if let version = currentVersion {
+            if let version = currentVersion, fixAppearWidth {
                 VStack(spacing: 6) {
                     HStack(spacing: 0) {
                         ForEach(Array(WhatsNewData.versions.enumerated()), id: \.element.id) { index, _ in
@@ -609,17 +610,26 @@ struct WhatsNewView: View {
                                 .padding(.horizontal, isVisible ? 4 : 0)
                         }
                     }
+                    .animation(animation, value: selectedVersionIndex)
                     .animation(animation, value: dotWindowStart)
                     
                     Text(version.date, format: .dateTime.day().month(.abbreviated).year())
                         .font(.caption2)
                         .foregroundStyle(.primary)
                         .contentTransition(.numericText(countsDown: previousVersionIndex < selectedVersionIndex))
+                        .animation(animation, value: selectedVersionIndex)
                 }
             }
         }
         .frame(maxWidth: .infinity)
-        .animation(animation, value: selectedVersionIndex)
+        .onAppear {
+            Task { @MainActor in
+                fixAppearWidth.toggle()
+                try await Task.sleep(for: .seconds(0.01))
+                fixAppearWidth.toggle()
+            }
+
+        }
     }
 }
 

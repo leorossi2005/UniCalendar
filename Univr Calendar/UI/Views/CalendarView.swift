@@ -351,10 +351,9 @@ struct CalendarView: View {
     
     // MARK: - Logic Methods
     private func openSettingsAction() {
-        //Haptics.play(.impact(weight: .light))
-        //openSettings = true
+        Haptics.play(.impact(weight: .light))
+        openSettings = true
         selectedDetent = .large
-        openWhatsNew = true
     }
     
     private func inizializeData() {
