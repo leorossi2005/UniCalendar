@@ -365,6 +365,7 @@ struct FeatureCard: View {
             Haptics.play(.impact(flexibility: .soft, intensity: 0.6))
             onToggle()
         }
+        .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 32, style: .continuous))
         .hoverEffect(.lift)
         .animation(animation, value: isExpanded)
     }
