@@ -113,7 +113,7 @@ public final class UniversityDataManager {
             if let NError = error as? NetworkError, case .offline = NError {
                 self.errorMessage = NError.errorDescription
             } else {
-                self.errorMessage = NSLocalizedString("Errore generico: \(error.localizedDescription)", comment: "")
+                self.errorMessage = String(localized: "Errore generico: \(error.localizedDescription)", comment: "")
             }
             
             throw error

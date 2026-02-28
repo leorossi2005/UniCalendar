@@ -224,7 +224,7 @@ public class CalendarViewModel {
             
             self.errorMessage = netError.localizedDescription
         } else {
-            self.errorMessage = NSLocalizedString("Errore generico: \(error.localizedDescription)", comment: "")
+            self.errorMessage = String(localized: "Errore generico: \(error.localizedDescription)", comment: "")
         }
         print("Debug Error: \(error)")
     }
