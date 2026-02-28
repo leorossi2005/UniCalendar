@@ -176,7 +176,8 @@ public struct AppConstants: Sendable {
                         detailedDescription: "La scheda di ogni lezione ha un aspetto completamente nuovo: l'orario di inizio e la durata sono a sinistra, il nome del corso, l'aula e i tag a destra. Il gradiente è stato sostituito da un colore pieno proveniente dall'università, per un look più pulito e coerente."
                     ),
                     WhatsNewFeature(
-                        icon: "app.grid",
+                        image: true,
+                        icon: "AppIconV0.6",
                         accentColor: .purple,
                         title: "Prima Icona dell'App",
                         shortDescription: "Univr Calendar ha finalmente la sua icona personalizzata.",

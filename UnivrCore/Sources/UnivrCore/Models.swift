@@ -257,13 +257,15 @@ public enum AppColor: String, Sendable {
 
 public struct WhatsNewFeature: Identifiable, Sendable {
     public let id = UUID()
+    public var image: Bool = false
     public let icon: String
     public let accentColor: AppColor
     public let title: String
     public let shortDescription: String
     public let detailedDescription: String
     
-    init(icon: String, accentColor: AppColor, title: String, shortDescription: String, detailedDescription: String) {
+    init(image: Bool = false, icon: String, accentColor: AppColor, title: String, shortDescription: String, detailedDescription: String) {
+        self.image = image
         self.icon = icon
         self.accentColor = accentColor
         self.title = title

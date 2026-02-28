@@ -301,16 +301,26 @@ struct FeatureCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: isExpanded ? .center : .top, spacing: 14) {
                 // Icon
-                Image(systemName: feature.icon)
-                    .font(.title3)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(feature.accentColor.color)
-                    .symbolEffect(.bounce, value: isExpanded)
-                    .frame(width: 48, height: 48)
-                    .background {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(feature.accentColor.color.opacity(0.12))
+                Group {
+                    if feature.image {
+                        Image(feature.icon)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: isExpanded ? 48 : 30.4, height: isExpanded ? 48 : 30.4)
+                            .clipShape(RoundedRectangle(cornerRadius: 32 * 0.225, style: .continuous))
+                    } else {
+                        Image(systemName: feature.icon)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(feature.accentColor.color)
+                            .symbolEffect(.bounce, value: isExpanded)
                     }
+                }
+                .frame(width: 48, height: 48)
+                .background {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(feature.accentColor.color.opacity(0.12))
+                }
                 
                 // Content
                 VStack(alignment: .leading, spacing: 4) {
