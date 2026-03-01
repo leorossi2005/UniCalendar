@@ -8,14 +8,10 @@
 //
 
 import Foundation
-#if canImport(Observation)
 import Observation
-#endif
 
 @MainActor
-#if canImport(Observation)
 @Observable
-#endif
 public class UserSettings {
     public static let shared = UserSettings()
     

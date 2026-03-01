@@ -102,7 +102,7 @@
 			mainGroup = A74C00842E960653001AB35D;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				A72DAEEB2EE0B35300F86639 /* XCLocalSwiftPackageReference "UnivrCore" */,
+				A743F01A2F54D1D800E14C97 /* XCLocalSwiftPackageReference "../UnivrCore" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A74C008E2E960653001AB35D /* Products */;
@@ -395,9 +395,9 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		A72DAEEB2EE0B35300F86639 /* XCLocalSwiftPackageReference "UnivrCore" */ = {
+		A743F01A2F54D1D800E14C97 /* XCLocalSwiftPackageReference "../UnivrCore" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = UnivrCore;
+			relativePath = ../UnivrCore;
 		};
 /* End XCLocalSwiftPackageReference section */
 

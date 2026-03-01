@@ -6,9 +6,7 @@
 //
 
 import Foundation
-#if canImport(Observation)
 import Observation
-#endif
 
 public struct CalendarCell: Identifiable, Equatable, Sendable {
     public var id: Date { date }
@@ -28,9 +26,7 @@ public struct FractionDay: Identifiable, Equatable, Hashable, Sendable {
 }
 
 @MainActor
-#if canImport(Observation)
 @Observable
-#endif
 public class DatePickerCache {
     public static let shared = DatePickerCache()
     

@@ -6,14 +6,10 @@
 //
 
 import Foundation
-#if canImport(Observation)
 import Observation
-#endif
 
 @MainActor
-#if canImport(Observation)
 @Observable
-#endif
 public final class UniversityDataManager {
     public var years: [Year] = []
     public var courses: [Corso] = []

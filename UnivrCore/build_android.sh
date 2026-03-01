@@ -4,7 +4,7 @@
 
 clear
 # 1. Definisci le variabili per non ripeterle
-SDK_NAME="swift-6.3-DEVELOPMENT-SNAPSHOT-2025-12-07-a_android"
+SDK_NAME="swift-6.3-DEVELOPMENT-SNAPSHOT-2026-02-27-a_android"
 BUILD_DIR=".build-android"
 
 # 2. Pulisci la vecchia build (rimuove solo la cartella Android, non quella di Xcode!)
@@ -17,7 +17,5 @@ echo "🚀  Compilo per Android..."
 swift build \
     --build-path "$BUILD_DIR" \
     --swift-sdk "$SDK_NAME" \
-    --triple aarch64-unknown-linux-android
-    
-echo "🧹  Elimino per ora la build Android..."
-rm -rf "$BUILD_DIR"
+    --triple aarch64-unknown-linux-android28 \
+    --static-swift-stdlib

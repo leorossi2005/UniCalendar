@@ -8,13 +8,10 @@
 //
 
 import Foundation
+import Observation
 
 #if canImport(Network)
 import Network
-#endif
-
-#if canImport(Observation)
-import Observation
 #endif
 
 #if canImport(FoundationNetworking)
@@ -27,9 +24,7 @@ public enum NetworkStatus: Sendable, Equatable {
 }
 
 @MainActor
-#if canImport(Observation)
 @Observable
-#endif
 public final class NetworkMonitor: @unchecked Sendable {
 
     public static let shared = NetworkMonitor()
@@ -56,8 +51,10 @@ public final class NetworkMonitor: @unchecked Sendable {
         #if canImport(Network)
         monitor.cancel()
         #else
-        pollTimer?.invalidate()
-        pollTimer = nil
+        MainActor.assumeIsolated {
+            pollTimer?.invalidate()
+            pollTimer = nil
+        }
         #endif
     }
 

@@ -16,6 +16,7 @@
 
 ## Swift Package Manager
 .build/
+.build-android/
 Packages/
 Package.resolved
 

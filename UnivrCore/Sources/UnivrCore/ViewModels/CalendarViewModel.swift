@@ -6,9 +6,7 @@
 //
 
 import Foundation
-#if canImport(Observation)
 import Observation
-#endif
 
 struct YearStructure: Sendable {
     let year: Int
@@ -17,9 +15,7 @@ struct YearStructure: Sendable {
 }
 
 @MainActor
-#if canImport(Observation)
 @Observable
-#endif
 public class CalendarViewModel {
     public var lessons: [Lesson] = []
     public var days: [[Lesson]] = []
