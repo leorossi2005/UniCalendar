@@ -27,9 +27,6 @@ let package = Package(
                 .enableUpcomingFeature("StrictConcurrency")
             ]
         ),
-        //.testTarget(
-        //    name: "UnivrCoreTests",
-        //    dependencies: ["UnivrCore"]
-        //)
+        
     ]
 )
