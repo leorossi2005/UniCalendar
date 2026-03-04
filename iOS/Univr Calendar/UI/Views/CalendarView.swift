@@ -574,24 +574,14 @@ struct CalendarViewDay: View {
         ScrollView {
             VStack(spacing: 10) {
                 ForEach(filteredLessons) { lesson in
-                    if lesson.tipo != "pause" && lesson.tipo != "chiusura_type" {
-                        LessonCard(lesson: lesson)
-                            .onTapGesture {
+                    ScheduleRow(lesson: lesson)
+                        .onTapGesture {
+                            if lesson.category == .regular {
                                 Haptics.play(.impact(weight: .light, intensity: 0.5))
                                 selectedLesson = lesson
                                 selectedDetent = .large
                             }
-                    } else {
-                        HStack(alignment: .bottom) {
-                            Image(systemName: .cupDynamic)
-                                .font(.system(size: 40))
-                            Text(lesson.durationCalculated)
-                                .font(.system(size: 30))
-                                .italic()
-                                .bold()
                         }
-                        .foregroundStyle(.secondary)
-                    }
                 }
             }
         }

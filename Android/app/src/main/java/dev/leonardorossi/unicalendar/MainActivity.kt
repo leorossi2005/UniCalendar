@@ -1,47 +1,71 @@
 package dev.leonardorossi.unicalendar
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import dev.leonardorossi.unicalendar.ui.theme.UnivrCalendarTheme
+import dev.leonardorossi.univrcore.CacheManager
+import dev.leonardorossi.univrcore.CalendarViewModel
+import dev.leonardorossi.univrcore.UserSettings
 
 class MainActivity : ComponentActivity() {
+    private val cacheManager: CacheManager by lazy {
+        CacheManager.getInstance(applicationContext.cacheDir)
+    }
+    private val viewModel: CalendarViewModel by lazy {
+        CalendarViewModel(
+            cacheManager = cacheManager
+        )
+    }
+
+    private val settings by lazy {
+        UserSettings.getInstance(applicationContext)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
+        settings.setSelectedYear("2025")
+        settings.setSelectedCourse("1348")
+        settings.setSelectedAcademicYear("999|1")
+        settings.setMatricola("dispari")
+
         setContent {
-            UnivrCalendarTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+            ProvideUserSettings(context = this) {
+                CalendarScreen(
+                    viewModel
+                )
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+val LocalUserSettings = compositionLocalOf<UserSettings> {
+    error("UserSettings non fornito. Avvolgi il contenuto in ProvideUserSettings.")
 }
 
-@Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
-    UnivrCalendarTheme {
-        Greeting("Android")
+fun ProvideUserSettings(
+    context: Context,
+    content: @Composable () -> Unit
+) {
+    val userSettings = UserSettings.getInstance(context)
+
+    CompositionLocalProvider(
+        LocalUserSettings provides userSettings
+    ) {
+        content()
     }
 }

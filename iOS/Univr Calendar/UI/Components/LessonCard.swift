@@ -11,14 +11,12 @@ import SwiftUI
 import UnivrCore
 
 struct LessonCard: View {
-    @Environment(\.colorScheme) var colorScheme
-    
     let lesson: Lesson
     
-    private var backgroundColor: Color { Color(hex: lesson.color) ?? Color(.systemGray6) }
+    private var backgroundColor: Color { lesson.annullato ? Color(.systemBackground) : Color(hex: lesson.color) ?? Color(.systemBackground) }
     
     var body: some View {
-        HStack(spacing: 20) {
+        HStack(alignment: .top, spacing: 20) {
             timeInfo
             lessonInfo
         }
@@ -33,14 +31,8 @@ struct LessonCard: View {
     // MARK: - Components
     private var backgroundLayer: some View {
         RoundedRectangle(cornerRadius: 35, style: .continuous)
-            .fill(lesson.annullato ? Color(.systemBackground) : backgroundColor)
-            .overlay {
-                if lesson.annullato {
-                    RoundedRectangle(cornerRadius: 35, style: .continuous)
-                        .strokeBorder(.secondary, lineWidth: 0.5)
-                }
-            }
-        
+            .fill(backgroundColor)
+            .strokeBorder(.secondary.opacity(lesson.annullato ? 1 : 0), lineWidth: 0.5)
     }
     
     private var timeInfo: some View {
@@ -52,10 +44,9 @@ struct LessonCard: View {
                 Label(lesson.durationCalculated, systemImage: "clock")
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(Color.black.opacity(0.1))
+                    .background(.black.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
-            Spacer()
         }
         .foregroundStyle(lesson.annullato ? .primary : Color.black)
     }
@@ -63,22 +54,19 @@ struct LessonCard: View {
     private var lessonInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(lesson.cleanName)
-                .foregroundStyle(lesson.annullato ? .primary : Color.black)
                 .font(.headline)
-                .multilineTextAlignment(.leading)
                 .strikethrough(lesson.annullato)
             if !lesson.annullato {
                 Text(lesson.formattedClassroom)
                     .foregroundStyle(Color(white: 0.3))
                     .font(.subheadline)
-                    .multilineTextAlignment(.leading)
                 
                 if !lesson.tags.isEmpty {
                     tagsList
                 }
             }
-            Spacer()
         }
+        .foregroundStyle(lesson.annullato ? .primary : Color.black)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
@@ -90,14 +78,41 @@ struct LessonCard: View {
                     .font(.caption2)
                     .padding(.horizontal, 7)
                     .padding(.vertical, 3)
-                    .background {
-                        ZStack {
-                            Color.black.opacity(0.1)
-                            backgroundColor.opacity(0.3)
-                        }
-                    }
+                    .background(backgroundColor.opacity(0.3))
+                    .background(.black.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
             }
+        }
+    }
+}
+
+struct BreakCard: View {
+    let lesson: Lesson
+    
+    var body: some View {
+        HStack(alignment: .bottom) {
+            Image(systemName: .cupDynamic)
+                .font(.system(size: 40))
+            Text(lesson.durationCalculated)
+                .font(.system(size: 30))
+                .italic()
+                .bold()
+        }
+        .foregroundStyle(Color(white: 0.35))
+    }
+}
+
+struct ScheduleRow: View {
+    let lesson: Lesson
+    
+    var body: some View {
+        switch lesson.category {
+        case .regular:
+            LessonCard(lesson: lesson)
+        case .pause:
+            BreakCard(lesson: lesson)
+        case .closure:
+            EmptyView()
         }
     }
 }
@@ -105,19 +120,7 @@ struct LessonCard: View {
 #Preview {
     ScrollView {
         ForEach([Lesson.sample, Lesson.pausaSample, Lesson.sample]) { lesson in
-            if lesson.tipo != "pause" && lesson.tipo != "chiusura_type" {
-                LessonCard(lesson: lesson)
-            } else {
-                HStack(alignment: .bottom) {
-                    Image(systemName: .cupDynamic)
-                        .font(.system(size: 40))
-                    Text(lesson.durationCalculated)
-                        .font(.system(size: 30))
-                        .italic()
-                        .bold()
-                }
-                .foregroundStyle(Color(white: 0.35))
-            }
+            ScheduleRow(lesson: lesson)
         }
     }
     .environment(UserSettings.shared)

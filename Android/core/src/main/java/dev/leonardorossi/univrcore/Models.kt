@@ -52,11 +52,18 @@ data class Lesson(
     val colorIndex: String = "",
     val codiceInsegnamento: String = "",
     var color: String = "",
-    val infoAulaHTML: String = "",
-    val durationCalculated: String = "",
-    val cleanName: String = "",
-    val tags: List<String> = emptyList()
+    val infoAulaHTML: String = ""
 ) {
+    val cleanName: String
+    val tags: List<String>
+    val durationCalculated: String
+
+    init {
+        val (formattedName, formattedTags) = LessonNameFormatter.format(nomeInsegnamento)
+        this.cleanName = formattedName
+        this.tags = formattedTags
+        this.durationCalculated = calculateDuration(orario)
+    }
 
     val id: Int
         get() {
@@ -95,11 +102,23 @@ data class Lesson(
             return match.groupValues[1].toIntOrNull()
         }
 
-    @Serializable
+    val category: EventCategory
+        get() = when (tipo) {
+            "pause" -> EventCategory.PAUSE
+            "chiusura_type" -> EventCategory.CLOSURE
+            else -> EventCategory.REGULAR
+        }
+
     enum class GruppoMatricola {
-        @SerialName("pari") PARI,
-        @SerialName("dispari") DISPARI,
-        @SerialName("tutti") TUTTI
+        PARI,
+        DISPARI,
+        TUTTI
+    }
+
+    enum class EventCategory {
+        REGULAR,
+        PAUSE,
+        CLOSURE
     }
 
     companion object {
@@ -193,9 +212,6 @@ object LessonSerializer : KSerializer<Lesson> {
 
         val infoAulaHTML = decodeInfoAula(json["informazioni_lezione"])
 
-        val (cleanName, tags) = LessonNameFormatter.format(nomeInsegnamento)
-        val durationCalculated = Lesson.calculateDuration(orario)
-
         return Lesson(
             nomeInsegnamento = nomeInsegnamento,
             nameOriginal = nameOriginal,
@@ -208,10 +224,7 @@ object LessonSerializer : KSerializer<Lesson> {
             colorIndex = colorIndex,
             codiceInsegnamento = codiceInsegnamento,
             color = color,
-            infoAulaHTML = infoAulaHTML,
-            durationCalculated = durationCalculated,
-            cleanName = cleanName,
-            tags = tags
+            infoAulaHTML = infoAulaHTML
         )
     }
 

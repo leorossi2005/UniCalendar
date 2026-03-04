@@ -93,8 +93,20 @@ public struct Lesson: Codable, Sendable, Hashable, Identifiable, Equatable {
         return Int(match.1)
     }
     
+    public var category: EventCategory {
+        switch tipo {
+        case "pause": return .pause
+        case "chiusura_type": return .closure
+        default: return .regular
+        }
+    }
+    
     public enum GruppoMatricola: String, Codable, Sendable {
         case pari, dispari, tutti
+    }
+    
+    public enum EventCategory: Sendable, Equatable {
+        case regular, pause, closure
     }
 
     public init(from decoder: Decoder) throws {
