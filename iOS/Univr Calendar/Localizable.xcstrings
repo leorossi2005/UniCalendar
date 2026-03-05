@@ -616,6 +616,7 @@
       }
     },
     "Scegli un corso" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

@@ -228,6 +228,10 @@ public struct Corso: Codable, Sendable, Equatable {
         guard !searchText.isEmpty else { return courses }
         return courses.filter { $0.label.localizedCaseInsensitiveContains(searchText) }
     }
+    
+    public static func label(for value: String, in courses: [Corso]) -> String {
+        courses.first { $0.valore == value }?.label ?? ""
+    }
 }
 
 public struct Anno: Codable, Sendable, Equatable {

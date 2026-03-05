@@ -13,143 +13,108 @@ import UnivrCore
 struct CourseSelector: View {
     @Binding var isFocused: Bool
     @Binding var selectedCourse: String
-    
     let courses: [Corso]
     
-    @State var searchText: String = ""
+    @State private var sm = CourseSearchManager()
     @FocusState private var internalFocus: Bool
     
-    private var filteredCourses: [Corso] { Corso.filter(courses, with: searchText) }
-    private var isSearching: Bool { !searchText.isEmpty || internalFocus }
+    private var isSearching: Bool { !sm.searchText.isEmpty || internalFocus }
     
     var body: some View {
-        VStack {
-            searchBar
-                .padding(.top)
-                .padding(.horizontal)
-            if !isSearching {
-                defaultMenu
-                    .padding(.horizontal)
-                    .padding(.bottom)
-            } else {
-                searchResultsList
-                    .padding(.horizontal)
-                    .padding(.bottom)
+        VStack(spacing: 16) {
+            ZStack {
+                searchBar
+                    .opacity(isSearching || selectedCourse == "0" ? 1 : 0)
+                if !isSearching, selectedCourse != "0" {
+                    Text(sm.labelForCourse(selectedCourse))
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity, minHeight: 50)
+                        .padding()
+                        .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 25))
+                        .onTapGesture { internalFocus = true }
+                }
+            }
+            if isSearching {
+                searchResults
             }
         }
         .disabled(courses.isEmpty)
-        .onChange(of: internalFocus) { _, newValue in
-            if isFocused != newValue {
-                if newValue == true {
-                    Haptics.play(.impact(weight: .light))
-                }
-                isFocused = newValue
-            }
+        .onChange(of: courses) { sm.courses = $1 }
+        .onAppear { sm.courses = courses }
+        .onChange(of: internalFocus) { _, new in
+            guard isFocused != new else { return }
+            if new { Haptics.play(.impact(weight: .light)) }
+            isFocused = new
         }
-        .onChange(of: isFocused) { _, newValue in
-            if internalFocus != newValue {
-                internalFocus = newValue
-            }
-        }
+        .onChange(of: isFocused) { if internalFocus != $1 { internalFocus = $1 } }
     }
     
-    // MARK: - Componets
+    // MARK: - Components
+    
     private var searchBar: some View {
         HStack {
-            TextField("Cerca un corso", text: $searchText)
+            TextField("Cerca un corso", text: $sm.searchText)
                 .keyboardType(.asciiCapable)
                 .autocorrectionDisabled()
                 .focused($internalFocus)
                 .frame(height: 50)
                 .padding(.horizontal)
-                .buttonStyle(.borderless)
                 .submitLabel(.done)
-                .background(Color(.tertiarySystemFill))
-                .clipShape(RoundedRectangle(cornerRadius: 25))
+                .multilineTextAlignment(.leading)
+                .background(Color(.tertiarySystemFill), in: .capsule)
                 .overlay(alignment: .trailing) {
-                    if !searchText.isEmpty {
-                        let size = 17.5
+                    if !sm.searchText.isEmpty {
                         Button {
                             Haptics.play(.impact(flexibility: .rigid, intensity: 1))
                             withAnimation(nil) {
-                                searchText = ""
+                                sm.clearSearch()
                                 internalFocus = true
                             }
                         } label: {
-                            ZStack {
-                                Circle()
-                                    .fill(Color(.systemGray))
-                                    .frame(width: size, height: size)
-
-                                Image(systemName: "xmark")
-                                    .font(Font.system(size: size / 2))
-                                    .bold()
-                                    .blendMode(.destinationOut)
-                            }
-                            .compositingGroup()
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.gray)
+                                .padding(.trailing, 16)
                         }
-                        .buttonStyle(.borderless)
-                        .padding(.trailing, (50 - size) / 2)
+                        .buttonStyle(.plain)
                     }
                 }
             if internalFocus {
-                Button(action: {
+                Button {
                     Haptics.play(.impact(flexibility: .solid, intensity: 1))
                     withAnimation(nil) {
-                        searchText = ""
+                        sm.clearSearch()
                         internalFocus = false
                     }
-                }) {
+                } label: {
                     Image(systemName: "xmark")
-                        .bold()
+                        .font(.title2)
                         .frame(width: 50, height: 50)
-                        .background(Color(.tertiarySystemFill))
-                        .clipShape(RoundedRectangle(cornerRadius: 25))
+                        .background(Color(.tertiarySystemFill), in: .circle)
                 }
-                .tint(.primary)
                 .buttonStyle(.borderless)
+                .tint(.primary)
             }
         }
-        .multilineTextAlignment(.leading)
     }
     
-    private var defaultMenu: some View {
-        Menu {
-            courseButton(value: "0", label: "Scegli un corso")
-            ForEach(courses, id: \.valore) { course in
-                courseButton(value: course.valore, label: LocalizedStringKey(course.label))
-            }
-        } label: {
-            ZStack {
-                if courses.isEmpty {
-                    ProgressView()
-                } else {
-                    Text(courses.first{$0.valore == selectedCourse}?.label ?? String(localized: "Scegli un corso"))
-                }
-            }
-            .frame(height: 100)
-            .frame(maxWidth: .infinity)
-            .background {
-                RoundedRectangle(cornerRadius: 25)
-                    .fill(Color(.tertiarySystemFill))
-            }
-        }
-        .tint(.primary)
-    }
-    
-    private var searchResultsList: some View {
-        Group {
-            if !filteredCourses.isEmpty {
+    private var searchResults: some View {
+        let filtered = sm.filteredCourses
+        return Group {
+            if filtered.isEmpty {
+                Text("Nessun corso trovato")
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .foregroundStyle(.secondary)
+            } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(Array(filteredCourses.enumerated()), id: \.element.valore) { index, course in
+                        ForEach(filtered, id: \.valore) { course in
                             Button {
-                                if course.valore != selectedCourse {
-                                    Haptics.play(.selection)
-                                    searchText = ""
-                                    internalFocus = false
-                                    selectedCourse = course.valore
-                                }
+                                guard course.valore != selectedCourse else { return }
+                                Haptics.play(.selection)
+                                selectedCourse = course.valore
+                                sm.clearSearch()
+                                internalFocus = false
                             } label: {
                                 HStack(spacing: 16) {
                                     Image(systemName: "checkmark")
@@ -159,50 +124,29 @@ struct CourseSelector: View {
                                         .multilineTextAlignment(.leading)
                                 }
                                 .padding(16)
+                                .contentShape(.rect)
                             }
-                            .buttonStyle(.borderless)
+                            .buttonStyle(.plain)
                             .tint(.primary)
-                            if index < filteredCourses.count - 1  {
+                            
+                            if course != filtered.last {
                                 Divider()
                             }
                         }
                     }
                 }
-                .frame(minHeight: 150)
-                .frame(maxHeight: 250)
-            } else {
-                Text("Nessun corso trovato")
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .foregroundStyle(.secondary)
+                .frame(minHeight: 150, maxHeight: 250)
             }
         }
-        .background {
-            RoundedRectangle(cornerRadius: 25)
-                .fill(Color(.tertiarySystemFill))
-        }
-    }
-    
-    // MARK: - Logic
-    private func courseButton(value: String, label: LocalizedStringKey) -> some View {
-        Button {
-            selectedCourse = value
-        } label: {
-            HStack {
-                if selectedCourse == value {
-                    Image(systemName: "checkmark")
-                }
-                Text(label)
-            }
-        }
+        .background(Color(.tertiarySystemFill))
+        .clipShape(.rect(cornerRadius: 25))
     }
 }
 
 #Preview {
     @Previewable @State var selectedCourse: String = "0"
     @Previewable @State var isFocused: Bool = false
-    let courses: [Corso] = []
     
-    CourseSelector(isFocused: $isFocused, selectedCourse: $selectedCourse, courses: courses)
+    CourseSelector(isFocused: $isFocused, selectedCourse: $selectedCourse, courses: [])
         .environment(UserSettings.shared)
 }

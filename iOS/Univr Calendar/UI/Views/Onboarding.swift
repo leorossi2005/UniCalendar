@@ -101,6 +101,7 @@ struct Onboarding: View {
                             selectedCourse: $settings.selectedCourse,
                             courses: viewModel.courses
                         )
+                        .padding()
                     },
                     bottomPadding: safeAreas.bottom,
                     buttonTitle: "Continua",

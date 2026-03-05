@@ -66,6 +66,7 @@ struct LessonCard: View {
                 }
             }
         }
+        .multilineTextAlignment(.leading)
         .foregroundStyle(lesson.annullato ? .primary : Color.black)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
