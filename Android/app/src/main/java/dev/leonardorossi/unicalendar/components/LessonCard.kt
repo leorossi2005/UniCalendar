@@ -1,6 +1,5 @@
 package dev.leonardorossi.unicalendar.components
 
-import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -78,6 +77,7 @@ fun TimeInfo(
         if (!lesson.annullato) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .background(
                         color = Color.Black.copy(alpha = 0.1f),
@@ -90,15 +90,11 @@ fun TimeInfo(
             ) {
                 OutlinedRoundedSymbol(
                     icon = "schedule",
-                    size = MaterialTheme.typography.bodyLarge.fontSize.value.dp,
-                    modifier = Modifier
-                        .align(Alignment.CenterVertically)
+                    size = MaterialTheme.typography.bodyLarge.fontSize.value.dp
                 )
                 Text(
                     text = lesson.durationCalculated,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier
-                        .align(Alignment.CenterVertically)
+                    style = MaterialTheme.typography.bodyLarge
                 )
             }
         }
