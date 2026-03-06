@@ -264,6 +264,10 @@ data class Corso(
                 it.label.contains(searchText, ignoreCase = true)
             }
         }
+
+        fun label(value: String, courses: List<Corso>): String {
+            return courses.firstOrNull { it.valore == value }?.label ?: ""
+        }
     }
 }
 

@@ -108,7 +108,7 @@ struct CourseSelector: View {
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(filtered, id: \.valore) { course in
+                        ForEach(Array(filtered.enumerated()), id: \.element.valore) { index, course in
                             Button {
                                 guard course.valore != selectedCourse else { return }
                                 Haptics.play(.selection)
@@ -129,7 +129,7 @@ struct CourseSelector: View {
                             .buttonStyle(.plain)
                             .tint(.primary)
                             
-                            if course != filtered.last {
+                            if index != filtered.count - 1 {
                                 Divider()
                             }
                         }
