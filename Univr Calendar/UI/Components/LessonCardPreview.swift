@@ -71,19 +71,6 @@ struct LessonCardPreview: View {
                     icon: "mappin"
                 )
             }
-            
-            //Divider()
-            //    .padding(.vertical, 4)
-            //
-            //Button {} label: {
-            //    Text("Visualizza dettagli completi")
-            //        .frame(maxWidth: .infinity)
-            //        .foregroundStyle(.black)
-            //        .fontWeight(.semibold)
-            //        .padding(12)
-            //}
-            //.glassProminentIfAvailable()
-            //.tint(backgroundColor)
         }
         .padding(24)
         .frame(width: UIApplication.shared.screenSize.width, alignment: .leading)

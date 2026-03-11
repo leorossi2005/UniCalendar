@@ -745,6 +745,16 @@
         }
       }
     },
+    "Vedi più dettagli" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show more details"
+          }
+        }
+      }
+    },
     "Vuoi resettare l'app?" : {
       "localizations" : {
         "en" : {

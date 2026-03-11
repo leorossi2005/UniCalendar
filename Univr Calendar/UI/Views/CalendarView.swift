@@ -591,6 +591,13 @@ struct CalendarViewDay: View {
                                     }) {
                                         Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
                                     }
+                                    Button(action: {
+                                        Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                        selectedLesson = lesson
+                                        selectedDetent = .large
+                                    }) {
+                                        Label("Vedi più dettagli", systemImage: "ellipsis")
+                                    }
                                 },
                                 preview: {
                                     LessonCardPreview(lesson: lesson)
