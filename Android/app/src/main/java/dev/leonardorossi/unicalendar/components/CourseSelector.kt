@@ -15,16 +15,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +41,7 @@ import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -58,10 +60,15 @@ fun CourseSelector(
     onSelectedCourseChange: (String) -> Unit,
     courses: List<Corso>
 ) {
-    var sm by remember { mutableStateOf(CourseSelectorManager()) }
+    val sm = remember { CourseSelectorManager() }
     val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
 
     val searchText by sm.searchText.collectAsStateWithLifecycle()
+    // Usiamo una variabile locale per i corsi filtrati calcolati reattivamente
+    val filteredCourses = remember(courses, searchText) {
+        Corso.filter(courses, searchText)
+    }
 
     val isSearching: Boolean = searchText.isNotEmpty() || isFocused
 
@@ -73,7 +80,7 @@ fun CourseSelector(
         if (isFocused) {
             focusRequester.requestFocus()
         } else {
-            focusRequester.freeFocus()
+            focusManager.clearFocus()
         }
     }
 
@@ -97,7 +104,7 @@ fun CourseSelector(
                 },
                 isFocused = isFocused,
                 modifier = Modifier
-                    .alpha(if (isSearching || selectedCourse === "0") 1f else 0f)
+                    .alpha(if (isSearching || selectedCourse == "0") 1f else 0f)
             )
             if (!isSearching && selectedCourse != "0") {
                 Text(
@@ -113,13 +120,22 @@ fun CourseSelector(
                         )
                         .padding(16.dp)
                         .clickable {
-                            focusRequester.requestFocus()
+                            onIsFocusedChange(true)
                         }
                 )
             }
         }
         if (isSearching) {
-            SearchResults(sm, selectedCourse, onSelectedCourseChange, focusRequester)
+            SearchResults(
+                filtered = filteredCourses,
+                selectedCourse = selectedCourse,
+                onSelectedCourseChange = {
+                    //TODO: Haptics
+                    onSelectedCourseChange(it)
+                    sm.clearSearch()
+                    onIsFocusedChange(false)
+                }
+            )
         }
     }
 }
@@ -134,6 +150,8 @@ fun SearchBar(
     isFocused: Boolean,
     modifier: Modifier
 ) {
+    val focusManager = LocalFocusManager.current
+
     Row(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = modifier
@@ -149,6 +167,11 @@ fun SearchBar(
                 keyboardType = KeyboardType.Ascii,
                 autoCorrectEnabled = false,
                 imeAction = ImeAction.Done
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                }
             ),
             trailingIcon = {
                 if (searchText.isNotEmpty()) {
@@ -173,7 +196,7 @@ fun SearchBar(
         )
         if (isFocused) {
             Box(
-                contentAlignment = Alignment.Center, // Centra l'icona perfettamente al centro
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxHeight()
                     .aspectRatio(1f)
@@ -185,7 +208,7 @@ fun SearchBar(
                     .clickable {
                         //TODO: Haptics
                         sm.clearSearch()
-                        focusRequester.freeFocus()
+                        focusManager.clearFocus()
                     }
             ) {
                 OutlinedRoundedSymbol(
@@ -199,13 +222,10 @@ fun SearchBar(
 
 @Composable
 fun SearchResults(
-    sm: CourseSelectorManager,
+    filtered: List<Corso>,
     selectedCourse: String,
-    onSelectedCourseChange: (String) -> Unit,
-    focusRequester: FocusRequester
+    onSelectedCourseChange: (String) -> Unit
 ) {
-    val filtered = sm.filteredCourses
-
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(25.dp))
@@ -230,20 +250,16 @@ fun SearchResults(
                 itemsIndexed(filtered) { index, course ->
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                if (course.valore != selectedCourse) {
-                                    //TODO: Haptics
-                                    onSelectedCourseChange(course.valore)
-                                    sm.clearSearch()
-                                    focusRequester.freeFocus()
-                                }
+                                onSelectedCourseChange(course.valore)
                             }
                             .padding(16.dp)
                     ) {
                         OutlinedRoundedSymbol(
-                            icon = "checkmark",
+                            icon = "check",
                             modifier = Modifier
                                 .alpha(if (selectedCourse == course.valore) 1f else 0f)
                         )

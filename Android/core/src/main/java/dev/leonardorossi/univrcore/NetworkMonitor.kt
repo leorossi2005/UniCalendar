@@ -48,8 +48,7 @@ class NetworkMonitor private constructor(context: Context) {
         }
 
         override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
-            val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-                    capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             _status.value = if (hasInternet) NetworkStatus.CONNECTED else NetworkStatus.DISCONNECTED
         }
     }
@@ -64,9 +63,7 @@ class NetworkMonitor private constructor(context: Context) {
     private fun getCurrentStatus(): NetworkStatus {
         val network = connectivityManager.activeNetwork ?: return NetworkStatus.DISCONNECTED
         val caps = connectivityManager.getNetworkCapabilities(network) ?: return NetworkStatus.DISCONNECTED
-        return if (caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-        ) {
+        return if (caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
             NetworkStatus.CONNECTED
         } else {
             NetworkStatus.DISCONNECTED

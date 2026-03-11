@@ -84,6 +84,14 @@ class UniversityDataManager(
         _academicYears.value = selectedCourse.elencoAnni
     }
 
+    fun clearCourses() {
+        _courses.value = emptyList()
+    }
+
+    fun clearAcademicYears() {
+        _academicYears.value = emptyList()
+    }
+
     fun checkForMatricola(academicYearValue: String): Boolean {
         val anno = _academicYears.value.firstOrNull { it.valore == academicYearValue } ?: return false
         return anno.elencoInsegnamenti.any { item ->
