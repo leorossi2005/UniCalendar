@@ -13,17 +13,12 @@ import CoreLocation
 import UnivrCore
 import EventKit
 
-struct CalendarEventWrapper: Identifiable, Equatable {
-    let id = UUID()
-    let event: EKEvent
-}
-
 struct LessonDetailsView: View {
     @Binding var lesson: Lesson?
     @Binding var lockSheet: Bool
     
     @State private var showOriginalName: Bool = false
-    @State private var calendarSheetWrapper: CalendarEventWrapper?
+    @State private var calendarEvent: EKEvent?
     @State private var eventStore = EKEventStore()
     @State private var currentLessonCoordinate: CLLocationCoordinate2D?
     @State private var eventSaved: Bool = false
@@ -34,9 +29,9 @@ struct LessonDetailsView: View {
     var body: some View {
         if let lesson = lesson {
             ZStack {
-                if let wrapper = calendarSheetWrapper {
+                if let event = calendarEvent {
                     EventEditViewController(
-                        event: wrapper.event,
+                        event: event,
                         eventStore: eventStore,
                         onSaved: {
                             Task { @MainActor in
@@ -44,9 +39,8 @@ struct LessonDetailsView: View {
                                 eventSaved = true
                             }
                         },
-                        onCanceled: {},
                         onDismiss: {
-                            calendarSheetWrapper = nil
+                            calendarEvent = nil
                         }
                     )
                     .ignoresSafeArea()
@@ -82,7 +76,7 @@ struct LessonDetailsView: View {
                     }
                 }
             }
-            .onChange(of: calendarSheetWrapper) { _, newValue in
+            .onChange(of: calendarEvent) { _, newValue in
                 lockSheet = newValue != nil
             }
             .task(id: eventSaved) {
@@ -159,22 +153,26 @@ struct LessonDetailsView: View {
         
         let timeComponents = timeString.split(separator: ":").compactMap { Int($0) }
         
-        if timeComponents.count >= 2 {
-            return calendar.date(
-                bySettingHour: timeComponents[0],
-                minute: timeComponents[1],
-                second: 0,
-                of: date
-            )
-        }
-        return date
+        guard timeComponents.count == 2 else { return nil }
+        let hour = timeComponents[0]
+        let minute = timeComponents[1]
+        guard (0...23).contains(hour), (0...59).contains(minute) else { return nil }
+
+        return calendar.date(
+            bySettingHour: hour,
+            minute: minute,
+            second: 0,
+            of: date
+        )
     }
     
     private func prepareAndShowEvent(for lesson: Lesson, coordinate: CLLocationCoordinate2D? = nil) {
         let newEvent = EKEvent(eventStore: eventStore)
         
         newEvent.title = lesson.cleanName
-        newEvent.notes = lesson.docente.contains(",") ? String(localized: "Docenti: \(lesson.docente)") : String(localized: "Docente: \(lesson.docente)")
+        if lesson.docente != "" {
+            newEvent.notes = lesson.docente.contains(",") ? String(localized: "Docenti: \(lesson.docente)") : String(localized: "Docente: \(lesson.docente)")
+        }
         newEvent.availability = .busy
         
         if let coordinate = coordinate {
@@ -187,7 +185,8 @@ struct LessonDetailsView: View {
         
         let baseDate = lesson.data.toDateModern() ?? Date()
         let startTime = lesson.startTime
-        let endTime = String(lesson.orario.split(separator: " - ").last ?? "")
+        let timeRange = lesson.orario.split(separator: "-").map { $0.trimmingCharacters(in: .whitespaces) }
+        let endTime = timeRange.count == 2 ? timeRange[1] : ""
         if let startDate = combineDateAndTime(date: baseDate, timeString: startTime), let endDate = combineDateAndTime(date: baseDate, timeString: endTime) {
             newEvent.startDate = startDate
             newEvent.endDate = endDate
@@ -196,7 +195,7 @@ struct LessonDetailsView: View {
             newEvent.endDate = Date().addingTimeInterval(3600)
         }
         
-        calendarSheetWrapper = CalendarEventWrapper(event: newEvent)
+        calendarEvent = newEvent
     }
 }
 
