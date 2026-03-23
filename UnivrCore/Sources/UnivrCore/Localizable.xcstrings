@@ -31,16 +31,6 @@
         }
       }
     },
-    "Errore generico: %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Generic Error: %@"
-          }
-        }
-      }
-    },
     "Sviluppatore" : {
       "localizations" : {
         "en" : {
