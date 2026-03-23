@@ -11,28 +11,79 @@ import SwiftUI
 import MapKit
 import CoreLocation
 import UnivrCore
+import EventKit
 
 struct LessonDetailsView: View {
     @Binding var lesson: Lesson?
+    @Binding var lockSheet: Bool
     
     @State private var showOriginalName: Bool = false
+    @State private var calendarEvent: EKEvent?
+    @State private var eventStore = EKEventStore()
+    @State private var currentLessonCoordinate: CLLocationCoordinate2D?
+    @State private var eventSaved: Bool = false
     
     private var date: Date { lesson?.data.toDateModern() ?? Date() }
     private var backgroundColor: Color { Color(hex: lesson?.color ?? "") ?? Color(.systemGray6) }
     
     var body: some View {
         if let lesson = lesson {
-            VStack(alignment: .leading, spacing: 20) {
-                headerInfo(lesson: lesson)
-                detailRows(lesson: lesson)
-                StableMapView(lesson: lesson, corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24)
+            ZStack {
+                if let event = calendarEvent {
+                    EventEditViewController(
+                        event: event,
+                        eventStore: eventStore,
+                        onSaved: {
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .seconds(0.1))
+                                eventSaved = true
+                            }
+                        },
+                        onDismiss: {
+                            calendarEvent = nil
+                        }
+                    )
+                    .ignoresSafeArea()
+                } else {
+                    VStack(alignment: .leading, spacing: 20) {
+                        headerInfo(lesson: lesson)
+                        detailRows(lesson: lesson)
+                        StableMapView(
+                            lesson: lesson,
+                            externalCoordinate: $currentLessonCoordinate,
+                            corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
+                        )
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 24)
+                    .ignoresSafeArea(edges: .bottom)
+                    .onChange(of: lesson) {
+                        showOriginalName = false
+                    }
+                    .toolbar {
+                        ToolbarItem(placement: .primaryAction) {
+                            Button {
+                                if !eventSaved {
+                                    prepareAndShowEvent(for: lesson, coordinate: currentLessonCoordinate)
+                                }
+                            } label: {
+                                Image(systemName: eventSaved ? "checkmark" : "calendar.badge.plus")
+                                    .frame(width: 24, height: 24)
+                                    .symbolReplace()
+                                    .animation(.snappy, value: eventSaved)
+                            }
+                        }
+                    }
+                }
             }
-            .padding(.top, 40)
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
-            .ignoresSafeArea(edges: .bottom)
-            .onChange(of: lesson) {
-                showOriginalName = false
+            .onChange(of: calendarEvent) { _, newValue in
+                lockSheet = newValue != nil
+            }
+            .task(id: eventSaved) {
+                if eventSaved {
+                    try? await Task.sleep(for: .seconds(2))
+                    eventSaved = false
+                }
             }
         }
     }
@@ -95,20 +146,72 @@ struct LessonDetailsView: View {
         Label(text, systemImage: icon)
             .font(.headline)
     }
+    
+    // MARK: - Logic
+    private func combineDateAndTime(date: Date, timeString: String) -> Date? {
+        let calendar = Calendar.current
+        
+        let timeComponents = timeString.split(separator: ":").compactMap { Int($0) }
+        
+        guard timeComponents.count == 2 else { return nil }
+        let hour = timeComponents[0]
+        let minute = timeComponents[1]
+        guard (0...23).contains(hour), (0...59).contains(minute) else { return nil }
+
+        return calendar.date(
+            bySettingHour: hour,
+            minute: minute,
+            second: 0,
+            of: date
+        )
+    }
+    
+    private func prepareAndShowEvent(for lesson: Lesson, coordinate: CLLocationCoordinate2D? = nil) {
+        let newEvent = EKEvent(eventStore: eventStore)
+        
+        newEvent.title = lesson.cleanName
+        if lesson.docente != "" {
+            newEvent.notes = lesson.docente.contains(",") ? String(localized: "Docenti: \(lesson.docente)") : String(localized: "Docente: \(lesson.docente)")
+        }
+        newEvent.availability = .busy
+        
+        if let coordinate = coordinate {
+            let structuredLocation = EKStructuredLocation(title: lesson.formattedClassroom)
+            structuredLocation.geoLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+            newEvent.structuredLocation = structuredLocation
+        } else {
+            newEvent.location = lesson.formattedClassroom
+        }
+        
+        let baseDate = lesson.data.toDateModern() ?? Date()
+        let startTime = lesson.startTime
+        let timeRange = lesson.orario.split(separator: "-").map { $0.trimmingCharacters(in: .whitespaces) }
+        let endTime = timeRange.count == 2 ? timeRange[1] : ""
+        if let startDate = combineDateAndTime(date: baseDate, timeString: startTime), let endDate = combineDateAndTime(date: baseDate, timeString: endTime) {
+            newEvent.startDate = startDate
+            newEvent.endDate = endDate
+        } else {
+            newEvent.startDate = Date()
+            newEvent.endDate = Date().addingTimeInterval(3600)
+        }
+        
+        calendarEvent = newEvent
+    }
 }
 
 // MARK: - Subviews
 struct StableMapView: View {
     let lesson: Lesson
+    @Binding var externalCoordinate: CLLocationCoordinate2D?
+    
     @State var corderRadius: CGFloat
-    @State private var coordinate: CLLocationCoordinate2D?
     @State private var isLoadingMap: Bool = false
     
     private var backgroundColor: Color { Color(hex: lesson.color) ?? Color(.systemGray6) }
 
     var body: some View {
         ZStack {
-            if let coordinate = coordinate {
+            if let coordinate = externalCoordinate {
                 UIKitStaticMap(coordinate: coordinate, padding: corderRadius / 2, altitude: 600)
                 mapAnnotationView(lesson: lesson)
                 VStack {
@@ -199,7 +302,7 @@ struct StableMapView: View {
         if let cachedCoord = await CoordinateCache.shared.coordinate(for: address) {
             let clCoord = CLLocationCoordinate2D(latitude: cachedCoord.latitude, longitude: cachedCoord.longitude)
             await MainActor.run {
-                self.coordinate = clCoord
+                self.externalCoordinate = clCoord
                 self.isLoadingMap = false
             }
             return
@@ -217,7 +320,7 @@ struct StableMapView: View {
                 
                 await CoordinateCache.shared.save(cacheCoord, for: address)
                 await MainActor.run {
-                    self.coordinate = coord
+                    self.externalCoordinate = coord
                     self.isLoadingMap = false
                 }
             } else {
@@ -236,14 +339,14 @@ struct StableMapView: View {
     }
 }
 
-
 #Preview {
     @Previewable @Namespace var transition
     @Previewable @State var lesson: Lesson? = Lesson.sample
+    @Previewable @State var lockSheet: Bool = false
     
     Text("")
         .sheet(isPresented: .constant(true)) {
-            LessonDetailsView(lesson: $lesson)
+            LessonDetailsView(lesson: $lesson, lockSheet: $lockSheet)
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
         }

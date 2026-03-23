@@ -248,7 +248,6 @@ struct GlassContainer<Content: View>: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
         let controller = UIViewController()
         
-        // Crea il GlassContainerView (il vetro UIKit)
         let glassContainer = GlassContainerView()
         glassContainer.cornerRadii = radii
         glassContainer.style = style
@@ -322,12 +321,14 @@ struct GlassContainer<Content: View>: UIViewControllerRepresentable {
     class Coordinator: ObservableObject {
         @Published var content: Content
         
-        var glassContainer: GlassContainerView?
-        var hostingController: UIHostingController<BridgeView>?
+        weak var glassContainer: GlassContainerView?
+        weak var hostingController: UIHostingController<BridgeView>?
         
         init(content: Content) {
             self.content = content
         }
+        
+        deinit { }
     }
     
     struct BridgeView: View {
