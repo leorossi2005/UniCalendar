@@ -58,8 +58,6 @@ struct CustomSheetView: View {
     
     @State private var dragY: CGFloat = .zero
     
-    @State private var lockSheet: Bool = false
-    
     @State private var basePadding: CGFloat = .zero
     @State private var initialPadding: CGFloat = .zero
     @State private var sheetPadding: CGFloat = .zero
@@ -74,6 +72,7 @@ struct CustomSheetView: View {
     
     // TEMP
     @State private var isGoingLarge: Bool = false
+    @State private var lockSheet: Bool = false
     
     var body: some View {
         Group {
@@ -173,6 +172,13 @@ struct CustomSheetView: View {
                 offset = 0
             }
         }
+        .onChange(of: lockSheet) { _, newValue in
+            if selectedDetent == .large {
+                detents = newValue ? [.large] : [.small, .medium, .large]
+            } else {
+                lockSheet = false
+            }
+        }
         .onAppear {
             if #available(iOS 26, *) {
                 sheetPadding = 8
@@ -198,12 +204,14 @@ struct CustomSheetView: View {
                 isGoingLarge: isGoingLarge
             )
             .overlay(alignment: .top) {
-                RoundedRectangle(cornerRadius: 2.5)
-                    .fill(.tertiary)
-                    .frame(width: 35, height: 5)
-                    .padding(.top, 5)
-                    .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
-                    .hoverEffect(.highlight)
+                if !lockSheet {
+                    RoundedRectangle(cornerRadius: 2.5)
+                        .fill(.tertiary)
+                        .frame(width: 35, height: 5)
+                        .padding(.top, 5)
+                        .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
+                        .hoverEffect(.highlight)
+                }
             }
         }
         .clipShape(sheetShape)
@@ -443,6 +451,14 @@ struct DynamicSheetContent: View {
     @Binding var lockSheet: Bool
     let isGoingLarge: Bool
     
+    var padding: CGFloat {
+        if #available(iOS 26, *) {
+            8
+        } else {
+            0
+        }
+    }
+    
     var body: some View {
         ZStack {
             GeometryReader { proxy in
@@ -465,12 +481,12 @@ struct DynamicSheetContent: View {
                     FractionDatePickerContainer(selectedWeek: $selectedWeek)
                         .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == .small)
-                        .frame(width: UIApplication.shared.windowSize.width - 16)
+                        .frame(width: UIApplication.shared.windowSize.width - padding * 2)
                     
                     DatePickerContainer(selectedWeek: $selectedWeek)
                         .opacity(mediumIsHidden ? 0 : min(max(mediumOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == .medium)
-                        .frame(width: UIApplication.shared.windowSize.width - 16)
+                        .frame(width: UIApplication.shared.windowSize.width - padding * 2)
                     
                     NavigationStack {
                         if openSettings {
@@ -483,7 +499,7 @@ struct DynamicSheetContent: View {
                             )
                             .ignoresSafeArea(.keyboard)
                         } else {
-                            LessonDetailsView(lesson: $selectedLesson)
+                            LessonDetailsView(lesson: $selectedLesson, lockSheet: $lockSheet)
                                 .opacity(min(max(largeOpacity, 0), 1))
                                 .allowsHitTesting(selectedDetent == .large)
                         }
