@@ -23,6 +23,8 @@ struct LessonDetailsView: View {
     @State private var currentLessonCoordinate: CLLocationCoordinate2D?
     @State private var eventSaved: Bool = false
     
+    let openAddToCalendar: Bool
+    var onDismiss: (() -> Void)?
     private var date: Date { lesson?.data.toDateModern() ?? Date() }
     private var backgroundColor: Color { Color(hex: lesson?.color ?? "") ?? Color(.systemGray6) }
     
@@ -36,7 +38,7 @@ struct LessonDetailsView: View {
                         onSaved: {
                             Task { @MainActor in
                                 try? await Task.sleep(for: .seconds(0.1))
-                                eventSaved = true
+                                eventSaved = !openAddToCalendar
                             }
                         },
                         onDismiss: {
@@ -78,11 +80,19 @@ struct LessonDetailsView: View {
             }
             .onChange(of: calendarEvent) { _, newValue in
                 lockSheet = newValue != nil
+                if openAddToCalendar, newValue == nil, let onDismiss = onDismiss {
+                    onDismiss()
+                }
             }
             .task(id: eventSaved) {
                 if eventSaved {
                     try? await Task.sleep(for: .seconds(2))
                     eventSaved = false
+                }
+            }
+            .onAppear {
+                if openAddToCalendar {
+                    prepareAndShowEvent(for: lesson, coordinate: currentLessonCoordinate)
                 }
             }
         }
@@ -346,7 +356,7 @@ struct StableMapView: View {
     
     Text("")
         .sheet(isPresented: .constant(true)) {
-            LessonDetailsView(lesson: $lesson, lockSheet: $lockSheet)
+            LessonDetailsView(lesson: $lesson, lockSheet: $lockSheet, openAddToCalendar: false)
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
         }

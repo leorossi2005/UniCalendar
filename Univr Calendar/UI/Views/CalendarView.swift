@@ -30,6 +30,7 @@ struct CalendarView: View {
     
     @State private var selectedDetent: CustomSheetDetent = .small
     @State private var openSettings: Bool = false
+    @State private var openAddToCalendar: Bool = false
     @State private var openCalendar: Bool = false
     @State private var oldOpenCalendar: Bool = false
     
@@ -85,7 +86,8 @@ struct CalendarView: View {
                 selectedWeek: $selectedWeek,
                 selectedLesson: $selectedLesson,
                 tempSettings: $tempSettings,
-                openCalendar: $openCalendar
+                openCalendar: $openCalendar,
+                openAddToCalendar: $openAddToCalendar
             )
             .disabled((viewModel.loading || viewModel.noLessonsFound || viewModel.days.isEmpty) && !openSettings)
         }
@@ -162,6 +164,7 @@ struct CalendarView: View {
                             filteredLessons: viewModel.days[i],
                             selectedLesson: $selectedLesson,
                             openCalendar: $openCalendar,
+                            openAddToCalendar: $openAddToCalendar,
                             selectedDetent: $selectedDetent,
                             firstLoading: $firstLoading,
                             changeOpenCalendar: changeOpenCalendar
@@ -565,6 +568,7 @@ struct CalendarViewDay: View {
     
     @Binding var selectedLesson: Lesson?
     @Binding var openCalendar: Bool
+    @Binding var openAddToCalendar: Bool
     @Binding var selectedDetent: CustomSheetDetent
     @Binding var firstLoading: Bool
 
@@ -584,9 +588,9 @@ struct CalendarViewDay: View {
                             .contextMenu(
                                 menuItems: {
                                     Button(action: {
-                                        // To Add
                                         Haptics.play(.impact(weight: .light, intensity: 0.5))
                                         selectedLesson = lesson
+                                        openAddToCalendar = true
                                         selectedDetent = .large
                                     }) {
                                         Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
