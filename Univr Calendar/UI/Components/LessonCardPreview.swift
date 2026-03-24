@@ -25,8 +25,11 @@ struct LessonCardPreview: View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
                 Text(lesson.cleanName)
-                    .font(.headline)
-                    .fontWeight(.bold)
+                    .font(.headline.weight(.bold))
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .layoutPriority(10)
                 
                 if !lesson.tags.isEmpty {
                     HStack {
@@ -73,7 +76,7 @@ struct LessonCardPreview: View {
             }
         }
         .padding(24)
-        .frame(width: UIApplication.shared.screenSize.width, alignment: .leading)
+        .frame(width: UIDevice.isIpad ? 320 : UIApplication.shared.screenSize.width, alignment: .leading)
     }
     
     private func rowLabel(text: LocalizedStringKey, icon: String) -> some View {
