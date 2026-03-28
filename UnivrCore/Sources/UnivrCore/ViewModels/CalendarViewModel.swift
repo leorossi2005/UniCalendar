@@ -33,7 +33,6 @@ public class CalendarViewModel {
     public var isOffline: Bool = false
     
     private var pendingNewLessons: [Lesson]? = nil
-    private var currentPalette: [String] = []
     private var cachedStructure: YearStructure? = nil
     
     private let service = NetworkService()
@@ -44,7 +43,6 @@ public class CalendarViewModel {
     public func loadFromCache(selYear: String, matricola: String) async {
         if let cacheResponse = await CacheManager.shared.load(fileName: cacheKey, type: ResponseAPI.self) {
             self.lessons = cacheResponse.lessons
-            self.currentPalette = cacheResponse.colors
             
             await self.organizeData(selectedYear: selYear, matricola: matricola)
             
@@ -78,14 +76,7 @@ public class CalendarViewModel {
         do {
             let response = try await service.fetchOrario(corso: corso, anno: anno, selyear: selYear)
             
-            self.currentPalette = response.colors
-            
-            var fetchedLessons = response.lessons
-            if !fetchedLessons.isEmpty {
-                fetchedLessons = CalendarLogic.applyColors(to: fetchedLessons, palette: self.currentPalette)
-            }
-            
-            try await handleNewData(fetchedLessons, selectedYear: selYear, matricola: matricola, update: updating)
+            try await handleNewData(response.lessons, selectedYear: selYear, matricola: matricola, update: updating)
             
             self.loading = false
         } catch {
@@ -200,7 +191,7 @@ public class CalendarViewModel {
     private func updateStateAndCache(_ newLessons: [Lesson], selectedYear: String, matricola: String) async {
         self.lessons = newLessons
         
-        let cacheObject = ResponseAPI(lessons: newLessons, colors: self.currentPalette)
+        let cacheObject = ResponseAPI(lessons: newLessons)
         await CacheManager.shared.save(cacheObject, fileName: cacheKey)
         
         await self.organizeData(selectedYear: selectedYear, matricola: matricola)
@@ -310,7 +301,8 @@ struct CalendarLogic {
                 let pauseLesson = Lesson(
                     date: date,
                     time: "\(currentEnd)-\(NextStart)",
-                    type: "pause"
+                    type: "pause",
+                    duration: "?h"
                 )
                 
                 processedDay.insert(pauseLesson, at: i + 1 + offset)
@@ -318,51 +310,5 @@ struct CalendarLogic {
             }
         }
         return processedDay
-    }
-    
-    static func applyColors(to lessons: [Lesson], palette: [String]) -> [Lesson] {
-        var processedLessons = lessons
-        var colorMap: [String: String] = [:]
-        var paletteIndex = 0
-        
-        for lesson in processedLessons where hasCustomColor(lesson) {
-            if let code = lesson.code {
-                colorMap[code] = lesson.color
-            }
-        }
-        
-        for i in processedLessons.indices {
-            guard let code = lessons[i].code else { continue }
-            
-            if processedLessons[i].canceled {
-                processedLessons[i].color = "#FFFFFF"
-                continue
-            }
-            
-            if processedLessons[i].type == "chiusura_type" {
-                processedLessons[i].color = "#BDF2F2"
-                continue
-            }
-            
-            if !processedLessons[i].colorIndex.isEmpty {
-                print("Trovato uno")
-                continue
-            }
-            
-            if let existingColor = colorMap[code] {
-                processedLessons[i].color = existingColor
-            } else {
-                let newColor = (paletteIndex < palette.count) ? palette[paletteIndex] : "#CCCCCC"
-                colorMap[code] = newColor
-                processedLessons[i].color = newColor
-                
-                paletteIndex += 1
-            }
-        }
-        return processedLessons
-    }
-    
-    private static func hasCustomColor(_ lesson: Lesson) -> Bool {
-        return !lesson.color.isEmpty && lesson.color != "CCCCCC" && lesson.color != "A0A0A0"
     }
 }

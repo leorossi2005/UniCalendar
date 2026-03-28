@@ -15,7 +15,7 @@ struct LessonCard: View {
     
     let lesson: Lesson
     
-    private var backgroundColor: Color { Color(hex: lesson.color) ?? Color(.systemGray6) }
+    private var backgroundColor: Color { Color(hex: lesson.color ?? "") ?? Color(.systemGray6) }
     
     var body: some View {
         HStack(spacing: 20) {

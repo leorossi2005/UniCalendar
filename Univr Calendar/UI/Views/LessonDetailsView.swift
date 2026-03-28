@@ -210,7 +210,7 @@ struct StableMapView: View {
     @State var corderRadius: CGFloat
     @State private var isLoadingMap: Bool = false
     
-    private var backgroundColor: Color { Color(hex: lesson.color) ?? Color(.systemGray6) }
+    private var backgroundColor: Color { Color(hex: lesson.color ?? "") ?? Color(.systemGray6) }
 
     var body: some View {
         ZStack {
