@@ -384,7 +384,7 @@ struct CalendarView: View {
         let today: Date = .now
         
         if let years = NetworkCache.shared.years.last,
-           let currentYear = Int(years.valore),
+           let currentYear = Int(years.value),
            let year = Int(settings.selectedYear),
            year != currentYear {
             let startAcademic = "01-10-\(year)"
@@ -574,7 +574,7 @@ struct CalendarViewDay: View {
         ScrollView {
             VStack(spacing: 10) {
                 ForEach(filteredLessons) { lesson in
-                    if lesson.tipo != "pause" && lesson.tipo != "chiusura_type" {
+                    if lesson.type != "pause" && lesson.type != "chiusura_type" {
                         LessonCard(lesson: lesson)
                             .onTapGesture {
                                 Haptics.play(.impact(weight: .light, intensity: 0.5))
@@ -585,7 +585,7 @@ struct CalendarViewDay: View {
                         HStack(alignment: .bottom) {
                             Image(systemName: .cupDynamic)
                                 .font(.system(size: 40))
-                            Text(lesson.durationCalculated)
+                            Text(lesson.duration ?? "")
                                 .font(.system(size: 30))
                                 .italic()
                                 .bold()

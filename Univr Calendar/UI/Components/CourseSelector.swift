@@ -116,15 +116,15 @@ struct CourseSelector: View {
     private var defaultMenu: some View {
         Menu {
             courseButton(value: "0", label: "Scegli un corso")
-            ForEach(courses, id: \.valore) { course in
-                courseButton(value: course.valore, label: LocalizedStringKey(course.label))
+            ForEach(courses, id: \.value) { course in
+                courseButton(value: course.value, label: LocalizedStringKey(course.label))
             }
         } label: {
             ZStack {
                 if courses.isEmpty {
                     ProgressView()
                 } else {
-                    Text(courses.first{$0.valore == selectedCourse}?.label ?? String(localized: "Scegli un corso"))
+                    Text(courses.first{$0.value == selectedCourse}?.label ?? String(localized: "Scegli un corso"))
                 }
             }
             .frame(height: 100)
@@ -142,18 +142,18 @@ struct CourseSelector: View {
             if !filteredCourses.isEmpty {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(Array(filteredCourses.enumerated()), id: \.element.valore) { index, course in
+                        ForEach(Array(filteredCourses.enumerated()), id: \.element.value) { index, course in
                             Button {
-                                if course.valore != selectedCourse {
+                                if course.value != selectedCourse {
                                     Haptics.play(.selection)
                                     searchText = ""
                                     internalFocus = false
-                                    selectedCourse = course.valore
+                                    selectedCourse = course.value
                                 }
                             } label: {
                                 HStack(spacing: 16) {
                                     Image(systemName: "checkmark")
-                                        .opacity(selectedCourse == course.valore ? 1 : 0)
+                                        .opacity(selectedCourse == course.value ? 1 : 0)
                                     Text(course.label)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .multilineTextAlignment(.leading)

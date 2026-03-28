@@ -66,17 +66,13 @@ public final class UniversityDataManager {
     }
     
     public func updateAcademicYears(for courseValue: String, year: String) {
-        guard let selectedCourse = courses.first(where: { $0.valore == courseValue }) else { return }
-        self.academicYears = selectedCourse.elenco_anni
+        guard let selectedCourse = courses.first(where: { $0.value == courseValue }) else { return }
+        self.academicYears = selectedCourse.years
     }
     
     public func checkForMatricola(in academicYearValue: String) -> Bool {
-        guard let anno = academicYears.first(where: { $0.valore == academicYearValue }) else { return false }
-        
-        return anno.elenco_insegnamenti.contains { item in
-            let label = item.label.lowercased()
-            return label.contains("matricole dispari") || label.contains("matricole pari")
-        }
+        guard let anno = academicYears.first(where: { $0.value == academicYearValue }) else { return false }
+        return anno.hasGroup
     }
     
     private func fetchAndRefresh<T: Sendable & Equatable>(

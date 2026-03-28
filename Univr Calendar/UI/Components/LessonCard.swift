@@ -23,7 +23,7 @@ struct LessonCard: View {
             lessonInfo
         }
         .padding()
-        .opacity(lesson.annullato ? 0.5 : 1.0)
+        .opacity(lesson.canceled ? 0.5 : 1.0)
         .background(backgroundLayer)
         .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
         .hoverEffect(.lift)
@@ -33,9 +33,9 @@ struct LessonCard: View {
     // MARK: - Components
     private var backgroundLayer: some View {
         RoundedRectangle(cornerRadius: 35, style: .continuous)
-            .fill(lesson.annullato ? Color(.systemBackground) : backgroundColor)
+            .fill(lesson.canceled ? Color(.systemBackground) : backgroundColor)
             .overlay {
-                if lesson.annullato {
+                if lesson.canceled {
                     RoundedRectangle(cornerRadius: 35, style: .continuous)
                         .strokeBorder(.secondary, lineWidth: 0.5)
                 }
@@ -45,11 +45,11 @@ struct LessonCard: View {
     
     private var timeInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(lesson.startTime)
+            Text(lesson.startTime ?? "")
                 .font(.largeTitle.monospacedDigit())
                 .fontWeight(.medium)
-            if !lesson.annullato {
-                Label(lesson.durationCalculated, systemImage: "clock")
+            if !lesson.canceled {
+                Label(lesson.duration ?? "", systemImage: "clock")
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(Color.black.opacity(0.1))
@@ -57,18 +57,18 @@ struct LessonCard: View {
             }
             Spacer()
         }
-        .foregroundStyle(lesson.annullato ? .primary : Color.black)
+        .foregroundStyle(lesson.canceled ? .primary : Color.black)
     }
     
     private var lessonInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(lesson.cleanName)
-                .foregroundStyle(lesson.annullato ? .primary : Color.black)
+            Text(lesson.cleanName ?? "")
+                .foregroundStyle(lesson.canceled ? .primary : Color.black)
                 .font(.headline)
                 .multilineTextAlignment(.leading)
-                .strikethrough(lesson.annullato)
-            if !lesson.annullato {
-                Text(lesson.formattedClassroom)
+                .strikethrough(lesson.canceled)
+            if !lesson.canceled {
+                Text(lesson.classroom ?? "")
                     .foregroundStyle(Color(white: 0.3))
                     .font(.subheadline)
                     .multilineTextAlignment(.leading)
@@ -105,13 +105,13 @@ struct LessonCard: View {
 #Preview {
     ScrollView {
         ForEach([Lesson.sample, Lesson.pausaSample, Lesson.sample]) { lesson in
-            if lesson.tipo != "pause" && lesson.tipo != "chiusura_type" {
+            if lesson.type != "pause" && lesson.type != "chiusura_type" {
                 LessonCard(lesson: lesson)
             } else {
                 HStack(alignment: .bottom) {
                     Image(systemName: .cupDynamic)
                         .font(.system(size: 40))
-                    Text(lesson.durationCalculated)
+                    Text(lesson.duration ?? "")
                         .font(.system(size: 30))
                         .italic()
                         .bold()

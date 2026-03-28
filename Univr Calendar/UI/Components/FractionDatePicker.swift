@@ -196,7 +196,6 @@ struct FractionDatePickerContainer: View {
                 .presentationDetents([.fraction(0.15)])
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                //.sheetDesign(transition, sourceID: "", detent: $selectedDetent)
         }
         .environment(UserSettings.shared)
 }

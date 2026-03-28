@@ -42,10 +42,10 @@ public actor CacheManager: Sendable {
             let data = try await Task.detached(priority: .utility) {
                 try Data(contentsOf: fileUrl)
             }.value
-            let object = try JSONDecoder().decode(type, from: data)
-            return object
+            return try JSONDecoder().decode(type, from: data)
         } catch {
             print("Error loading cache \(fileName): \(error)")
+            try? FileManager.default.removeItem(at: fileUrl)
             return nil
         }
     }

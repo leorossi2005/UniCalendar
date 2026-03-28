@@ -36,8 +36,8 @@ struct Settings: View {
                         .foregroundStyle(.primary)
                         .padding(.trailing)
                     Picker(selection: $selectedYear) {
-                        ForEach(viewModel.years, id: \.valore) { year in
-                            Text(year.label).tag(year.valore)
+                        ForEach(viewModel.years) { year in
+                            Text(year.label).tag(year.value)
                         }
                     } label: {}
                         .pickerStyle(.segmented)
@@ -55,8 +55,8 @@ struct Settings: View {
                 }
                 if selectedCourse != "0" {
                     Picker(selection: $selectedAcademicYear) {
-                        ForEach(viewModel.academicYears, id: \.valore) { year in
-                            Text(year.label).tag(year.valore)
+                        ForEach(viewModel.academicYears, id: \.value) { year in
+                            Text(year.label).tag(year.value)
                         }
                     } label: {
                         Label("Anno di Corso", systemImage: "calendar.badge.clock")
@@ -161,7 +161,7 @@ struct Settings: View {
             viewModel.updateAcademicYears(for: selectedCourse, year: selectedYear)
             
             if let firstYear = viewModel.academicYears.first {
-                selectedAcademicYear = firstYear.valore
+                selectedAcademicYear = firstYear.value
                 if selectedAcademicYear != "0" {
                     settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                 }
@@ -201,19 +201,19 @@ struct Settings: View {
                         matricola = "pari"
                     }
                     
-                    if !viewModel.years.contains(where: { $0.valore == selectedYear }) {
+                    if !viewModel.years.contains(where: { $0.value == selectedYear }) {
                         if let lastYear = viewModel.years.last {
-                            selectedYear = lastYear.valore
+                            selectedYear = lastYear.value
                         }
                     }
                     
                     if selectedCourse != "0" {
-                        if let course = viewModel.courses.first(where: { $0.valore == selectedCourse }) {
-                            viewModel.academicYears = course.elenco_anni
+                        if let course = viewModel.courses.first(where: { $0.value == selectedCourse }) {
+                            viewModel.academicYears = course.years
                             
-                            if !viewModel.academicYears.contains(where: { $0.valore == selectedAcademicYear }) {
+                            if !viewModel.academicYears.contains(where: { $0.value == selectedAcademicYear }) {
                                 if let firstAcademicYear = viewModel.academicYears.last {
-                                    selectedAcademicYear = firstAcademicYear.valore
+                                    selectedAcademicYear = firstAcademicYear.value
                                 }
                             }
                             settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)

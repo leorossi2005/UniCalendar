@@ -43,8 +43,8 @@ public class CalendarViewModel {
     
     public func loadFromCache(selYear: String, matricola: String) async {
         if let cacheResponse = await CacheManager.shared.load(fileName: cacheKey, type: ResponseAPI.self) {
-            self.lessons = cacheResponse.celle
-            self.currentPalette = cacheResponse.colori
+            self.lessons = cacheResponse.lessons
+            self.currentPalette = cacheResponse.colors
             
             await self.organizeData(selectedYear: selYear, matricola: matricola)
             
@@ -78,9 +78,9 @@ public class CalendarViewModel {
         do {
             let response = try await service.fetchOrario(corso: corso, anno: anno, selyear: selYear)
             
-            self.currentPalette = response.colori
+            self.currentPalette = response.colors
             
-            var fetchedLessons = response.celle
+            var fetchedLessons = response.lessons
             if !fetchedLessons.isEmpty {
                 fetchedLessons = CalendarLogic.applyColors(to: fetchedLessons, palette: self.currentPalette)
             }
@@ -137,12 +137,14 @@ public class CalendarViewModel {
             let lessons = organizedDays[index]
             
             // Filtra: solo lezioni valide (non annullate e non pause)
-            let validLessons = lessons.filter { !$0.annullato && $0.tipo != "pause" }
+            let validLessons = lessons.filter { !$0.canceled && $0.type != "pause" }
             
             if !validLessons.isEmpty {
                 let totalMinutes = validLessons.reduce(0) { sum, lesson in
                     // Gestisce spazi extra es: "08:30 - 10:30"
-                    let times = lesson.orario.split(separator: "-").map { $0.trimmingCharacters(in: .whitespaces) }
+                    guard let time = lesson.time else { return 0 }
+                    
+                    let times = time.split(separator: "-").map { $0.trimmingCharacters(in: .whitespaces) }
                     guard times.count == 2 else { return sum }
                     
                     func toMinutes(_ time: String) -> Int {
@@ -184,6 +186,7 @@ public class CalendarViewModel {
         self.noLessonsFound = false
         
         if self.lessons.isEmpty || update {
+            
             await updateStateAndCache(fetchedLessons, selectedYear: selectedYear, matricola: matricola)
             return
         }
@@ -197,7 +200,7 @@ public class CalendarViewModel {
     private func updateStateAndCache(_ newLessons: [Lesson], selectedYear: String, matricola: String) async {
         self.lessons = newLessons
         
-        let cacheObject = ResponseAPI(celle: newLessons, colori: self.currentPalette)
+        let cacheObject = ResponseAPI(lessons: newLessons, colors: self.currentPalette)
         await CacheManager.shared.save(cacheObject, fileName: cacheKey)
         
         await self.organizeData(selectedYear: selectedYear, matricola: matricola)
@@ -245,8 +248,8 @@ struct CalendarLogic {
                 structure = generateYearStructure(year: year)
             }
             
-            let lessonsByDate = Dictionary(grouping: lessons, by: { $0.data })
-            let userFilter: Lesson.GruppoMatricola = (matricola == "pari") ? .pari : .dispari
+            let lessonsByDate = Dictionary(grouping: lessons, by: { $0.date })
+            let userFilter: Lesson.GruppoMatricola = (matricola == "pari") ? .even : .odd
             
             var organized: [[Lesson]] = []
             organized.reserveCapacity(structure.days.count)
@@ -258,9 +261,9 @@ struct CalendarLogic {
                 }
                 
                 let filtered = dailyLessons.filter { lesson in
-                    lesson.tipo != "chiusura_type" &&
-                    (lesson.gruppo == .tutti || lesson.gruppo == userFilter)
-                }.sorted(by: { $0.orario < $1.orario })
+                    lesson.type != "chiusura_type" &&
+                    (lesson.group == Lesson.GruppoMatricola.all.rawValue || lesson.group == userFilter.rawValue)
+                }.sorted(by: { $0.time ?? "" < $1.time ?? "" })
                 
                 if filtered.isEmpty {
                     organized.append([])
@@ -297,14 +300,17 @@ struct CalendarLogic {
         var offset = 0
         
         for i in 0..<lessons.count - 1 {
-            let currentEnd = lessons[i].orario.suffix(5)
-            let NextStart = lessons[i + 1].orario.prefix(5)
+            guard let time = lessons[i].time,
+                  let nextTime = lessons[i + 1].time else { continue }
+            
+            let currentEnd = time.suffix(5)
+            let NextStart = nextTime.prefix(5)
             
             if currentEnd < NextStart {
                 let pauseLesson = Lesson(
-                    data: date,
-                    orario: "\(currentEnd)-\(NextStart)",
-                    tipo: "pause"
+                    date: date,
+                    time: "\(currentEnd)-\(NextStart)",
+                    type: "pause"
                 )
                 
                 processedDay.insert(pauseLesson, at: i + 1 + offset)
@@ -320,16 +326,20 @@ struct CalendarLogic {
         var paletteIndex = 0
         
         for lesson in processedLessons where hasCustomColor(lesson) {
-            colorMap[lesson.codiceInsegnamento] = lesson.color
+            if let code = lesson.code {
+                colorMap[code] = lesson.color
+            }
         }
         
         for i in processedLessons.indices {
-            if processedLessons[i].annullato {
+            guard let code = lessons[i].code else { continue }
+            
+            if processedLessons[i].canceled {
                 processedLessons[i].color = "#FFFFFF"
                 continue
             }
             
-            if processedLessons[i].tipo == "chiusura_type" {
+            if processedLessons[i].type == "chiusura_type" {
                 processedLessons[i].color = "#BDF2F2"
                 continue
             }
@@ -338,8 +348,6 @@ struct CalendarLogic {
                 print("Trovato uno")
                 continue
             }
-            
-            let code = lessons[i].codiceInsegnamento
             
             if let existingColor = colorMap[code] {
                 processedLessons[i].color = existingColor
