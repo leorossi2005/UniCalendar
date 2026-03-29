@@ -30,9 +30,7 @@ struct FractionDatePickerView: View {
                 
                 Button {
                     if !day.isOutOfBounds {
-                        withAnimation {
-                            selection = day.date
-                        }
+                        selection = day.date
                     }
                 } label: {
                     dayContent(for: day, isSelected: isSelected)

@@ -70,7 +70,7 @@ struct Onboarding: View {
                     content: {
                         Picker(selection: $settings.selectedYear) {
                             ForEach(viewModel.years) { year in
-                                Text(year.label).tag(year.value)
+                                Text(year.label).tag(year.id)
                             }
                         } label: {}
                         .pickerStyle(.segmented)
@@ -92,7 +92,7 @@ struct Onboarding: View {
                 .id(1)
                 OnboardingPage(
                     title: "Bene! Ora scegli un corso",
-                    subtitle: "Sono mostrati i corsi per l'anno \(viewModel.years.filter{$0.value == settings.selectedYear}.first?.label ?? "")",
+                    subtitle: "Sono mostrati i corsi per l'anno \(viewModel.years.filter{$0.id == settings.selectedYear}.first?.label ?? "")",
                     errorMessage: $errorText,
                     isTopContent: false,
                     content: {
@@ -117,7 +117,7 @@ struct Onboarding: View {
                             
                             if let firstYear = viewModel.academicYears.first {
                                 await MainActor.run {
-                                    settings.selectedAcademicYear = firstYear.value
+                                    settings.selectedAcademicYear = firstYear.id
                                     settings.foundMatricola = viewModel.checkForMatricola(in: settings.selectedAcademicYear)
                                 }
                             }
@@ -132,8 +132,8 @@ struct Onboarding: View {
                     isTopContent: false,
                     content: {
                         Picker(selection: $settings.selectedAcademicYear) {
-                            ForEach(viewModel.academicYears, id: \.value) { year in
-                                Text(year.label).tag(year.value)
+                            ForEach(viewModel.academicYears) { year in
+                                Text(year.label).tag(year.id)
                             }
                         } label: {}
                         .pickerStyle(.segmented)

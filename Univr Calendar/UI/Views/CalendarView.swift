@@ -23,7 +23,6 @@ struct CalendarView: View {
     
     @State private var selectedLesson: Lesson? = nil
     @State private var selectedWeek: Date = Date()
-    @State private var selection: String? = ""
     
     @State private var firstLoading: Bool = true
     @State private var scrollUpdateTask: Task<Void, Never>?
@@ -47,9 +46,6 @@ struct CalendarView: View {
                 }
                 .onAppear {
                     inizializeData()
-                }
-                .onChange(of: selection) {
-                    handleSelectionChange()
                 }
                 .onChange(of: openCalendar) { oldValue, newValue in
                     oldOpenCalendar = oldValue
@@ -107,25 +103,52 @@ struct CalendarView: View {
                 }
                 .multilineTextAlignment(.center)
                 .scrollTargetLayout()
-                .id(viewModel.loading ? "loading-state" : "content-state")
+                //.id(viewModel.loading ? "loading-state" : "content-state")
             }
             .scrollTargetBehavior(.paging)
             .scrollIndicators(.never, axes: .horizontal)
-            .scrollPosition(id: $selection, anchor: .center)
-            .task(id: selectedWeek) {
-                if !viewModel.loading && !firstLoading {
-                    let newSelection = selectedWeek.formatUnivrStyle()
-                    if newSelection != selection { selection = newSelection }
+            .scrollPosition(id: Binding<Date?>(
+                    get: { self.selectedWeek },
+                    set: { newValue in
+                        if let validDate = newValue {
+                            self.selectedWeek = validDate
+                        }
+                    }
+                ), anchor: .center)
+            .onChange(of: selectedWeek) { oldValue, newValue in
+                if !Calendar.current.isDate(oldValue, inSameDayAs: newValue) {
+                    Haptics.play(.selection, state: "selection")
+                    
+                    if !openSettings {
+                        selectedDetent = .small
+                    }
+                    
+                    Task {
+                        try? await Task.sleep(for: .seconds(0.2))
+                        GlobalHaptics.shared.state = ""
+                    }
                 }
             }
-            .onChange(of: positionObserver.windowFrame.size.width) { _, _ in
-                guard let currentSelection = selection else { return }
+            .onChange(of: positionObserver.windowFrame.size.width) {
                 var transaction = Transaction()
                 transaction.disablesAnimations = true
                 withTransaction(transaction) {
-                    proxy.scrollTo(currentSelection, anchor: .center)
+                    proxy.scrollTo(selectedWeek, anchor: .center)
                 }
             }
+            //.onChange(of: viewModel.loading) { _, isFirstLoading in
+            //    if !isFirstLoading {
+            //        Task { @MainActor in
+            //            try? await Task.sleep(for: .seconds(0.01))
+            //
+            //            var transaction = Transaction()
+            //            transaction.disablesAnimations = true
+            //            withTransaction(transaction) {
+            //                proxy.scrollTo(selectedWeek, anchor: .center)
+            //            }
+            //        }
+            //    }
+            //}
         }
     }
     
@@ -166,13 +189,13 @@ struct CalendarView: View {
                             firstLoading: $firstLoading,
                             changeOpenCalendar: changeOpenCalendar
                         )
-                        .id(viewModel.daysString[i])
+                        .id(viewModel.daysString[i].toDateModern())
                         .containerRelativeFrame(.horizontal)
                     } else {
                         Text("Oggi non hai lezioni!")
                             .bold()
                             .font(.title2)
-                            .id(viewModel.daysString[i])
+                            .id(viewModel.daysString[i].toDateModern())
                             .containerRelativeFrame(.horizontal)
                     }
                 }
@@ -384,7 +407,7 @@ struct CalendarView: View {
         let today: Date = .now
         
         if let years = NetworkCache.shared.years.last,
-           let currentYear = Int(years.value),
+           let currentYear = Int(years.id),
            let year = Int(settings.selectedYear),
            year != currentYear {
             let startAcademic = "01-10-\(year)"
@@ -392,32 +415,8 @@ struct CalendarView: View {
                 selectedWeek = startAcademic.toDateModern() ?? Date(year: year, month: today.month, day: today.day)
             }
         } else {
-            if selectedWeek.formatUnivrStyle() != today.formatUnivrStyle() {
-                selectedWeek = Date(year: today.year, month: today.month, day: today.day)
-            }
-        }
-    }
-    
-    private func handleSelectionChange() {
-        scrollUpdateTask?.cancel()
-        scrollUpdateTask = Task {
-            if !Task.isCancelled {
-                await MainActor.run {
-                    if let date = selection?.toDateModern() {
-                        if selectedWeek.formatUnivrStyle() != selection {
-                            selectedWeek = date
-                        }
-                        
-                        if !openSettings {
-                            selectedDetent = .small
-                        }
-                    }
-                    if selection != nil {
-                        Haptics.play(.selection, state: "selection")
-                    }
-                }
-                try? await Task.sleep(for: .seconds(0.2))
-                GlobalHaptics.shared.state = ""
+            if !Calendar.current.isDate(selectedWeek, inSameDayAs: today) {
+                selectedWeek = today
             }
         }
     }
@@ -425,7 +424,6 @@ struct CalendarView: View {
     private func handleLoadingChange(_ isLoading: Bool) {
         if isLoading {
             Haptics.play(.start)
-            selection = nil
             firstLoading = true
         } else {
             let targetDate = selectedWeek.formatUnivrStyle()
@@ -434,9 +432,9 @@ struct CalendarView: View {
                 transaction.disablesAnimations = true
                 withTransaction(transaction) {
                     if viewModel.daysString.contains(targetDate) {
-                        selection = targetDate
+                        selectedWeek = targetDate.toDateModern() ?? Date()
                     } else {
-                        selection = viewModel.daysString.first
+                        selectedWeek = viewModel.daysString.first?.toDateModern() ?? Date()
                         if let first = viewModel.daysString.first, let date = first.toDateModern() {
                             selectedWeek = date
                         }

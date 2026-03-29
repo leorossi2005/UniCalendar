@@ -15,9 +15,9 @@ import Observation
 @Observable
 #endif
 public final class UniversityDataManager {
-    public var years: [Year] = []
+    public var years: [AcademicYear] = []
     public var courses: [Corso] = []
-    public var academicYears: [Anno] = []
+    public var academicYears: [AcademicYear] = []
     
     public var loading: Bool = false
     public var errorMessage: String?
@@ -66,16 +66,16 @@ public final class UniversityDataManager {
     }
     
     public func updateAcademicYears(for courseValue: String, year: String) {
-        guard let selectedCourse = courses.first(where: { $0.value == courseValue }) else { return }
+        guard let selectedCourse = courses.first(where: { $0.id == courseValue }) else { return }
         self.academicYears = selectedCourse.years
     }
     
     public func checkForMatricola(in academicYearValue: String) -> Bool {
-        guard let anno = academicYears.first(where: { $0.value == academicYearValue }) else { return false }
-        return anno.hasGroup
+        guard let anno = academicYears.first(where: { $0.id == academicYearValue }) else { return false }
+        return anno.hasGroup ?? false
     }
     
-    private func fetchAndRefresh<T: Sendable & Equatable>(
+    private func fetchAndRefresh<T: Equatable >(
         currentData: T?,
         fetchOperation: @escaping @Sendable () async throws -> T,
         updateState: @escaping @MainActor (T) -> Void

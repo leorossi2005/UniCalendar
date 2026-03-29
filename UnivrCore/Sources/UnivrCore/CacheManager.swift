@@ -18,7 +18,7 @@ public actor CacheManager: Sendable {
         self.cacheDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
     }
     
-    func save<T: Encodable & Sendable>(_ object: T, fileName: String) async {
+    func save<T: Encodable >(_ object: T, fileName: String) async {
         guard let folder = cacheDirectory else { return }
         let fileUrl = folder.appendingPathComponent(fileName)
         
@@ -32,7 +32,7 @@ public actor CacheManager: Sendable {
         }
     }
     
-    func load<T: Decodable & Sendable>(fileName: String, type: T.Type) async -> T? {
+    func load<T: Decodable & Sendable >(fileName: String, type: T.Type) async -> T? {
         guard let folder = cacheDirectory else { return nil }
         let fileUrl = folder.appendingPathComponent(fileName)
         

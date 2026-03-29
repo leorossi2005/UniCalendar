@@ -106,10 +106,10 @@ struct LessonDetailsView: View {
                                 .font(.caption)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
-                                .background(lesson.canceled ? Color(.secondarySystemBackground) : backgroundColor.opacity(0.2))
+                                .background(lesson.isCanceled ? Color(.secondarySystemBackground) : backgroundColor.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                                 .overlay {
-                                    if lesson.canceled {
+                                    if lesson.isCanceled {
                                         RoundedRectangle(cornerRadius: 7, style: .continuous)
                                             .strokeBorder(Color(white: 0.35), lineWidth: 0.5)
                                     }
@@ -184,11 +184,11 @@ struct LessonDetailsView: View {
         }
         
         guard let date = lesson.date,
-              let time = lesson.time,
-              let startTime = lesson.startTime else { return }
+              let time = lesson.time else { return }
         
         let baseDate = date.toDateModern() ?? Date()
         let timeRange = time.split(separator: "-").map { $0.trimmingCharacters(in: .whitespaces) }
+        let startTime = timeRange.count == 2 ? timeRange[0] : ""
         let endTime = timeRange.count == 2 ? timeRange[1] : ""
         if let startDate = combineDateAndTime(date: baseDate, timeString: startTime), let endDate = combineDateAndTime(date: baseDate, timeString: endTime) {
             newEvent.startDate = startDate

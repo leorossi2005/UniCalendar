@@ -13,7 +13,7 @@ import FoundationNetworking
 #endif
 
 public struct NetworkCacheData: Codable, Sendable {
-    public let years: [Year]
+    public let years: [AcademicYear]
     public let courses: [String: [Corso]]
 }
 
@@ -21,7 +21,7 @@ public struct NetworkCacheData: Codable, Sendable {
 public final class NetworkCache: Sendable {
     public static let shared = NetworkCache()
     
-    public var years: [Year] = []
+    public var years: [AcademicYear] = []
     public var courses: [String: [Corso]] = [:]
     
     private init() {}
@@ -60,9 +60,9 @@ enum NetworkError: Error {
 }
 
 public protocol NetworkServiceProtocol: Sendable {
-    func getYears() async throws -> [Year]
+    func getYears() async throws -> [AcademicYear]
     func getCourses(year: String) async throws -> [Corso]
-    func fetchOrario(corso: String, anno: String, selyear: String) async throws -> ResponseAPI
+    func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [Lesson]
 }
 
 public struct NetworkService: NetworkServiceProtocol {
@@ -84,7 +84,7 @@ public struct NetworkService: NetworkServiceProtocol {
         self.session = URLSession(configuration: configuration)
     }
     
-    public func getYears() async throws -> [Year] {
+    public func getYears() async throws -> [AcademicYear] {
         guard let url = URL(string: "\(baseURL)/years") else { throw NetworkError.badURL }
         
         do {
@@ -95,7 +95,7 @@ public struct NetworkService: NetworkServiceProtocol {
                 throw NetworkError.badServerResponse(statusCode: code)
             }
             
-            struct RootWrapper: Decodable { let years: [Year] }
+            struct RootWrapper: Decodable { let years: [AcademicYear] }
             let wrapper = try JSONDecoder().decode(RootWrapper.self, from: data)
             print(wrapper.years)
             return wrapper.years
@@ -131,7 +131,7 @@ public struct NetworkService: NetworkServiceProtocol {
         }
     }
     
-    public func fetchOrario(corso: String, anno: String, selyear: String) async throws -> ResponseAPI {
+    public func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [Lesson] {
         guard let url = URL(string: "\(baseURL)/schedule?course=\(corso)&academicYear=\(anno)&year=\(selyear)") else { throw NetworkError.badURL }
         
         do {
@@ -142,7 +142,9 @@ public struct NetworkService: NetworkServiceProtocol {
                 throw NetworkError.badServerResponse(statusCode: code)
             }
             
-            return try JSONDecoder().decode(ResponseAPI.self, from: data)
+            struct RootWrapper: Decodable { let lessons: [Lesson] }
+            let wrapper = try JSONDecoder().decode(RootWrapper.self, from: data)
+            return wrapper.lessons
             
         } catch let error as URLError where error.code == .notConnectedToInternet {
             throw NetworkError.offline

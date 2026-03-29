@@ -23,7 +23,7 @@ struct LessonCard: View {
             lessonInfo
         }
         .padding()
-        .opacity(lesson.canceled ? 0.5 : 1.0)
+        .opacity(lesson.isCanceled ? 0.5 : 1.0)
         .background(backgroundLayer)
         .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
         .hoverEffect(.lift)
@@ -33,9 +33,9 @@ struct LessonCard: View {
     // MARK: - Components
     private var backgroundLayer: some View {
         RoundedRectangle(cornerRadius: 35, style: .continuous)
-            .fill(lesson.canceled ? Color(.systemBackground) : backgroundColor)
+            .fill(lesson.isCanceled ? Color(.systemBackground) : backgroundColor)
             .overlay {
-                if lesson.canceled {
+                if lesson.isCanceled {
                     RoundedRectangle(cornerRadius: 35, style: .continuous)
                         .strokeBorder(.secondary, lineWidth: 0.5)
                 }
@@ -45,10 +45,10 @@ struct LessonCard: View {
     
     private var timeInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(lesson.startTime ?? "")
+            Text(lesson.time?.split(separator: " - ").first ?? "")
                 .font(.largeTitle.monospacedDigit())
                 .fontWeight(.medium)
-            if !lesson.canceled {
+            if !lesson.isCanceled {
                 Label(lesson.duration ?? "", systemImage: "clock")
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
@@ -57,17 +57,17 @@ struct LessonCard: View {
             }
             Spacer()
         }
-        .foregroundStyle(lesson.canceled ? .primary : Color.black)
+        .foregroundStyle(lesson.isCanceled ? .primary : Color.black)
     }
     
     private var lessonInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(lesson.cleanName ?? "")
-                .foregroundStyle(lesson.canceled ? .primary : Color.black)
+                .foregroundStyle(lesson.isCanceled ? .primary : Color.black)
                 .font(.headline)
                 .multilineTextAlignment(.leading)
-                .strikethrough(lesson.canceled)
-            if !lesson.canceled {
+                .strikethrough(lesson.isCanceled)
+            if !lesson.isCanceled {
                 Text(lesson.classroom ?? "")
                     .foregroundStyle(Color(white: 0.3))
                     .font(.subheadline)

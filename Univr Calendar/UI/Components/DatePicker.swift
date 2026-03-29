@@ -91,9 +91,11 @@ struct DatePicker: View, Equatable {
             Spacer()
             if today.isInAcademicYear(for: settings.selectedYear) {
                 Button("Oggi") {
-                    if selection.formatUnivrStyle() != today.formatUnivrStyle() {
+                    let midnightToday = Calendar.current.startOfDay(for: today)
+                    
+                    if !Calendar.current.isDate(selection, inSameDayAs: midnightToday) {
                         Haptics.play(.impact(weight: .medium), state: "selection")
-                        selection = today
+                        selection = midnightToday
                     }
                 }
                 .glassIfAvailable()

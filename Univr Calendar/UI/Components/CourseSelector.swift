@@ -19,7 +19,7 @@ struct CourseSelector: View {
     @State var searchText: String = ""
     @FocusState private var internalFocus: Bool
     
-    private var filteredCourses: [Corso] { Corso.filter(courses, with: searchText) }
+    private var filteredCourses: [Corso] { courses.filtered(by: searchText) }
     private var isSearching: Bool { !searchText.isEmpty || internalFocus }
     
     var body: some View {
@@ -116,15 +116,15 @@ struct CourseSelector: View {
     private var defaultMenu: some View {
         Menu {
             courseButton(value: "0", label: "Scegli un corso")
-            ForEach(courses, id: \.value) { course in
-                courseButton(value: course.value, label: LocalizedStringKey(course.label))
+            ForEach(courses) { course in
+                courseButton(value: course.id, label: LocalizedStringKey(course.label))
             }
         } label: {
             ZStack {
                 if courses.isEmpty {
                     ProgressView()
                 } else {
-                    Text(courses.first{$0.value == selectedCourse}?.label ?? String(localized: "Scegli un corso"))
+                    Text(courses.first{$0.id == selectedCourse}?.label ?? String(localized: "Scegli un corso"))
                 }
             }
             .frame(height: 100)
@@ -142,18 +142,18 @@ struct CourseSelector: View {
             if !filteredCourses.isEmpty {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(Array(filteredCourses.enumerated()), id: \.element.value) { index, course in
+                        ForEach(Array(filteredCourses.enumerated()), id: \.element.id) { index, course in
                             Button {
-                                if course.value != selectedCourse {
+                                if course.id != selectedCourse {
                                     Haptics.play(.selection)
                                     searchText = ""
                                     internalFocus = false
-                                    selectedCourse = course.value
+                                    selectedCourse = course.id
                                 }
                             } label: {
                                 HStack(spacing: 16) {
                                     Image(systemName: "checkmark")
-                                        .opacity(selectedCourse == course.value ? 1 : 0)
+                                        .opacity(selectedCourse == course.id ? 1 : 0)
                                     Text(course.label)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .multilineTextAlignment(.leading)

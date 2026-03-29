@@ -41,8 +41,8 @@ public class CalendarViewModel {
     public init() {}
     
     public func loadFromCache(selYear: String, matricola: String) async {
-        if let cacheResponse = await CacheManager.shared.load(fileName: cacheKey, type: ResponseAPI.self) {
-            self.lessons = cacheResponse.lessons
+        if let cacheResponse = await CacheManager.shared.load(fileName: cacheKey, type: [Lesson].self) {
+            self.lessons = cacheResponse
             
             await self.organizeData(selectedYear: selYear, matricola: matricola)
             
@@ -76,7 +76,7 @@ public class CalendarViewModel {
         do {
             let response = try await service.fetchOrario(corso: corso, anno: anno, selyear: selYear)
             
-            try await handleNewData(response.lessons, selectedYear: selYear, matricola: matricola, update: updating)
+            try await handleNewData(response, selectedYear: selYear, matricola: matricola, update: updating)
             
             self.loading = false
         } catch {
@@ -128,7 +128,7 @@ public class CalendarViewModel {
             let lessons = organizedDays[index]
             
             // Filtra: solo lezioni valide (non annullate e non pause)
-            let validLessons = lessons.filter { !$0.canceled && $0.type != "pause" }
+            let validLessons = lessons.filter { !$0.isCanceled && $0.type != "pause" }
             
             if !validLessons.isEmpty {
                 let totalMinutes = validLessons.reduce(0) { sum, lesson in
@@ -191,7 +191,7 @@ public class CalendarViewModel {
     private func updateStateAndCache(_ newLessons: [Lesson], selectedYear: String, matricola: String) async {
         self.lessons = newLessons
         
-        let cacheObject = ResponseAPI(lessons: newLessons)
+        let cacheObject = newLessons
         await CacheManager.shared.save(cacheObject, fileName: cacheKey)
         
         await self.organizeData(selectedYear: selectedYear, matricola: matricola)
@@ -240,7 +240,7 @@ struct CalendarLogic {
             }
             
             let lessonsByDate = Dictionary(grouping: lessons, by: { $0.date })
-            let userFilter: Lesson.GruppoMatricola = (matricola == "pari") ? .even : .odd
+            let userFilter: Lesson.TargetGroup = (matricola == "pari") ? .even : .odd
             
             var organized: [[Lesson]] = []
             organized.reserveCapacity(structure.days.count)
@@ -253,7 +253,7 @@ struct CalendarLogic {
                 
                 let filtered = dailyLessons.filter { lesson in
                     lesson.type != "chiusura_type" &&
-                    (lesson.group == Lesson.GruppoMatricola.all.rawValue || lesson.group == userFilter.rawValue)
+                    (lesson.group == .all || lesson.group == userFilter)
                 }.sorted(by: { $0.time ?? "" < $1.time ?? "" })
                 
                 if filtered.isEmpty {
@@ -299,10 +299,10 @@ struct CalendarLogic {
             
             if currentEnd < NextStart {
                 let pauseLesson = Lesson(
-                    date: date,
-                    time: "\(currentEnd)-\(NextStart)",
-                    type: "pause",
-                    duration: "?h"
+                    id: "\(date) \(currentEnd)-\(NextStart) \("?h")", name: nil, cleanName: nil, date: date,
+                    time: "\(currentEnd)-\(NextStart)", duration: "?h", classroom: nil, location: nil,
+                    address: nil, teacher: nil, code: nil, color: nil, type: "pause", tags: [], latitude: nil,
+                    longitude: nil, capacity: nil, group: .all, isCanceled: false
                 )
                 
                 processedDay.insert(pauseLesson, at: i + 1 + offset)
