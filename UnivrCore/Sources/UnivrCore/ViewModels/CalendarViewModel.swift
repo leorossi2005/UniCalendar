@@ -21,7 +21,7 @@ struct YearStructure: Sendable {
 @Observable
 #endif
 public class CalendarViewModel {
-    public var lessons: [Lesson] = []
+    public var lessons: [String: [Lesson]] = [:]
     public var days: [[Lesson]] = []
     public var daysString: [String] = []
     
@@ -32,7 +32,7 @@ public class CalendarViewModel {
     public var noLessonsFound: Bool = false
     public var isOffline: Bool = false
     
-    private var pendingNewLessons: [Lesson]? = nil
+    private var pendingNewLessons: [String: [Lesson]]? = nil
     private var cachedStructure: YearStructure? = nil
     
     private let service = NetworkService()
@@ -41,7 +41,7 @@ public class CalendarViewModel {
     public init() {}
     
     public func loadFromCache(selYear: String, matricola: String) async {
-        if let cacheResponse = await CacheManager.shared.load(fileName: cacheKey, type: [Lesson].self) {
+        if let cacheResponse = await CacheManager.shared.load(fileName: cacheKey, type: [String: [Lesson]].self) {
             self.lessons = cacheResponse
             
             await self.organizeData(selectedYear: selYear, matricola: matricola)
@@ -125,14 +125,13 @@ public class CalendarViewModel {
         
         let activeActivities = organizedDays.indices.reduce(into: [String: Double]()) { dict, index in
             let date = newStructure.days[index]
-            let lessons = organizedDays[index]
+            let dailyLessons = organizedDays[index]
             
             // Filtra: solo lezioni valide (non annullate e non pause)
-            let validLessons = lessons.filter { !$0.isCanceled && $0.type != "pause" }
+            let validLessons = dailyLessons.filter { !$0.isCanceled && $0.type != "pause" }
             
             if !validLessons.isEmpty {
                 let totalMinutes = validLessons.reduce(0) { sum, lesson in
-                    // Gestisce spazi extra es: "08:30 - 10:30"
                     guard let time = lesson.time else { return 0 }
                     
                     let times = time.split(separator: "-").map { $0.trimmingCharacters(in: .whitespaces) }
@@ -152,10 +151,7 @@ public class CalendarViewModel {
                     return sum + (end - start)
                 }
                 
-                // Calcola le ore come Double
                 let hours = Double(totalMinutes) / 60.0
-                
-                // Salva solo se le ore sono > 0 (puoi anche mettere una soglia minima tipo 0.1)
                 if hours > 0 {
                     dict[date] = hours
                 }
@@ -167,10 +163,10 @@ public class CalendarViewModel {
         }
     }
     
-    private func handleNewData(_ fetchedLessons: [Lesson], selectedYear: String, matricola: String, update: Bool) async throws {
+    private func handleNewData(_ fetchedLessons: [String: [Lesson]], selectedYear: String, matricola: String, update: Bool) async throws {
         if fetchedLessons.isEmpty {
             self.noLessonsFound = true
-            await updateStateAndCache([], selectedYear: selectedYear, matricola: matricola)
+            await updateStateAndCache([:], selectedYear: selectedYear, matricola: matricola)
             return
         }
         
@@ -188,7 +184,7 @@ public class CalendarViewModel {
         }
     }
     
-    private func updateStateAndCache(_ newLessons: [Lesson], selectedYear: String, matricola: String) async {
+    private func updateStateAndCache(_ newLessons: [String: [Lesson]], selectedYear: String, matricola: String) async {
         self.lessons = newLessons
         
         let cacheObject = newLessons
@@ -228,7 +224,7 @@ struct CalendarLogic {
     static func processCalendarData(
         year: Int,
         matricola: String,
-        lessons: [Lesson],
+        lessons: [String: [Lesson]],
         cachedStructure: YearStructure?
     ) async -> (YearStructure, [[Lesson]]) {
         return await Task.detached(priority: .userInitiated) {
@@ -239,28 +235,24 @@ struct CalendarLogic {
                 structure = generateYearStructure(year: year)
             }
             
-            let lessonsByDate = Dictionary(grouping: lessons, by: { $0.date })
             let userFilter: Lesson.TargetGroup = (matricola == "pari") ? .even : .odd
             
             var organized: [[Lesson]] = []
             organized.reserveCapacity(structure.days.count)
             
             for dayString in structure.days {
-                guard let dailyLessons = lessonsByDate[dayString] else {
+                guard let dailyLessons = lessons[dayString] else {
                     organized.append([])
                     continue
                 }
                 
                 let filtered = dailyLessons.filter { lesson in
                     lesson.type != "chiusura_type" &&
+                    lesson.type != "closure" &&
                     (lesson.group == .all || lesson.group == userFilter)
-                }.sorted(by: { $0.time ?? "" < $1.time ?? "" })
-                
-                if filtered.isEmpty {
-                    organized.append([])
-                } else {
-                    organized.append(insertPauses(in: filtered, date: dayString))
                 }
+                
+                organized.append(filtered)
             }
             
             return (structure, organized)
@@ -284,31 +276,5 @@ struct CalendarLogic {
         }
         
         return YearStructure(year: year, days: dateStrings, dates: dateObj)
-    }
-    
-    private static func insertPauses(in lessons: [Lesson], date: String) -> [Lesson] {
-        var processedDay = lessons
-        var offset = 0
-        
-        for i in 0..<lessons.count - 1 {
-            guard let time = lessons[i].time,
-                  let nextTime = lessons[i + 1].time else { continue }
-            
-            let currentEnd = time.suffix(5)
-            let NextStart = nextTime.prefix(5)
-            
-            if currentEnd < NextStart {
-                let pauseLesson = Lesson(
-                    id: "\(date) \(currentEnd)-\(NextStart) \("?h")", name: nil, cleanName: nil, date: date,
-                    time: "\(currentEnd)-\(NextStart)", duration: "?h", classroom: nil, location: nil,
-                    address: nil, teacher: nil, code: nil, color: nil, type: "pause", tags: [], latitude: nil,
-                    longitude: nil, capacity: nil, group: .all, isCanceled: false
-                )
-                
-                processedDay.insert(pauseLesson, at: i + 1 + offset)
-                offset += 1
-            }
-        }
-        return processedDay
     }
 }

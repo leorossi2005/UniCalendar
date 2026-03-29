@@ -62,7 +62,7 @@ enum NetworkError: Error {
 public protocol NetworkServiceProtocol: Sendable {
     func getYears() async throws -> [AcademicYear]
     func getCourses(year: String) async throws -> [Corso]
-    func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [Lesson]
+    func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [String: [Lesson]]
 }
 
 public struct NetworkService: NetworkServiceProtocol {
@@ -97,7 +97,6 @@ public struct NetworkService: NetworkServiceProtocol {
             
             struct RootWrapper: Decodable { let years: [AcademicYear] }
             let wrapper = try JSONDecoder().decode(RootWrapper.self, from: data)
-            print(wrapper.years)
             return wrapper.years
             
         } catch let error as URLError where error.code == .notConnectedToInternet {
@@ -131,7 +130,7 @@ public struct NetworkService: NetworkServiceProtocol {
         }
     }
     
-    public func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [Lesson] {
+    public func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [String: [Lesson]] {
         guard let url = URL(string: "\(baseURL)/schedule?course=\(corso)&academicYear=\(anno)&year=\(selyear)") else { throw NetworkError.badURL }
         
         do {
@@ -142,9 +141,7 @@ public struct NetworkService: NetworkServiceProtocol {
                 throw NetworkError.badServerResponse(statusCode: code)
             }
             
-            struct RootWrapper: Decodable { let lessons: [Lesson] }
-            let wrapper = try JSONDecoder().decode(RootWrapper.self, from: data)
-            return wrapper.lessons
+            return try JSONDecoder().decode([String: [Lesson]].self, from: data)
             
         } catch let error as URLError where error.code == .notConnectedToInternet {
             throw NetworkError.offline

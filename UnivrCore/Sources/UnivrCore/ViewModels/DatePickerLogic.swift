@@ -47,21 +47,22 @@ public class DatePickerCache {
         self.activeDatesCache = dates
         print("🔄 Updating Activities in Cache: \(dates.count) items") // DEBUG
         
-        for (monthKey, cells) in monthGrids {
-            monthGrids[monthKey] = cells.map { cell in
-                var newCell = cell
-                let dateKey = cell.date.formatUnivrStyle()
+        for monthKey in monthGrids.keys {
+            guard var cells = monthGrids[monthKey] else { continue }
+            
+            for i in 0..<cells.count {
+                let dateKey = cells[i].date.formatUnivrStyle()
                 
                 if let quantity = dates[dateKey] {
-                    newCell.hasActivity = true
-                    newCell.activityQuantity = quantity
+                    cells[i].hasActivity = true
+                    cells[i].activityQuantity = quantity
                 } else {
-                    newCell.hasActivity = false
-                    newCell.activityQuantity = 0.0
+                    cells[i].hasActivity = false
+                    cells[i].activityQuantity = 0.0
                 }
-                
-                return newCell
             }
+            
+            monthGrids[monthKey] = cells
         }
     }
     
