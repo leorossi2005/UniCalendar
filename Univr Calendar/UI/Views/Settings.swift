@@ -74,8 +74,8 @@ struct Settings: View {
                             .foregroundStyle(.primary)
                             .padding(.trailing)
                         Picker("", selection: $matricola) {
-                            Text("Pari").tag("pari")
-                            Text("Dispari").tag("dispari")
+                            Text("Pari").tag("even")
+                            Text("Dispari").tag("odd")
                         }
                         .pickerStyle(.segmented)
                     }
@@ -197,8 +197,8 @@ struct Settings: View {
                 try await viewModel.loadCourses(year: selectedYear)
                 
                 await MainActor.run {
-                    if !["pari", "dispari"].contains(matricola) {
-                        matricola = "pari"
+                    if !["even", "odd"].contains(matricola) {
+                        matricola = "even"
                     }
                     
                     if !viewModel.years.contains(where: { $0.id == selectedYear }) {
@@ -233,7 +233,7 @@ struct Settings: View {
     @Previewable @State var selectedYear: String = "2025"
     @Previewable @State var selectedCourse: String = "0"
     @Previewable @State var selectedAcademicYear: String = "0"
-    @Previewable @State var matricola: String = "pari"
+    @Previewable @State var matricola: String = "even"
     @Previewable @State var isFocused: Bool = false
     @Previewable @State var lockSheet: Bool = false
     

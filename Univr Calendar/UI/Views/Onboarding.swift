@@ -163,8 +163,8 @@ struct Onboarding: View {
                     isTopContent: false,
                     content: {
                         Picker(selection: $settings.matricola) {
-                            Text("Pari").tag("pari")
-                            Text("Dispari").tag("dispari")
+                            Text("Pari").tag("even")
+                            Text("Dispari").tag("odd")
                         } label: {}
                         .pickerStyle(.segmented)
                         .padding()
