@@ -63,7 +63,6 @@ extension Lesson: Hashable, Equatable {
     }
 }
 
-#if DEBUG
 // MARK: - UI Previews
 extension Lesson {
     public static let sample = Lesson(
@@ -81,4 +80,3 @@ extension Lesson {
         group: .all, isCanceled: false
     )
 }
-#endif

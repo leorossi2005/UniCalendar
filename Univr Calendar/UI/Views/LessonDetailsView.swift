@@ -300,6 +300,14 @@ struct StableMapView: View {
     }
     
     private func findLocation(for lesson: Lesson) async {
+        if let latitude = lesson.latitude, let longitude = lesson.longitude {
+            await MainActor.run {
+                self.externalCoordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+                self.isLoadingMap = false
+            }
+            return
+        }
+        
         guard let address = lesson.address, !address.isEmpty else { return }
         
         if let cachedCoord = await CoordinateCache.shared.coordinate(for: address) {
