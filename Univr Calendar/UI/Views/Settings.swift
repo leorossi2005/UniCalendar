@@ -184,7 +184,9 @@ struct Settings: View {
     }
     
     private func loadInitialData() {
-        viewModel.loadFromCache()
+        Task {
+            await viewModel.loadFromCache()
+        }
         
         if viewModel.years.isEmpty {
             Task {

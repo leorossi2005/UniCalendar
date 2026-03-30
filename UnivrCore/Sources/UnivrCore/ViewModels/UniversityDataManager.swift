@@ -27,12 +27,10 @@ public final class UniversityDataManager {
     
     public init() {}
     
-    public func loadFromCache() {
-        Task {
-            if let cacheResponse = await CacheManager.shared.load(fileName: cacheKey, type: NetworkCacheData.self) {
-                NetworkCache.shared.update(from: cacheResponse)
-                self.years = NetworkCache.shared.years
-            }
+    public func loadFromCache() async {
+        if let cacheResponse = await CacheManager.shared.load(fileName: cacheKey, type: NetworkCacheData.self) {
+            NetworkCache.shared.update(from: cacheResponse)
+            self.years = NetworkCache.shared.years
         }
     }
     
@@ -56,7 +54,7 @@ public final class UniversityDataManager {
         defer { self.loading = false }
         
         try await fetchAndRefresh(
-            currentData: NetworkCache.shared.courses[year],
+            currentData: NetworkCache.shared.courses[year] ?? [],
             fetchOperation: { try await self.service.getCourses(year: year) },
             updateState: { [weak self] newCourses in
                 NetworkCache.shared.courses[year] = newCourses
@@ -75,20 +73,17 @@ public final class UniversityDataManager {
         return anno.hasGroup ?? false
     }
     
-    private func fetchAndRefresh<T: Equatable >(
-        currentData: T?,
+    private func fetchAndRefresh<T: Collection & Equatable & Sendable >(
+        currentData: T,
         fetchOperation: @escaping @Sendable () async throws -> T,
         updateState: @escaping @MainActor (T) -> Void
     ) async throws {
-        let hasCache = (currentData as? [Any])?.isEmpty == false
-                
-        if let currentData, hasCache {
+        if !currentData.isEmpty {
             updateState(currentData)
             
             Task {
                 do {
                     let newData = try await fetchOperation()
-                    
                     if currentData != newData {
                         updateState(newData)
                         await saveCache()
@@ -105,13 +100,11 @@ public final class UniversityDataManager {
             let newData = try await fetchOperation()
             updateState(newData)
             await saveCache()
+        } catch let error as NetworkError {
+            self.errorMessage = error.errorDescription
+            throw error
         } catch {
-            if let NError = error as? NetworkError, case .offline = NError {
-                self.errorMessage = NError.errorDescription
-            } else {
-                self.errorMessage = NSLocalizedString("Errore generico: \(error.localizedDescription)", comment: "")
-            }
-            
+            self.errorMessage = NSLocalizedString("Errore generico: \(error.localizedDescription)", comment: "")
             throw error
         }
     }

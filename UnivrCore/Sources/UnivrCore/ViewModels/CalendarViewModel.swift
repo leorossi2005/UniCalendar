@@ -64,8 +64,10 @@ public class CalendarViewModel {
     // MARK: - Data Handling
     private func handleNewData(_ fetched: [String: [Lesson]], selectedYear: String, matricola: String, update: Bool) async {
         if fetched.isEmpty {
-            state = .empty
-            lessons.removeAll()
+            if update || lessons.isEmpty {
+                state = .empty
+                lessons.removeAll()
+            }
             return
         }
         

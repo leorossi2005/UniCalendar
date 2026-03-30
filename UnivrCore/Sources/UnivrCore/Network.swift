@@ -27,10 +27,7 @@ public final class NetworkCache: Sendable {
     private init() {}
     
     public func toData() -> NetworkCacheData {
-        return NetworkCacheData(
-            years: self.years,
-            courses: self.courses
-        )
+        return NetworkCacheData(years: self.years, courses: self.courses)
     }
     
     public func update(from data: NetworkCacheData) {
@@ -43,18 +40,20 @@ enum NetworkError: Error {
     case badURL
     case badServerResponse(statusCode: Int)
     case emptyData
-    case dataNotFound(variable: String)
     case decodingError(Error)
     case offline
+    case timeout
+    case unknown(Error)
     
     var errorDescription: String? {
         switch self {
-            case .offline: return "Device is offline."
-            case .badURL: return "URL is not valid"
-            case .badServerResponse(let code): return "Server Error: \(code)."
-            case .emptyData: return "Empty data recieved from the server"
-            case .dataNotFound(let variable): return "Impossible to find data for: \(variable)."
-            case .decodingError(let err): return "Decoding error: \(err.localizedDescription)"
+        case .offline: return "Il dispositivo è offline."
+        case .timeout: return "La richiesta è scaduta (Timeout)."
+        case .badURL: return "L'URL non è valido."
+        case .badServerResponse(let code): return "Errore Server: \(code)."
+        case .emptyData: return "Nessun dato ricevuto dal server."
+        case .decodingError(let err): return "Errore di decodifica: \(err.localizedDescription)"
+        case .unknown(let err): return "Errore sconosciuto: \(err.localizedDescription)"
         }
     }
 }
@@ -67,7 +66,6 @@ public protocol NetworkServiceProtocol: Sendable {
 
 public struct NetworkService: NetworkServiceProtocol {
     private let session: URLSession
-    
     let baseURL = "http://192.168.0.7:8787/api/v1"
     
     public init() {
@@ -84,70 +82,50 @@ public struct NetworkService: NetworkServiceProtocol {
         self.session = URLSession(configuration: configuration)
     }
     
-    public func getYears() async throws -> [AcademicYear] {
-        guard let url = URL(string: "\(baseURL)/years") else { throw NetworkError.badURL }
+    private func fetch<T: Decodable>(from endpoint: String) async throws -> T {
+        guard let url = URL(string: "\(baseURL)\(endpoint)") else { throw NetworkError.badURL }
         
         do {
             let (data, response) = try await self.session.data(from: url)
             
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                let code = (response as? HTTPURLResponse)?.statusCode ?? 0
-                throw NetworkError.badServerResponse(statusCode: code)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw NetworkError.unknown(URLError(.unknown))
             }
             
-            struct RootWrapper: Decodable { let years: [AcademicYear] }
-            let wrapper = try JSONDecoder().decode(RootWrapper.self, from: data)
-            return wrapper.years
+            guard (200...299).contains(httpResponse.statusCode) else {
+                throw NetworkError.badServerResponse(statusCode: httpResponse.statusCode)
+            }
             
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            throw NetworkError.offline
-        } catch {
-            print("Decode error: \(error)")
+            return try JSONDecoder().decode(T.self, from: data)
+            
+        } catch let error as URLError {
+            switch error.code {
+            case .notConnectedToInternet: throw NetworkError.offline
+            case .timedOut: throw NetworkError.timeout
+            default: throw NetworkError.unknown(error)
+            }
+        } catch let error as DecodingError {
+            print("Decode error for \(endpoint): \(error)")
             throw NetworkError.decodingError(error)
+        } catch {
+            throw NetworkError.unknown(error)
         }
+    }
+    
+    // MARK: - Public Methods
+    public func getYears() async throws -> [AcademicYear] {
+        struct RootWrapper: Decodable { let years: [AcademicYear] }
+        let wrapper: RootWrapper = try await fetch(from: "/years")
+        return wrapper.years
     }
     
     public func getCourses(year: String) async throws -> [Corso] {
-        guard let url = URL(string: "\(baseURL)/courses?year=\(year)") else { throw NetworkError.badURL }
-        
-        do {
-            let (data, response) = try await self.session.data(from: url)
-            
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                let code = (response as? HTTPURLResponse)?.statusCode ?? 0
-                throw NetworkError.badServerResponse(statusCode: code)
-            }
-            
-            struct RootWrapper: Decodable { let courses: [Corso] }
-            let wrapper = try JSONDecoder().decode(RootWrapper.self, from: data)
-            return wrapper.courses
-            
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            throw NetworkError.offline
-        } catch {
-            print("Decode error: \(error)")
-            throw NetworkError.decodingError(error)
-        }
+        struct RootWrapper: Decodable { let courses: [Corso] }
+        let wrapper: RootWrapper = try await fetch(from: "/courses?year=\(year)")
+        return wrapper.courses
     }
     
     public func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [String: [Lesson]] {
-        guard let url = URL(string: "\(baseURL)/schedule?course=\(corso)&academicYear=\(anno)&year=\(selyear)") else { throw NetworkError.badURL }
-        
-        do {
-            let (data, response) = try await self.session.data(from: url)
-            
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                let code = (response as? HTTPURLResponse)?.statusCode ?? 0
-                throw NetworkError.badServerResponse(statusCode: code)
-            }
-            
-            return try JSONDecoder().decode([String: [Lesson]].self, from: data)
-            
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            throw NetworkError.offline
-        } catch {
-            print("Decode error: \(error)")
-            throw NetworkError.decodingError(error)
-        }
+        return try await fetch(from: "/schedule?course=\(corso)&academicYear=\(anno)&year=\(selyear)")
     }
 }
