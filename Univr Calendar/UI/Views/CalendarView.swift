@@ -572,7 +572,7 @@ struct CalendarViewDay: View {
         ScrollView {
             VStack(spacing: 10) {
                 ForEach(filteredLessons) { lesson in
-                    if lesson.type != "pause" && lesson.type != "chiusura_type" {
+                    if lesson.type != .pause && lesson.type != .closure {
                         LessonCard(lesson: lesson)
                             .onTapGesture {
                                 Haptics.play(.impact(weight: .light, intensity: 0.5))

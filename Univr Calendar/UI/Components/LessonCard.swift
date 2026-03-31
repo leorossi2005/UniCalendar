@@ -105,7 +105,7 @@ struct LessonCard: View {
 #Preview {
     ScrollView {
         ForEach([Lesson.sample, Lesson.pausaSample, Lesson.sample]) { lesson in
-            if lesson.type != "pause" && lesson.type != "chiusura_type" {
+            if lesson.type != .pause && lesson.type != .closure {
                 LessonCard(lesson: lesson)
             } else {
                 HStack(alignment: .bottom) {

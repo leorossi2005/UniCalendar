@@ -23,43 +23,43 @@ public struct Corso: Codable, Equatable, Sendable, Identifiable {
 }
 
 // MARK: - Schedule Models
-public struct Lesson: Codable, Sendable, Identifiable {
+public struct Lesson: Codable, Equatable, Sendable, Identifiable {
     public let id: String
-    public let name: String?
-    public let cleanName: String?
-    public let date: String?
-    public let time: String?
-    public let duration: String?
-    public let classroom: String?
-    public let location: String?
-    public let address: String?
-    public let teacher: String?
-    public let code: String?
-    public let color: String?
-    public let type: String?
+    public private(set) var name: String? = nil
+    public private(set) var cleanName: String? = nil
+    public private(set) var date: String? = nil
+    public private(set) var time: String? = nil
+    public private(set) var duration: String? = nil
+    public private(set) var classroom: String? = nil
+    public private(set) var location: String? = nil
+    public private(set) var address: String? = nil
+    public private(set) var teacher: String? = nil
+    public private(set) var code: String? = nil
+    public private(set) var color: String? = nil
+    public private(set) var type: EventType = .unknown
     
-    public let tags: [String]
+    public private(set) var tags: [String] = []
     
-    public let latitude: Double?
-    public let longitude: Double?
-    public let capacity: Int?
+    public private(set) var latitude: Double? = nil
+    public private(set) var longitude: Double? = nil
+    public private(set) var capacity: Int? = nil
     
-    public let group: TargetGroup
-    public let isCanceled: Bool 
+    public private(set) var group: TargetGroup = .all
+    public private(set) var isCanceled: Bool = false
     
     public enum TargetGroup: String, Codable, Sendable {
         case even, odd, all
     }
-}
-
-// MARK: - O(1) Diffing per SwiftUI
-extension Lesson: Hashable, Equatable {
-    public static func == (lhs: Lesson, rhs: Lesson) -> Bool {
-        lhs.id == rhs.id
-    }
     
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
+    public enum EventType: String, Codable, Sendable {
+        case lesson, closure, pause, unknown
+        
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.singleValueContainer()
+            let rawValue = try container.decode(String.self)
+            
+            self = EventType(rawValue: rawValue) ?? .unknown
+        }
     }
 }
 
@@ -68,15 +68,10 @@ extension Lesson {
     public static let sample = Lesson(
         id: "SAMPLE-123", name: "Insegnamento di prova", cleanName: "Insegnamento di prova",
         date: "01-01-2025", time: "08:30 - 10:30", duration: "2h", classroom: "Aula Gino Tessari",
-        location: nil, address: nil, teacher: "Prof. Rossi", code: "XYZ", color: "#A0A0A0", type: "lesson",
-        tags: [], latitude: nil, longitude: nil, capacity: nil,
-        group: .all, isCanceled: false
+        teacher: "Prof. Rossi", code: "XYZ", color: "#A0A0A0", type: .lesson
     )
     
     public static let pausaSample = Lesson(
-        id: "PAUSA-123", name: nil, cleanName: nil, date: "01-01-2025", time: "08:30 - 10:30", duration: "2h",
-        classroom: nil, location: nil, address: nil, teacher: nil, code: nil, color: nil, type: "pause", tags: [],
-        latitude: nil, longitude: nil, capacity: nil,
-        group: .all, isCanceled: false
+        id: "PAUSA-123", name: nil, cleanName: nil, date: "01-01-2025", time: "08:30 - 10:30", duration: "2h", type: .pause
     )
 }

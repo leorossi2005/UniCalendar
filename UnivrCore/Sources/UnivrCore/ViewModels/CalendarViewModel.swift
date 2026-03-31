@@ -97,14 +97,14 @@ public class CalendarViewModel {
         
         for (dateString, dailyLessons) in rawLessons {
             let filtered = dailyLessons.filter { lesson in
-                lesson.type != "chiusura_type" &&
+                lesson.type != .closure &&
                 (lesson.group == .all || lesson.group == userFilter)
             }
             
             if !filtered.isEmpty {
                 processedLessons[dateString] = filtered
                 
-                let valid = filtered.filter { !$0.isCanceled && $0.type != "pause" }
+                let valid = filtered.filter { !$0.isCanceled && $0.type != .pause }
                 if !valid.isEmpty {
                     let totalMinutes = valid.reduce(0) { sum, lesson in
                         guard let t = lesson.time else { return sum }
