@@ -15,7 +15,7 @@ struct LessonCard: View {
     
     let lesson: Lesson
     
-    private var backgroundColor: Color { Color(hex: lesson.color ?? "") ?? Color(.systemGray6) }
+    private var backgroundColor: Color { Color(hex: lesson.color) ?? Color(.systemGray6) }
     
     var body: some View {
         HStack(spacing: 20) {
@@ -45,11 +45,11 @@ struct LessonCard: View {
     
     private var timeInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(lesson.time?.split(separator: " - ").first ?? "")
+            Text(lesson.startTime.formatted(.dateTime.hour().minute()))
                 .font(.largeTitle.monospacedDigit())
                 .fontWeight(.medium)
             if !lesson.isCanceled {
-                Label(lesson.duration ?? "", systemImage: "clock")
+                Label(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)), systemImage: "clock")
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(Color.black.opacity(0.1))
@@ -68,7 +68,7 @@ struct LessonCard: View {
                 .multilineTextAlignment(.leading)
                 .strikethrough(lesson.isCanceled)
             if !lesson.isCanceled {
-                Text(lesson.classroom ?? "")
+                Text(lesson.location?.classroom ?? "")
                     .foregroundStyle(Color(white: 0.3))
                     .font(.subheadline)
                     .multilineTextAlignment(.leading)
@@ -111,7 +111,7 @@ struct LessonCard: View {
                 HStack(alignment: .bottom) {
                     Image(systemName: .cupDynamic)
                         .font(.system(size: 40))
-                    Text(lesson.duration ?? "")
+                    Text(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)))
                         .font(.system(size: 30))
                         .italic()
                         .bold()

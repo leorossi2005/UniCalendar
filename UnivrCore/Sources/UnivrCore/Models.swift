@@ -23,29 +23,34 @@ public struct Corso: Codable, Equatable, Sendable, Identifiable {
 }
 
 // MARK: - Schedule Models
+public struct Coordinates: Codable, Equatable, Sendable {
+    public let latitude: Double
+    public let longitude: Double
+}
+
+public struct LocationInfo: Codable, Equatable, Sendable {
+    public let classroom: String
+    public let building: String?
+    public let address: String?
+    public let capacity: Int?
+    public let coordinates: Coordinates?
+}
+
 public struct Lesson: Codable, Equatable, Sendable, Identifiable {
     public let id: String
-    public private(set) var name: String? = nil
-    public private(set) var cleanName: String? = nil
-    public private(set) var date: String? = nil
-    public private(set) var time: String? = nil
-    public private(set) var duration: String? = nil
-    public private(set) var classroom: String? = nil
-    public private(set) var location: String? = nil
-    public private(set) var address: String? = nil
-    public private(set) var teacher: String? = nil
-    public private(set) var code: String? = nil
-    public private(set) var color: String? = nil
-    public private(set) var type: EventType = .unknown
-    
-    public private(set) var tags: [String] = []
-    
-    public private(set) var latitude: Double? = nil
-    public private(set) var longitude: Double? = nil
-    public private(set) var capacity: Int? = nil
-    
-    public private(set) var group: TargetGroup = .all
-    public private(set) var isCanceled: Bool = false
+    public let code: String?
+    public let type: EventType
+    public let name: String?
+    public let cleanName: String?
+    public let tags: [String]
+    public let group: TargetGroup
+    public let startTime: Date
+    public let endTime: Date
+    public let durationMinutes: Int
+    public let isCanceled: Bool
+    public let color: String
+    public let teachers: [String]
+    public let location: LocationInfo?
     
     public enum TargetGroup: String, Codable, Sendable {
         case even, odd, all
@@ -63,15 +68,51 @@ public struct Lesson: Codable, Equatable, Sendable, Identifiable {
     }
 }
 
+public struct DailySchedule: Codable, Equatable, Sendable, Identifiable {
+    public var id: String { date }
+    public let date: String
+    public let events: [Lesson]
+}
+
 // MARK: - UI Previews
 extension Lesson {
     public static let sample = Lesson(
-        id: "SAMPLE-123", name: "Insegnamento di prova", cleanName: "Insegnamento di prova",
-        date: "01-01-2025", time: "08:30 - 10:30", duration: "2h", classroom: "Aula Gino Tessari",
-        teacher: "Prof. Rossi", code: "XYZ", color: "#A0A0A0", type: .lesson
+        id: "SAMPLE-123",
+        code: "XYZ",
+        type: .lesson,
+        name: "Insegnamento di prova",
+        cleanName: "Insegnamento di prova",
+        tags: ["Informatica", "Base"],
+        group: .all,
+        startTime: Date(),
+        endTime: Date().addingTimeInterval(7200), // +2 ore
+        durationMinutes: 120,
+        isCanceled: false,
+        color: "#A0A0A0",
+        teachers: ["Prof. Rossi", "Prof. Verdi"],
+        location: LocationInfo(
+            classroom: "Aula Gino Tessari",
+            building: "Borgo Roma - Ca' Vignal 2",
+            address: "Strada Le Grazie, 15 - 37134 Verona",
+            capacity: 236,
+            coordinates: Coordinates(latitude: 45.4037, longitude: 10.9991)
+        )
     )
     
     public static let pausaSample = Lesson(
-        id: "PAUSA-123", name: nil, cleanName: nil, date: "01-01-2025", time: "08:30 - 10:30", duration: "2h", type: .pause
+        id: "PAUSA-123",
+        code: nil,
+        type: .pause,
+        name: "Pausa",
+        cleanName: "Pausa",
+        tags: [],
+        group: .all,
+        startTime: Date(),
+        endTime: Date().addingTimeInterval(3600),
+        durationMinutes: 60,
+        isCanceled: false,
+        color: "#FFFFFF",
+        teachers: [],
+        location: nil
     )
 }

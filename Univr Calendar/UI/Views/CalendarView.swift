@@ -83,7 +83,7 @@ struct CalendarView: View {
                 tempSettings: $tempSettings,
                 openCalendar: $openCalendar
             )
-            .disabled((viewModel.state == .loading || viewModel.state == .empty || viewModel.lessons.isEmpty) && !openSettings)
+            .disabled((viewModel.state == .loading || viewModel.state == .empty || viewModel.schedule.isEmpty) && !openSettings)
         }
         .ignoresSafeArea(edges: .bottom)
     }
@@ -106,8 +106,7 @@ struct CalendarView: View {
         ScrollView(.horizontal) {
             LazyHStack(spacing: 0) {
                 ForEach(viewModel.academicYearDays, id: \.self) { date in
-                    let dateString = date.formatUnivrStyle()
-                    let dailyLessons = viewModel.lessons[dateString] ?? []
+                    let dailyLessons = viewModel.events(for: date) ?? []
                     
                     Group {
                         if !dailyLessons.isEmpty {
@@ -159,7 +158,7 @@ struct CalendarView: View {
     private var stateOverlays: some View {
         let hasCourse = settings.selectedCourse != "0"
         
-        if net.status != .connected && (viewModel.lessons.isEmpty || !hasCourse) {
+        if net.status != .connected && (viewModel.schedule.isEmpty || !hasCourse) {
             ContentUnavailableView(
                 "Sei Offline",
                 systemImage: "wifi.slash",
@@ -583,7 +582,7 @@ struct CalendarViewDay: View {
                         HStack(alignment: .bottom) {
                             Image(systemName: .cupDynamic)
                                 .font(.system(size: 40))
-                            Text(lesson.duration ?? "")
+                            Text(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)))
                                 .font(.system(size: 30))
                                 .italic()
                                 .bold()

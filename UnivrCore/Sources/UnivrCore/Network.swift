@@ -61,12 +61,12 @@ enum NetworkError: Error {
 public protocol NetworkServiceProtocol: Sendable {
     func getYears() async throws -> [AcademicYear]
     func getCourses(year: String) async throws -> [Corso]
-    func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [String: [Lesson]]
+    func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [DailySchedule]
 }
 
 public struct NetworkService: NetworkServiceProtocol {
     private let session: URLSession
-    let baseURL = "http://192.168.0.7:8787/api/v1"
+    let baseURL = "http://192.168.0.4:3001/api/v1"
     
     public init() {
         let configuration = URLSessionConfiguration.default
@@ -96,7 +96,24 @@ public struct NetworkService: NetworkServiceProtocol {
                 throw NetworkError.badServerResponse(statusCode: httpResponse.statusCode)
             }
             
-            return try JSONDecoder().decode(T.self, from: data)
+            let decoder = JSONDecoder()
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = TimeZone(identifier: "Europe/Rome")
+            decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let dateStr = try container.decode(String.self)
+            
+            // Sostituiamo il "24:00:00" illegale dell'università con "23:59:59"
+            let safeDateStr = dateStr.replacingOccurrences(of: "T24:00:00", with: "T23:59:59")
+            
+            guard let date = formatter.date(from: safeDateStr) else {
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Impossibile formattare la data: \(dateStr)")
+            }
+            return date
+        }
+            return try decoder.decode(T.self, from: data)
             
         } catch let error as URLError {
             switch error.code {
@@ -125,7 +142,7 @@ public struct NetworkService: NetworkServiceProtocol {
         return wrapper.courses
     }
     
-    public func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [String: [Lesson]] {
+    public func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [DailySchedule] {
         return try await fetch(from: "/schedule?course=\(corso)&academicYear=\(anno)&year=\(selyear)")
     }
 }

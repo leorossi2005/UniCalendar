@@ -11,7 +11,18 @@
         }
       }
     },
+    "%@ - %@ (%@" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ - %2$@ (%3$@"
+          }
+        }
+      }
+    },
     "%@ (%@)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

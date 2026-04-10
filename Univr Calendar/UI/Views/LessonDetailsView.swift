@@ -23,7 +23,7 @@ struct LessonDetailsView: View {
     @State private var currentLessonCoordinate: CLLocationCoordinate2D?
     @State private var eventSaved: Bool = false
     
-    private var date: Date { lesson?.date?.toDateModern() ?? Date() }
+    private var date: Date { lesson?.startTime ?? Date() }
     private var backgroundColor: Color { Color(hex: lesson?.color ?? "") ?? Color(.systemGray6) }
     
     var body: some View {
@@ -128,15 +128,15 @@ struct LessonDetailsView: View {
                 icon: "calendar"
             )
             rowLabel(
-                text: "\(lesson.time ?? "") (\(lesson.duration ?? ""))",
+                text: "\(lesson.startTime.formatted(.dateTime.hour().minute())) - \(lesson.endTime.formatted(.dateTime.hour().minute())) (\(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)))",
                 icon: "clock.fill"
             )
             rowLabel(
-                text: lesson.teacher == nil ? "Non specificato" : LocalizedStringKey(lesson.teacher!),
-                icon: lesson.teacher != nil && lesson.teacher!.contains(",") ? "person.2.fill" : "person.fill"
+                text: lesson.teachers.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.teachers.joined(separator: ", ")),
+                icon: !lesson.teachers.isEmpty && lesson.teachers.count > 1 ? "person.2.fill" : "person.fill"
             )
             rowLabel(
-                text: "\(lesson.classroom ?? "") \(lesson.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
+                text: "\(lesson.location?.classroom ?? "") \(lesson.location?.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
                 icon: "mappin"
             )
         }
@@ -170,33 +170,23 @@ struct LessonDetailsView: View {
         let newEvent = EKEvent(eventStore: eventStore)
         
         newEvent.title = lesson.cleanName
-        if let teacher = lesson.teacher {
-            newEvent.notes = teacher.contains(",") ? String(localized: "Docenti: \(teacher)") : String(localized: "Docente: \(teacher)")
+        if !lesson.teachers.isEmpty {
+            newEvent.notes = lesson.teachers.count > 1 ? String(localized: "Docenti: \(lesson.teachers.joined(separator: ", "))") : String(localized: "Docente: \(lesson.teachers.joined(separator: ", "))")
         }
         newEvent.availability = .busy
         
-        if let coordinate = coordinate, let classroom = lesson.classroom {
-            let structuredLocation = EKStructuredLocation(title: classroom)
-            structuredLocation.geoLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-            newEvent.structuredLocation = structuredLocation
-        } else if let classroom = lesson.classroom {
-            newEvent.location = classroom
+        if let location = lesson.location {
+            if let coords = location.coordinates {
+                let structuredLocation = EKStructuredLocation(title: location.classroom)
+                structuredLocation.geoLocation = CLLocation(latitude: coords.latitude, longitude: coords.longitude)
+                newEvent.structuredLocation = structuredLocation
+            } else {
+                newEvent.location = location.classroom
+            }
         }
         
-        guard let date = lesson.date,
-              let time = lesson.time else { return }
-        
-        let baseDate = date.toDateModern() ?? Date()
-        let timeRange = time.split(separator: "-").map { $0.trimmingCharacters(in: .whitespaces) }
-        let startTime = timeRange.count == 2 ? timeRange[0] : ""
-        let endTime = timeRange.count == 2 ? timeRange[1] : ""
-        if let startDate = combineDateAndTime(date: baseDate, timeString: startTime), let endDate = combineDateAndTime(date: baseDate, timeString: endTime) {
-            newEvent.startDate = startDate
-            newEvent.endDate = endDate
-        } else {
-            newEvent.startDate = Date()
-            newEvent.endDate = Date().addingTimeInterval(3600)
-        }
+        newEvent.startDate = lesson.startTime
+        newEvent.endDate = lesson.endTime
         
         calendarEvent = newEvent
     }
@@ -210,7 +200,7 @@ struct StableMapView: View {
     @State var corderRadius: CGFloat
     @State private var isLoadingMap: Bool = false
     
-    private var backgroundColor: Color { Color(hex: lesson.color ?? "") ?? Color(.systemGray6) }
+    private var backgroundColor: Color { Color(hex: lesson.color) ?? Color(.systemGray6) }
 
     var body: some View {
         ZStack {
@@ -220,14 +210,14 @@ struct StableMapView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        openInMapsButton(coordinate: coordinate, name: lesson.classroom ?? "", color: backgroundColor)
+                        openInMapsButton(coordinate: coordinate, name: lesson.location?.classroom ?? "", color: backgroundColor)
                     }
                     Spacer()
                 }
             } else if isLoadingMap {
                 ProgressView()
             } else {
-                ContentUnavailableView("Posizione non trovata\n\n\(lesson.address ?? "")", systemImage: "mappin.slash")
+                ContentUnavailableView("Posizione non trovata\n\n\(lesson.location?.address ?? "")", systemImage: "mappin.slash")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -250,7 +240,7 @@ struct StableMapView: View {
                     .foregroundStyle(.black)
             }
             
-            Text(lesson.address ?? "")
+            Text(lesson.location?.address ?? "")
                 .frame(height: 10)
                 .font(.caption)
                 .bold()
@@ -300,7 +290,7 @@ struct StableMapView: View {
     }
     
     private func findLocation(for lesson: Lesson) async {
-        if let latitude = lesson.latitude, let longitude = lesson.longitude {
+        if let latitude = lesson.location?.coordinates?.latitude, let longitude = lesson.location?.coordinates?.longitude {
             await MainActor.run {
                 self.externalCoordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
                 self.isLoadingMap = false
@@ -308,7 +298,7 @@ struct StableMapView: View {
             return
         }
         
-        guard let address = lesson.address, !address.isEmpty else { return }
+        guard let address = lesson.location?.address, !address.isEmpty else { return }
         
         if let cachedCoord = await CoordinateCache.shared.coordinate(for: address) {
             let clCoord = CLLocationCoordinate2D(latitude: cachedCoord.latitude, longitude: cachedCoord.longitude)
