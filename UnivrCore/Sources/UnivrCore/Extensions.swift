@@ -13,25 +13,11 @@ public enum CalendarSymbolLength: String, Sendable {
     case full, short, veryShort
 }
 
-extension Date.ParseStrategy {
-    static var univrDate: Date.ParseStrategy {
-        Date.ParseStrategy(
-            format: "\(day: .twoDigits)-\(month: .twoDigits)-\(year: .extended())",
-            timeZone: .autoupdatingCurrent
-        )
-    }
-}
-
 extension Date {
     private var calendar: Calendar { .autoupdatingCurrent }
     
     public init(year: Int, month: Int, day: Int) {
         self = Calendar.autoupdatingCurrent.date(from: DateComponents(year: year, month: month, day: day)) ?? Date()
-    }
-    
-    public func formatUnivrStyle() -> String {
-        self.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year(.extended()))
-            .replacingOccurrences(of: "/", with: "-")
     }
     
     public func startOfWeek() -> Date? {
@@ -108,12 +94,6 @@ extension Date {
     public var weekday: Int { calendar.component(.weekday, from: self) }
     public var yearSymbol: String { String(year) }
     public var isoDateString: String { String(format: "%04d-%02d-%02d", year, month, day) }
-}
-
-extension String {
-    public func toDateModern() -> Date? {
-        (try? Date(self, strategy: Date.ParseStrategy.univrDate)) ?? (try? Date(self, strategy: .iso8601))
-    }
 }
 
 extension Bundle {

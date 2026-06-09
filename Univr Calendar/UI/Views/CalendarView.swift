@@ -412,9 +412,9 @@ struct CalendarView: View {
            let currentYear = Int(years.id),
            let year = Int(settings.selectedYear),
            year != currentYear {
-            let startAcademic = "01-10-\(year)"
-            if selectedWeek.formatUnivrStyle() != startAcademic {
-                selectedWeek = startAcademic.toDateModern() ?? Date(year: year, month: today.month, day: today.day)
+            let startAcademic = Date(year: year, month: 10, day: 1)
+            if !Calendar.current.isDate(selectedWeek, inSameDayAs: startAcademic) {
+                selectedWeek = startAcademic
             }
         } else {
             if !Calendar.current.isDate(selectedWeek, inSameDayAs: today) {
