@@ -14,10 +14,10 @@ struct CalendarView: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
+    @Environment(NetworkStateObserver.self) private var net
     @Namespace var transition
     
     private let positionObserver = WindowPositionObserver.shared
-    private let net: NetworkMonitor = .shared
     @State private var viewModel = CalendarViewModel()
     @State private var tempSettings = TempSettingsState()
     
@@ -582,7 +582,7 @@ struct CalendarViewDay: View {
                         HStack(alignment: .bottom) {
                             Image(systemName: .cupDynamic)
                                 .font(.system(size: 40))
-                            Text(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)))
+                            Text(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)))
                                 .font(.system(size: 30))
                                 .italic()
                                 .bold()

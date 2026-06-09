@@ -49,20 +49,3 @@ public struct HexColorParser: Sendable {
         }
     }
 }
-
-public struct Stopwatch: Sendable {
-    private var startTime: UInt64?
-    
-    public init() {}
-    
-    public mutating func start() {
-        startTime = DispatchTime.now().uptimeNanoseconds
-    }
-    
-    public mutating func stop() -> Double {
-        guard let start = startTime else { return 0 }
-        let now = DispatchTime.now().uptimeNanoseconds
-        self.startTime = nil
-        return Double(now - start) / 1_000_000_000.0
-    }
-}

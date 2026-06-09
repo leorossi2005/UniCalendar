@@ -15,8 +15,6 @@ struct LessonCard: View {
     
     let lesson: Lesson
     
-    private var backgroundColor: Color { Color(hex: lesson.color) ?? Color(.systemGray6) }
-    
     var body: some View {
         HStack(spacing: 20) {
             timeInfo
@@ -33,7 +31,7 @@ struct LessonCard: View {
     // MARK: - Components
     private var backgroundLayer: some View {
         RoundedRectangle(cornerRadius: 35, style: .continuous)
-            .fill(lesson.isCanceled ? Color(.systemBackground) : backgroundColor)
+            .fill(lesson.isCanceled ? Color(.systemBackground) : lesson.uiColor)
             .overlay {
                 if lesson.isCanceled {
                     RoundedRectangle(cornerRadius: 35, style: .continuous)
@@ -49,7 +47,7 @@ struct LessonCard: View {
                 .font(.largeTitle.monospacedDigit())
                 .fontWeight(.medium)
             if !lesson.isCanceled {
-                Label(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)), systemImage: "clock")
+                Label(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)), systemImage: "clock")
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(Color.black.opacity(0.1))
@@ -93,7 +91,7 @@ struct LessonCard: View {
                     .background {
                         ZStack {
                             Color.black.opacity(0.1)
-                            backgroundColor.opacity(0.3)
+                            lesson.uiColor.opacity(0.3)
                         }
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))

@@ -14,8 +14,8 @@ struct Onboarding: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
+    @Environment(NetworkStateObserver.self) private var net
     
-    private let net: NetworkMonitor = .shared
     @State private var viewModel = UniversityDataManager()
     
     @State private var currentIndex: Int? = 0

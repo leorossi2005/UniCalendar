@@ -107,6 +107,7 @@ extension Date {
     public var year: Int { calendar.component(.year, from: self) }
     public var weekday: Int { calendar.component(.weekday, from: self) }
     public var yearSymbol: String { String(year) }
+    public var isoDateString: String { String(format: "%04d-%02d-%02d", year, month, day) }
 }
 
 extension String {

@@ -24,7 +24,6 @@ struct LessonDetailsView: View {
     @State private var eventSaved: Bool = false
     
     private var date: Date { lesson?.startTime ?? Date() }
-    private var backgroundColor: Color { Color(hex: lesson?.color ?? "") ?? Color(.systemGray6) }
     
     var body: some View {
         if let lesson = lesson {
@@ -106,7 +105,7 @@ struct LessonDetailsView: View {
                                 .font(.caption)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
-                                .background(lesson.isCanceled ? Color(.secondarySystemBackground) : backgroundColor.opacity(0.2))
+                                .background(lesson.isCanceled ? Color(.secondarySystemBackground) : lesson.uiColor.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                                 .overlay {
                                     if lesson.isCanceled {
@@ -128,7 +127,7 @@ struct LessonDetailsView: View {
                 icon: "calendar"
             )
             rowLabel(
-                text: "\(lesson.startTime.formatted(.dateTime.hour().minute())) - \(lesson.endTime.formatted(.dateTime.hour().minute())) (\(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)))",
+                text: "\(lesson.startTime.formatted(.dateTime.hour().minute())) - \(lesson.endTime.formatted(.dateTime.hour().minute())) (\(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow))))",
                 icon: "clock.fill"
             )
             rowLabel(
@@ -200,8 +199,6 @@ struct StableMapView: View {
     @State var corderRadius: CGFloat
     @State private var isLoadingMap: Bool = false
     
-    private var backgroundColor: Color { Color(hex: lesson.color) ?? Color(.systemGray6) }
-
     var body: some View {
         ZStack {
             if let coordinate = externalCoordinate {
@@ -210,7 +207,7 @@ struct StableMapView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        openInMapsButton(coordinate: coordinate, name: lesson.location?.classroom ?? "", color: backgroundColor)
+                        openInMapsButton(coordinate: coordinate, name: lesson.location?.classroom ?? "", color: lesson.uiColor)
                     }
                     Spacer()
                 }
@@ -232,7 +229,7 @@ struct StableMapView: View {
         VStack(spacing: 4) {
             ZStack {
                 Circle()
-                    .fill(backgroundColor)
+                    .fill(lesson.uiColor)
                     .frame(width: 30, height: 30)
                     .shadow(radius: 2)
                 Image(systemName: "graduationcap.fill")

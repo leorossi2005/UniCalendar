@@ -17,6 +17,13 @@ extension Color {
     }
 }
 
+extension Lesson {
+    var uiColor: Color {
+        guard let components = HexColorParser.parse(color) else { return .secondary }
+        return Color(red: components.red, green: components.green, blue: components.blue, opacity: components.opacity)
+    }
+}
+
 struct ShimmeringGradient: View {
     @Environment(\.colorScheme) var colorScheme
     

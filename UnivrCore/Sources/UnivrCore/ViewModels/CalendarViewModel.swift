@@ -53,7 +53,7 @@ public class CalendarViewModel {
         
         do {
             let response = try await service.fetchOrario(corso: corso, anno: anno, selyear: selYear)
-            try await handleNewData(response, selectedYear: selYear, matricola: matricola, update: updating)
+            await handleNewData(response, selectedYear: selYear, matricola: matricola, update: updating)
         } catch {
             self.handleError(error)
         }
@@ -95,12 +95,6 @@ public class CalendarViewModel {
         var processedSchedule: [DailySchedule] = []
         var activeActivities: [String: Double] = [:]
         
-        let isoFormatter = DateFormatter()
-        isoFormatter.dateFormat = "yyyy-MM-dd"
-        
-        let univrFormatter = DateFormatter()
-        univrFormatter.dateFormat = "dd-MM-yyyy"
-        
         for daily in rawSchedule {
             let filtered = daily.events.filter { lesson in
                 lesson.type != .closure &&
@@ -113,11 +107,7 @@ public class CalendarViewModel {
                 let valid = filtered.filter { !$0.isCanceled && $0.type != .pause && $0.type != .closure }
                 if !valid.isEmpty {
                     let totalMinutes = valid.reduce(0) { $0 + $1.durationMinutes }
-                    
-                    if let dateObj = isoFormatter.date(from: daily.date) {
-                        let oldFormatKey = univrFormatter.string(from: dateObj)
-                        activeActivities[oldFormatKey] = Double(totalMinutes) / 60.0
-                    }
+                    activeActivities[daily.date] = Double(totalMinutes) / 60.0
                 }
             }
         }
@@ -189,9 +179,7 @@ public class CalendarViewModel {
     }
     
     public func events(for date: Date) -> [Lesson]? {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        let targetDateStr = formatter.string(from: date)
+        let targetDateStr = date.isoDateString
         
         return schedule.first(where: { $0.date == targetDateStr })?.events
     }

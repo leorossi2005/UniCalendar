@@ -51,7 +51,7 @@ public class DatePickerCache {
             guard var cells = monthGrids[monthKey] else { continue }
             
             for i in 0..<cells.count {
-                let dateKey = cells[i].date.formatUnivrStyle()
+                let dateKey = cells[i].date.isoDateString
                 
                 if let quantity = dates[dateKey] {
                     cells[i].hasActivity = true
@@ -109,7 +109,7 @@ public class DatePickerCache {
                     cellDate = calendar.date(byAdding: .day, value: dayValue - 1, to: startOfMonth) ?? date
                 }
                 
-                let dateKey = cellDate.formatUnivrStyle()
+                let dateKey = cellDate.isoDateString
                 
                 newGrid.append(CalendarCell(
                     dayNumber: "\(dayValue)",
@@ -142,7 +142,7 @@ public class DatePickerCache {
                 let weekDates = currentWeekStart.weekDates()
                 
                 for date in weekDates {
-                    let stableID = date.formatUnivrStyle()
+                    let stableID = date.isoDateString
                     
                     weekOfDays.append(FractionDay(
                         id: stableID,
@@ -161,7 +161,7 @@ public class DatePickerCache {
             let weekDates = currentWeekStart.weekDates()
             
             for date in weekDates {
-                let stableID = date.formatUnivrStyle()
+                let stableID = date.isoDateString
                 
                 weekOfDays.append(FractionDay(
                     id: stableID,

@@ -8,14 +8,9 @@
 //
 
 import Foundation
-#if canImport(Observation)
-import Observation
-#endif
 
 @MainActor
-#if canImport(Observation)
 @Observable
-#endif
 public class UserSettings {
     public static let shared = UserSettings()
     
@@ -112,15 +107,12 @@ public struct TempSettingsState {
     }
     
     public func hasChanged(from settings: UserSettings) -> Bool {
-        return selectedCourse != settings.selectedCourse || selectedYear != settings.selectedYear || selectedAcademicYear != settings.selectedAcademicYear
+        selectedCourse != settings.selectedCourse ||
+        selectedYear != settings.selectedYear ||
+        selectedAcademicYear != settings.selectedAcademicYear
     }
     
     public func apply(to settings: UserSettings) {
-        settings.selectedYear = ""
-        settings.selectedCourse = ""
-        settings.selectedAcademicYear = ""
-        settings.matricola = ""
-        
         settings.selectedYear = self.selectedYear
         settings.selectedCourse = self.selectedCourse
         settings.selectedAcademicYear = self.selectedAcademicYear

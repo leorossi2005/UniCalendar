@@ -13,8 +13,8 @@ import UnivrCore
 struct Settings: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
+    @Environment(NetworkStateObserver.self) private var net
     
-    private let net: NetworkMonitor = .shared
     @State private var viewModel = UniversityDataManager()
     @State private var showDeleteAlert = false
     @State private var initialIsContentAtTop: Bool? = nil
@@ -147,7 +147,9 @@ struct Settings: View {
         selectedAcademicYear = "0"
         
         Task {
-            try await viewModel.loadCourses(year: selectedYear)
+            do {
+                try await viewModel.loadCourses(year: selectedYear)
+            } catch {}
         }
     }
     
@@ -190,40 +192,44 @@ struct Settings: View {
         
         if viewModel.years.isEmpty {
             Task {
-                try await viewModel.loadYears()
+                do {
+                    try await viewModel.loadYears()
+                } catch {}
             }
         }
         
         if viewModel.courses.isEmpty {
             Task {
-                try await viewModel.loadCourses(year: selectedYear)
-                
-                await MainActor.run {
-                    if !["even", "odd"].contains(matricola) {
-                        matricola = "even"
-                    }
+                do {
+                    try await viewModel.loadCourses(year: selectedYear)
                     
-                    if !viewModel.years.contains(where: { $0.id == selectedYear }) {
-                        if let lastYear = viewModel.years.last {
-                            selectedYear = lastYear.id
+                    await MainActor.run {
+                        if !["even", "odd"].contains(matricola) {
+                            matricola = "even"
                         }
-                    }
-                    
-                    if selectedCourse != "0" {
-                        if let course = viewModel.courses.first(where: { $0.id == selectedCourse }) {
-                            viewModel.academicYears = course.years
-                            
-                            if !viewModel.academicYears.contains(where: { $0.id == selectedAcademicYear }) {
-                                if let firstAcademicYear = viewModel.academicYears.last {
-                                    selectedAcademicYear = firstAcademicYear.id
-                                }
+                        
+                        if !viewModel.years.contains(where: { $0.id == selectedYear }) {
+                            if let lastYear = viewModel.years.last {
+                                selectedYear = lastYear.id
                             }
-                            settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                         }
-                    } else {
-                        lockSheet = true
+                        
+                        if selectedCourse != "0" {
+                            if let course = viewModel.courses.first(where: { $0.id == selectedCourse }) {
+                                viewModel.academicYears = course.years
+                                
+                                if !viewModel.academicYears.contains(where: { $0.id == selectedAcademicYear }) {
+                                    if let firstAcademicYear = viewModel.academicYears.last {
+                                        selectedAcademicYear = firstAcademicYear.id
+                                    }
+                                }
+                                settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
+                            }
+                        } else {
+                            lockSheet = true
+                        }
                     }
-                }
+                } catch {}
             }
         }
     }
