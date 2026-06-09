@@ -66,7 +66,7 @@ public protocol NetworkServiceProtocol: Sendable {
 
 public struct NetworkService: NetworkServiceProtocol {
     private let session: URLSession
-    let baseURL = "http://192.168.0.20:3001/api/v1"
+    let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
     
     public init() {
         let configuration = URLSessionConfiguration.default

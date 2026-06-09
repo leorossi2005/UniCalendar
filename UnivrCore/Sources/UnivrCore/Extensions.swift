@@ -55,18 +55,16 @@ extension Date {
     }
     
     public func getWeekdaySymbols(length: CalendarSymbolLength) -> [String] {
-        var symbols = switch length {
+        let symbols = switch length {
             case .full: calendar.weekdaySymbols
             case .short: calendar.shortWeekdaySymbols
             case .veryShort: calendar.veryShortWeekdaySymbols
         }
         
-        if let first = symbols.first {
-            symbols.append(first)
-            symbols.removeFirst()
-        }
+        let firstWeekdayIndex = calendar.firstWeekday - 1
+        let shiftedSymbols = Array(symbols[firstWeekdayIndex...] + symbols[0..<firstWeekdayIndex])
         
-        return symbols.map { $0.capitalized }
+        return shiftedSymbols.map { $0.capitalized }
     }
     
     public func isOutOfAcademicBounds(for academicYear: Int) -> Bool {
@@ -93,7 +91,6 @@ extension Date {
     public var year: Int { calendar.component(.year, from: self) }
     public var weekday: Int { calendar.component(.weekday, from: self) }
     public var yearSymbol: String { String(year) }
-    public var isoDateString: String { String(format: "%04d-%02d-%02d", year, month, day) }
 }
 
 extension Bundle {

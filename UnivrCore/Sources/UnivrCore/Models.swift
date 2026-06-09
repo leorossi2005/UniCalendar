@@ -69,8 +69,8 @@ public struct Lesson: Codable, Equatable, Sendable, Identifiable {
 }
 
 public struct DailySchedule: Codable, Equatable, Sendable, Identifiable {
-    public var id: String { date }
-    public let date: String
+    public var id: Date { date }
+    public let date: Date
     public let events: [Lesson]
 }
 

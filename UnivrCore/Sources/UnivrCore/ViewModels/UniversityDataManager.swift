@@ -3,17 +3,14 @@
 //  Univr Core
 //
 //  Created by Leonardo Rossi on 19/11/25.
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
 //
 
 import Foundation
-#if canImport(Observation)
-import Observation
-#endif
 
 @MainActor
-#if canImport(Observation)
 @Observable
-#endif
 public final class UniversityDataManager {
     public var years: [AcademicYear] = []
     public var courses: [Corso] = []
@@ -64,13 +61,11 @@ public final class UniversityDataManager {
     }
     
     public func updateAcademicYears(for courseValue: String, year: String) {
-        guard let selectedCourse = courses.first(where: { $0.id == courseValue }) else { return }
-        self.academicYears = selectedCourse.years
+        self.academicYears = courses.first(where: { $0.id == courseValue })?.years ?? []
     }
     
     public func checkForMatricola(in academicYearValue: String) -> Bool {
-        guard let anno = academicYears.first(where: { $0.id == academicYearValue }) else { return false }
-        return anno.hasGroup ?? false
+        return academicYears.first(where: { $0.id == academicYearValue })?.hasGroup ?? false
     }
     
     private func fetchAndRefresh<T: Collection & Equatable & Sendable >(
@@ -82,15 +77,9 @@ public final class UniversityDataManager {
             updateState(currentData)
             
             Task {
-                do {
-                    let newData = try await fetchOperation()
-                    if currentData != newData {
-                        updateState(newData)
-                        await saveCache()
-                    }
-                } catch {
-                    print("Background refresh failed: \(error)")
-                }
+                guard let newData = try? await fetchOperation(), currentData != newData else { return }
+                updateState(newData)
+                await saveCache()
             }
             
             return
@@ -104,7 +93,7 @@ public final class UniversityDataManager {
             self.errorMessage = error.errorDescription
             throw error
         } catch {
-            self.errorMessage = NSLocalizedString("Errore generico: \(error.localizedDescription)", comment: "")
+            self.errorMessage = String(localized: "Errore generico: \(error.localizedDescription)", bundle: .module)
             throw error
         }
     }

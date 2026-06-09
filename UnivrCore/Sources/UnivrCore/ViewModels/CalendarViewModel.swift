@@ -3,21 +3,19 @@
 //  Univr Core
 //
 //  Created by Leonardo Rossi on 22/10/25.
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
 //
 
 import Foundation
-#if canImport(Observation)
 import Observation
-#endif
 
 public enum CalendarViewState: Equatable, Sendable {
     case loading, loaded, empty, offline, error(String)
 }
 
 @MainActor
-#if canImport(Observation)
 @Observable
-#endif
 public class CalendarViewModel {
     public var schedule: [DailySchedule] = []
     public var academicYearDays: [Date] = []
@@ -41,14 +39,15 @@ public class CalendarViewModel {
         
         generateAcademicYearDays(for: selYear)
         
-        if !updating && schedule.isEmpty {
-            await loadFromCache(selYear: selYear, matricola: matricola)
-        }
-        
-        if !updating && !schedule.isEmpty {
-            self.checkingUpdates = true
+        if !updating {
+            if schedule.isEmpty {
+                await loadFromCache(selYear: selYear, matricola: matricola)
+            }
+            checkingUpdates = !schedule.isEmpty
         } else {
-            await clearAll(state: .loading)
+            if schedule.isEmpty {
+                await clearAll(state: .loading)
+            }
         }
         
         do {
@@ -86,30 +85,30 @@ public class CalendarViewModel {
     public func confirmUpdate(selectedYear: String, matricola: String) async {
         guard let newLessons = pendingNewLessons else { return }
         await processAndSave(newLessons, selectedYear: selectedYear, matricola: matricola)
-        pendingNewLessons = nil
-        updateAvailable = false
+        clearPendingUpdate()
     }
     
-    private func processRawLessons(_ rawSchedule: [DailySchedule], matricola: String) -> (processed: [DailySchedule], activities: [String: Double]) {
+    private func processRawLessons(_ rawSchedule: [DailySchedule], matricola: String) -> (processed: [DailySchedule], activities: [Date: Double]) {
         let userFilter: Lesson.TargetGroup = (matricola == "even") ? .even : .odd
-        var processedSchedule: [DailySchedule] = []
-        var activeActivities: [String: Double] = [:]
         
-        for daily in rawSchedule {
-            let filtered = daily.events.filter { lesson in
-                lesson.type != .closure &&
-                (lesson.group == .all || lesson.group == userFilter)
+        var activeActivities: [Date: Double] = [:]
+        
+        let processedSchedule = rawSchedule.compactMap { daily -> DailySchedule? in
+            let validEvents = daily.events.filter { lesson in
+                lesson.type != .closure && (lesson.group == .all || lesson.group == userFilter)
             }
             
-            if !filtered.isEmpty {
-                processedSchedule.append(DailySchedule(date: daily.date, events: filtered))
-                                
-                let valid = filtered.filter { !$0.isCanceled && $0.type != .pause && $0.type != .closure }
-                if !valid.isEmpty {
-                    let totalMinutes = valid.reduce(0) { $0 + $1.durationMinutes }
-                    activeActivities[daily.date] = Double(totalMinutes) / 60.0
-                }
+            guard !validEvents.isEmpty else { return nil }
+            
+            let activeMinutes = validEvents.reduce(0) { total, lesson in
+                (lesson.isCanceled || lesson.type == .pause) ? total : total + lesson.durationMinutes
             }
+            
+            if activeMinutes > 0 {
+                activeActivities[daily.date] = Double(activeMinutes) / 60.0
+            }
+            
+            return DailySchedule(date: daily.date, events: validEvents)
         }
         
         return (processedSchedule, activeActivities)
@@ -143,8 +142,7 @@ public class CalendarViewModel {
         self.state = state
         await CacheManager.shared.clear(fileName: cacheKey)
         schedule.removeAll()
-        pendingNewLessons = nil
-        updateAvailable = false
+        clearPendingUpdate()
     }
     
     public func clearPendingUpdate() {
@@ -179,8 +177,7 @@ public class CalendarViewModel {
     }
     
     public func events(for date: Date) -> [Lesson]? {
-        let targetDateStr = date.isoDateString
-        
-        return schedule.first(where: { $0.date == targetDateStr })?.events
+        let normalizedDate = Calendar.current.startOfDay(for: date)
+        return schedule.first(where: { $0.date == normalizedDate })?.events
     }
 }
