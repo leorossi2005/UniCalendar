@@ -15,7 +15,6 @@ struct CalendarView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
     @Environment(NetworkStateObserver.self) private var net
-    @Namespace var transition
     
     private let positionObserver = WindowPositionObserver.shared
     @State private var viewModel = CalendarViewModel()
@@ -25,7 +24,6 @@ struct CalendarView: View {
     @State private var selectedWeek: Date = Calendar.current.startOfDay(for: Date())
     
     @State private var firstLoading: Bool = true
-    @State private var scrollUpdateTask: Task<Void, Never>?
     
     @State private var selectedDetent: CustomSheetDetent = .small
     @State private var openSettings: Bool = false
@@ -73,7 +71,6 @@ struct CalendarView: View {
         }
         .overlay(alignment: .bottom) {
             CustomSheetView(
-                transition: transition,
                 openSettings: $openSettings,
                 selectedDetent: $selectedDetent,
                 sheetShape: $sheetShape,
@@ -292,7 +289,7 @@ struct CalendarView: View {
                 HStack {
                     Button("Aggiorna") {
                         Task { @MainActor in
-                            await viewModel.confirmUpdate(selectedYear: settings.selectedYear, matricola: settings.matricola)
+                            await viewModel.confirmUpdate(matricola: settings.matricola)
                         }
                     }
                     .font(.caption)
@@ -320,7 +317,7 @@ struct CalendarView: View {
                     Button("Aggiorna") {
                         Haptics.play(.start)
                         Task { @MainActor in
-                            await viewModel.confirmUpdate(selectedYear: settings.selectedYear, matricola: settings.matricola)
+                            await viewModel.confirmUpdate(matricola: settings.matricola)
                         }
                     }
                     .font(.caption)
@@ -392,7 +389,7 @@ struct CalendarView: View {
         Task {
             if settings.selectedCourse != "0" {
                 await viewModel.loadNetworkFromCache()
-                await viewModel.loadFromCache(selYear: settings.selectedYear, matricola: settings.matricola)
+                await viewModel.loadFromCache(matricola: settings.matricola)
             }
             
             await viewModel.loadLessons(
@@ -477,7 +474,7 @@ struct CalendarView: View {
                     settings.matricola = tempSettings.matricola
                     changeOpenCalendar(true)
                     Task {
-                        await viewModel.loadFromCache(selYear: settings.selectedYear, matricola: settings.matricola)
+                        await viewModel.loadFromCache(matricola: settings.matricola)
                     }
                 } else {
                     changeOpenCalendar(oldOpenCalendar)

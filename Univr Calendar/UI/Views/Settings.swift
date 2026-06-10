@@ -17,7 +17,6 @@ struct Settings: View {
     
     @State private var viewModel = UniversityDataManager()
     @State private var showDeleteAlert = false
-    @State private var initialIsContentAtTop: Bool? = nil
     @State private var searchTextFieldFocus: Bool = false
     
     @Binding var selectedYear: String
@@ -25,8 +24,6 @@ struct Settings: View {
     @Binding var selectedAcademicYear: String
     @Binding var matricola: String
     @Binding var lockSheet: Bool
-    
-    private let screenSize: CGRect = UIApplication.shared.screenSize
     
     var body: some View {
         List {
@@ -160,7 +157,7 @@ struct Settings: View {
             viewModel.academicYears = []
             selectedAcademicYear = "0"
             
-            viewModel.updateAcademicYears(for: selectedCourse, year: selectedYear)
+            viewModel.updateAcademicYears(for: selectedCourse)
             
             if let firstYear = viewModel.academicYears.first {
                 selectedAcademicYear = firstYear.id

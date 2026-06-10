@@ -58,17 +58,11 @@ enum NetworkError: Error {
     }
 }
 
-public protocol NetworkServiceProtocol: Sendable {
-    func getYears() async throws -> [AcademicYear]
-    func getCourses(year: String) async throws -> [Corso]
-    func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [DailySchedule]
-}
-
-public struct NetworkService: NetworkServiceProtocol {
+struct NetworkService {
     private let session: URLSession
     let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
     
-    public init() {
+    init() {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 30
         
@@ -120,19 +114,19 @@ public struct NetworkService: NetworkServiceProtocol {
     }
     
     // MARK: - Public Methods
-    public func getYears() async throws -> [AcademicYear] {
+    func getYears() async throws -> [AcademicYear] {
         struct RootWrapper: Decodable { let years: [AcademicYear] }
         let wrapper: RootWrapper = try await fetch(from: "/years")
         return wrapper.years
     }
     
-    public func getCourses(year: String) async throws -> [Corso] {
+    func getCourses(year: String) async throws -> [Corso] {
         struct RootWrapper: Decodable { let courses: [Corso] }
         let wrapper: RootWrapper = try await fetch(from: "/courses?year=\(year)")
         return wrapper.courses
     }
     
-    public func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [DailySchedule] {
+    func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [DailySchedule] {
         return try await fetch(from: "/schedule?course=\(corso)&academicYear=\(anno)&year=\(selyear)")
     }
 }

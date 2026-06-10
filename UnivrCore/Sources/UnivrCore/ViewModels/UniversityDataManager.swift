@@ -60,7 +60,7 @@ public final class UniversityDataManager {
         )
     }
     
-    public func updateAcademicYears(for courseValue: String, year: String) {
+    public func updateAcademicYears(for courseValue: String) {
         self.academicYears = courses.first(where: { $0.id == courseValue })?.years ?? []
     }
     

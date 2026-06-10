@@ -130,21 +130,6 @@ extension View {
     }
     
     @ViewBuilder
-    func sheetDesign(_ namespace: Namespace.ID, sourceID: String, detent: Binding<PresentationDetent>) -> some View {
-        if #available(iOS 26, *) {
-            self
-                .navigationTransition(.zoom(sourceID: sourceID, in: namespace))
-                .presentationCornerRadius(detent.wrappedValue != .large ? .deviceCornerRadius - 8 : nil)
-                .animation(.easeInOut, value: detent.wrappedValue)
-        } else {
-            self
-                .presentationCornerRadius(detent.wrappedValue != .large ? .deviceCornerRadius : nil)
-                .animation(.easeInOut, value: detent.wrappedValue)
-            
-        }
-    }
-    
-    @ViewBuilder
     func scrollViewTopPadding() -> some View {
         if #available(iOS 26, *) {
             self
@@ -240,12 +225,6 @@ extension UIApplication {
         connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .first?.keyWindow?.safeAreaInsets ?? .zero
-    }
-    
-    var screenSize: CGRect {
-        connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?.screen.bounds ?? .zero
     }
     
     var windowSize: CGRect {

@@ -11,8 +11,8 @@ import Foundation
 import Network
 import UnivrCore
 
-public final class IOSNetworkMonitor: Sendable {
-    public static func createProvider() -> NetworkProvider {
+final class IOSNetworkMonitor: Sendable {
+    static func createProvider() -> NetworkProvider {
         return NetworkProvider {
             AsyncStream { continuation in
                 let monitor = NWPathMonitor()
@@ -35,10 +35,10 @@ public final class IOSNetworkMonitor: Sendable {
 
 @MainActor
 @Observable
-public final class NetworkStateObserver {
-    public private(set) var status: NetworkStatus = .connected
+final class NetworkStateObserver {
+    private(set) var status: NetworkStatus = .connected
     
-    public init(provider: NetworkProvider) {
+    init(provider: NetworkProvider) {
         Task {
             for await newStatus in provider.statusStream() {
                 self.status = newStatus

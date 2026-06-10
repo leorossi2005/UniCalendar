@@ -15,8 +15,6 @@ struct DeveloperProfileView: View {
     @State private var rotateRings = false
     
     let deepBg = Color(red: 0.02, green: 0.02, blue: 0.08)
-    let glassBg = Color.white.opacity(0.08)
-    let glassBorder = Color.white.opacity(0.2)
     let accentTech = Color.cyan
     let accentHand = Color(red: 1.0, green: 0.9, blue: 0.4)
     

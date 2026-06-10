@@ -20,7 +20,6 @@ struct LessonDetailsView: View {
     @State private var showOriginalName: Bool = false
     @State private var calendarEvent: EKEvent?
     @State private var eventStore = EKEventStore()
-    @State private var currentLessonCoordinate: CLLocationCoordinate2D?
     @State private var eventSaved: Bool = false
     
     private var date: Date { lesson?.startTime ?? Date() }
@@ -49,7 +48,6 @@ struct LessonDetailsView: View {
                         detailRows(lesson: lesson)
                         StableMapView(
                             lesson: lesson,
-                            externalCoordinate: $currentLessonCoordinate,
                             corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
                         )
                     }
@@ -63,7 +61,7 @@ struct LessonDetailsView: View {
                         ToolbarItem(placement: .primaryAction) {
                             Button {
                                 if !eventSaved {
-                                    prepareAndShowEvent(for: lesson, coordinate: currentLessonCoordinate)
+                                    prepareAndShowEvent(for: lesson)
                                 }
                             } label: {
                                 Image(systemName: eventSaved ? "checkmark" : "calendar.badge.plus")
@@ -147,25 +145,7 @@ struct LessonDetailsView: View {
     }
     
     // MARK: - Logic
-    private func combineDateAndTime(date: Date, timeString: String) -> Date? {
-        let calendar = Calendar.current
-        
-        let timeComponents = timeString.split(separator: ":").compactMap { Int($0) }
-        
-        guard timeComponents.count == 2 else { return nil }
-        let hour = timeComponents[0]
-        let minute = timeComponents[1]
-        guard (0...23).contains(hour), (0...59).contains(minute) else { return nil }
-
-        return calendar.date(
-            bySettingHour: hour,
-            minute: minute,
-            second: 0,
-            of: date
-        )
-    }
-    
-    private func prepareAndShowEvent(for lesson: Lesson, coordinate: CLLocationCoordinate2D? = nil) {
+    private func prepareAndShowEvent(for lesson: Lesson) {
         let newEvent = EKEvent(eventStore: eventStore)
         
         newEvent.title = lesson.cleanName
@@ -194,8 +174,7 @@ struct LessonDetailsView: View {
 // MARK: - Subviews
 struct StableMapView: View {
     let lesson: Lesson
-    @Binding var externalCoordinate: CLLocationCoordinate2D?
-    
+    @State var externalCoordinate: CLLocationCoordinate2D?
     @State var corderRadius: CGFloat
     @State private var isLoadingMap: Bool = false
     

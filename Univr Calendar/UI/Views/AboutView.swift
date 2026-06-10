@@ -86,6 +86,11 @@ struct AboutView: View {
             .clipShape(.circle)
             .frame(width: 40, height: 40)
         }
+        .onTapGesture {
+            if let link {
+                UIApplication.shared.open(link)
+            }
+        }
     }
 }
 

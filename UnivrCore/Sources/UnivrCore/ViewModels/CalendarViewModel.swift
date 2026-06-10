@@ -41,7 +41,7 @@ public class CalendarViewModel {
         
         if !updating {
             if schedule.isEmpty {
-                await loadFromCache(selYear: selYear, matricola: matricola)
+                await loadFromCache(matricola: matricola)
             }
             checkingUpdates = !schedule.isEmpty
         } else {
@@ -52,7 +52,7 @@ public class CalendarViewModel {
         
         do {
             let response = try await service.fetchOrario(corso: corso, anno: anno, selyear: selYear)
-            await handleNewData(response, selectedYear: selYear, matricola: matricola, update: updating)
+            await handleNewData(response, matricola: matricola, update: updating)
         } catch {
             self.handleError(error)
         }
@@ -61,7 +61,7 @@ public class CalendarViewModel {
     }
     
     // MARK: - Data Handling
-    private func handleNewData(_ fetched: [DailySchedule], selectedYear: String, matricola: String, update: Bool) async {
+    private func handleNewData(_ fetched: [DailySchedule], matricola: String, update: Bool) async {
         if fetched.isEmpty {
             if update || schedule.isEmpty {
                 state = .empty
@@ -71,7 +71,7 @@ public class CalendarViewModel {
         }
         
         if schedule.isEmpty || update {
-            await processAndSave(fetched, selectedYear: selectedYear, matricola: matricola)
+            await processAndSave(fetched, matricola: matricola)
         } else {
             let fetchedFiltered = processRawLessons(fetched, matricola: matricola).processed
             
@@ -82,9 +82,9 @@ public class CalendarViewModel {
         }
     }
     
-    public func confirmUpdate(selectedYear: String, matricola: String) async {
+    public func confirmUpdate(matricola: String) async {
         guard let newLessons = pendingNewLessons else { return }
-        await processAndSave(newLessons, selectedYear: selectedYear, matricola: matricola)
+        await processAndSave(newLessons, matricola: matricola)
         clearPendingUpdate()
     }
     
@@ -115,7 +115,7 @@ public class CalendarViewModel {
     }
     
     // MARK: - Data Processing
-    private func processAndSave(_ rawLessons: [DailySchedule], selectedYear: String, matricola: String) async {
+    private func processAndSave(_ rawLessons: [DailySchedule], matricola: String) async {
         let result = processRawLessons(rawLessons, matricola: matricola)
         
         self.schedule = result.processed
@@ -126,9 +126,9 @@ public class CalendarViewModel {
     }
     
     // MARK: - Helpers & Cache
-    public func loadFromCache(selYear: String, matricola: String) async {
+    public func loadFromCache(matricola: String) async {
         if let cached = await CacheManager.shared.load(fileName: cacheKey, type: [DailySchedule].self) {
-            await processAndSave(cached, selectedYear: selYear, matricola: matricola)
+            await processAndSave(cached, matricola: matricola)
         }
     }
     

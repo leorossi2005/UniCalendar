@@ -101,47 +101,36 @@ public class DatePickerCache {
     }
     
     public func generateAcademicWeeks(selectedYear: String) async {
-        guard currentYear != selectedYear else { return }
-        guard let yearInt = Int(selectedYear) else { return }
+        guard currentYear != selectedYear, let yearInt = Int(selectedYear) else { return }
         
         (self.academicWeeks, self.additionalWeek) = await Task.detached(priority: .userInitiated) {
             let startAcademicYear = Date(year: yearInt, month: 10, day: 1)
             let endAcademicYear = Date(year: yearInt + 1, month: 9, day: 30)
             
-            guard var currentWeekStart = startAcademicYear.startOfWeek() else { return ([[FractionDay]](), [FractionDay]()) }
+            guard let initialWeekStart = startAcademicYear.startOfWeek() else { return ([], []) }
             
-            var allWeeks: [[FractionDay]] = []
+            var weekStarts = Array(sequence(first: initialWeekStart) { current in
+                let next = current.add(type: .weekOfYear, value: 1)
+                return next <= endAcademicYear ? next : nil
+            })
             
-            while currentWeekStart <= endAcademicYear {
-                var weekOfDays: [FractionDay] = []
-                let weekDates = currentWeekStart.weekDates()
-                
-                for date in weekDates {
-                    weekOfDays.append(FractionDay(
+            if let lastStart = weekStarts.last {
+                weekStarts.append(lastStart.add(type: .weekOfYear, value: 1))
+            }
+            
+            var allWeeks = weekStarts.map { weekStart -> [FractionDay] in
+                weekStart.weekDates().map { date in
+                    FractionDay(
                         dayNumber: "\(date.day)",
                         weekdayString: date.getCurrentWeekdaySymbol(length: .abbreviated),
                         isOutOfBounds: date.isOutOfAcademicBounds(for: yearInt),
                         date: date
-                    ))
+                    )
                 }
-                
-                allWeeks.append(weekOfDays)
-                currentWeekStart = currentWeekStart.add(type: .weekOfYear, value: 1)
             }
             
-            var weekOfDays: [FractionDay] = []
-            let weekDates = currentWeekStart.weekDates()
-            
-            for date in weekDates {
-                weekOfDays.append(FractionDay(
-                    dayNumber: "\(date.day)",
-                    weekdayString: date.getCurrentWeekdaySymbol(length: .abbreviated),
-                    isOutOfBounds: date.isOutOfAcademicBounds(for: yearInt),
-                    date: date
-                ))
-            }
-            
-            return (allWeeks, weekOfDays)
+            let extraWeek = allWeeks.popLast() ?? []
+            return (allWeeks, extraWeek)
         }.value
         
         self.currentYear = selectedYear

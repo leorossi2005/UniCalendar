@@ -287,12 +287,6 @@ private struct DayCellView: View {
     private var fontWeight: Font.Weight {
         (isToday && !isSelected) ? .black : .regular
     }
-    
-    private var textColor: Color {
-        if isToday && !isSelected { return .primary }
-        if isSelected { return colorScheme == .light ? .white : .black }
-        return .primary
-    }
 }
 
 #Preview {

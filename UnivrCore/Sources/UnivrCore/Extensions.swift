@@ -29,10 +29,6 @@ extension Date {
         return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: start) }
     }
     
-    public func set(type: Calendar.Component, value: Int) -> Date {
-        calendar.date(bySetting: type, value: value, of: self) ?? self
-    }
-    
     public func add(type: Calendar.Component, value: Int) -> Date {
         calendar.date(byAdding: type, value: value, to: self) ?? self
     }
@@ -43,11 +39,6 @@ extension Date {
     
     public func getCurrentMonthSymbol(length: Date.FormatStyle.Symbol.Month) -> String {
         self.formatted(.dateTime.month(length)).capitalized
-    }
-    
-    public func startWeekdaySymbolOfMonth(length: Date.FormatStyle.Symbol.Weekday) -> String {
-        guard let firstOfMonth = calendar.date(bySetting: .day, value: 1, of: self) else { return "" }
-        return firstOfMonth.getCurrentWeekdaySymbol(length: length)
     }
     
     public func getCurrentWeekdaySymbol(length: Date.FormatStyle.Symbol.Weekday) -> String {
@@ -84,12 +75,9 @@ extension Date {
         return false
     }
     
-    public var minute: Int { calendar.component(.minute, from: self) }
-    public var hour: Int { calendar.component(.hour, from: self) }
     public var day: Int { calendar.component(.day, from: self) }
     public var month: Int { calendar.component(.month, from: self) }
     public var year: Int { calendar.component(.year, from: self) }
-    public var weekday: Int { calendar.component(.weekday, from: self) }
     public var yearSymbol: String { String(year) }
 }
 

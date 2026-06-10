@@ -9,7 +9,7 @@
 
 import Foundation
 
-public actor CacheManager: Sendable {
+actor CacheManager: Sendable {
     static let shared = CacheManager()
     
     private let folder: URL = .cachesDirectory

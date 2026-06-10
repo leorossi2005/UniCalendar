@@ -35,7 +35,6 @@ struct CustomSheetView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.verticalSizeClass) var verticalSizeClass
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
-    var transition: Namespace.ID
     
     var positionObserver = WindowPositionObserver.shared
     
@@ -65,10 +64,6 @@ struct CustomSheetView: View {
     @State private var offset: CGFloat = .zero
     
     private var liveHeight: CGFloat { baseHeight - dragY }
-    
-    enum GestureDirection {
-        case horizontal, vertical
-    }
     
     // TEMP
     @State private var isGoingLarge: Bool = false
@@ -217,8 +212,8 @@ struct CustomSheetView: View {
         .clipShape(sheetShape)
         .overlay {
             VerticalDragger(
-                onDrag: { translationY, direction in
-                    handleDragUpdating(value: translationY, direction: direction, state: &self.dragY)
+                onDrag: { translationY, _ in
+                    handleDragUpdating(value: translationY, state: &self.dragY)
                 },
                 onEnded: { translationY, predictedEndTranslation in
                     handleDragEnded(translationY, predictedEndTranslation)
@@ -249,7 +244,7 @@ struct CustomSheetView: View {
         return (1.0 - (1.0 / ((offset * coefficient / dimension) + 1.0))) * dimension
     }
     
-    private func handleDragUpdating(value: CGFloat, direction: CustomSheetDraggingDirection, state: inout CGFloat) {
+    private func handleDragUpdating(value: CGFloat, state: inout CGFloat) {
         if isGoingLarge {
             isGoingLarge = false
         }

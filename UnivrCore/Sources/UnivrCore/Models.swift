@@ -30,6 +30,7 @@ public struct Coordinates: Codable, Equatable, Sendable {
 
 public struct LocationInfo: Codable, Equatable, Sendable {
     public let classroom: String
+    // periphery:ignore
     public let building: String?
     public let address: String?
     public let capacity: Int?
@@ -38,6 +39,7 @@ public struct LocationInfo: Codable, Equatable, Sendable {
 
 public struct Lesson: Codable, Equatable, Sendable, Identifiable {
     public let id: String
+    // periphery:ignore
     public let code: String?
     public let type: EventType
     public let name: String?
@@ -99,6 +101,7 @@ extension Lesson {
         )
     )
     
+    // periphery:ignore
     public static let pausaSample = Lesson(
         id: "PAUSA-123",
         code: nil,

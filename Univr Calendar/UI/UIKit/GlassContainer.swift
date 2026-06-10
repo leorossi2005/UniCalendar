@@ -28,13 +28,6 @@ enum GlassEffectStyle {
         case .clear: return .clear
         }
     }
-    
-    var blurStyle: UIBlurEffect.Style {
-        switch self {
-        case .regular: return .regular
-        case .clear: return .regular
-        }
-    }
 }
 
 final class GlassContainerView: UIView {
@@ -153,7 +146,7 @@ final class GlassContainerView: UIView {
         }
     }
     
-    public var contentView: UIView {
+    var contentView: UIView {
         return glassView.contentView
     }
     

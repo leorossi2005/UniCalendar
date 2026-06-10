@@ -22,15 +22,10 @@ struct Onboarding: View {
     @State private var nextIndexLoading: Int = -1
     @State private var errorText: String = "nope"
     
-    @State private var offlineScale: CGFloat = 1
-    @State private var offlineOffset: CGPoint = .zero
-    
     @State private var searchTextFieldFocus: Bool = false
     
     let animation: Namespace.ID
     @Binding var showSplash: Bool
-    
-    private let screenSize: CGRect = UIApplication.shared.screenSize
     
     var body: some View {
         @Bindable var settings = settings
@@ -113,7 +108,7 @@ struct Onboarding: View {
                         settings.foundMatricola = false
                         
                         handlePageTransition(to: 3) {
-                            viewModel.updateAcademicYears(for: settings.selectedCourse, year: settings.selectedYear)
+                            viewModel.updateAcademicYears(for: settings.selectedCourse)
                             
                             if let firstYear = viewModel.academicYears.first {
                                 await MainActor.run {
@@ -252,7 +247,7 @@ struct Onboarding: View {
         }
     }
     
-    public func completeOnboarding() {
+    func completeOnboarding() {
         settings.onboardingCompleted = true
     }
 }
