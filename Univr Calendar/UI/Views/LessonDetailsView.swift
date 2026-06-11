@@ -90,7 +90,7 @@ struct LessonDetailsView: View {
             }
             .onAppear {
                 if openAddToCalendar {
-                    prepareAndShowEvent(for: lesson, coordinate: currentLessonCoordinate)
+                    prepareAndShowEvent(for: lesson)
                 }
             }
         }
@@ -114,7 +114,7 @@ struct LessonDetailsView: View {
                                 .font(.caption)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
-                                .background(lesson.isCanceled ? Color(.secondarySystemBackground) : lesson.uiColor.opacity(0.2))
+                                .background(lesson.isCanceled ? Color(.systemBackground) : lesson.uiColor.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                                 .overlay {
                                     if lesson.isCanceled {
@@ -132,7 +132,7 @@ struct LessonDetailsView: View {
     private func detailRows(lesson: Lesson) -> some View {
         VStack(alignment: .leading, spacing: 15) {
             rowLabel(
-                text: "\(date.getCurrentWeekdaySymbol(length: .wide)), \(date.day) \(date.getCurrentMonthSymbol(length: .wide)) \(date.yearSymbol)",
+                text: "\(lesson.startTime.getCurrentWeekdaySymbol(length: .wide)), \(lesson.startTime.day) \(lesson.startTime.getCurrentMonthSymbol(length: .wide)) \(lesson.startTime.yearSymbol)",
                 icon: "calendar"
             )
             rowLabel(

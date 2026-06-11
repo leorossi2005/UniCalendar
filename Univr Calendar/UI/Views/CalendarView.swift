@@ -113,6 +113,7 @@ struct CalendarView: View {
                                 filteredLessons: dailyLessons,
                                 selectedLesson: $selectedLesson,
                                 openCalendar: $openCalendar,
+                                openAddToCalendar: $openAddToCalendar,
                                 selectedDetent: $selectedDetent,
                                 firstLoading: $firstLoading,
                                 changeOpenCalendar: changeOpenCalendar

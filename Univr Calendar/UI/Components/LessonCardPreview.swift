@@ -13,18 +13,10 @@ import UnivrCore
 struct LessonCardPreview: View {
     let lesson: Lesson
     
-    private var backgroundColor: Color {
-        Color(hex: lesson.color) ?? Color(.systemGray6)
-    }
-    
-    private var date: Date {
-        lesson.data.toDateModern() ?? Date()
-    }
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
-                Text(lesson.cleanName)
+                Text(lesson.cleanName ?? "")
                     .font(.headline.weight(.bold))
                     .multilineTextAlignment(.leading)
                     .lineLimit(3)
@@ -38,10 +30,10 @@ struct LessonCardPreview: View {
                                 .font(.caption2)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(lesson.annullato ? Color(.systemBackground) : backgroundColor.opacity(0.2))
+                                .background(lesson.isCanceled ? Color(.systemBackground) : lesson.uiColor.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                                 .overlay {
-                                    if lesson.annullato {
+                                    if lesson.isCanceled {
                                         RoundedRectangle(cornerRadius: 6, style: .continuous)
                                             .strokeBorder(Color(white: 0.35), lineWidth: 0.5)
                                     }
@@ -58,25 +50,25 @@ struct LessonCardPreview: View {
             
             VStack(alignment: .leading, spacing: 12) {
                 rowLabel(
-                    text: "\(date.getCurrentWeekdaySymbol(length: .wide)), \(date.day) \(date.getCurrentMonthSymbol(length: .wide)) \(date.yearSymbol)",
+                    text: "\(lesson.startTime.getCurrentWeekdaySymbol(length: .wide)), \(lesson.startTime.day) \(lesson.startTime.getCurrentMonthSymbol(length: .wide)) \(lesson.startTime.yearSymbol)",
                     icon: "calendar"
                 )
                 rowLabel(
-                    text: "\(lesson.orario) (\(lesson.durationCalculated))",
+                    text: "\(lesson.startTime.formatted(.dateTime.hour().minute())) - \(lesson.endTime.formatted(.dateTime.hour().minute())) (\(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow))))",
                     icon: "clock.fill"
                 )
                 rowLabel(
-                    text: lesson.docente.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.docente),
-                    icon: lesson.docente.contains(",") ? "person.2.fill" : "person.fill"
+                    text: lesson.teachers.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.teachers.joined(separator: ", ")),
+                    icon: !lesson.teachers.isEmpty && lesson.teachers.count > 1 ? "person.2.fill" : "person.fill"
                 )
                 rowLabel(
-                    text: "\(lesson.formattedClassroom) \(lesson.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
+                    text: "\(lesson.location?.classroom ?? "") \(lesson.location?.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
                     icon: "mappin"
                 )
             }
         }
         .padding(24)
-        .frame(width: UIDevice.isIpad ? 320 : UIApplication.shared.screenSize.width, alignment: .leading)
+        .frame(width: UIDevice.isIpad ? 320 : UIScreen.main.bounds.width - 32, alignment: .leading)
     }
     
     private func rowLabel(text: LocalizedStringKey, icon: String) -> some View {
