@@ -15,15 +15,13 @@ struct LessonCard: View {
     
     let lesson: Lesson
     
-    private var backgroundColor: Color { Color(hex: lesson.color) ?? Color(.systemGray6) }
-    
     var body: some View {
         HStack(spacing: 20) {
             timeInfo
             lessonInfo
         }
         .padding()
-        .opacity(lesson.annullato ? 0.5 : 1.0)
+        .opacity(lesson.isCanceled ? 0.5 : 1.0)
         .background(backgroundLayer)
         .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
         .hoverEffect(.lift)
@@ -33,9 +31,9 @@ struct LessonCard: View {
     // MARK: - Components
     private var backgroundLayer: some View {
         RoundedRectangle(cornerRadius: 35, style: .continuous)
-            .fill(lesson.annullato ? Color(.systemBackground) : backgroundColor)
+            .fill(lesson.isCanceled ? Color(.systemBackground) : lesson.uiColor)
             .overlay {
-                if lesson.annullato {
+                if lesson.isCanceled {
                     RoundedRectangle(cornerRadius: 35, style: .continuous)
                         .strokeBorder(.secondary, lineWidth: 0.5)
                 }
@@ -45,11 +43,11 @@ struct LessonCard: View {
     
     private var timeInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(lesson.startTime)
+            Text(lesson.startTime.formatted(.dateTime.hour().minute()))
                 .font(.largeTitle.monospacedDigit())
                 .fontWeight(.medium)
-            if !lesson.annullato {
-                Label(lesson.durationCalculated, systemImage: "clock")
+            if !lesson.isCanceled {
+                Label(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)), systemImage: "clock")
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(Color.black.opacity(0.1))
@@ -57,18 +55,18 @@ struct LessonCard: View {
             }
             Spacer()
         }
-        .foregroundStyle(lesson.annullato ? .primary : Color.black)
+        .foregroundStyle(lesson.isCanceled ? .primary : Color.black)
     }
     
     private var lessonInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(lesson.cleanName)
-                .foregroundStyle(lesson.annullato ? .primary : Color.black)
+            Text(lesson.cleanName ?? "")
+                .foregroundStyle(lesson.isCanceled ? .primary : Color.black)
                 .font(.headline)
                 .multilineTextAlignment(.leading)
-                .strikethrough(lesson.annullato)
-            if !lesson.annullato {
-                Text(lesson.formattedClassroom)
+                .strikethrough(lesson.isCanceled)
+            if !lesson.isCanceled {
+                Text(lesson.location?.classroom ?? "")
                     .foregroundStyle(Color(white: 0.3))
                     .font(.subheadline)
                     .multilineTextAlignment(.leading)
@@ -93,7 +91,7 @@ struct LessonCard: View {
                     .background {
                         ZStack {
                             Color.black.opacity(0.1)
-                            backgroundColor.opacity(0.3)
+                            lesson.uiColor.opacity(0.3)
                         }
                     }
                     .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
@@ -105,13 +103,13 @@ struct LessonCard: View {
 #Preview {
     ScrollView {
         ForEach([Lesson.sample, Lesson.pausaSample, Lesson.sample]) { lesson in
-            if lesson.tipo != "pause" && lesson.tipo != "chiusura_type" {
+            if lesson.type != .pause && lesson.type != .closure {
                 LessonCard(lesson: lesson)
             } else {
                 HStack(alignment: .bottom) {
                     Image(systemName: .cupDynamic)
                         .font(.system(size: 40))
-                    Text(lesson.durationCalculated)
+                    Text(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)))
                         .font(.system(size: 30))
                         .italic()
                         .bold()
