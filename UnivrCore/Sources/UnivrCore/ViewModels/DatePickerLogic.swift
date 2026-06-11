@@ -3,12 +3,11 @@
 //  UnivrCore
 //
 //  Created by Leonardo Rossi on 12/12/25.
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
 //
 
 import Foundation
-#if canImport(Observation)
-import Observation
-#endif
 
 public struct CalendarCell: Identifiable, Equatable, Sendable {
     public var id: Date { date }
@@ -20,7 +19,7 @@ public struct CalendarCell: Identifiable, Equatable, Sendable {
 }
 
 public struct FractionDay: Identifiable, Equatable, Hashable, Sendable {
-    public let id: String
+    public var id: Date { date }
     public let dayNumber: String
     public let weekdayString: String
     public let isOutOfBounds: Bool
@@ -28,9 +27,7 @@ public struct FractionDay: Identifiable, Equatable, Hashable, Sendable {
 }
 
 @MainActor
-#if canImport(Observation)
 @Observable
-#endif
 public class DatePickerCache {
     public static let shared = DatePickerCache()
     
@@ -41,137 +38,99 @@ public class DatePickerCache {
     public var additionalWeek: [FractionDay] = []
     public var currentYear: String = ""
     
-    private var activeDatesCache: [String: Double] = [:]
+    private var activeDatesCache: [Date: Double] = [:]
     
-    public func updateActivities(dates: [String: Double]) {
+    public func updateActivities(dates: [Date: Double]) {
         self.activeDatesCache = dates
         print("🔄 Updating Activities in Cache: \(dates.count) items") // DEBUG
         
-        for (monthKey, cells) in monthGrids {
-            monthGrids[monthKey] = cells.map { cell in
-                var newCell = cell
-                let dateKey = cell.date.formatUnivrStyle()
+        let calendar = Calendar.current
+        
+        for monthKey in monthGrids.keys {
+            guard var cells = monthGrids[monthKey] else { continue }
+            
+            for i in 0..<cells.count {
+                let cellNormalizedDate = calendar.startOfDay(for: cells[i].date)
                 
-                if let quantity = dates[dateKey] {
-                    newCell.hasActivity = true
-                    newCell.activityQuantity = quantity
+                if let quantity = dates[cellNormalizedDate] {
+                    cells[i].hasActivity = true
+                    cells[i].activityQuantity = quantity
                 } else {
-                    newCell.hasActivity = false
-                    newCell.activityQuantity = 0.0
+                    cells[i].hasActivity = false
+                    cells[i].activityQuantity = 0.0
                 }
-                
-                return newCell
             }
+            
+            monthGrids[monthKey] = cells
         }
     }
     
     public func generateMonthGrid(for date: Date, monthName: String) async {
-        guard monthGrids["\(monthName)-\(date.yearSymbol)"] == nil else { return }
+        let cacheKey = "\(monthName)-\(date.yearSymbol)"
+        guard monthGrids[cacheKey] == nil else { return }
         
         let cells: [CalendarCell] = await Task.detached(priority: .userInitiated) { [activeDatesCache] in
-            var newGrid: [CalendarCell] = []
             let calendar = Calendar.autoupdatingCurrent
             
-            guard let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: date)),
-                  let range = calendar.range(of: .day, in: .month, for: startOfMonth) else { return newGrid }
-            
-            let numDays = range.count
+            guard let monthInterval = calendar.dateInterval(of: .month, for: date) else { return [] }
+            let startOfMonth = monthInterval.start
             
             let firstWeekday = calendar.component(.weekday, from: startOfMonth)
             let startOffset = (firstWeekday + 5) % 7
             
-            let prevMonthDate = calendar.date(byAdding: .month, value: -1, to: startOfMonth)
-            let prevMonthRange = prevMonthDate.flatMap { calendar.range(of: .day, in: .month, for: $0) }
-            let prevMonthDays = prevMonthRange?.count ?? 30
+            let startDate = calendar.date(byAdding: .day, value: -startOffset, to: startOfMonth) ?? startOfMonth
             
-            for i in 0..<42 {
-                let cellDate: Date
-                let dayValue: Int
-                let isCurrentMonth: Bool
+            return (0..<42).compactMap { offset -> CalendarCell? in
+                guard let cellDate = calendar.date(byAdding: .day, value: offset, to: startDate) else { return nil }
                 
-                if i < startOffset {
-                    dayValue = prevMonthDays - (startOffset - i - 1)
-                    isCurrentMonth = false
-                    cellDate = calendar.date(byAdding: .day, value: -(startOffset - i), to: startOfMonth) ?? date
-                } else if i >= startOffset + numDays {
-                    dayValue = i - (startOffset + numDays) + 1
-                    isCurrentMonth = false
-                    
-                    if let nextMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth) {
-                        cellDate = calendar.date(byAdding: .day, value: dayValue - 1, to: nextMonth) ?? date
-                    } else {
-                        cellDate = date
-                    }
-                } else {
-                    dayValue = i - startOffset + 1
-                    isCurrentMonth = true
-                    cellDate = calendar.date(byAdding: .day, value: dayValue - 1, to: startOfMonth) ?? date
-                }
+                let normalizedDate = calendar.startOfDay(for: cellDate)
+                let isCurrentMonth = calendar.isDate(cellDate, equalTo: startOfMonth, toGranularity: .month)
+                let dayValue = calendar.component(.day, from: cellDate)
                 
-                let dateKey = cellDate.formatUnivrStyle()
-                
-                newGrid.append(CalendarCell(
+                return CalendarCell(
                     dayNumber: "\(dayValue)",
                     isCurrentMonth: isCurrentMonth,
-                    hasActivity: activeDatesCache[dateKey] != nil,
-                    activityQuantity: activeDatesCache[dateKey] ?? 0,
+                    hasActivity: activeDatesCache[normalizedDate] != nil,
+                    activityQuantity: activeDatesCache[normalizedDate] ?? 0,
                     date: cellDate
-                ))
+                )
             }
-            return newGrid
         }.value
         
-        self.monthGrids["\(monthName)-\(date.yearSymbol)"] = cells
+        self.monthGrids[cacheKey] = cells
     }
     
     public func generateAcademicWeeks(selectedYear: String) async {
-        guard currentYear != selectedYear else { return }
-        guard let yearInt = Int(selectedYear) else { return }
+        guard currentYear != selectedYear, let yearInt = Int(selectedYear) else { return }
         
         (self.academicWeeks, self.additionalWeek) = await Task.detached(priority: .userInitiated) {
             let startAcademicYear = Date(year: yearInt, month: 10, day: 1)
             let endAcademicYear = Date(year: yearInt + 1, month: 9, day: 30)
             
-            guard var currentWeekStart = startAcademicYear.startOfWeek() else { return ([[FractionDay]](), [FractionDay]()) }
+            guard let initialWeekStart = startAcademicYear.startOfWeek() else { return ([], []) }
             
-            var allWeeks: [[FractionDay]] = []
+            var weekStarts = Array(sequence(first: initialWeekStart) { current in
+                let next = current.add(type: .weekOfYear, value: 1)
+                return next <= endAcademicYear ? next : nil
+            })
             
-            while currentWeekStart <= endAcademicYear {
-                var weekOfDays: [FractionDay] = []
-                let weekDates = currentWeekStart.weekDates()
-                
-                for date in weekDates {
-                    let stableID = date.formatUnivrStyle()
-                    
-                    weekOfDays.append(FractionDay(
-                        id: stableID,
+            if let lastStart = weekStarts.last {
+                weekStarts.append(lastStart.add(type: .weekOfYear, value: 1))
+            }
+            
+            var allWeeks = weekStarts.map { weekStart -> [FractionDay] in
+                weekStart.weekDates().map { date in
+                    FractionDay(
                         dayNumber: "\(date.day)",
                         weekdayString: date.getCurrentWeekdaySymbol(length: .abbreviated),
                         isOutOfBounds: date.isOutOfAcademicBounds(for: yearInt),
                         date: date
-                    ))
+                    )
                 }
-                
-                allWeeks.append(weekOfDays)
-                currentWeekStart = currentWeekStart.add(type: .weekOfYear, value: 1)
             }
             
-            var weekOfDays: [FractionDay] = []
-            let weekDates = currentWeekStart.weekDates()
-            
-            for date in weekDates {
-                let stableID = date.formatUnivrStyle()
-                
-                weekOfDays.append(FractionDay(
-                    id: stableID,
-                    dayNumber: "\(date.day)",
-                    weekdayString: date.getCurrentWeekdaySymbol(length: .abbreviated),
-                    isOutOfBounds: date.isOutOfAcademicBounds(for: yearInt),
-                    date: date
-                ))
-            }
-            
-            return (allWeeks, weekOfDays)
+            let extraWeek = allWeeks.popLast() ?? []
+            return (allWeeks, extraWeek)
         }.value
         
         self.currentYear = selectedYear

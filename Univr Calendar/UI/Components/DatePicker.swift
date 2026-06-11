@@ -91,9 +91,11 @@ struct DatePicker: View, Equatable {
             Spacer()
             if today.isInAcademicYear(for: settings.selectedYear) {
                 Button("Oggi") {
-                    if selection.formatUnivrStyle() != today.formatUnivrStyle() {
+                    let midnightToday = Calendar.current.startOfDay(for: today)
+                    
+                    if !Calendar.current.isDate(selection, inSameDayAs: midnightToday) {
                         Haptics.play(.impact(weight: .medium), state: "selection")
-                        selection = today
+                        selection = midnightToday
                     }
                 }
                 .glassIfAvailable()
@@ -284,12 +286,6 @@ private struct DayCellView: View {
     
     private var fontWeight: Font.Weight {
         (isToday && !isSelected) ? .black : .regular
-    }
-    
-    private var textColor: Color {
-        if isToday && !isSelected { return .primary }
-        if isSelected { return colorScheme == .light ? .white : .black }
-        return .primary
     }
 }
 

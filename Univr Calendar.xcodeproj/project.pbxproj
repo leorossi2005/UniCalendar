@@ -84,7 +84,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2610;
-				LastUpgradeCheck = 2620;
+				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					A74C008C2E960653001AB35D = {
 						CreatedOnToolsVersion = 26.1;
@@ -312,7 +312,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
-				XROS_DEPLOYMENT_TARGET = 1.0;
+				XROS_DEPLOYMENT_TARGET = "$(RECOMMENDED_XROS_DEPLOYMENT_TARGET)";
 			};
 			name = Debug;
 		};
@@ -367,7 +367,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
-				XROS_DEPLOYMENT_TARGET = 1.0;
+				XROS_DEPLOYMENT_TARGET = "$(RECOMMENDED_XROS_DEPLOYMENT_TARGET)";
 			};
 			name = Release;
 		};

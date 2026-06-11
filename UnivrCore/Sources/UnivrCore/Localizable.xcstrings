@@ -30,6 +30,9 @@
           }
         }
       }
+    },
+    "Errore generico: %@" : {
+
     }
   },
   "version" : "1.1"

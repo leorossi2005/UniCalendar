@@ -14,19 +14,16 @@ struct CalendarView: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
-    @Namespace var transition
+    @Environment(NetworkStateObserver.self) private var net
     
     private let positionObserver = WindowPositionObserver.shared
-    private let net: NetworkMonitor = .shared
     @State private var viewModel = CalendarViewModel()
     @State private var tempSettings = TempSettingsState()
     
     @State private var selectedLesson: Lesson? = nil
-    @State private var selectedWeek: Date = Date()
-    @State private var selection: String? = ""
+    @State private var selectedWeek: Date = Calendar.current.startOfDay(for: Date())
     
     @State private var firstLoading: Bool = true
-    @State private var scrollUpdateTask: Task<Void, Never>?
     
     @State private var selectedDetent: CustomSheetDetent = .small
     @State private var openSettings: Bool = false
@@ -49,13 +46,10 @@ struct CalendarView: View {
                 .onAppear {
                     inizializeData()
                 }
-                .onChange(of: selection) {
-                    handleSelectionChange()
-                }
                 .onChange(of: openCalendar) { oldValue, newValue in
                     oldOpenCalendar = oldValue
                 }
-                .onChange(of: viewModel.loading) { _, isLoading in
+                .onChange(of: viewModel.state == .loading) { _, isLoading in
                     handleLoadingChange(isLoading)
                 }
                 .onChange(of: net.status) { _, newStatus in
@@ -73,12 +67,11 @@ struct CalendarView: View {
                 }
                 .removeTopSafeArea()
                 .animation(.default, value: viewModel.checkingUpdates)
-                .animation(.default, value: viewModel.showUpdateAlert)
+                .animation(.default, value: viewModel.updateAvailable)
                 .animation(.default, value: net.status)
         }
         .overlay(alignment: .bottom) {
             CustomSheetView(
-                transition: transition,
                 openSettings: $openSettings,
                 selectedDetent: $selectedDetent,
                 sheetShape: $sheetShape,
@@ -89,116 +82,141 @@ struct CalendarView: View {
                 openCalendar: $openCalendar,
                 openAddToCalendar: $openAddToCalendar
             )
-            .disabled((viewModel.loading || viewModel.noLessonsFound || viewModel.days.isEmpty) && !openSettings)
+            .disabled((viewModel.state == .loading || viewModel.state == .empty || viewModel.schedule.isEmpty) && !openSettings)
         }
         .ignoresSafeArea(edges: .bottom)
     }
     
     // MARK: - Main Content
     private var mainScrollView: some View {
-        ScrollViewReader { proxy in
-            ScrollView(.horizontal) {
-                LazyHStack(spacing: 0) {
-                    if net.status != .connected && viewModel.days.isEmpty {
-                        offlineContent
-                    } else if viewModel.loading || firstLoading {
-                        loadingPlaceholder
-                    } else {
-                        loadedContent
-                    }
-                }
-                .multilineTextAlignment(.center)
-                .scrollTargetLayout()
-                .id(viewModel.loading ? "loading-state" : "content-state")
-            }
-            .scrollTargetBehavior(.paging)
-            .scrollIndicators(.never, axes: .horizontal)
-            .scrollPosition(id: $selection, anchor: .center)
-            .task(id: selectedWeek) {
-                if !viewModel.loading && !firstLoading {
-                    let newSelection = selectedWeek.formatUnivrStyle()
-                    if newSelection != selection { selection = newSelection }
-                }
-            }
-            .onChange(of: positionObserver.windowFrame.size.width) { _, _ in
-                guard let currentSelection = selection else { return }
-                var transaction = Transaction()
-                transaction.disablesAnimations = true
-                withTransaction(transaction) {
-                    proxy.scrollTo(currentSelection, anchor: .center)
-                }
+        ZStack {
+            calendarScrollView
+            
+            if viewModel.state != .loaded || firstLoading {
+                Color(UIColor.systemBackground)
+                    .ignoresSafeArea()
+                
+                stateOverlays
             }
         }
     }
     
-    private var loadingPlaceholder: some View {
-        Group {
-            if settings.selectedCourse != "0" {
-                ScrollView {
-                    VStack(spacing: 10) {
-                        ForEach(0..<10, id: \.self) { _ in
-                            LessonCard(lesson: .sample)
-                                .shimmeringPlaceholder(opacity: colorScheme == .light ? 0.5 : 0.7)
+    private var calendarScrollView: some View {
+        ScrollView(.horizontal) {
+            LazyHStack(spacing: 0) {
+                ForEach(viewModel.academicYearDays, id: \.self) { date in
+                    let dailyLessons = viewModel.events(for: date) ?? []
+                    
+                    Group {
+                        if !dailyLessons.isEmpty {
+                            CalendarViewDay(
+                                filteredLessons: dailyLessons,
+                                selectedLesson: $selectedLesson,
+                                openCalendar: $openCalendar,
+                                selectedDetent: $selectedDetent,
+                                firstLoading: $firstLoading,
+                                changeOpenCalendar: changeOpenCalendar
+                            )
+                        } else {
+                            ContentUnavailableView(
+                                "Giornata Libera",
+                                systemImage: "moon.zzz",
+                                description: Text("Non ci sono lezioni in programma per oggi.")
+                            )
                         }
                     }
-                }
-                .scrollViewTopPadding()
-                .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
-                .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
-                .containerRelativeFrame(.horizontal)
-            } else {
-                Text("Devi scegliere un corso")
-                    .bold()
-                    .font(.title2)
                     .containerRelativeFrame(.horizontal)
+                    .id(date)
+                }
             }
+            .scrollTargetLayout()
         }
-    }
-    
-    private var loadedContent: some View {
-        Group {
-            if !viewModel.noLessonsFound {
-                ForEach(viewModel.days.indices, id: \.self) { i in
-                    if !viewModel.days[i].isEmpty {
-                        CalendarViewDay(
-                            filteredLessons: viewModel.days[i],
-                            selectedLesson: $selectedLesson,
-                            openCalendar: $openCalendar,
-                            openAddToCalendar: $openAddToCalendar,
-                            selectedDetent: $selectedDetent,
-                            firstLoading: $firstLoading,
-                            changeOpenCalendar: changeOpenCalendar
-                        )
-                        .id(viewModel.daysString[i])
-                        .containerRelativeFrame(.horizontal)
-                    } else {
-                        Text("Oggi non hai lezioni!")
-                            .bold()
-                            .font(.title2)
-                            .id(viewModel.daysString[i])
-                            .containerRelativeFrame(.horizontal)
+        .scrollTargetBehavior(.paging)
+        .scrollIndicators(.never, axes: .horizontal)
+        .scrollPosition(id: Binding<Date?>(
+                get: { self.selectedWeek },
+                set: { newValue in
+                    if let validDate = newValue {
+                        self.selectedWeek = validDate
                     }
                 }
-            } else {
-                Text("Nessuna lezione trovata per questo corso")
-                    .bold()
-                    .font(.title2)
-                    .containerRelativeFrame(.horizontal)
+            ), anchor: .center)
+        .onChange(of: selectedWeek) { oldValue, newValue in
+            if !Calendar.current.isDate(oldValue, inSameDayAs: newValue) {
+                Haptics.play(.selection, state: "selection")
+                if !openSettings { selectedDetent = .small }
+                Task {
+                    try? await Task.sleep(for: .seconds(0.2))
+                    GlobalHaptics.shared.state = ""
+                }
             }
         }
     }
     
-    private var offlineContent: some View {
-        if settings.selectedCourse == "0" {
-            Text("Connettiti a internet per scegliere un corso")
-                .bold()
-                .font(.title2)
-                .containerRelativeFrame(.horizontal)
+    @ViewBuilder
+    private var stateOverlays: some View {
+        let hasCourse = settings.selectedCourse != "0"
+        
+        if net.status != .connected && (viewModel.schedule.isEmpty || !hasCourse) {
+            ContentUnavailableView(
+                "Sei Offline",
+                systemImage: "wifi.slash",
+                description: Text(hasCourse ? "Connettiti a internet per scaricare le tue lezioni." : "Connettiti a internet per configurare il tuo corso.")
+            )
         } else {
-            Text("Connettiti a internet per scaricare le lezioni")
-                .bold()
-                .font(.title2)
-                .containerRelativeFrame(.horizontal)
+            switch viewModel.state {
+            case .loading:
+                loadingStateOverlay(hasCourse: hasCourse)
+                
+            case .empty:
+                ContentUnavailableView(
+                    "Nessuna Lezione",
+                    systemImage: "graduationcap",
+                    description: Text(hasCourse ? "Non è stata trovata nessuna lezione per questo corso." : "Scegli un corso dalle impostazioni per iniziare.")
+                )
+                
+            case .offline:
+                ContentUnavailableView(
+                    "Sei Offline",
+                    systemImage: "wifi.slash",
+                    description: Text(hasCourse ? "Connettiti a internet per scaricare le tue lezioni." : "Connettiti a internet per configurare il tuo corso.")
+                )
+                
+            case .error(let msg):
+                ContentUnavailableView(
+                    "Si è verificato un errore",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text(msg)
+                )
+                
+            case .loaded:
+                if firstLoading {
+                    loadingStateOverlay(hasCourse: hasCourse)
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private func loadingStateOverlay(hasCourse: Bool) -> some View {
+        if hasCourse {
+            ScrollView {
+                VStack(spacing: 10) {
+                    ForEach(0..<10, id: \.self) { _ in
+                        LessonCard(lesson: .sample)
+                            .shimmeringPlaceholder(opacity: colorScheme == .light ? 0.5 : 0.7)
+                    }
+                }
+            }
+            .scrollViewTopPadding()
+            .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
+            .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
+        } else {
+            ContentUnavailableView(
+                "Nessun corso",
+                systemImage: "graduationcap",
+                description: Text("Scegli un corso dalle impostazioni per iniziare.")
+            )
         }
     }
     
@@ -219,7 +237,7 @@ struct CalendarView: View {
         }
         .toolbarBackgroundVisibility(.hidden)
         
-        if viewModel.checkingUpdates || viewModel.showUpdateAlert {
+        if viewModel.checkingUpdates || viewModel.updateAvailable {
             ToolbarItem {
                 if #available(iOS 26, *) {
                     modernUpdateStatus
@@ -269,11 +287,11 @@ struct CalendarView: View {
     // MARK: - Toolbar Components
     private var modernUpdateStatus: some View {
         Group {
-            if viewModel.showUpdateAlert {
+            if viewModel.updateAvailable {
                 HStack {
                     Button("Aggiorna") {
                         Task { @MainActor in
-                            viewModel.confirmUpdate(selectedYear: settings.selectedYear, matricola: settings.matricola)
+                            await viewModel.confirmUpdate(matricola: settings.matricola)
                         }
                     }
                     .font(.caption)
@@ -296,12 +314,12 @@ struct CalendarView: View {
     
     private var legacyUpdateStatus: some View {
         Group {
-            if viewModel.showUpdateAlert {
+            if viewModel.updateAvailable {
                 HStack {
                     Button("Aggiorna") {
                         Haptics.play(.start)
                         Task { @MainActor in
-                            viewModel.confirmUpdate(selectedYear: settings.selectedYear, matricola: settings.matricola)
+                            await viewModel.confirmUpdate(matricola: settings.matricola)
                         }
                     }
                     .font(.caption)
@@ -358,6 +376,8 @@ struct CalendarView: View {
     }
     
     private func inizializeData() {
+        viewModel.generateAcademicYearDays(for: settings.selectedYear)
+        
         updateDate()
         
         tempSettings.sync(with: settings)
@@ -368,59 +388,36 @@ struct CalendarView: View {
             oldOpenCalendar = true
         }
         
-        if settings.selectedCourse != "0" {
-            Task {
+        Task {
+            if settings.selectedCourse != "0" {
                 await viewModel.loadNetworkFromCache()
-                await viewModel.loadFromCache(selYear: settings.selectedYear, matricola: settings.matricola)
-                await viewModel.loadLessons(
-                    corso: settings.selectedCourse,
-                    anno: settings.selectedAcademicYear,
-                    selYear: settings.selectedYear,
-                    matricola: settings.matricola,
-                    updating: false
-                )
+                await viewModel.loadFromCache(matricola: settings.matricola)
             }
+            
+            await viewModel.loadLessons(
+                corso: settings.selectedCourse,
+                anno: settings.selectedAcademicYear,
+                selYear: settings.selectedYear,
+                matricola: settings.matricola,
+                updating: false
+            )
         }
     }
     
     private func updateDate() {
-        let today: Date = .now
+        let today = Calendar.current.startOfDay(for: Date())
         
         if let years = NetworkCache.shared.years.last,
-           let currentYear = Int(years.valore),
+           let currentYear = Int(years.id),
            let year = Int(settings.selectedYear),
            year != currentYear {
-            let startAcademic = "01-10-\(year)"
-            if selectedWeek.formatUnivrStyle() != startAcademic {
-                selectedWeek = startAcademic.toDateModern() ?? Date(year: year, month: today.month, day: today.day)
+            let startAcademic = Date(year: year, month: 10, day: 1)
+            if !Calendar.current.isDate(selectedWeek, inSameDayAs: startAcademic) {
+                selectedWeek = startAcademic
             }
         } else {
-            if selectedWeek.formatUnivrStyle() != today.formatUnivrStyle() {
-                selectedWeek = Date(year: today.year, month: today.month, day: today.day)
-            }
-        }
-    }
-    
-    private func handleSelectionChange() {
-        scrollUpdateTask?.cancel()
-        scrollUpdateTask = Task {
-            if !Task.isCancelled {
-                await MainActor.run {
-                    if let date = selection?.toDateModern() {
-                        if selectedWeek.formatUnivrStyle() != selection {
-                            selectedWeek = date
-                        }
-                        
-                        if !openSettings {
-                            selectedDetent = .small
-                        }
-                    }
-                    if selection != nil {
-                        Haptics.play(.selection, state: "selection")
-                    }
-                }
-                try? await Task.sleep(for: .seconds(0.2))
-                GlobalHaptics.shared.state = ""
+            if !Calendar.current.isDate(selectedWeek, inSameDayAs: today) {
+                selectedWeek = today
             }
         }
     }
@@ -428,21 +425,16 @@ struct CalendarView: View {
     private func handleLoadingChange(_ isLoading: Bool) {
         if isLoading {
             Haptics.play(.start)
-            selection = nil
             firstLoading = true
         } else {
-            let targetDate = selectedWeek.formatUnivrStyle()
             Task { @MainActor in
                 var transaction = Transaction()
                 transaction.disablesAnimations = true
                 withTransaction(transaction) {
-                    if viewModel.daysString.contains(targetDate) {
-                        selection = targetDate
+                    if let exactMatch = viewModel.academicYearDays.first(where: { Calendar.current.isDate($0, inSameDayAs: selectedWeek) }) {
+                        selectedWeek = exactMatch
                     } else {
-                        selection = viewModel.daysString.first
-                        if let first = viewModel.daysString.first, let date = first.toDateModern() {
-                            selectedWeek = date
-                        }
+                        selectedWeek = viewModel.academicYearDays.first ?? Calendar.current.startOfDay(for: Date())
                     }
                     firstLoading = false
                     Haptics.play(.success)
@@ -458,6 +450,7 @@ struct CalendarView: View {
                 let hasChanged = tempSettings.hasChanged(from: settings)
                 
                 if hasChanged {
+                    viewModel.state = .loading
                     tempSettings.apply(to: settings)
                     
                     changeOpenCalendar(true)
@@ -483,7 +476,7 @@ struct CalendarView: View {
                     settings.matricola = tempSettings.matricola
                     changeOpenCalendar(true)
                     Task {
-                        await viewModel.organizeData(selectedYear: settings.selectedYear, matricola: settings.matricola)
+                        await viewModel.loadFromCache(matricola: settings.matricola)
                     }
                 } else {
                     changeOpenCalendar(oldOpenCalendar)
@@ -578,7 +571,7 @@ struct CalendarViewDay: View {
         ScrollView {
             VStack(spacing: 10) {
                 ForEach(filteredLessons) { lesson in
-                    if lesson.tipo != "pause" && lesson.tipo != "chiusura_type" {
+                    if lesson.type != .pause && lesson.type != .closure {
                         LessonCard(lesson: lesson)
                             .onTapGesture {
                                 Haptics.play(.impact(weight: .light, intensity: 0.5))
@@ -611,7 +604,7 @@ struct CalendarViewDay: View {
                         HStack(alignment: .bottom) {
                             Image(systemName: .cupDynamic)
                                 .font(.system(size: 40))
-                            Text(lesson.durationCalculated)
+                            Text(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)))
                                 .font(.system(size: 30))
                                 .italic()
                                 .bold()

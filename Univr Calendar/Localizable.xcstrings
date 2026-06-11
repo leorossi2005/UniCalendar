@@ -11,18 +11,18 @@
         }
       }
     },
-    "%@ (%@)" : {
+    "%@ - %@ (%@)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ (%2$@)"
+            "value" : "%1$@ - %2$@ (%3$@)"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@ (%2$@)"
+            "value" : "%1$@ - %2$@ (%3$@)"
           }
         }
       }
@@ -265,22 +265,22 @@
         }
       }
     },
-    "Connettiti a internet per scaricare le lezioni" : {
+    "Connettiti a internet per configurare il tuo corso." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connect to the internet to download lessons"
+            "value" : "Connect to the internet to configure your course."
           }
         }
       }
     },
-    "Connettiti a internet per scegliere un corso" : {
+    "Connettiti a internet per scaricare le tue lezioni." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Connect to the internet to choose a course"
+            "value" : "Connect to the internet to download your lessons."
           }
         }
       }
@@ -335,16 +335,6 @@
         }
       }
     },
-    "Devi scegliere un corso" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You have to choose a course"
-          }
-        }
-      }
-    },
     "Dispari" : {
       "localizations" : {
         "en" : {
@@ -391,6 +381,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Make me a little gift"
+          }
+        }
+      }
+    },
+    "Giornata Libera" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free Day"
           }
         }
       }
@@ -450,7 +450,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In offline mode you can’t change this options"
+            "value" : "In offline mode you can’t change this options."
           }
         }
       }
@@ -515,6 +515,16 @@
         }
       }
     },
+    "Nessun corso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No course"
+          }
+        }
+      }
+    },
     "Nessun corso trovato" : {
       "localizations" : {
         "en" : {
@@ -525,12 +535,12 @@
         }
       }
     },
-    "Nessuna lezione trovata per questo corso" : {
+    "Nessuna Lezione" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No classes found for this course"
+            "value" : "No classes"
           }
         }
       }
@@ -541,6 +551,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Don't you ever understand what classes you have? Don't you want to open the site every time or use outdated apps? Now you can do everything here!"
+          }
+        }
+      }
+    },
+    "Non ci sono lezioni in programma per oggi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There are no classes scheduled for today."
+          }
+        }
+      }
+    },
+    "Non è stata trovata nessuna lezione per questo corso." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No lesson was found for this course."
           }
         }
       }
@@ -571,16 +601,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Today"
-          }
-        }
-      }
-    },
-    "Oggi non hai lezioni!" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You don't have classes today!"
           }
         }
       }
@@ -665,6 +685,16 @@
         }
       }
     },
+    "Scegli un corso dalle impostazioni per iniziare." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a course from the settings to get started."
+          }
+        }
+      }
+    },
     "Scrivimi!" : {
       "localizations" : {
         "en" : {
@@ -725,12 +755,32 @@
         }
       }
     },
+    "Sei Offline" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You’re Offline"
+          }
+        }
+      }
+    },
     "Seleziona un anno precedente per vedere l'archivio, sennò procedi pure con l'ultimo ;)" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Select a previous year to see the archive, otherwise proceed with the last one ;)"
+          }
+        }
+      }
+    },
+    "Si è verificato un errore" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An error has occurred"
           }
         }
       }

@@ -20,12 +20,11 @@ struct LessonDetailsView: View {
     @State private var showOriginalName: Bool = false
     @State private var calendarEvent: EKEvent?
     @State private var eventStore = EKEventStore()
-    @State private var currentLessonCoordinate: CLLocationCoordinate2D?
     @State private var eventSaved: Bool = false
     
     let openAddToCalendar: Bool
     var onDismiss: (() -> Void)?
-    private var date: Date { lesson?.data.toDateModern() ?? Date() }
+    private var date: Date { lesson?.startTime ?? Date() }
     private var backgroundColor: Color { Color(hex: lesson?.color ?? "") ?? Color(.systemGray6) }
     
     var body: some View {
@@ -52,7 +51,6 @@ struct LessonDetailsView: View {
                         detailRows(lesson: lesson)
                         StableMapView(
                             lesson: lesson,
-                            externalCoordinate: $currentLessonCoordinate,
                             corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
                         )
                     }
@@ -66,7 +64,7 @@ struct LessonDetailsView: View {
                         ToolbarItem(placement: .primaryAction) {
                             Button {
                                 if !eventSaved {
-                                    prepareAndShowEvent(for: lesson, coordinate: currentLessonCoordinate)
+                                    prepareAndShowEvent(for: lesson)
                                 }
                             } label: {
                                 Image(systemName: eventSaved ? "checkmark" : "calendar.badge.plus")
@@ -101,7 +99,7 @@ struct LessonDetailsView: View {
     // MARK: - Subviews
     private func headerInfo(lesson: Lesson) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(showOriginalName ? lesson.nameOriginal : lesson.cleanName)
+            Text((showOriginalName ? lesson.name : lesson.cleanName) ?? "")
                 .font(.title2)
                 .bold()
                 .contentShape(.rect)
@@ -116,10 +114,10 @@ struct LessonDetailsView: View {
                                 .font(.caption)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
-                                .background(lesson.annullato ? Color(.systemBackground) : backgroundColor.opacity(0.2))
+                                .background(lesson.isCanceled ? Color(.secondarySystemBackground) : lesson.uiColor.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                                 .overlay {
-                                    if lesson.annullato {
+                                    if lesson.isCanceled {
                                         RoundedRectangle(cornerRadius: 7, style: .continuous)
                                             .strokeBorder(Color(white: 0.35), lineWidth: 0.5)
                                     }
@@ -138,15 +136,15 @@ struct LessonDetailsView: View {
                 icon: "calendar"
             )
             rowLabel(
-                text: "\(lesson.orario) (\(lesson.durationCalculated))",
+                text: "\(lesson.startTime.formatted(.dateTime.hour().minute())) - \(lesson.endTime.formatted(.dateTime.hour().minute())) (\(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow))))",
                 icon: "clock.fill"
             )
             rowLabel(
-                text: lesson.docente.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.docente),
-                icon: lesson.docente.contains(",") ? "person.2.fill" : "person.fill"
+                text: lesson.teachers.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.teachers.joined(separator: ", ")),
+                icon: !lesson.teachers.isEmpty && lesson.teachers.count > 1 ? "person.2.fill" : "person.fill"
             )
             rowLabel(
-                text: "\(lesson.formattedClassroom) \(lesson.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
+                text: "\(lesson.location?.classroom ?? "") \(lesson.location?.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
                 icon: "mappin"
             )
         }
@@ -158,52 +156,27 @@ struct LessonDetailsView: View {
     }
     
     // MARK: - Logic
-    private func combineDateAndTime(date: Date, timeString: String) -> Date? {
-        let calendar = Calendar.current
-        
-        let timeComponents = timeString.split(separator: ":").compactMap { Int($0) }
-        
-        guard timeComponents.count == 2 else { return nil }
-        let hour = timeComponents[0]
-        let minute = timeComponents[1]
-        guard (0...23).contains(hour), (0...59).contains(minute) else { return nil }
-
-        return calendar.date(
-            bySettingHour: hour,
-            minute: minute,
-            second: 0,
-            of: date
-        )
-    }
-    
-    private func prepareAndShowEvent(for lesson: Lesson, coordinate: CLLocationCoordinate2D? = nil) {
+    private func prepareAndShowEvent(for lesson: Lesson) {
         let newEvent = EKEvent(eventStore: eventStore)
         
         newEvent.title = lesson.cleanName
-        if lesson.docente != "" {
-            newEvent.notes = lesson.docente.contains(",") ? String(localized: "Docenti: \(lesson.docente)") : String(localized: "Docente: \(lesson.docente)")
+        if !lesson.teachers.isEmpty {
+            newEvent.notes = lesson.teachers.count > 1 ? String(localized: "Docenti: \(lesson.teachers.joined(separator: ", "))") : String(localized: "Docente: \(lesson.teachers.joined(separator: ", "))")
         }
         newEvent.availability = .busy
         
-        if let coordinate = coordinate {
-            let structuredLocation = EKStructuredLocation(title: lesson.formattedClassroom)
-            structuredLocation.geoLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-            newEvent.structuredLocation = structuredLocation
-        } else {
-            newEvent.location = lesson.formattedClassroom
+        if let location = lesson.location {
+            if let coords = location.coordinates {
+                let structuredLocation = EKStructuredLocation(title: location.classroom)
+                structuredLocation.geoLocation = CLLocation(latitude: coords.latitude, longitude: coords.longitude)
+                newEvent.structuredLocation = structuredLocation
+            } else {
+                newEvent.location = location.classroom
+            }
         }
         
-        let baseDate = lesson.data.toDateModern() ?? Date()
-        let startTime = lesson.startTime
-        let timeRange = lesson.orario.split(separator: "-").map { $0.trimmingCharacters(in: .whitespaces) }
-        let endTime = timeRange.count == 2 ? timeRange[1] : ""
-        if let startDate = combineDateAndTime(date: baseDate, timeString: startTime), let endDate = combineDateAndTime(date: baseDate, timeString: endTime) {
-            newEvent.startDate = startDate
-            newEvent.endDate = endDate
-        } else {
-            newEvent.startDate = Date()
-            newEvent.endDate = Date().addingTimeInterval(3600)
-        }
+        newEvent.startDate = lesson.startTime
+        newEvent.endDate = lesson.endTime
         
         calendarEvent = newEvent
     }
@@ -212,13 +185,10 @@ struct LessonDetailsView: View {
 // MARK: - Subviews
 struct StableMapView: View {
     let lesson: Lesson
-    @Binding var externalCoordinate: CLLocationCoordinate2D?
-    
+    @State var externalCoordinate: CLLocationCoordinate2D?
     @State var corderRadius: CGFloat
     @State private var isLoadingMap: Bool = false
     
-    private var backgroundColor: Color { Color(hex: lesson.color) ?? Color(.systemGray6) }
-
     var body: some View {
         ZStack {
             if let coordinate = externalCoordinate {
@@ -227,14 +197,14 @@ struct StableMapView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        openInMapsButton(coordinate: coordinate, name: lesson.formattedClassroom, color: backgroundColor)
+                        openInMapsButton(coordinate: coordinate, name: lesson.location?.classroom ?? "", color: lesson.uiColor)
                     }
                     Spacer()
                 }
             } else if isLoadingMap {
                 ProgressView()
             } else {
-                ContentUnavailableView("Posizione non trovata\n\n\(lesson.aula)", systemImage: "mappin.slash")
+                ContentUnavailableView("Posizione non trovata\n\n\(lesson.location?.address ?? "")", systemImage: "mappin.slash")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -249,7 +219,7 @@ struct StableMapView: View {
         VStack(spacing: 4) {
             ZStack {
                 Circle()
-                    .fill(backgroundColor)
+                    .fill(lesson.uiColor)
                     .frame(width: 30, height: 30)
                     .shadow(radius: 2)
                 Image(systemName: "graduationcap.fill")
@@ -257,7 +227,7 @@ struct StableMapView: View {
                     .foregroundStyle(.black)
             }
             
-            Text(lesson.aula)
+            Text(lesson.location?.address ?? "")
                 .frame(height: 10)
                 .font(.caption)
                 .bold()
@@ -307,7 +277,15 @@ struct StableMapView: View {
     }
     
     private func findLocation(for lesson: Lesson) async {
-        guard let address = lesson.indirizzoAula, !address.isEmpty else { return }
+        if let latitude = lesson.location?.coordinates?.latitude, let longitude = lesson.location?.coordinates?.longitude {
+            await MainActor.run {
+                self.externalCoordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+                self.isLoadingMap = false
+            }
+            return
+        }
+        
+        guard let address = lesson.location?.address, !address.isEmpty else { return }
         
         if let cachedCoord = await CoordinateCache.shared.coordinate(for: address) {
             let clCoord = CLLocationCoordinate2D(latitude: cachedCoord.latitude, longitude: cachedCoord.longitude)

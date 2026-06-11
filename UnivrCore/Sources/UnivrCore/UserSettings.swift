@@ -8,61 +8,68 @@
 //
 
 import Foundation
-#if canImport(Observation)
-import Observation
-#endif
 
 @MainActor
-#if canImport(Observation)
 @Observable
-#endif
 public class UserSettings {
     public static let shared = UserSettings()
     
     private enum Key: String {
         case selectedYear, selectedCourse, selectedAcademicYear
         case foundMatricola, matricola, onboardingCompleted
+        case settingsVersion
     }
     
     private enum Default {
         static let year = "2025"
         static let course = "0"
         static let academicYear = "0"
-        static let matricola = "pari"
+        static let matricola = "even"
         static let boolFalse = false
+        static let currentVersion = 1
     }
     
     public var selectedYear: String {
-        didSet { save(selectedYear, key: .selectedYear) }
+        didSet { Self.save(selectedYear, key: .selectedYear) }
     }
     
     public var selectedCourse: String {
-        didSet { save(selectedCourse, key: .selectedCourse) }
+        didSet { Self.save(selectedCourse, key: .selectedCourse) }
     }
     
     public var selectedAcademicYear: String {
-        didSet { save(selectedAcademicYear, key: .selectedAcademicYear) }
+        didSet { Self.save(selectedAcademicYear, key: .selectedAcademicYear) }
     }
     
     public var foundMatricola: Bool {
-        didSet { save(foundMatricola, key: .foundMatricola) }
+        didSet { Self.save(foundMatricola, key: .foundMatricola) }
     }
     
     public var matricola: String {
-        didSet { save(matricola, key: .matricola) }
+        didSet { Self.save(matricola, key: .matricola) }
     }
     
     public var onboardingCompleted: Bool {
-        didSet { save(onboardingCompleted, key: .onboardingCompleted) }
+        didSet { Self.save(onboardingCompleted, key: .onboardingCompleted) }
     }
     
     private init() {
+        let savedVersion = Self.load(.settingsVersion, fallback: 0)
+        if savedVersion < 1 { Self.performV1Migration() }
+        
         self.selectedYear = Self.load(.selectedYear, fallback: Default.year)
         self.selectedCourse = Self.load(.selectedCourse, fallback: Default.course)
         self.selectedAcademicYear = Self.load(.selectedAcademicYear, fallback: Default.academicYear)
         self.foundMatricola = Self.load(.foundMatricola, fallback: Default.boolFalse)
         self.matricola = Self.load(.matricola, fallback: Default.matricola)
         self.onboardingCompleted = Self.load(.onboardingCompleted, fallback: Default.boolFalse)
+    }
+    
+    private static func performV1Migration() {
+        let oldMatricola = load(.matricola, fallback: "pari")
+        
+        save(oldMatricola == "pari" ? "even" : "odd", key: .matricola)
+        save(Default.currentVersion, key: .settingsVersion)
     }
     
     public func reset() {
@@ -74,7 +81,7 @@ public class UserSettings {
         onboardingCompleted =  Default.boolFalse
     }
     
-    private func save(_ value: Any, key: Key) {
+    private static func save(_ value: Any, key: Key) {
         UserDefaults.standard.set(value, forKey: key.rawValue)
     }
     
@@ -100,15 +107,12 @@ public struct TempSettingsState {
     }
     
     public func hasChanged(from settings: UserSettings) -> Bool {
-        return selectedCourse != settings.selectedCourse || selectedYear != settings.selectedYear || selectedAcademicYear != settings.selectedAcademicYear
+        selectedCourse != settings.selectedCourse ||
+        selectedYear != settings.selectedYear ||
+        selectedAcademicYear != settings.selectedAcademicYear
     }
     
     public func apply(to settings: UserSettings) {
-        settings.selectedYear = ""
-        settings.selectedCourse = ""
-        settings.selectedAcademicYear = ""
-        settings.matricola = ""
-        
         settings.selectedYear = self.selectedYear
         settings.selectedCourse = self.selectedCourse
         settings.selectedAcademicYear = self.selectedAcademicYear
