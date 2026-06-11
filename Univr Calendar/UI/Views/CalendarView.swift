@@ -27,6 +27,7 @@ struct CalendarView: View {
     
     @State private var selectedDetent: CustomSheetDetent = .small
     @State private var openSettings: Bool = false
+    @State private var openAddToCalendar: Bool = false
     @State private var openCalendar: Bool = false
     @State private var oldOpenCalendar: Bool = false
     
@@ -78,7 +79,8 @@ struct CalendarView: View {
                 selectedWeek: $selectedWeek,
                 selectedLesson: $selectedLesson,
                 tempSettings: $tempSettings,
-                openCalendar: $openCalendar
+                openCalendar: $openCalendar,
+                openAddToCalendar: $openAddToCalendar
             )
             .disabled((viewModel.state == .loading || viewModel.state == .empty || viewModel.schedule.isEmpty) && !openSettings)
         }
@@ -111,6 +113,7 @@ struct CalendarView: View {
                                 filteredLessons: dailyLessons,
                                 selectedLesson: $selectedLesson,
                                 openCalendar: $openCalendar,
+                                openAddToCalendar: $openAddToCalendar,
                                 selectedDetent: $selectedDetent,
                                 firstLoading: $firstLoading,
                                 changeOpenCalendar: changeOpenCalendar
@@ -559,6 +562,7 @@ struct CalendarViewDay: View {
     
     @Binding var selectedLesson: Lesson?
     @Binding var openCalendar: Bool
+    @Binding var openAddToCalendar: Bool
     @Binding var selectedDetent: CustomSheetDetent
     @Binding var firstLoading: Bool
 
@@ -575,6 +579,28 @@ struct CalendarViewDay: View {
                                 selectedLesson = lesson
                                 selectedDetent = .large
                             }
+                            .contextMenu(
+                                menuItems: {
+                                    Button(action: {
+                                        Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                        selectedLesson = lesson
+                                        openAddToCalendar = true
+                                        selectedDetent = .large
+                                    }) {
+                                        Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
+                                    }
+                                    Button(action: {
+                                        Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                        selectedLesson = lesson
+                                        selectedDetent = .large
+                                    }) {
+                                        Label("Vedi più dettagli", systemImage: "ellipsis")
+                                    }
+                                },
+                                preview: {
+                                    LessonCardPreview(lesson: lesson)
+                                }
+                            )
                     } else {
                         HStack(alignment: .bottom) {
                             Image(systemName: .cupDynamic)

@@ -85,12 +85,32 @@
         }
       }
     },
+    "+%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+%lld"
+          }
+        }
+      }
+    },
     "Aggiorna" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Update"
+          }
+        }
+      }
+    },
+    "Aggiungi al calendario" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add to calendar"
           }
         }
       }
@@ -791,6 +811,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Use this section to change app settings, change the year, the course, the course year or the freshman if present."
+          }
+        }
+      }
+    },
+    "Vedi più dettagli" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show more details"
           }
         }
       }

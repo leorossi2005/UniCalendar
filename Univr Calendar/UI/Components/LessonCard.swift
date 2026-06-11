@@ -24,6 +24,7 @@ struct LessonCard: View {
         .opacity(lesson.isCanceled ? 0.5 : 1.0)
         .background(backgroundLayer)
         .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
+        .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 35, style: .continuous))
         .hoverEffect(.lift)
         .padding(.horizontal, 15)
     }

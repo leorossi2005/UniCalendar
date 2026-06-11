@@ -22,7 +22,8 @@ struct LessonDetailsView: View {
     @State private var eventStore = EKEventStore()
     @State private var eventSaved: Bool = false
     
-    private var date: Date { lesson?.startTime ?? Date() }
+    let openAddToCalendar: Bool
+    var onDismiss: (() -> Void)?
     
     var body: some View {
         if let lesson = lesson {
@@ -34,7 +35,7 @@ struct LessonDetailsView: View {
                         onSaved: {
                             Task { @MainActor in
                                 try? await Task.sleep(for: .seconds(0.1))
-                                eventSaved = true
+                                eventSaved = !openAddToCalendar
                             }
                         },
                         onDismiss: {
@@ -75,11 +76,19 @@ struct LessonDetailsView: View {
             }
             .onChange(of: calendarEvent) { _, newValue in
                 lockSheet = newValue != nil
+                if openAddToCalendar, newValue == nil, let onDismiss = onDismiss {
+                    onDismiss()
+                }
             }
             .task(id: eventSaved) {
                 if eventSaved {
                     try? await Task.sleep(for: .seconds(2))
                     eventSaved = false
+                }
+            }
+            .onAppear {
+                if openAddToCalendar {
+                    prepareAndShowEvent(for: lesson)
                 }
             }
         }
@@ -103,7 +112,7 @@ struct LessonDetailsView: View {
                                 .font(.caption)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
-                                .background(lesson.isCanceled ? Color(.secondarySystemBackground) : lesson.uiColor.opacity(0.2))
+                                .background(lesson.isCanceled ? Color(.systemBackground) : lesson.uiColor.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                                 .overlay {
                                     if lesson.isCanceled {
@@ -121,7 +130,7 @@ struct LessonDetailsView: View {
     private func detailRows(lesson: Lesson) -> some View {
         VStack(alignment: .leading, spacing: 15) {
             rowLabel(
-                text: "\(date.getCurrentWeekdaySymbol(length: .wide)), \(date.day) \(date.getCurrentMonthSymbol(length: .wide)) \(date.yearSymbol)",
+                text: "\(lesson.startTime.getCurrentWeekdaySymbol(length: .wide)), \(lesson.startTime.day) \(lesson.startTime.getCurrentMonthSymbol(length: .wide)) \(lesson.startTime.yearSymbol)",
                 icon: "calendar"
             )
             rowLabel(
@@ -323,7 +332,7 @@ struct StableMapView: View {
     
     Text("")
         .sheet(isPresented: .constant(true)) {
-            LessonDetailsView(lesson: $lesson, lockSheet: $lockSheet)
+            LessonDetailsView(lesson: $lesson, lockSheet: $lockSheet, openAddToCalendar: false)
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
         }

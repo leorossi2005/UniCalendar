@@ -48,6 +48,7 @@ struct CustomSheetView: View {
     @Binding var selectedLesson: Lesson?
     @Binding var tempSettings: TempSettingsState
     @Binding var openCalendar: Bool
+    @Binding var openAddToCalendar: Bool
     
     // Gesture & Layout States
     @State private var enableBackground: Bool = false
@@ -193,6 +194,7 @@ struct CustomSheetView: View {
                 selectedWeek: $selectedWeek,
                 selectedDetent: $selectedDetent,
                 selectedLesson: $selectedLesson,
+                openAddToCalendar: $openAddToCalendar,
                 openSettings: $openSettings,
                 tempSettings: $tempSettings,
                 lockSheet: $lockSheet,
@@ -439,6 +441,7 @@ struct DynamicSheetContent: View {
     @Binding var selectedWeek: Date
     @Binding var selectedDetent: CustomSheetDetent
     @Binding var selectedLesson: Lesson?
+    @Binding var openAddToCalendar: Bool
     @Binding var openSettings: Bool
     @Binding var tempSettings: TempSettingsState
     
@@ -494,9 +497,13 @@ struct DynamicSheetContent: View {
                             )
                             .ignoresSafeArea(.keyboard)
                         } else {
-                            LessonDetailsView(lesson: $selectedLesson, lockSheet: $lockSheet)
-                                .opacity(min(max(largeOpacity, 0), 1))
-                                .allowsHitTesting(selectedDetent == .large)
+                            LessonDetailsView(lesson: $selectedLesson, lockSheet: $lockSheet, openAddToCalendar: openAddToCalendar) {
+                                selectedDetent = .small
+                                selectedLesson = nil
+                                openAddToCalendar = false
+                            }
+                            .opacity(min(max(largeOpacity, 0), 1))
+                            .allowsHitTesting(selectedDetent == .large)
                         }
                     }
                     .id(openSettings)
