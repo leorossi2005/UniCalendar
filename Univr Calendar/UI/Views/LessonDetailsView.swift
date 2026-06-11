@@ -24,8 +24,6 @@ struct LessonDetailsView: View {
     
     let openAddToCalendar: Bool
     var onDismiss: (() -> Void)?
-    private var date: Date { lesson?.startTime ?? Date() }
-    private var backgroundColor: Color { Color(hex: lesson?.color ?? "") ?? Color(.systemGray6) }
     
     var body: some View {
         if let lesson = lesson {
