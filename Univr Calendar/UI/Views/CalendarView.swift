@@ -390,8 +390,7 @@ struct CalendarView: View {
             changeOpenCalendar(true)
             oldOpenCalendar = true
             
-            settings.latestVersion = ""
-            if settings.latestVersion != Bundle.main.clearAppVersion {
+            if !settings.latestVersion.isEmpty && settings.latestVersion != Bundle.main.clearAppVersion {
                 try? await Task.sleep(for: .seconds(0.2))
                 openWhatsNew = true
                 selectedDetent = .large

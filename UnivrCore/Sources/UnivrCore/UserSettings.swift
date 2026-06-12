@@ -25,7 +25,7 @@ public class UserSettings {
         static let course = "0"
         static let academicYear = "0"
         static let matricola = "even"
-        static let latestVersion: String = ""
+        static let latestVersion: String = Bundle.main.clearAppVersion
         static let boolFalse = false
         static let currentVersion = 1
     }
