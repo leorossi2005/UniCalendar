@@ -15,12 +15,17 @@ struct WhatsNewView: View {
     @State private var previousVersionIndex: Int = 0
     @State private var selectedVersionIndex: Int = 0
     @State private var expandedFeatures: Set<UUID> = []
-    @State private var showAllExpanded: Bool = false
     @State private var dotWindowStart: Int = 0
     
+    private let versions = AppConstants.WhatsNewData.versions
+    
+    private var showAllExpanded: Bool {
+        return expandedFeatures.count == versions[selectedVersionIndex].features.count
+    }
+    
     private var currentVersion: WhatsNewVersion? {
-        guard AppConstants.WhatsNewData.versions.indices.contains(selectedVersionIndex) else { return nil }
-        return AppConstants.WhatsNewData.versions[selectedVersionIndex]
+        guard versions.indices.contains(selectedVersionIndex) else { return nil }
+        return versions[selectedVersionIndex]
     }
     
     private var canGoNewer: Bool {
@@ -28,7 +33,7 @@ struct WhatsNewView: View {
     }
     
     private var canGoOlder: Bool {
-        selectedVersionIndex < AppConstants.WhatsNewData.versions.count - 1
+        selectedVersionIndex < versions.count - 1
     }
     
     private let animation: Animation = .interactiveSpring(response: 0.25, dampingFraction: 1)
@@ -38,7 +43,7 @@ struct WhatsNewView: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
-                ForEach(Array(AppConstants.WhatsNewData.versions.enumerated()), id: \.element.id) { index, version in
+                ForEach(Array(versions.enumerated()), id: \.element.id) { index, version in
                     if #available(iOS 18, *) {
                         versionContent(version)
                             .containerRelativeFrame(.horizontal)
@@ -76,9 +81,8 @@ struct WhatsNewView: View {
         .animation(animation, value: selectedVersionIndex)
         .onChange(of: selectedVersionIndex) {
             expandedFeatures.removeAll()
-            showAllExpanded = false
             
-            let count = AppConstants.WhatsNewData.versions.count
+            let count = versions.count
             let maxStart = max(0, count - 4)
             let posInWindow = selectedVersionIndex - dotWindowStart
             if posInWindow < 1 {
@@ -98,9 +102,6 @@ struct WhatsNewView: View {
                 }
             }
         }
-        .onChange(of: expandedFeatures) {
-            showAllExpanded = expandedFeatures.count == AppConstants.WhatsNewData.versions[selectedVersionIndex].features.count
-        }
         .toolbar {
             ToolbarItem(placement: .bottomBar) {
                 navigatorArrow(direction: .left)
@@ -112,6 +113,7 @@ struct WhatsNewView: View {
             
             ToolbarItem(placement: .bottomBar) {
                 navigator
+                    .frame(width: 160)
             }
             
             ToolbarItem(placement: .bottomBar) {
@@ -180,9 +182,7 @@ struct WhatsNewView: View {
                     if showAllExpanded {
                         expandedFeatures.removeAll()
                     } else {
-                        version.features.forEach {
-                            expandedFeatures.insert($0.id)
-                        }
+                        expandedFeatures = Set(version.features.map(\.id))
                     }
                 } label: {
                     HStack(spacing: 6) {
@@ -246,51 +246,44 @@ struct WhatsNewView: View {
         .sensoryFeedback(.selection, trigger: selectedVersionIndex)
     }
     
-    @State var fixAppearWidth: Bool = true
+    @ViewBuilder
     private var navigator: some View {
-        ZStack {
-            if let version = currentVersion, fixAppearWidth {
-                VStack(spacing: 6) {
-                    HStack(spacing: 0) {
-                        ForEach(Array(AppConstants.WhatsNewData.versions.enumerated()), id: \.element.id) { index, _ in
-                            let posInWindow = index - dotWindowStart
-                            let isVisible = posInWindow >= 0 && posInWindow <= 3
-                            let isEdgeSmall = (posInWindow == 0 && dotWindowStart > 0) || (posInWindow == 3 && dotWindowStart + 3 < AppConstants.WhatsNewData.versions.count - 1)
-                            let dotSize: CGFloat = isVisible ? (isEdgeSmall ? 5 : 7) : 0
-                            
-                            Circle()
-                                .fill(index == selectedVersionIndex ? Color.primary : Color.secondary.opacity(0.3))
-                                .frame(width: dotSize, height: dotSize)
-                                .padding(.horizontal, isVisible ? 4 : 0)
-                        }
+        if let version = currentVersion {
+            VStack(spacing: 6) {
+                HStack(spacing: 0) {
+                    ForEach(0..<versions.count, id: \.self) { index in
+                        Circle()
+                            .fill(index == selectedVersionIndex ? Color.primary : Color.secondary.opacity(0.3))
+                            .frame(width: dotSize(for: index), height: dotSize(for: index))
+                            .padding(.horizontal, dotSize(for: index) > 0 ? 4 : 0)
                     }
-                    .animation(animation, value: selectedVersionIndex)
-                    .animation(animation, value: dotWindowStart)
-                    
-                    Text(version.date, format: .dateTime.day().month(.abbreviated).year())
-                        .font(.caption2)
-                        .foregroundStyle(.primary)
-                        .contentTransition(.numericText(countsDown: previousVersionIndex < selectedVersionIndex))
-                        .animation(animation, value: selectedVersionIndex)
                 }
+                .animation(animation, value: selectedVersionIndex)
+                .animation(animation, value: dotWindowStart)
+                
+                Text(version.date, format: .dateTime.day().month(.abbreviated).year())
+                    .font(.caption2)
+                    .foregroundStyle(.primary)
+                    .contentTransition(.numericText(countsDown: previousVersionIndex < selectedVersionIndex))
+                    .animation(animation, value: selectedVersionIndex)
             }
         }
-        .frame(maxWidth: .infinity)
-        .onAppear {
-            Task { @MainActor in
-                fixAppearWidth.toggle()
-                do {
-                    try await Task.sleep(for: .seconds(0.01))
-                } catch {}
-                fixAppearWidth.toggle()
-            }
-
-        }
+    }
+    
+    // MARK: - Logic
+    private func dotSize(for index: Int) -> CGFloat {
+        let posInWindow = index - dotWindowStart
+        let isVisible = posInWindow >= 0 && posInWindow <= 3
+        guard isVisible else { return 0 }
+        
+        let isEdgeSmall = (posInWindow == 0 && dotWindowStart > 0) ||
+                          (posInWindow == 3 && dotWindowStart + 3 < versions.count - 1)
+        
+        return isEdgeSmall ? 5 : 7
     }
 }
 
 // MARK: - Feature Card
-
 struct FeatureCard: View {
     @Namespace var namespace
     
@@ -304,18 +297,19 @@ struct FeatureCard: View {
             HStack(alignment: isExpanded ? .center : .top, spacing: 14) {
                 // Icon
                 Group {
-                    if feature.image {
-                        Image(feature.icon)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: isExpanded ? 48 : 30.4, height: isExpanded ? 48 : 30.4)
-                            .clipShape(RoundedRectangle(cornerRadius: 32 * 0.225, style: .continuous))
-                    } else {
-                        Image(systemName: feature.icon)
+                    switch feature.icon {
+                    case .system(let name):
+                        Image(systemName: name)
                             .font(.title3)
                             .fontWeight(.semibold)
                             .foregroundStyle(feature.accentColor.color)
                             .symbolEffect(.bounce, value: isExpanded)
+                    case .asset(let name):
+                        Image(name)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: isExpanded ? 48 : 30.4, height: isExpanded ? 48 : 30.4)
+                            .clipShape(RoundedRectangle(cornerRadius: 32 * 0.225, style: .continuous))
                     }
                 }
                 .frame(width: 48, height: 48)
@@ -367,8 +361,6 @@ struct FeatureCard: View {
             Haptics.play(.impact(flexibility: .soft, intensity: 0.6))
             onToggle()
         }
-        .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .hoverEffect(.lift)
         .animation(animation, value: isExpanded)
     }
 }

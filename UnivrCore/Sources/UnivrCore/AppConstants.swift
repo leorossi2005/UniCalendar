@@ -24,22 +24,6 @@ public enum AppConstants: Sendable {
         public static let developerName = "Leonardo Rossi"
     }
     
-    public struct Contributor: Identifiable, Sendable, Equatable {
-        public let id: String
-        public let name: String
-        public let role: String
-        public let url: URL?
-        public let image: String
-        
-        public init(name: String, role: String, url: URL? = nil, image: String = "") {
-            self.id = name
-            self.name = name
-            self.role = role
-            self.url = url
-            self.image = image
-        }
-    }
-    
     public enum Credits {
         public static let contributors: [Contributor] = [
             Contributor(name: "Gaia", role: String(localized: "Aiuto Sviluppo", bundle: .module), image: "GaiaPhoto"),
@@ -49,7 +33,7 @@ public enum AppConstants: Sendable {
     }
     
     
-    public struct WhatsNewData {
+    public enum WhatsNewData {
         public static let versions: [WhatsNewVersion] = [
             WhatsNewVersion(
                 version: "0.9",
@@ -57,28 +41,28 @@ public enum AppConstants: Sendable {
                 headline: String(localized: "iPad, Offline e un look tutto nuovo", bundle: .module),
                 features: [
                     WhatsNewFeature(
-                        icon: "ipad.landscape",
+                        icon: .system("ipad.landscape"),
                         accentColor: .blue,
                         title: String(localized: "Supporto Nativo per iPad", bundle: .module),
                         shortDescription: String(localized: "Esperienza ottimizzata per schermi grandi con layout adattivi e split view.", bundle: .module),
                         detailedDescription: String(localized: "Univr Calendar ora è completamente ottimizzato per iPad! Goditi un'esperienza fluida con layout adattivi, split view per visualizzare le settimane in landscape e interfaccia pensata appositamente per schermi più grandi. Ogni elemento è stato ripensato per sfruttare al meglio lo spazio disponibile.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "wifi.slash",
+                        icon: .system("wifi.slash"),
                         accentColor: .orange,
                         title: String(localized: "Modalità Offline", bundle: .module),
                         shortDescription: String(localized: "Consulta le tue lezioni anche senza connessione, sincronizzazione automatica.", bundle: .module),
                         detailedDescription: String(localized: "Niente più preoccupazioni per la connessione! L'app rileva in tempo reale quando sei offline e ti avvisa con un indicatore dedicato, permettendoti di consultare le lezioni salvate. L'onboarding e le impostazioni si bloccano automaticamente senza rete. Appena torni online, tutto si sincronizza in background senza alcun intervento da parte tua.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "sparkles",
+                        icon: .system("sparkles"),
                         accentColor: .purple,
                         title: String(localized: "Interfaccia Rinnovata", bundle: .module),
                         shortDescription: String(localized: "Sheet personalizzate, animazioni fluide ed effetti liquid glass.", bundle: .module),
                         detailedDescription: String(localized: "Le sheet di sistema sono state sostituite da una sheet completamente personalizzata, costruita con UIKit, che offre gesture avanzate, effetti liquid glass dinamici e un controllo totale sulle animazioni. Su iPad il corner radius della sheet si adatta automaticamente alla posizione della finestra. Il risultato? Un'app ancora più bella e piacevole da usare.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "wrench.and.screwdriver",
+                        icon: .system("wrench.and.screwdriver"),
                         accentColor: .gray,
                         title: String(localized: "Miglioramenti e Correzioni", bundle: .module),
                         shortDescription: String(localized: "Bug fix, performance migliorate e supporto per iOS 17/18.", bundle: .module),
@@ -92,28 +76,28 @@ public enum AppConstants: Sendable {
                 headline: String(localized: "Donazioni, nuova ricerca e velocità", bundle: .module),
                 features: [
                     WhatsNewFeature(
-                        icon: "cup.and.saucer",
+                        icon: .system("cup.and.saucer"),
                         accentColor: .blue,
                         title: String(localized: "Sezione Donazioni", bundle: .module),
                         shortDescription: String(localized: "Supporta lo sviluppatore con una donazione direttamente dall'app.", bundle: .module),
                         detailedDescription: String(localized: "Nelle impostazioni è stata aggiunta una nuova sezione con un link per effettuare una donazione allo sviluppatore tramite Revolut. Se l'app ti è utile, ora puoi mostrare il tuo apprezzamento con un piccolo contributo. Grazie di cuore!", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "list.bullet.rectangle",
+                        icon: .system("list.bullet.rectangle"),
                         accentColor: .orange,
                         title: String(localized: "Selezione Corso Ridisegnata", bundle: .module),
                         shortDescription: String(localized: "La ricerca del corso è stata ripensata da zero con un nuovo componente.", bundle: .module),
                         detailedDescription: String(localized: "L'interfaccia di selezione del corso è stata completamente riscritta in un componente dedicato condiviso tra onboarding e impostazioni. La barra di ricerca ora ha un pulsante per cancellare il testo, i risultati si caricano in modo più fluido e lo stile è stato uniformato con sfondi adattivi al tema del sistema.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "square.3.layers.3d.bottom.filled",
+                        icon: .system("square.3.layers.3d.bottom.filled"),
                         accentColor: .purple,
                         title: String(localized: "Prestazioni in Background", bundle: .module),
                         shortDescription: String(localized: "L'elaborazione dei dati avviene ora interamente in background.", bundle: .module),
                         detailedDescription: String(localized: "L'organizzazione del calendario, la generazione del date picker e tutte le operazioni di lettura e scrittura della cache vengono ora eseguite in background. I campi delle lezioni come durata, nome pulito e tag sono pre-calcolati al caricamento, rendendo lo scorrimento istantaneo.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "wrench.and.screwdriver",
+                        icon: .system("wrench.and.screwdriver"),
                         accentColor: .gray,
                         title: String(localized: "Miglioramenti e Correzioni", bundle: .module),
                         shortDescription: String(localized: "Architettura rinnovata, animazioni fluide e tanti fix.", bundle: .module),
@@ -127,28 +111,28 @@ public enum AppConstants: Sendable {
                 headline: String(localized: "Due lingue, splash screen e crediti", bundle: .module),
                 features: [
                     WhatsNewFeature(
-                        icon: "globe",
+                        icon: .system("globe"),
                         accentColor: .blue,
                         title: String(localized: "Italiano e Inglese", bundle: .module),
                         shortDescription: String(localized: "L'app è ora completamente tradotta in italiano e inglese.", bundle: .module),
                         detailedDescription: String(localized: "Ogni testo dell'app è stato tradotto: dall'onboarding alle impostazioni, dai messaggi di errore ai dettagli delle lezioni. La lingua si adatta automaticamente a quella impostata sul dispositivo, così l'esperienza è naturale fin dal primo avvio.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "sparkle",
+                        icon: .system("sparkle"),
                         accentColor: .orange,
                         title: String(localized: "Splash Screen Animato", bundle: .module),
                         shortDescription: String(localized: "L'app si apre con un'animazione che porta l'icona nell'onboarding.", bundle: .module),
                         detailedDescription: String(localized: "All'apertura dell'app viene mostrata una splash screen con l'icona che, al primo avvio, si anima e si sposta fluida nella pagina di benvenuto dell'onboarding grazie a una transizione coordinata. Se hai già completato la configurazione, la splash scompare rapidamente.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "gearshape",
+                        icon: .system("gearshape"),
                         accentColor: .purple,
                         title: String(localized: "Impostazioni Rinnovate", bundle: .module),
                         shortDescription: String(localized: "Nuove icone, sezione Info con versione e crediti, e conferma reset.", bundle: .module),
                         detailedDescription: String(localized: "Le impostazioni hanno un look completamente nuovo con icone per ogni voce e una migliore organizzazione. È stata aggiunta la sezione Info con la versione dell'app, i crediti e i contributori. La ricerca dei corsi ora ha una lista scorrevole con pulsante di chiusura e il reset dell'app richiede una conferma per evitare errori.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "wrench.and.screwdriver",
+                        icon: .system("wrench.and.screwdriver"),
                         accentColor: .gray,
                         title: String(localized: "Miglioramenti e Correzioni", bundle: .module),
                         shortDescription: String(localized: "Pause ridisegnate, lezioni annullate e preparazione TestFlight.", bundle: .module),
@@ -162,29 +146,28 @@ public enum AppConstants: Sendable {
                 headline: String(localized: "Lezioni più leggibili e nuova icona", bundle: .module),
                 features: [
                     WhatsNewFeature(
-                        icon: "textformat.abc",
+                        icon: .system("textformat.abc"),
                         accentColor: .blue,
                         title: String(localized: "Nomi Lezioni Semplificati", bundle: .module),
                         shortDescription: String(localized: "I nomi dei corsi vengono abbreviati automaticamente e mostrano tag utili.", bundle: .module),
                         detailedDescription: String(localized: "I nomi delle lezioni vengono ora formattati in modo intelligente: parole come \"Laboratorio\" o \"Teoria\" diventano tag colorati sotto il nome, le parentesi e le informazioni tecniche vengono estratte e semplificate. Il risultato è un nome più corto e leggibile a colpo d'occhio.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "sparkles.rectangle.stack",
+                        icon: .system("sparkles.rectangle.stack"),
                         accentColor: .orange,
                         title: String(localized: "Card Lezione Ridisegnata", bundle: .module),
                         shortDescription: String(localized: "Nuovo layout con orario a sinistra, dettagli a destra e tag colorati.", bundle: .module),
                         detailedDescription: String(localized: "La scheda di ogni lezione ha un aspetto completamente nuovo: l'orario di inizio e la durata sono a sinistra, il nome del corso, l'aula e i tag a destra. Il gradiente è stato sostituito da un colore pieno proveniente dall'università, per un look più pulito e coerente.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        image: true,
-                        icon: "AppIconV0.6",
+                        icon: .asset("AppIconV0.6"),
                         accentColor: .purple,
                         title: String(localized: "Prima Icona dell'App", bundle: .module),
                         shortDescription: String(localized: "Univr Calendar ha finalmente la sua icona personalizzata.", bundle: .module),
                         detailedDescription: String(localized: "L'app ha ora un'icona dedicata con un design che richiama il calendario e la lente d'ingrandimento, pensata per essere riconoscibile fin dalla schermata principale del dispositivo.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "wrench.and.screwdriver",
+                        icon: .system("wrench.and.screwdriver"),
                         accentColor: .gray,
                         title: String(localized: "Miglioramenti e Correzioni", bundle: .module),
                         shortDescription: String(localized: "Calendario localizzato, dettagli migliorati e vari fix.", bundle: .module),
@@ -198,28 +181,28 @@ public enum AppConstants: Sendable {
                 headline: String(localized: "Dettagli lezione e velocità al top", bundle: .module),
                 features: [
                     WhatsNewFeature(
-                        icon: "info.circle",
+                        icon: .system("info.circle"),
                         accentColor: .blue,
                         title: String(localized: "Dettagli della Lezione", bundle: .module),
                         shortDescription: String(localized: "Tocca una lezione per vedere tutte le informazioni e la mappa dell'aula.", bundle: .module),
                         detailedDescription: String(localized: "Ora puoi toccare qualsiasi lezione per aprire una schermata dettagliata con orario, docente, aula e una mappa interattiva che mostra la posizione approssimativa dell'edificio. Puoi anche toccare il titolo per vedere il nome completo del corso.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "chart.line.uptrend.xyaxis",
+                        icon: .system("chart.line.uptrend.xyaxis"),
                         accentColor: .orange,
                         title: String(localized: "Performance Migliorate", bundle: .module),
                         shortDescription: String(localized: "Caricamento più veloce del \(0.4, format: .percent) e transizioni fluide nella sheet.", bundle: .module),
                         detailedDescription: String(localized: "L'organizzazione dei dati è stata ottimizzata con un miglioramento di circa il \(0.4, format: .percent) nei tempi di elaborazione. Molti valori vengono ora pre-calcolati al primo caricamento, così le schermate si aprono istantaneamente. Anche la sheet in basso ha nuove animazioni di opacità dinamiche che rendono le transizioni più naturali.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "cylinder.split.1x2",
+                        icon: .system("cylinder.split.1x2"),
                         accentColor: .purple,
                         title: String(localized: "Cache di Rete", bundle: .module),
                         shortDescription: String(localized: "I dati scaricati vengono salvati e aggiornati in automatico.", bundle: .module),
                         detailedDescription: String(localized: "Le informazioni su anni, corsi e anni accademici vengono ora salvate localmente dopo il primo download. Alle aperture successive l'app li carica dalla cache e verifica in background se ci sono aggiornamenti, rendendo la navigazione molto più rapida.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "wrench.and.screwdriver",
+                        icon: .system("wrench.and.screwdriver"),
                         accentColor: .gray,
                         title: String(localized: "Miglioramenti e Correzioni", bundle: .module),
                         shortDescription: String(localized: "Calendario più fluido, colori ottimizzati e tanti bug fix.", bundle: .module),
@@ -233,28 +216,28 @@ public enum AppConstants: Sendable {
                 headline: String(localized: "Avvio più veloce e design adattivo", bundle: .module),
                 features: [
                     WhatsNewFeature(
-                        icon: "hare",
+                        icon: .system("hare"),
                         accentColor: .blue,
                         title: String(localized: "Avvio Rapido con la Cache", bundle: .module),
                         shortDescription: String(localized: "L'app carica i dati salvati e controlla aggiornamenti in automatico.", bundle: .module),
                         detailedDescription: String(localized: "Ora all'apertura l'app carica istantaneamente le lezioni salvate in precedenza, senza attendere la rete. In background viene verificata la disponibilità di aggiornamenti: se ci sono novità, un avviso ti permette di aggiornare i dati quando preferisci.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "network.badge.shield.half.filled",
+                        icon: .system("network.badge.shield.half.filled"),
                         accentColor: .orange,
                         title: String(localized: "Rete Più Affidabile", bundle: .module),
                         shortDescription: String(localized: "Messaggi di errore chiari e una connessione più stabile.", bundle: .module),
                         detailedDescription: String(localized: "Il sistema di rete è stato riscritto con un metodo più affidabile per estrarre i dati dal server. I messaggi di errore sono ora specifici e in italiano, così puoi capire subito cosa è andato storto senza dover interpretare codici tecnici.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "paintbrush.pointed",
+                        icon: .system("paintbrush.pointed"),
                         accentColor: .purple,
                         title: String(localized: "Interfaccia su Misura", bundle: .module),
                         shortDescription: String(localized: "Le finestre seguono la curvatura reale del tuo dispositivo.", bundle: .module),
                         detailedDescription: String(localized: "Il raggio degli angoli delle finestre sovrapposte ora si adatta automaticamente al modello del tuo iPhone o iPad, per un aspetto più armonioso e naturale. Anche i numeri e i nomi dei giorni nel calendario sono stati uniformati per una lettura più chiara.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "wrench.and.screwdriver",
+                        icon: .system("wrench.and.screwdriver"),
                         accentColor: .gray,
                         title: String(localized: "Miglioramenti e Correzioni", bundle: .module),
                         shortDescription: String(localized: "Impostazioni centralizzate, date migliorate e vari fix.", bundle: .module),
@@ -268,35 +251,35 @@ public enum AppConstants: Sendable {
                 headline: String(localized: "Nuovo benvenuto e compatibilità iOS", bundle: .module),
                 features: [
                     WhatsNewFeature(
-                        icon: "rectangle.portrait.on.rectangle.portrait.angled",
+                        icon: .system("rectangle.portrait.on.rectangle.portrait.angled"),
                         accentColor: .blue,
                         title: String(localized: "Pagina di Benvenuto", bundle: .module),
                         shortDescription: String(localized: "Una nuova schermata introduttiva apre l'onboarding.", bundle: .module),
                         detailedDescription: String(localized: "L'onboarding ora inizia con una pagina di benvenuto che presenta l'app e il suo scopo. Un modo più accogliente per guidarti nella configurazione iniziale, con la possibilità in futuro di includere un'animazione dedicata.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "hand.draw",
+                        icon: .system("hand.draw"),
                         accentColor: .orange,
                         title: String(localized: "Scorri le Settimane", bundle: .module),
                         shortDescription: String(localized: "Cambia settimana con uno swipe dal calendario compatto.", bundle: .module),
                         detailedDescription: String(localized: "Nel calendario compatto in basso puoi ora scorrere a sinistra o a destra per passare alla settimana precedente o successiva. Il primo giorno della nuova settimana viene selezionato automaticamente.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "square.stack.3d.up",
+                        icon: .system("square.stack.3d.up"),
                         accentColor: .purple,
                         title: String(localized: "Architettura MVVM", bundle: .module),
                         shortDescription: String(localized: "Logica e interfaccia ora sono completamente separate.", bundle: .module),
                         detailedDescription: String(localized: "L'app è stata ristrutturata con il pattern MVVM: la logica di caricamento lezioni, organizzazione dati e rete è ora gestita da ViewModel dedicati per il calendario, l'onboarding e le impostazioni.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "iphone.gen2",
+                        icon: .system("iphone.gen2"),
                         accentColor: .green,
                         title: String(localized: "Supporto iOS 17 e 18", bundle: .module),
                         shortDescription: String(localized: "Compatibilità estesa alle versioni precedenti di iOS.", bundle: .module),
                         detailedDescription: String(localized: "L'app è ora retrocompatibile con iOS 17 e 18 grazie a fallback dedicati per i componenti più recenti. Stili dei pulsanti, effetti visivi e layout si adattano automaticamente alla versione del sistema.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "wrench.and.screwdriver",
+                        icon: .system("wrench.and.screwdriver"),
                         accentColor: .gray,
                         title: String(localized: "Miglioramenti e Correzioni", bundle: .module),
                         shortDescription: String(localized: "Rete migliorata, file riorganizzati e vari fix.", bundle: .module),
@@ -310,28 +293,28 @@ public enum AppConstants: Sendable {
                 headline: String(localized: "Scorri i giorni e nuovo calendario", bundle: .module),
                 features: [
                     WhatsNewFeature(
-                        icon: "hand.draw",
+                        icon: .system("hand.draw"),
                         accentColor: .blue,
                         title: String(localized: "Scorri tra i Giorni", bundle: .module),
                         shortDescription: String(localized: "Passa da un giorno all'altro con uno swipe orizzontale.", bundle: .module),
                         detailedDescription: String(localized: "Ora puoi navigare tra i giorni direttamente dalla schermata principale con uno swipe a destra o sinistra. Ogni giorno mostra le sue lezioni, le pause e un messaggio se non ci sono lezioni. Tutto l'anno accademico è già pronto per essere sfogliato.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "calendar",
+                        icon: .system("calendar"),
                         accentColor: .red,
                         title: String(localized: "Calendario Personalizzato", bundle: .module),
                         shortDescription: String(localized: "Un nuovo calendario mensile sostituisce quello di sistema.", bundle: .module),
                         detailedDescription: String(localized: "Il calendario di sistema è stato sostituito con uno personalizzato, pensato per adattarsi meglio all'app. Puoi navigare tra i mesi e selezionare qualsiasi giorno in modo più rapido e intuitivo.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "network.badge.shield.half.filled",
+                        icon: .system("network.badge.shield.half.filled"),
                         accentColor: .orange,
                         title: String(localized: "Rete più Moderna", bundle: .module),
                         shortDescription: String(localized: "Le chiamate di rete ora usano async/await per una maggiore affidabilità.", bundle: .module),
                         detailedDescription: String(localized: "Tutte le funzioni di rete sono state riscritte con async/await e Task, sostituendo il vecchio sistema a callback. Il risultato è un caricamento più stabile e reattivo, con una gestione degli errori più chiara.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "wrench.and.screwdriver",
+                        icon: .system("wrench.and.screwdriver"),
                         accentColor: .gray,
                         title: String(localized: "Miglioramenti e Correzioni", bundle: .module),
                         shortDescription: String(localized: "Riorganizzazione interna e vari bug risolti.", bundle: .module),
@@ -345,42 +328,42 @@ public enum AppConstants: Sendable {
                 headline: String(localized: "Nasce l'app, tutto parte da qui", bundle: .module),
                 features: [
                     WhatsNewFeature(
-                        icon: "app.badge.checkmark",
+                        icon: .system("app.badge.checkmark"),
                         accentColor: .blue,
                         title: String(localized: "Nasce Univr Calendar", bundle: .module),
                         shortDescription: String(localized: "Visualizza le tue lezioni del giorno, scegli il corso e inizia subito.", bundle: .module),
                         detailedDescription: String(localized: "Univr Calendar nasce con tutto il necessario per partire: una schermata principale che mostra le lezioni del giorno, un onboarding guidato per scegliere anno accademico e corso di laurea, e le impostazioni per cambiare le tue preferenze in qualsiasi momento.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "calendar",
+                        icon: .system("calendar"),
                         accentColor: .green,
                         title: String(localized: "Pulsante Calendario", bundle: .module),
                         shortDescription: String(localized: "Si apre e chiude in automatico mentre scorri le lezioni.", bundle: .module),
                         detailedDescription: String(localized: "Il nuovo pulsante Calendario nella barra in basso si comporta in modo intelligente: si apre quando torni in cima alla lista, si chiude quando scorri verso il basso e si riapre quando passi al giorno successivo. Così hai sempre le informazioni giuste al momento giusto.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "magnifyingglass",
+                        icon: .system("magnifyingglass"),
                         accentColor: .teal,
                         title: String(localized: "Ricerca Corsi", bundle: .module),
                         shortDescription: String(localized: "Trova il tuo corso in un attimo con la barra di ricerca.", bundle: .module),
                         detailedDescription: String(localized: "Non devi più scorrere l'intera lista: basta digitare il nome del corso e la lista si filtra istantaneamente. Disponibile sia durante la configurazione iniziale sia nelle impostazioni.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "person.text.rectangle",
+                        icon: .system("person.text.rectangle"),
                         accentColor: .purple,
                         title: String(localized: "Matricola Intelligente", bundle: .module),
                         shortDescription: String(localized: "La scelta pari/dispari appare solo quando il corso lo richiede.", bundle: .module),
                         detailedDescription: String(localized: "L'app rileva automaticamente se il tuo corso prevede la distinzione tra matricole pari e dispari. Se non serve, la pagina viene saltata nell'onboarding e nascosta nelle impostazioni, rendendo tutto più semplice e veloce.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "bolt.fill",
+                        icon: .system("bolt.fill"),
                         accentColor: .orange,
                         title: String(localized: "Caricamenti Più Veloci", bundle: .module),
                         shortDescription: String(localized: "I dati vengono caricati una sola volta e riutilizzati ovunque.", bundle: .module),
                         detailedDescription: String(localized: "Anni, corsi e anni accademici vengono scaricati una volta e condivisi tra tutte le schermate. Le impostazioni non ricaricano più i dati se sono già disponibili, rendendo la navigazione più fluida e riducendo i tempi di attesa.", bundle: .module)
                     ),
                     WhatsNewFeature(
-                        icon: "wrench.and.screwdriver",
+                        icon: .system("wrench.and.screwdriver"),
                         accentColor: .gray,
                         title: String(localized: "Miglioramenti e Correzioni", bundle: .module),
                         shortDescription: String(localized: "Vari bug risolti e miglioramenti di stabilità.", bundle: .module),

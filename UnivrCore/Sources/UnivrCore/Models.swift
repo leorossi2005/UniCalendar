@@ -120,26 +120,37 @@ extension Lesson {
     )
 }
 
+public struct Contributor: Identifiable, Sendable, Equatable {
+    public let id: String
+    public let name: String
+    public let role: String
+    public let url: URL?
+    public let image: String
+    
+    public init(name: String, role: String, url: URL? = nil, image: String = "") {
+        self.id = name
+        self.name = name
+        self.role = role
+        self.url = url
+        self.image = image
+    }
+}
+
 public enum AppColor: String, Sendable {
     case blue, orange, purple, gray, green, red, teal, pink, yellow, indigo, mint, cyan, brown
 }
 
 public struct WhatsNewFeature: Identifiable, Sendable {
     public let id = UUID()
-    public var image: Bool = false
-    public let icon: String
+    public let icon: IconType
     public let accentColor: AppColor
     public let title: String
     public let shortDescription: String
     public let detailedDescription: String
     
-    init(image: Bool = false, icon: String, accentColor: AppColor, title: String, shortDescription: String, detailedDescription: String) {
-        self.image = image
-        self.icon = icon
-        self.accentColor = accentColor
-        self.title = title
-        self.shortDescription = shortDescription
-        self.detailedDescription = detailedDescription
+    public enum IconType: Sendable, Equatable {
+        case system(String)
+        case asset(String)
     }
 }
 
