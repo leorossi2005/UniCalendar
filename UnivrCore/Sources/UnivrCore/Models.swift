@@ -123,11 +123,11 @@ extension Lesson {
 public struct Contributor: Identifiable, Sendable, Equatable {
     public let id: String
     public let name: String
-    public let role: String
+    public let role: LocalizedStringResource
     public let url: URL?
     public let image: String
     
-    public init(name: String, role: String, url: URL? = nil, image: String = "") {
+    public init(name: String, role: LocalizedStringResource, url: URL? = nil, image: String = "") {
         self.id = name
         self.name = name
         self.role = role
@@ -144,9 +144,9 @@ public struct WhatsNewFeature: Identifiable, Sendable {
     public let id = UUID()
     public let icon: IconType
     public let accentColor: AppColor
-    public let title: String
-    public let shortDescription: String
-    public let detailedDescription: String
+    public let title: LocalizedStringResource
+    public let shortDescription: LocalizedStringResource
+    public let detailedDescription: LocalizedStringResource
     
     public enum IconType: Sendable, Equatable {
         case system(String)
@@ -158,13 +158,6 @@ public struct WhatsNewVersion: Identifiable, Sendable {
     public let id = UUID()
     public let version: String
     public let date: Date
-    public let headline: String
+    public let headline: LocalizedStringResource
     public let features: [WhatsNewFeature]
-    
-    init(version: String, date: Date, headline: String, features: [WhatsNewFeature]) {
-        self.version = version
-        self.date = date
-        self.headline = headline
-        self.features = features
-    }
 }

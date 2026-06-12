@@ -1,332 +1,53 @@
 {
   "sourceLanguage" : "it",
   "strings" : {
-    "• Aggiunte numerose utility per lavorare con le date in modo più semplice\n• Rimosso SwiftData dal progetto, non più necessario\n• Rinominato il file dei modelli per una struttura più chiara\n• Aggiunto un identificativo univoco alle lezioni\n• Corretti diversi bug nella navigazione e nel calendario" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "• Added numerous utilities for working with dates more easily\n• Removed SwiftData from the project, no longer needed\n• Renamed model file for a clearer structure\n• Added a unique identifier to lessons\n• Fixed several bugs in navigation and the calendar"
-          }
-        }
-      }
-    },
-    "• Corretto un problema che impediva di visualizzare le lezioni degli anni precedenti\n• Risolto un errore nel filtro che nascondeva alcune lezioni per corsi senza distinzione matricola\n• Migliorato il supporto al tema chiaro nell'indicatore di caricamento\n• Migliorata la compatibilità con diverse dimensioni di schermo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "• Fixed an issue that prevented viewing classes from previous years\n• Fixed a filter error that hid some classes for courses without student ID distinction\n• Improved light theme support in the loading indicator\n• Improved compatibility with different screen sizes"
-          }
-        }
-      }
-    },
-    "• Il calendario ora rispetta la lingua impostata sul dispositivo dell'utente\n• I simboli del giorno e del mese sono ora capitalizzati correttamente\n• Migliorato il layout della schermata dettagli lezione con data, orario, docente e capienza\n• Corretti problemi con la cache degli anni accademici\n• Risolti bug nell'aggiornamento delle date del calendario\n• Impedito di navigare verso giorni non disponibili nel calendario" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "• The calendar now respects the language set on the user's device\n• Day and month symbols are now properly capitalized\n• Improved lesson detail screen layout with date, time, instructor and capacity\n• Fixed issues with academic year caching\n• Fixed bugs in calendar date updates\n• Prevented navigating to unavailable days in the calendar"
-          }
-        }
-      }
-    },
-    "• Le impostazioni dell'app sono state centralizzate in un unico punto, più affidabili e condivise ovunque\n• Corretta la selezione del giorno all'apertura dell'app che non sempre andava al giorno giusto\n• Migliorato il calendario con stati disabilitati più chiari e interazioni più precise\n• Aggiunto un messaggio dedicato quando non vengono trovate lezioni per il corso selezionato\n• Numerosi bug fix nella navigazione e nella gestione delle date" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "• App settings have been centralized in a single point, more reliable and shared everywhere\n• Fixed day selection on app launch that didn't always go to the correct day\n• Improved calendar with clearer disabled states and more precise interactions\n• Added a dedicated message when no lessons are found for the selected course\n• Numerous bug fixes in navigation and date handling"
-          }
-        }
-      }
-    },
-    "• Le pause tra le lezioni mostrano ora un'icona tazza al posto del testo semplice\n• Le lezioni con sfondo bianco su tema chiaro hanno ora un bordo visibile\n• Le lezioni annullate appaiono ora con opacità ridotta per distinguerle meglio\n• Separata l'architettura dell'app in modulo Apple e modulo multipiattaforma\n• Preparata l'app per la distribuzione su TestFlight con privacy manifest e nuovo Bundle ID\n• Corretti bug nel reset dell'app e nella riapertura della sheet" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "• Breaks between classes now show a cup icon instead of plain text\n• Classes with white background on light theme now have a visible border\n• Cancelled classes now appear with reduced opacity for better distinction\n• App architecture split into Apple module and cross-platform module\n• App prepared for TestFlight distribution with privacy manifest and new Bundle ID\n• Fixed bugs in app reset and sheet reopening"
-          }
-        }
-      }
-    },
-    "• Migliorato il parsing JSON delle risposte di rete per una maggiore affidabilità\n• Riorganizzati tutti i file in cartelle dedicate (App, Core, UI)\n• Le viste sono state separate in file distinti per una gestione più semplice\n• Le estensioni sono state divise tra logica e UI per facilitare future migrazioni\n• Corretti numerosi bug nella navigazione e nel caricamento" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "• Improved JSON parsing of network responses for greater reliability\n• Reorganized all files into dedicated folders (App, Core, UI)\n• Views have been separated into individual files for easier management\n• Extensions have been split between logic and UI to facilitate future migrations\n• Fixed numerous bugs in navigation and loading"
-          }
-        }
-      }
-    },
-    "• Navigazione semplificata: ContentView e RootView unite in un'unica vista\n• Aggiornamento a Swift 6.2 con Strict Concurrency per maggiore stabilità\n• Cache convertita in actor per sicurezza tra thread garantita\n• Logica di onboarding e impostazioni unificata in un componente condiviso\n• Crediti nella pagina Info ora interattivi con link al portfolio\n• Placeholder di caricamento migliorato con più elementi e shimmer rinnovato\n• Animazioni più fluide nell'onboarding con transizioni snappy\n• Costanti dell'app centralizzate per una manutenzione più semplice" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "• Simplified navigation: ContentView and RootView merged into a single view\n• Updated to Swift 6.2 with Strict Concurrency for greater stability\n• Cache converted to actor for guaranteed thread safety\n• Onboarding and settings logic unified in a shared component\n• Credits on the Info page are now interactive with portfolio links\n• Improved loading placeholder with more elements and renewed shimmer\n• Smoother onboarding animations with snappy transitions\n• App constants centralized for easier maintenance"
-          }
-        }
-      }
-    },
-    "• Nuovo stile per le lezioni cancellate con bordo e testo barrato\n• Hover effects su iPad per un'interazione più naturale\n• Picker data e ora completamente ridisegnati con performance migliorate\n• Mappa dell'aula ora statica per maggiore stabilità e velocità\n• Risolti numerosi bug con la sheet personalizzata su iOS 17 e 18\n• Supporto ottimizzato per iOS 17, 18 e iPadOS\n• Dettagli lezione ridisegnati con layout migliorato\n• Performance generali notevolmente migliorate" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "• New style for cancelled classes with border and strikethrough text\n• Hover effects on iPad for more natural interaction\n• Completely redesigned date and time pickers with improved performance\n• Classroom map now static for greater stability and speed\n• Fixed numerous bugs with custom sheet on iOS 17 and 18\n• Optimized support for iOS 17, 18 and iPadOS\n• Redesigned lesson details with improved layout\n• Overall performance significantly improved"
-          }
-        }
-      }
-    },
-    "• Risolto definitivamente il bug che all'apertura non selezionava il giorno corretto\n• Ottimizzata la conversione dei colori con un sistema di cache dedicato\n• Migliorata l'estrazione JSON con regex più performanti\n• Il calendario non si muove più in modo irregolare durante lo scroll\n• Date picker e calendario compatto ora usano cache interna per rigenerarsi senza ricalcolare tutto" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "• Definitively fixed the bug that didn't select the correct day on launch\n• Optimized color conversion with a dedicated cache system\n• Improved JSON extraction with more performant regex\n• Calendar no longer moves erratically during scrolling\n• Date picker and compact calendar now use internal cache to regenerate without recalculating everything"
-          }
-        }
-      }
-    },
-    "Aiuto Sviluppo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Development Help"
-          }
-        }
-      }
-    },
-    "Aiuto Testing" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Testing Help"
-          }
-        }
-      }
-    },
-    "All'apertura dell'app viene mostrata una splash screen con l'icona che, al primo avvio, si anima e si sposta fluida nella pagina di benvenuto dell'onboarding grazie a una transizione coordinata. Se hai già completato la configurazione, la splash scompare rapidamente." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "On launch, a splash screen with the icon is displayed. On first launch, it animates and smoothly transitions into the onboarding welcome page via a coordinated transition. If you've already completed setup, the splash disappears quickly."
-          }
-        }
-      }
-    },
-    "Anni, corsi e anni accademici vengono scaricati una volta e condivisi tra tutte le schermate. Le impostazioni non ricaricano più i dati se sono già disponibili, rendendo la navigazione più fluida e riducendo i tempi di attesa." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Years, courses and academic years are downloaded once and shared across all screens. Settings no longer reload data if it's already available, making navigation smoother and reducing wait times."
-          }
-        }
-      }
-    },
-    "Architettura MVVM" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MVVM Architecture"
-          }
-        }
-      }
-    },
-    "Architettura rinnovata, animazioni fluide e tanti fix." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Renewed architecture, smooth animations and many fixes."
-          }
-        }
-      }
-    },
-    "Avvio più veloce e design adattivo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Faster launch and adaptive design"
-          }
-        }
-      }
-    },
-    "Avvio Rapido con la Cache" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quick Launch with Cache"
-          }
-        }
-      }
-    },
-    "Bug fix, performance migliorate e supporto per iOS 17/18." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bug fixes, improved performance and iOS 17/18 support."
-          }
-        }
-      }
-    },
-    "Cache di Rete" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Network Cache"
-          }
-        }
-      }
-    },
-    "Calendario localizzato, dettagli migliorati e vari fix." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Localized calendar, improved details and various fixes."
-          }
-        }
-      }
-    },
-    "Calendario per UniVR" : {
+    "app_name" : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Calendar for UniVR"
           }
-        }
-      }
-    },
-    "Calendario Personalizzato" : {
-      "localizations" : {
-        "en" : {
+        },
+        "it" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Custom Calendar"
+            "state" : "new",
+            "value" : "Calendario per UniVR"
           }
         }
       }
     },
-    "Calendario più fluido, colori ottimizzati e tanti bug fix." : {
+    "development_help" : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Smoother calendar, optimized colors and many bug fixes."
+            "value" : "Development Help"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Aiuto Sviluppo"
           }
         }
       }
     },
-    "Cambia settimana con uno swipe dal calendario compatto." : {
+    "development_testing" : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Change week with a swipe from the compact calendar."
+            "value" : "Testing Help"
           }
-        }
-      }
-    },
-    "Card Lezione Ridisegnata" : {
-      "localizations" : {
-        "en" : {
+        },
+        "it" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Redesigned Lesson Card"
-          }
-        }
-      }
-    },
-    "Caricamenti Più Veloci" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Faster Loading"
-          }
-        }
-      }
-    },
-    "Caricamento più veloce del %@ e transizioni fluide nella sheet." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ faster loading and smooth sheet transitions."
-          }
-        }
-      }
-    },
-    "Compatibilità estesa alle versioni precedenti di iOS." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Extended compatibility with previous iOS versions."
-          }
-        }
-      }
-    },
-    "Consulta le tue lezioni anche senza connessione, sincronizzazione automatica." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Check your classes even without a connection, with automatic sync."
-          }
-        }
-      }
-    },
-    "Dettagli della Lezione" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lesson Details"
-          }
-        }
-      }
-    },
-    "Dettagli lezione e velocità al top" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lesson details and speed at the top"
-          }
-        }
-      }
-    },
-    "Donazioni, nuova ricerca e velocità" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Donations, new search and speed"
-          }
-        }
-      }
-    },
-    "Due lingue, splash screen e crediti" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Two languages, splash and credits"
+            "state" : "new",
+            "value" : "Aiuto Testing"
           }
         }
       }
@@ -341,882 +62,2144 @@
         }
       }
     },
-    "Esperienza ottimizzata per schermi grandi con layout adattivi e split view." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Optimized experience for large screens with adaptive layouts and split view."
-          }
-        }
-      }
-    },
-    "I dati scaricati vengono salvati e aggiornati in automatico." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Downloaded data is saved and updated automatically."
-          }
-        }
-      }
-    },
-    "I dati vengono caricati una sola volta e riutilizzati ovunque." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data is loaded once and reused everywhere."
-          }
-        }
-      }
-    },
-    "I nomi dei corsi vengono abbreviati automaticamente e mostrano tag utili." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Course names are automatically shortened and display useful tags."
-          }
-        }
-      }
-    },
-    "I nomi delle lezioni vengono ora formattati in modo intelligente: parole come \"Laboratorio\" o \"Teoria\" diventano tag colorati sotto il nome, le parentesi e le informazioni tecniche vengono estratte e semplificate. Il risultato è un nome più corto e leggibile a colpo d'occhio." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lesson names are now intelligently formatted: words like \"Laboratory\" or \"Theory\" become colored tags below the name, parentheses and technical info are extracted and simplified. The result is a shorter name that's readable at a glance."
-          }
-        }
-      }
-    },
-    "Il calendario di sistema è stato sostituito con uno personalizzato, pensato per adattarsi meglio all'app. Puoi navigare tra i mesi e selezionare qualsiasi giorno in modo più rapido e intuitivo." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The system calendar has been replaced with a custom one designed to better fit the app. You can navigate between months and select any day more quickly and intuitively."
-          }
-        }
-      }
-    },
-    "Il nuovo pulsante Calendario nella barra in basso si comporta in modo intelligente: si apre quando torni in cima alla lista, si chiude quando scorri verso il basso e si riapre quando passi al giorno successivo. Così hai sempre le informazioni giuste al momento giusto." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The new Calendar button in the bottom bar behaves smartly: it opens when you scroll back to the top, closes when you scroll down and reopens when you move to the next day. So you always have the right information at the right time."
-          }
-        }
-      }
-    },
-    "Il raggio degli angoli delle finestre sovrapposte ora si adatta automaticamente al modello del tuo iPhone o iPad, per un aspetto più armonioso e naturale. Anche i numeri e i nomi dei giorni nel calendario sono stati uniformati per una lettura più chiara." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The corner radius of overlay windows now adapts automatically to your iPhone or iPad model, for a more harmonious and natural appearance. Day numbers and names in the calendar have also been unified for clearer reading."
-          }
-        }
-      }
-    },
-    "Il sistema di rete è stato riscritto con un metodo più affidabile per estrarre i dati dal server. I messaggi di errore sono ora specifici e in italiano, così puoi capire subito cosa è andato storto senza dover interpretare codici tecnici." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The network system has been rewritten with a more reliable method for extracting server data. Error messages are now specific and clear, so you can immediately understand what went wrong without interpreting technical codes."
-          }
-        }
-      }
-    },
-    "Impostazioni centralizzate, date migliorate e vari fix." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Centralized settings, improved dates and various fixes."
-          }
-        }
-      }
-    },
-    "Impostazioni Rinnovate" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Redesigned Settings"
-          }
-        }
-      }
-    },
-    "Interfaccia Rinnovata" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Redesigned Interface"
-          }
-        }
-      }
-    },
-    "Interfaccia su Misura" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tailored Interface"
-          }
-        }
-      }
-    },
-    "iPad, Offline e un look tutto nuovo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "iPad, Offline and a brand new look"
-          }
-        }
-      }
-    },
-    "Italiano e Inglese" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Italian and English"
-          }
-        }
-      }
-    },
-    "L'app carica i dati salvati e controlla aggiornamenti in automatico." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The app loads saved data and checks for updates automatically."
-          }
-        }
-      }
-    },
-    "L'app è ora completamente tradotta in italiano e inglese." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The app is now fully translated into Italian and English."
-          }
-        }
-      }
-    },
-    "L'app è ora retrocompatibile con iOS 17 e 18 grazie a fallback dedicati per i componenti più recenti. Stili dei pulsanti, effetti visivi e layout si adattano automaticamente alla versione del sistema." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The app is now backward compatible with iOS 17 and 18 thanks to dedicated fallbacks for the latest components. Button styles, visual effects and layouts adapt automatically to the system version."
-          }
-        }
-      }
-    },
-    "L'app è stata ristrutturata con il pattern MVVM: la logica di caricamento lezioni, organizzazione dati e rete è ora gestita da ViewModel dedicati per il calendario, l'onboarding e le impostazioni." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The app has been restructured with the MVVM pattern: lesson loading, data organization and networking logic is now handled by dedicated ViewModels for the calendar, onboarding and settings."
-          }
-        }
-      }
-    },
-    "L'app ha ora un'icona dedicata con un design che richiama il calendario e la lente d'ingrandimento, pensata per essere riconoscibile fin dalla schermata principale del dispositivo." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The app now has a dedicated icon with a design featuring a calendar and magnifying glass, designed to be recognizable right from the device's home screen."
-          }
-        }
-      }
-    },
-    "L'app rileva automaticamente se il tuo corso prevede la distinzione tra matricole pari e dispari. Se non serve, la pagina viene saltata nell'onboarding e nascosta nelle impostazioni, rendendo tutto più semplice e veloce." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The app automatically detects whether your course distinguishes between odd and even student IDs. If not, the page is skipped in onboarding and hidden in settings, making everything simpler and faster."
-          }
-        }
-      }
-    },
-    "L'app si apre con un'animazione che porta l'icona nell'onboarding." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The app opens with an animation that carries the icon into onboarding."
-          }
-        }
-      }
-    },
-    "L'elaborazione dei dati avviene ora interamente in background." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data processing now happens entirely in the background."
-          }
-        }
-      }
-    },
-    "L'interfaccia di selezione del corso è stata completamente riscritta in un componente dedicato condiviso tra onboarding e impostazioni. La barra di ricerca ora ha un pulsante per cancellare il testo, i risultati si caricano in modo più fluido e lo stile è stato uniformato con sfondi adattivi al tema del sistema." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The course selection interface has been completely rewritten as a dedicated component shared between onboarding and settings. The search bar now has a clear button, results load more smoothly and the style has been unified with adaptive backgrounds matching the system theme."
-          }
-        }
-      }
-    },
-    "L'onboarding ora inizia con una pagina di benvenuto che presenta l'app e il suo scopo. Un modo più accogliente per guidarti nella configurazione iniziale, con la possibilità in futuro di includere un'animazione dedicata." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Onboarding now starts with a welcome page that introduces the app and its purpose. A more welcoming way to guide you through initial setup, with the possibility of a dedicated animation in the future."
-          }
-        }
-      }
-    },
-    "L'organizzazione dei dati è stata ottimizzata con un miglioramento di circa il %@ nei tempi di elaborazione. Molti valori vengono ora pre-calcolati al primo caricamento, così le schermate si aprono istantaneamente. Anche la sheet in basso ha nuove animazioni di opacità dinamiche che rendono le transizioni più naturali." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data organization has been optimized with roughly %@ improvement in processing times. Many values are now pre-computed on first load, so screens open instantly. The bottom sheet also has new dynamic opacity animations that make transitions feel more natural."
-          }
-        }
-      }
-    },
-    "L'organizzazione del calendario, la generazione del date picker e tutte le operazioni di lettura e scrittura della cache vengono ora eseguite in background. I campi delle lezioni come durata, nome pulito e tag sono pre-calcolati al caricamento, rendendo lo scorrimento istantaneo." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Calendar organization, date picker generation and all cache read/write operations now run in the background. Lesson fields such as duration, clean name and tags are pre-computed on load, making scrolling instant."
-          }
-        }
-      }
-    },
-    "La ricerca del corso è stata ripensata da zero con un nuovo componente." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Course search has been rethought from scratch with a new component."
-          }
-        }
-      }
-    },
-    "La scelta pari/dispari appare solo quando il corso lo richiede." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The odd/even choice only appears when the course requires it."
-          }
-        }
-      }
-    },
-    "La scheda di ogni lezione ha un aspetto completamente nuovo: l'orario di inizio e la durata sono a sinistra, il nome del corso, l'aula e i tag a destra. Il gradiente è stato sostituito da un colore pieno proveniente dall'università, per un look più pulito e coerente." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Each lesson card has a completely new look: start time and duration on the left, course name, classroom and tags on the right. The gradient has been replaced by a solid color from the university, for a cleaner and more consistent look."
-          }
-        }
-      }
-    },
-    "Le chiamate di rete ora usano async/await per una maggiore affidabilità." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Network calls now use async/await for greater reliability."
-          }
-        }
-      }
-    },
-    "Le finestre seguono la curvatura reale del tuo dispositivo." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Windows follow the actual curvature of your device."
-          }
-        }
-      }
-    },
-    "Le impostazioni hanno un look completamente nuovo con icone per ogni voce e una migliore organizzazione. È stata aggiunta la sezione Info con la versione dell'app, i crediti e i contributori. La ricerca dei corsi ora ha una lista scorrevole con pulsante di chiusura e il reset dell'app richiede una conferma per evitare errori." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Settings have a completely new look with icons for each item and better organization. An Info section has been added with the app version, credits and contributors. Course search now has a scrollable list with a close button and app reset requires confirmation to prevent accidents."
-          }
-        }
-      }
-    },
-    "Le informazioni su anni, corsi e anni accademici vengono ora salvate localmente dopo il primo download. Alle aperture successive l'app li carica dalla cache e verifica in background se ci sono aggiornamenti, rendendo la navigazione molto più rapida." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Information about years, courses and academic years is now saved locally after the first download. On subsequent launches the app loads them from cache and checks for updates in the background, making navigation much faster."
-          }
-        }
-      }
-    },
-    "Le sheet di sistema sono state sostituite da una sheet completamente personalizzata, costruita con UIKit, che offre gesture avanzate, effetti liquid glass dinamici e un controllo totale sulle animazioni. Su iPad il corner radius della sheet si adatta automaticamente alla posizione della finestra. Il risultato? Un'app ancora più bella e piacevole da usare." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "System sheets have been replaced by a fully custom sheet built with UIKit, offering advanced gestures, dynamic liquid glass effects and total control over animations. On iPad, the sheet's corner radius automatically adapts to the window position. The result? An even more beautiful and enjoyable app."
-          }
-        }
-      }
-    },
-    "Lezioni più leggibili e nuova icona" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "More readable lessons and new icon"
-          }
-        }
-      }
-    },
-    "Logica e interfaccia ora sono completamente separate." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Logic and interface are now completely separated."
-          }
-        }
-      }
-    },
-    "Matricola Intelligente" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Smart Student ID"
-          }
-        }
-      }
-    },
-    "Messaggi di errore chiari e una connessione più stabile." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clear error messages and a more stable connection."
-          }
-        }
-      }
-    },
-    "Miglioramenti e Correzioni" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Improvements and Fixes"
-          }
-        }
-      }
-    },
-    "Modalità Offline" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Offline Mode"
-          }
-        }
-      }
-    },
-    "Nasce l'app, tutto parte da qui" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The app is born, it all starts here"
-          }
-        }
-      }
-    },
-    "Nasce Univr Calendar" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Univr Calendar is Born"
-          }
-        }
-      }
-    },
-    "Nel calendario compatto in basso puoi ora scorrere a sinistra o a destra per passare alla settimana precedente o successiva. Il primo giorno della nuova settimana viene selezionato automaticamente." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In the compact calendar at the bottom you can now swipe left or right to go to the previous or next week. The first day of the new week is selected automatically."
-          }
-        }
-      }
-    },
-    "Nelle impostazioni è stata aggiunta una nuova sezione con un link per effettuare una donazione allo sviluppatore tramite Revolut. Se l'app ti è utile, ora puoi mostrare il tuo apprezzamento con un piccolo contributo. Grazie di cuore!" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A new section has been added in settings with a link to donate to the developer via Revolut. If the app is useful to you, you can now show your appreciation with a small contribution. Thank you!"
-          }
-        }
-      }
-    },
-    "Niente più preoccupazioni per la connessione! L'app rileva in tempo reale quando sei offline e ti avvisa con un indicatore dedicato, permettendoti di consultare le lezioni salvate. L'onboarding e le impostazioni si bloccano automaticamente senza rete. Appena torni online, tutto si sincronizza in background senza alcun intervento da parte tua." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No more worrying about connectivity! The app detects in real time when you're offline and notifies you with a dedicated indicator, letting you browse saved classes. Onboarding and settings lock automatically without a network. As soon as you're back online, everything syncs in the background without any action on your part."
-          }
-        }
-      }
-    },
-    "Nomi Lezioni Semplificati" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Simplified Lesson Names"
-          }
-        }
-      }
-    },
-    "Non devi più scorrere l'intera lista: basta digitare il nome del corso e la lista si filtra istantaneamente. Disponibile sia durante la configurazione iniziale sia nelle impostazioni." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No more scrolling through the entire list: just type the course name and the list filters instantly. Available both during initial setup and in settings."
-          }
-        }
-      }
-    },
-    "Nuove icone, sezione Info con versione e crediti, e conferma reset." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New icons, Info section with version and credits, and reset confirmation."
-          }
-        }
-      }
-    },
-    "Nuovo benvenuto e compatibilità iOS" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New welcome and iOS compatibility"
-          }
-        }
-      }
-    },
-    "Nuovo layout con orario a sinistra, dettagli a destra e tag colorati." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New layout with time on the left, details on the right and colored tags."
-          }
-        }
-      }
-    },
-    "Ogni testo dell'app è stato tradotto: dall'onboarding alle impostazioni, dai messaggi di errore ai dettagli delle lezioni. La lingua si adatta automaticamente a quella impostata sul dispositivo, così l'esperienza è naturale fin dal primo avvio." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Every text in the app has been translated: from onboarding to settings, from error messages to lesson details. The language adapts automatically to the device setting, so the experience feels natural from the very first launch."
-          }
-        }
-      }
-    },
-    "Ora all'apertura l'app carica istantaneamente le lezioni salvate in precedenza, senza attendere la rete. In background viene verificata la disponibilità di aggiornamenti: se ci sono novità, un avviso ti permette di aggiornare i dati quando preferisci." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "On launch the app now instantly loads previously saved lessons without waiting for the network. Updates are checked in the background: if there's something new, a prompt lets you update the data whenever you prefer."
-          }
-        }
-      }
-    },
-    "Ora puoi navigare tra i giorni direttamente dalla schermata principale con uno swipe a destra o sinistra. Ogni giorno mostra le sue lezioni, le pause e un messaggio se non ci sono lezioni. Tutto l'anno accademico è già pronto per essere sfogliato." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You can now navigate between days directly from the main screen with a left or right swipe. Each day shows its classes, breaks and a message if there are no classes. The entire academic year is ready to browse."
-          }
-        }
-      }
-    },
-    "Ora puoi toccare qualsiasi lezione per aprire una schermata dettagliata con orario, docente, aula e una mappa interattiva che mostra la posizione approssimativa dell'edificio. Puoi anche toccare il titolo per vedere il nome completo del corso." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You can now tap any lesson to open a detailed screen with time, instructor, classroom and an interactive map showing the approximate building location. You can also tap the title to see the full course name."
-          }
-        }
-      }
-    },
-    "Pagina di Benvenuto" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Welcome Page"
-          }
-        }
-      }
-    },
-    "Passa da un giorno all'altro con uno swipe orizzontale." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Switch from one day to another with a horizontal swipe."
-          }
-        }
-      }
-    },
-    "Pause ridisegnate, lezioni annullate e preparazione TestFlight." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Redesigned breaks, cancelled lessons and TestFlight preparation."
-          }
-        }
-      }
-    },
-    "Performance Migliorate" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Improved Performance"
-          }
-        }
-      }
-    },
-    "Prestazioni in Background" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Background Performance"
-          }
-        }
-      }
-    },
-    "Prima Icona dell'App" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "First App Icon"
-          }
-        }
-      }
-    },
-    "Pulsante Calendario" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Calendar Button"
-          }
-        }
-      }
-    },
-    "Rete migliorata, file riorganizzati e vari fix." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Improved networking, reorganized files and various fixes."
-          }
-        }
-      }
-    },
-    "Rete Più Affidabile" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "More Reliable Network"
-          }
-        }
-      }
-    },
-    "Rete più Moderna" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Modern Networking"
-          }
-        }
-      }
-    },
-    "Ricerca Corsi" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Course Search"
-          }
-        }
-      }
-    },
-    "Riorganizzazione interna e vari bug risolti." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Internal reorganization and various bugs fixed."
-          }
-        }
-      }
-    },
-    "Scorri i giorni e nuovo calendario" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Swipe through days and new calendar"
-          }
-        }
-      }
-    },
-    "Scorri le Settimane" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Swipe Through Weeks"
-          }
-        }
-      }
-    },
-    "Scorri tra i Giorni" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Swipe Between Days"
-          }
-        }
-      }
-    },
-    "Selezione Corso Ridisegnata" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Redesigned Course Selection"
-          }
-        }
-      }
-    },
-    "Sezione Donazioni" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Donations Section"
-          }
-        }
-      }
-    },
-    "Sheet personalizzate, animazioni fluide ed effetti liquid glass." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Custom sheets, smooth animations and liquid glass effects."
-          }
-        }
-      }
-    },
-    "Si apre e chiude in automatico mentre scorri le lezioni." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Opens and closes automatically as you scroll through classes."
-          }
-        }
-      }
-    },
-    "Splash Screen Animato" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Animated Splash Screen"
-          }
-        }
-      }
-    },
-    "Supporta lo sviluppatore con una donazione direttamente dall'app." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Support the developer with a donation directly from the app."
-          }
-        }
-      }
-    },
-    "Supporto iOS 17 e 18" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "iOS 17 and 18 Support"
-          }
-        }
-      }
-    },
-    "Supporto Nativo per iPad" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Native iPad Support"
-          }
-        }
-      }
-    },
-    "Tocca una lezione per vedere tutte le informazioni e la mappa dell'aula." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap a lesson to see all the information and the classroom map."
-          }
-        }
-      }
-    },
-    "Trova il tuo corso in un attimo con la barra di ricerca." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Find your course in an instant with the search bar."
-          }
-        }
-      }
-    },
-    "Tutte le funzioni di rete sono state riscritte con async/await e Task, sostituendo il vecchio sistema a callback. Il risultato è un caricamento più stabile e reattivo, con una gestione degli errori più chiara." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All network functions have been rewritten with async/await and Task, replacing the old callback system. The result is more stable and responsive loading, with clearer error handling."
-          }
-        }
-      }
-    },
-    "Un nuovo calendario mensile sostituisce quello di sistema." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A new monthly calendar replaces the system one."
-          }
-        }
-      }
-    },
-    "Una nuova schermata introduttiva apre l'onboarding." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A new introductory screen opens the onboarding."
-          }
-        }
-      }
-    },
-    "Univr Calendar ha finalmente la sua icona personalizzata." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Univr Calendar finally has its own custom icon."
-          }
-        }
-      }
-    },
-    "Univr Calendar nasce con tutto il necessario per partire: una schermata principale che mostra le lezioni del giorno, un onboarding guidato per scegliere anno accademico e corso di laurea, e le impostazioni per cambiare le tue preferenze in qualsiasi momento." : {
+    "v0_1-00-long" : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Univr Calendar launches with everything you need to get going: a main screen showing the day's classes, a guided onboarding to choose your academic year and degree program, and settings to change your preferences at any time."
           }
-        }
-      }
-    },
-    "Univr Calendar ora è completamente ottimizzato per iPad! Goditi un'esperienza fluida con layout adattivi, split view per visualizzare le settimane in landscape e interfaccia pensata appositamente per schermi più grandi. Ogni elemento è stato ripensato per sfruttare al meglio lo spazio disponibile." : {
-      "localizations" : {
-        "en" : {
+        },
+        "it" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Univr Calendar is now fully optimized for iPad! Enjoy a smooth experience with adaptive layouts, split view to browse weeks in landscape and an interface designed specifically for larger screens. Every element has been rethought to make the most of the available space."
+            "state" : "new",
+            "value" : "Univr Calendar nasce con tutto il necessario per partire: una schermata principale che mostra le lezioni del giorno, un onboarding guidato per scegliere anno accademico e corso di laurea, e le impostazioni per cambiare le tue preferenze in qualsiasi momento."
           }
         }
       }
     },
-    "Vari bug risolti e miglioramenti di stabilità." : {
+    "v0_1-00-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View your daily classes, choose your course and get started right away."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Visualizza le tue lezioni del giorno, scegli il corso e inizia subito."
+          }
+        }
+      }
+    },
+    "v0_1-00-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introducing Univr Calendar"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nasce Univr Calendar"
+          }
+        }
+      }
+    },
+    "v0_1-01-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The new Calendar button in the bottom bar behaves smartly: it opens when you scroll back to the top, closes when you scroll down and reopens when you move to the next day. So you always have the right information at the right time."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Il nuovo pulsante Calendario nella barra in basso si comporta in modo intelligente: si apre quando torni in cima alla lista, si chiude quando scorri verso il basso e si riapre quando passi al giorno successivo. Così hai sempre le informazioni giuste al momento giusto."
+          }
+        }
+      }
+    },
+    "v0_1-01-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens and closes automatically as you scroll through classes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Si apre e chiude in automatico mentre scorri le lezioni."
+          }
+        }
+      }
+    },
+    "v0_1-01-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calendar Button"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pulsante Calendario"
+          }
+        }
+      }
+    },
+    "v0_1-02-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No more scrolling through the entire list: just type the course name and the list filters instantly. Available both during initial setup and in settings."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Non devi più scorrere l'intera lista: basta digitare il nome del corso e la lista si filtra istantaneamente. Disponibile sia durante la configurazione iniziale sia nelle impostazioni."
+          }
+        }
+      }
+    },
+    "v0_1-02-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Find your course in an instant with the search bar."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Trova il tuo corso in un attimo con la barra di ricerca."
+          }
+        }
+      }
+    },
+    "v0_1-02-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Course Search"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ricerca Corsi"
+          }
+        }
+      }
+    },
+    "v0_1-03-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app automatically detects whether your course distinguishes between odd and even student IDs. If not, the page is skipped in onboarding and hidden in settings, making everything simpler and faster."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "L'app rileva automaticamente se il tuo corso prevede la distinzione tra matricole pari e dispari. Se non serve, la pagina viene saltata nell'onboarding e nascosta nelle impostazioni, rendendo tutto più semplice e veloce."
+          }
+        }
+      }
+    },
+    "v0_1-03-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The odd/even student ID option only appears when required."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "La scelta pari/dispari della matricola appare solo quando il corso lo richiede."
+          }
+        }
+      }
+    },
+    "v0_1-03-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smart Student ID"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Matricola Intelligente"
+          }
+        }
+      }
+    },
+    "v0_1-04-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Years, courses and academic years are downloaded once and shared across all screens. Settings no longer reload data if it's already available, making navigation smoother and reducing wait times."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Anni, corsi e anni accademici vengono scaricati una volta e condivisi tra tutte le schermate. Le impostazioni non ricaricano più i dati se sono già disponibili, rendendo la navigazione più fluida e riducendo i tempi di attesa."
+          }
+        }
+      }
+    },
+    "v0_1-04-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data is loaded once and reused everywhere."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "I dati vengono caricati una sola volta e riutilizzati ovunque."
+          }
+        }
+      }
+    },
+    "v0_1-04-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faster Loading"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Caricamenti Più Veloci"
+          }
+        }
+      }
+    },
+    "v0_1-05-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Fixed an issue that prevented viewing classes from previous years\n• Fixed a filter error that hid some classes for courses without student ID distinction\n• Improved light theme support in the loading indicator\n• Improved compatibility with different screen sizes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "• Corretto un problema che impediva di visualizzare le lezioni degli anni precedenti\n• Risolto un errore nel filtro che nascondeva alcune lezioni per corsi senza distinzione matricola\n• Migliorato il supporto al tema chiaro nell'indicatore di caricamento\n• Migliorata la compatibilità con diverse dimensioni di schermo"
+          }
+        }
+      }
+    },
+    "v0_1-05-short" : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Various bugs fixed and stability improvements."
           }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Vari bug risolti e miglioramenti di stabilità."
+          }
         }
       }
     },
-    "Visualizza le tue lezioni del giorno, scegli il corso e inizia subito." : {
+    "v0_1-05-title" : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "View your daily classes, choose your course and get started right away."
+            "value" : "Improvements and Fixes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Miglioramenti e Correzioni"
+          }
+        }
+      }
+    },
+    "v0_1-headline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app is born, it all starts here"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nasce l'app, tutto parte da qui"
+          }
+        }
+      }
+    },
+    "v0_2-00-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can now navigate between days directly from the main screen with a left or right swipe. Each day shows its classes, breaks and a message if there are no classes. The entire academic year is ready to browse."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ora puoi navigare tra i giorni direttamente dalla schermata principale con uno swipe a destra o sinistra. Ogni giorno mostra le sue lezioni, le pause e un messaggio se non ci sono lezioni. Tutto l'anno accademico è già pronto per essere sfogliato."
+          }
+        }
+      }
+    },
+    "v0_2-00-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch from one day to another with a horizontal swipe."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Passa da un giorno all'altro con uno swipe orizzontale."
+          }
+        }
+      }
+    },
+    "v0_2-00-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swipe Between Days"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Scorri tra i Giorni"
+          }
+        }
+      }
+    },
+    "v0_2-01-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The system calendar has been replaced with a custom one designed to better fit the app. You can navigate between months and select any day more quickly and intuitively."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Il calendario di sistema è stato sostituito con uno personalizzato, pensato per adattarsi meglio all'app. Puoi navigare tra i mesi e selezionare qualsiasi giorno in modo più rapido e intuitivo."
+          }
+        }
+      }
+    },
+    "v0_2-01-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A new monthly calendar replaces the system one."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Un nuovo calendario mensile sostituisce quello di sistema."
+          }
+        }
+      }
+    },
+    "v0_2-01-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom Calendar"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Calendario Personalizzato"
+          }
+        }
+      }
+    },
+    "v0_2-02-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All network functions have been rewritten with async/await and Task, replacing the old callback system. The result is more stable and responsive loading, with clearer error handling."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tutte le funzioni di rete sono state riscritte con async/await e Task, sostituendo il vecchio sistema a callback. Il risultato è un caricamento più stabile e reattivo, con una gestione degli errori più chiara."
+          }
+        }
+      }
+    },
+    "v0_2-02-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network calls now use async/await for greater reliability."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Le chiamate di rete ora usano async/await per una maggiore affidabilità."
+          }
+        }
+      }
+    },
+    "v0_2-02-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modern Networking"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rete più Moderna"
+          }
+        }
+      }
+    },
+    "v0_2-03-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Added numerous utilities for working with dates more easily\n• Removed SwiftData from the project, no longer needed\n• Renamed model file for a clearer structure\n• Added a unique identifier to lessons\n• Fixed several bugs in navigation and the calendar"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "• Aggiunte numerose utility per lavorare con le date in modo più semplice\n• Rimosso SwiftData dal progetto, non più necessario\n• Rinominato il file dei modelli per una struttura più chiara\n• Aggiunto un identificativo univoco alle lezioni\n• Corretti diversi bug nella navigazione e nel calendario"
+          }
+        }
+      }
+    },
+    "v0_2-03-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Internal reorganization and various bugs fixed."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Riorganizzazione interna e vari bug risolti."
+          }
+        }
+      }
+    },
+    "v0_2-03-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Improvements and Fixes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Miglioramenti e Correzioni"
+          }
+        }
+      }
+    },
+    "v0_2-headline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swipe through days and new calendar"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Scorri i giorni e nuovo calendario"
+          }
+        }
+      }
+    },
+    "v0_3-00-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Onboarding now starts with a welcome page that introduces the app and its purpose. A more welcoming way to guide you through initial setup, with the possibility of a dedicated animation in the future."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "L'onboarding ora inizia con una pagina di benvenuto che presenta l'app e il suo scopo. Un modo più accogliente per guidarti nella configurazione iniziale, con la possibilità in futuro di includere un'animazione dedicata."
+          }
+        }
+      }
+    },
+    "v0_3-00-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A new introductory screen opens the onboarding."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Una nuova schermata introduttiva apre l'onboarding."
+          }
+        }
+      }
+    },
+    "v0_3-00-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome Page"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pagina di Benvenuto"
+          }
+        }
+      }
+    },
+    "v0_3-01-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In the compact calendar at the bottom you can now swipe left or right to go to the previous or next week. The first day of the new week is selected automatically."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nel calendario compatto in basso puoi ora scorrere a sinistra o a destra per passare alla settimana precedente o successiva. Il primo giorno della nuova settimana viene selezionato automaticamente."
+          }
+        }
+      }
+    },
+    "v0_3-01-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change week with a swipe from the compact calendar."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cambia settimana con uno swipe dal calendario compatto."
+          }
+        }
+      }
+    },
+    "v0_3-01-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swipe Through Weeks"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Scorri le Settimane"
+          }
+        }
+      }
+    },
+    "v0_3-02-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app has been restructured with the MVVM pattern: lesson loading, data organization and networking logic are now handled by dedicated ViewModels for the calendar, onboarding and settings."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "L'app è stata ristrutturata con il pattern MVVM: la logica di caricamento lezioni, organizzazione dati e rete è ora gestita da ViewModel dedicati per il calendario, l'onboarding e le impostazioni."
+          }
+        }
+      }
+    },
+    "v0_3-02-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Logic and interface are now completely separated."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Logica e interfaccia ora sono completamente separate."
+          }
+        }
+      }
+    },
+    "v0_3-02-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MVVM Architecture"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Architettura MVVM"
+          }
+        }
+      }
+    },
+    "v0_3-03-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app is now backward compatible with iOS 17 and 18 thanks to dedicated fallbacks for the latest components. Button styles, visual effects and layouts adapt automatically to the system version."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "L'app è ora retrocompatibile con iOS 17 e 18 grazie a fallback dedicati per i componenti più recenti. Stili dei pulsanti, effetti visivi e layout si adattano automaticamente alla versione del sistema."
+          }
+        }
+      }
+    },
+    "v0_3-03-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extended compatibility with previous iOS versions."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Compatibilità estesa alle versioni precedenti di iOS."
+          }
+        }
+      }
+    },
+    "v0_3-03-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iOS 17 and 18 Support"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Supporto iOS 17 e 18"
+          }
+        }
+      }
+    },
+    "v0_3-04-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Improved JSON parsing of network responses for greater reliability\n• Reorganized all files into dedicated folders (App, Core, UI)\n• Views have been separated into individual files for easier management\n• Extensions have been split between logic and UI to facilitate future migrations\n• Fixed numerous bugs in navigation and loading"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "• Migliorato il parsing JSON delle risposte di rete per una maggiore affidabilità\n• Riorganizzati tutti i file in cartelle dedicate (App, Core, UI)\n• Le viste sono state separate in file distinti per una gestione più semplice\n• Le estensioni sono state divise tra logica e UI per facilitare future migrazioni\n• Corretti numerosi bug nella navigazione e nel caricamento"
+          }
+        }
+      }
+    },
+    "v0_3-04-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Improved networking, reorganized files and various fixes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rete migliorata, file riorganizzati e vari fix."
+          }
+        }
+      }
+    },
+    "v0_3-04-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Improvements and Fixes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Miglioramenti e Correzioni"
+          }
+        }
+      }
+    },
+    "v0_3-headline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New welcome and iOS compatibility"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nuovo benvenuto e compatibilità iOS"
+          }
+        }
+      }
+    },
+    "v0_4-00-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On launch the app now instantly loads previously saved lessons without waiting for the network. Updates are checked in the background: if there's something new, a prompt lets you update the data whenever you prefer."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ora all'apertura l'app carica istantaneamente le lezioni salvate in precedenza, senza attendere la rete. In background viene verificata la disponibilità di aggiornamenti: se ci sono novità, un avviso ti permette di aggiornare i dati quando preferisci."
+          }
+        }
+      }
+    },
+    "v0_4-00-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app loads saved data and checks for updates automatically."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "L'app carica i dati salvati e controlla aggiornamenti in automatico."
+          }
+        }
+      }
+    },
+    "v0_4-00-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quick Launch with Cache"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Avvio Rapido con la Cache"
+          }
+        }
+      }
+    },
+    "v0_4-01-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The network system has been rewritten with a more reliable method for extracting server data. Error messages are now specific and clear, so you can immediately understand what went wrong without interpreting technical codes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Il sistema di rete è stato riscritto con un metodo più affidabile per estrarre i dati dal server. I messaggi di errore sono ora specifici e in italiano, così puoi capire subito cosa è andato storto senza dover interpretare codici tecnici."
+          }
+        }
+      }
+    },
+    "v0_4-01-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear error messages and a more stable connection."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Messaggi di errore chiari e una connessione più stabile."
+          }
+        }
+      }
+    },
+    "v0_4-01-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More Reliable Network"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rete Più Affidabile"
+          }
+        }
+      }
+    },
+    "v0_4-02-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The corner radius of overlay windows now adapts automatically to your iPhone or iPad model, for a more harmonious and natural appearance. Day numbers and names in the calendar have also been unified for clearer reading."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Il raggio degli angoli delle finestre sovrapposte ora si adatta automaticamente al modello del tuo iPhone o iPad, per un aspetto più armonioso e naturale. Anche i numeri e i nomi dei giorni nel calendario sono stati uniformati per una lettura più chiara."
+          }
+        }
+      }
+    },
+    "v0_4-02-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Windows follow the actual curvature of your device."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Le finestre seguono la curvatura reale del tuo dispositivo."
+          }
+        }
+      }
+    },
+    "v0_4-02-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tailored Interface"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Interfaccia su Misura"
+          }
+        }
+      }
+    },
+    "v0_4-03-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• App settings have been centralized in a single point, more reliable and shared everywhere\n• Fixed day selection on app launch that didn't always go to the correct day\n• Improved calendar with clearer disabled states and more precise interactions\n• Added a dedicated message when no lessons are found for the selected course\n• Numerous bug fixes in navigation and date handling"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "• Le impostazioni dell'app sono state centralizzate in un unico punto, più affidabili e condivise ovunque\n• Corretta la selezione del giorno all'apertura dell'app che non sempre andava al giorno giusto\n• Migliorato il calendario con stati disabilitati più chiari e interazioni più precise\n• Aggiunto un messaggio dedicato quando non vengono trovate lezioni per il corso selezionato\n• Numerosi bug fix nella navigazione e nella gestione delle date"
+          }
+        }
+      }
+    },
+    "v0_4-03-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Centralized settings, improved dates and various fixes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Impostazioni centralizzate, date migliorate e vari fix."
+          }
+        }
+      }
+    },
+    "v0_4-03-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Improvements and Fixes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Miglioramenti e Correzioni"
+          }
+        }
+      }
+    },
+    "v0_4-headline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faster launch and adaptive design"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Avvio più veloce e design adattivo"
+          }
+        }
+      }
+    },
+    "v0_5-00-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can now tap any lesson to open a detailed screen with time, instructor, classroom and an interactive map showing the approximate building location. You can also tap the title to see the full course name."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ora puoi toccare qualsiasi lezione per aprire una schermata dettagliata con orario, docente, aula e una mappa interattiva che mostra la posizione approssimativa dell'edificio. Puoi anche toccare il titolo per vedere il nome completo del corso."
+          }
+        }
+      }
+    },
+    "v0_5-00-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap a lesson to see all the information and the classroom map."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tocca una lezione per vedere tutte le informazioni e la mappa dell'aula."
+          }
+        }
+      }
+    },
+    "v0_5-00-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesson Details"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dettagli della Lezione"
+          }
+        }
+      }
+    },
+    "v0_5-01-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data organization has been optimized with roughly %@ improvement in processing times. Many values are now pre-computed on first load, so screens open instantly. The bottom sheet also has new dynamic opacity animations that make transitions feel more natural."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "L'organizzazione dei dati è stata ottimizzata con un miglioramento di circa il %@ nei tempi di elaborazione. Molti valori vengono ora pre-calcolati al primo caricamento, così le schermate si aprono istantaneamente. Anche la sheet in basso ha nuove animazioni di opacità dinamiche che rendono le transizioni più naturali."
+          }
+        }
+      }
+    },
+    "v0_5-01-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading is %@ faster with smooth sheet transitions."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Caricamento più veloce del %@ e transizioni fluide nella sheet."
+          }
+        }
+      }
+    },
+    "v0_5-01-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Improved Performance"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Performance Migliorate"
+          }
+        }
+      }
+    },
+    "v0_5-02-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Information about years, courses and academic years is now saved locally after the first download. On subsequent launches the app loads them from cache and checks for updates in the background, making navigation much faster."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Le informazioni su anni, corsi e anni accademici vengono ora salvate localmente dopo il primo download. Alle aperture successive l'app li carica dalla cache e verifica in background se ci sono aggiornamenti, rendendo la navigazione molto più rapida."
+          }
+        }
+      }
+    },
+    "v0_5-02-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Downloaded data is saved and updated automatically."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "I dati scaricati vengono salvati e aggiornati in automatico."
+          }
+        }
+      }
+    },
+    "v0_5-02-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Network Cache"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cache di Rete"
+          }
+        }
+      }
+    },
+    "v0_5-03-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Definitively fixed the bug that didn't select the correct day on launch\n• Optimized color conversion with a dedicated cache system\n• Improved JSON extraction with more performant regex\n• Calendar no longer moves erratically during scrolling\n• Date picker and compact calendar now use internal cache to regenerate without recalculating everything"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "• Risolto definitivamente il bug che all'apertura non selezionava il giorno corretto\n• Ottimizzata la conversione dei colori con un sistema di cache dedicato\n• Migliorata l'estrazione JSON con regex più performanti\n• Il calendario non si muove più in modo irregolare durante lo scroll\n• Date picker e calendario compatto ora usano cache interna per rigenerarsi senza ricalcolare tutto"
+          }
+        }
+      }
+    },
+    "v0_5-03-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Smoother calendar, optimized colors and many bug fixes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Calendario più fluido, colori ottimizzati e tanti bug fix."
+          }
+        }
+      }
+    },
+    "v0_5-03-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Improvements and Fixes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Miglioramenti e Correzioni"
+          }
+        }
+      }
+    },
+    "v0_5-headline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesson details and blazing fast speed"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dettagli lezione e velocità al top"
+          }
+        }
+      }
+    },
+    "v0_6-00-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesson names are now intelligently formatted: words like \"Laboratory\" or \"Theory\" become colored tags below the name, parentheses and technical info are extracted and simplified. The result is a shorter name that's readable at a glance."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "I nomi delle lezioni vengono ora formattati in modo intelligente: parole come \"Laboratorio\" o \"Teoria\" diventano tag colorati sotto il nome, le parentesi e le informazioni tecniche vengono estratte e semplificate. Il risultato è un nome più corto e leggibile a colpo d'occhio."
+          }
+        }
+      }
+    },
+    "v0_6-00-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Course names are automatically shortened and display useful tags."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "I nomi dei corsi vengono abbreviati automaticamente e mostrano tag utili."
+          }
+        }
+      }
+    },
+    "v0_6-00-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simplified Lesson Names"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nomi Lezioni Semplificati"
+          }
+        }
+      }
+    },
+    "v0_6-01-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each lesson card has a completely new look: start time and duration on the left, course name, classroom and tags on the right. The gradient has been replaced by a solid color from the university, for a cleaner and more consistent look."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "La scheda di ogni lezione ha un aspetto completamente nuovo: l'orario di inizio e la durata sono a sinistra, il nome del corso, l'aula e i tag a destra. Il gradiente è stato sostituito da un colore pieno proveniente dall'università, per un look più pulito e coerente."
+          }
+        }
+      }
+    },
+    "v0_6-01-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New layout with time on the left, details on the right and colored tags."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nuovo layout con orario a sinistra, dettagli a destra e tag colorati."
+          }
+        }
+      }
+    },
+    "v0_6-01-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redesigned Lesson Card"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Card Lezione Ridisegnata"
+          }
+        }
+      }
+    },
+    "v0_6-02-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app now has a dedicated icon with a design featuring a calendar and magnifying glass, designed to be recognizable right from the device's home screen."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "L'app ha ora un'icona dedicata con un design che richiama il calendario e la lente d'ingrandimento, pensata per essere riconoscibile fin dalla schermata principale del dispositivo."
+          }
+        }
+      }
+    },
+    "v0_6-02-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Univr Calendar finally has its own custom icon."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Univr Calendar ha finalmente la sua icona personalizzata."
+          }
+        }
+      }
+    },
+    "v0_6-02-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "First App Icon"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Prima Icona dell'App"
+          }
+        }
+      }
+    },
+    "v0_6-03-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• The calendar now respects the language set on the user's device\n• Day and month symbols are now properly capitalized\n• Improved lesson detail screen layout with date, time, instructor and capacity\n• Fixed issues with academic year caching\n• Fixed bugs in calendar date updates\n• Prevented navigating to unavailable days in the calendar"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "• Il calendario ora rispetta la lingua impostata sul dispositivo dell'utente\n• I simboli del giorno e del mese sono ora capitalizzati correttamente\n• Migliorato il layout della schermata dettagli lezione con data, orario, docente e capienza\n• Corretti problemi con la cache degli anni accademici\n• Risolti bug nell'aggiornamento delle date del calendario\n• Impedito di navigare verso giorni non disponibili nel calendario"
+          }
+        }
+      }
+    },
+    "v0_6-03-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Localized calendar, improved details and various fixes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Calendario localizzato, dettagli migliorati e vari fix."
+          }
+        }
+      }
+    },
+    "v0_6-03-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Improvements and Fixes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Miglioramenti e Correzioni"
+          }
+        }
+      }
+    },
+    "v0_6-headline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More readable lessons and new icon"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Lezioni più leggibili e nuova icona"
+          }
+        }
+      }
+    },
+    "v0_7-00-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every text in the app has been translated: from onboarding to settings, from error messages to lesson details. The language adapts automatically to the device setting, so the experience feels natural from the very first launch."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ogni testo dell'app è stato tradotto: dall'onboarding alle impostazioni, dai messaggi di errore ai dettagli delle lezioni. La lingua si adatta automaticamente a quella impostata sul dispositivo, così l'esperienza è naturale fin dal primo avvio."
+          }
+        }
+      }
+    },
+    "v0_7-00-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app is now fully translated into Italian and English."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "L'app è ora completamente tradotta in italiano e inglese."
+          }
+        }
+      }
+    },
+    "v0_7-00-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Italian and English"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Italiano e Inglese"
+          }
+        }
+      }
+    },
+    "v0_7-01-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "On launch, a splash screen with the icon is displayed. On first launch, it animates and smoothly transitions into the onboarding welcome page via a coordinated transition. If you've already completed setup, the splash disappears quickly."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "All'apertura dell'app viene mostrata una splash screen con l'icona che, al primo avvio, si anima e si sposta fluida nella pagina di benvenuto dell'onboarding grazie a una transizione coordinata. Se hai già completato la configurazione, la splash scompare rapidamente."
+          }
+        }
+      }
+    },
+    "v0_7-01-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app opens with an animation that carries the icon into onboarding."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "L'app si apre con un'animazione che porta l'icona nell'onboarding."
+          }
+        }
+      }
+    },
+    "v0_7-01-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Animated Splash Screen"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Splash Screen Animato"
+          }
+        }
+      }
+    },
+    "v0_7-02-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings have a completely new look with icons for each item and better organization. An Info section has been added with the app version, credits and contributors. Course search now has a scrollable list with a close button and app reset requires confirmation to prevent accidents."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Le impostazioni hanno un look completamente nuovo con icone per ogni voce e una migliore organizzazione. È stata aggiunta la sezione Info con la versione dell'app, i crediti e i contributori. La ricerca dei corsi ora ha una lista scorrevole con pulsante di chiusura e il reset dell'app richiede una conferma per evitare errori."
+          }
+        }
+      }
+    },
+    "v0_7-02-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New icons, Info section with version and credits, and reset confirmation."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nuove icone, sezione Info con versione e crediti, e conferma reset."
+          }
+        }
+      }
+    },
+    "v0_7-02-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redesigned Settings"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Impostazioni Rinnovate"
+          }
+        }
+      }
+    },
+    "v0_7-03-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Breaks between classes now show a cup icon instead of plain text\n• Classes with white background on light theme now have a visible border\n• Cancelled classes now appear with reduced opacity for better distinction\n• App architecture split into Apple module and cross-platform module\n• App prepared for TestFlight distribution with privacy manifest and new Bundle ID\n• Fixed bugs in app reset and sheet reopening"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "• Le pause tra le lezioni mostrano ora un'icona tazza al posto del testo semplice\n• Le lezioni con sfondo bianco su tema chiaro hanno ora un bordo visibile\n• Le lezioni annullate appaiono ora con opacità ridotta per distinguerle meglio\n• Separata l'architettura dell'app in modulo Apple e modulo multipiattaforma\n• Preparata l'app per la distribuzione su TestFlight con privacy manifest e nuovo Bundle ID\n• Corretti bug nel reset dell'app e nella riapertura della sheet"
+          }
+        }
+      }
+    },
+    "v0_7-03-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redesigned breaks, cancelled lessons and TestFlight preparation."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pause ridisegnate, lezioni annullate e preparazione TestFlight."
+          }
+        }
+      }
+    },
+    "v0_7-03-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Improvements and Fixes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Miglioramenti e Correzioni"
+          }
+        }
+      }
+    },
+    "v0_7-headline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Two languages, splash screen and credits"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Due lingue, splash screen e crediti"
+          }
+        }
+      }
+    },
+    "v0_8-00-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A new section has been added in settings with a link to donate to the developer via Revolut. If the app is useful to you, you can now show your appreciation with a small contribution. Thank you!"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nelle impostazioni è stata aggiunta una nuova sezione con un link per effettuare una donazione allo sviluppatore tramite Revolut. Se l'app ti è utile, ora puoi mostrare il tuo apprezzamento con un piccolo contributo. Grazie di cuore!"
+          }
+        }
+      }
+    },
+    "v0_8-00-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Support the developer with a donation directly from the app."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Supporta lo sviluppatore con una donazione direttamente dall'app."
+          }
+        }
+      }
+    },
+    "v0_8-00-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Donations Section"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sezione Donazioni"
+          }
+        }
+      }
+    },
+    "v0_8-01-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The course selection interface has been completely rewritten as a dedicated component shared between onboarding and settings. The search bar now has a clear button, results load more smoothly and the style has been unified with adaptive backgrounds matching the system theme."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "L'interfaccia di selezione del corso è stata completamente riscritta in un componente dedicato condiviso tra onboarding e impostazioni. La barra di ricerca ora ha un pulsante per cancellare il testo, i risultati si caricano in modo più fluido e lo stile è stato uniformato con sfondi adattivi al tema del sistema."
+          }
+        }
+      }
+    },
+    "v0_8-01-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Course search has been rethought from scratch with a new component."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "La ricerca del corso è stata ripensata da zero con un nuovo componente."
+          }
+        }
+      }
+    },
+    "v0_8-01-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redesigned Course Selection"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Selezione Corso Ridisegnata"
+          }
+        }
+      }
+    },
+    "v0_8-02-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calendar organization, date picker generation and all cache read/write operations now run in the background. Lesson fields such as duration, clean name and tags are pre-computed on load, making scrolling instant."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "L'organizzazione del calendario, la generazione del date picker e tutte le operazioni di lettura e scrittura della cache vengono ora eseguite in background. I campi delle lezioni come durata, nome pulito e tag sono pre-calcolati al caricamento, rendendo lo scorrimento istantaneo."
+          }
+        }
+      }
+    },
+    "v0_8-02-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data processing now happens entirely in the background."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "L'elaborazione dei dati avviene ora interamente in background."
+          }
+        }
+      }
+    },
+    "v0_8-02-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Background Performance"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Prestazioni in Background"
+          }
+        }
+      }
+    },
+    "v0_8-03-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Simplified navigation: ContentView and RootView merged into a single view\n• Updated to Swift 6.2 with Strict Concurrency for greater stability\n• Cache converted to actor for guaranteed thread safety\n• Onboarding and settings logic unified in a shared component\n• Credits on the Info page are now interactive with portfolio links\n• Improved loading placeholder with more elements and renewed shimmer\n• Smoother onboarding animations with snappy transitions\n• App constants centralized for easier maintenance"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "• Navigazione semplificata: ContentView e RootView unite in un'unica vista\n• Aggiornamento a Swift 6.2 con Strict Concurrency per maggiore stabilità\n• Cache convertita in actor per sicurezza tra thread garantita\n• Logica di onboarding e impostazioni unificata in un componente condiviso\n• Crediti nella pagina Info ora interattivi con link al portfolio\n• Placeholder di caricamento migliorato con più elementi e shimmer rinnovato\n• Animazioni più fluide nell'onboarding con transizioni snappy\n• Costanti dell'app centralizzate per una manutenzione più semplice"
+          }
+        }
+      }
+    },
+    "v0_8-03-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Renewed architecture, smooth animations and many fixes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Architettura rinnovata, animazioni fluide e tanti fix."
+          }
+        }
+      }
+    },
+    "v0_8-03-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Improvements and Fixes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Miglioramenti e Correzioni"
+          }
+        }
+      }
+    },
+    "v0_8-headline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Donations, new search and speed"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Donazioni, nuova ricerca e velocità"
+          }
+        }
+      }
+    },
+    "v0_9-00-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Univr Calendar is now fully optimized for iPad! Enjoy a smooth experience with adaptive layouts, split view to browse weeks in landscape and an interface designed specifically for larger screens. Every element has been rethought to make the most of the available space."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Univr Calendar ora è completamente ottimizzato per iPad! Goditi un'esperienza fluida con layout adattivi, split view per visualizzare le settimane in landscape e interfaccia pensata appositamente per schermi più grandi. Ogni elemento è stato ripensato per sfruttare al meglio lo spazio disponibile."
+          }
+        }
+      }
+    },
+    "v0_9-00-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optimized experience for large screens with adaptive layouts and split view."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Esperienza ottimizzata per schermi grandi con layout adattivi e split view."
+          }
+        }
+      }
+    },
+    "v0_9-00-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Native iPad Support"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Supporto Nativo per iPad"
+          }
+        }
+      }
+    },
+    "v0_9-01-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No more worrying about connectivity! The app detects in real time when you're offline and notifies you with a dedicated indicator, letting you browse saved classes. Onboarding and settings lock automatically without a network. As soon as you're back online, everything syncs in the background without any action on your part."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Niente più preoccupazioni per la connessione! L'app rileva in tempo reale quando sei offline e ti avvisa con un indicatore dedicato, permettendoti di consultare le lezioni salvate. L'onboarding e le impostazioni si bloccano automaticamente senza rete. Appena torni online, tutto si sincronizza in background senza alcun intervento da parte tua."
+          }
+        }
+      }
+    },
+    "v0_9-01-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check your classes even without a connection, with automatic sync."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Consulta le tue lezioni anche senza connessione, sincronizzazione automatica."
+          }
+        }
+      }
+    },
+    "v0_9-01-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offline Mode"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Modalità Offline"
+          }
+        }
+      }
+    },
+    "v0_9-02-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System sheets have been replaced by a fully custom sheet built with UIKit, offering advanced gestures, dynamic Liquid Glass effects and total control over animations. On iPad, the sheet's corner radius automatically adapts to the window position. The result? An even more beautiful and enjoyable app."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Le sheet di sistema sono state sostituite da una sheet completamente personalizzata, costruita con UIKit, che offre gesture avanzate, effetti Liquid Glass dinamici e un controllo totale sulle animazioni. Su iPad il corner radius della sheet si adatta automaticamente alla posizione della finestra. Il risultato? Un'app ancora più bella e piacevole da usare."
+          }
+        }
+      }
+    },
+    "v0_9-02-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Custom sheets, smooth animations and Liquid Glass effects."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sheet personalizzate, animazioni fluide ed effetti Liquid Glass."
+          }
+        }
+      }
+    },
+    "v0_9-02-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redesigned Interface"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Interfaccia Rinnovata"
+          }
+        }
+      }
+    },
+    "v0_9-03-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• New style for cancelled classes with border and strikethrough text\n• Hover effects on iPad for more natural interaction\n• Completely redesigned date and time pickers with improved performance\n• Classroom map now static for greater stability and speed\n• Fixed numerous bugs with custom sheet on iOS 17 and 18\n• Optimized support for iOS 17, 18 and iPadOS\n• Redesigned lesson details with improved layout\n• Overall performance significantly improved"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "• Nuovo stile per le lezioni cancellate con bordo e testo barrato\n• Hover effects su iPad per un'interazione più naturale\n• Picker data e ora completamente ridisegnati con performance migliorate\n• Mappa dell'aula ora statica per maggiore stabilità e velocità\n• Risolti numerosi bug con la sheet personalizzata su iOS 17 e 18\n• Supporto ottimizzato per iOS 17, 18 e iPadOS\n• Dettagli lezione ridisegnati con layout migliorato\n• Performance generali notevolmente migliorate"
+          }
+        }
+      }
+    },
+    "v0_9-03-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bug fixes, improved performance and iOS 17/18 support."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bug fix, performance migliorate e supporto per iOS 17/18."
+          }
+        }
+      }
+    },
+    "v0_9-03-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Improvements and Fixes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Miglioramenti e Correzioni"
+          }
+        }
+      }
+    },
+    "v0_9-headline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPad, Offline and a brand new look"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "iPad, Offline e un look tutto nuovo"
           }
         }
       }

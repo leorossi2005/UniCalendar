@@ -41,8 +41,8 @@ struct AboutView: View {
             Section {
                 ForEach(AppConstants.Credits.contributors) { credit in
                     infoRow(
-                        name: LocalizedStringKey(credit.name),
-                        role: LocalizedStringKey(credit.role),
+                        name: credit.name,
+                        role: credit.role,
                         link: credit.url,
                         image: credit.image
                     )
@@ -63,7 +63,7 @@ struct AboutView: View {
     }
     
     // MARK: - Components
-    private func infoRow(name: LocalizedStringKey, role: LocalizedStringKey, link: URL?, image: String) -> some View {
+    private func infoRow(name: String, role: LocalizedStringResource, link: URL?, image: String) -> some View {
         HStack {
             VStack(alignment: .leading) {
                 Text(name)

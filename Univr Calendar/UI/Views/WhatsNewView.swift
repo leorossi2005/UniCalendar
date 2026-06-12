@@ -3,6 +3,8 @@
 //  Univr Calendar
 //
 //  Created by Leonardo Rossi on 17/01/26.
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
 //
 
 import SwiftUI
@@ -161,7 +163,7 @@ struct WhatsNewView: View {
             .font(.largeTitle)
             .fontWeight(.bold)
             
-            Text(currentVersion?.headline ?? " ")
+            Text(currentVersion?.headline ?? "")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .animation(animation, value: selectedVersionIndex)
