@@ -55,7 +55,7 @@ public class UserSettings {
     }
     
     public var latestVersion: String {
-        didSet { save(latestVersion, key: .latestVersion) }
+        didSet { Self.save(latestVersion, key: .latestVersion) }
     }
     
     private init() {

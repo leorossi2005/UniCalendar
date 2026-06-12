@@ -150,9 +150,9 @@ public struct WhatsNewVersion: Identifiable, Sendable {
     public let headline: String
     public let features: [WhatsNewFeature]
     
-    init(version: String, date: String, headline: String, features: [WhatsNewFeature]) {
+    init(version: String, date: Date, headline: String, features: [WhatsNewFeature]) {
         self.version = version
-        self.date = date.toDateModern() ?? Date()
+        self.date = date
         self.headline = headline
         self.features = features
     }

@@ -53,7 +53,7 @@ public enum AppConstants: Sendable {
         public static let versions: [WhatsNewVersion] = [
             WhatsNewVersion(
                 version: "0.9",
-                date: "06-01-2026",
+                date: Date(year: 2026, month: 1, day: 6),
                 headline: String(localized: "iPad, Offline e un look tutto nuovo", bundle: .module),
                 features: [
                     WhatsNewFeature(
@@ -88,7 +88,7 @@ public enum AppConstants: Sendable {
             ),
             WhatsNewVersion(
                 version: "0.8",
-                date: "12-12-2025",
+                date: Date(year: 2025, month: 12, day: 12),
                 headline: String(localized: "Donazioni, nuova ricerca e velocità", bundle: .module),
                 features: [
                     WhatsNewFeature(
@@ -123,7 +123,7 @@ public enum AppConstants: Sendable {
             ),
             WhatsNewVersion(
                 version: "0.7",
-                date: "04-12-2025",
+                date: Date(year: 2025, month: 12, day: 4),
                 headline: String(localized: "Due lingue, splash screen e crediti", bundle: .module),
                 features: [
                     WhatsNewFeature(
@@ -158,7 +158,7 @@ public enum AppConstants: Sendable {
             ),
             WhatsNewVersion(
                 version: "0.6",
-                date: "02-12-2025",
+                date: Date(year: 2025, month: 12, day: 2),
                 headline: String(localized: "Lezioni più leggibili e nuova icona", bundle: .module),
                 features: [
                     WhatsNewFeature(
@@ -194,7 +194,7 @@ public enum AppConstants: Sendable {
             ),
             WhatsNewVersion(
                 version: "0.5",
-                date: "27-11-2025",
+                date: Date(year: 2025, month: 11, day: 27),
                 headline: String(localized: "Dettagli lezione e velocità al top", bundle: .module),
                 features: [
                     WhatsNewFeature(
@@ -229,7 +229,7 @@ public enum AppConstants: Sendable {
             ),
             WhatsNewVersion(
                 version: "0.4",
-                date: "23-11-2025",
+                date: Date(year: 2025, month: 11, day: 23),
                 headline: String(localized: "Avvio più veloce e design adattivo", bundle: .module),
                 features: [
                     WhatsNewFeature(
@@ -264,7 +264,7 @@ public enum AppConstants: Sendable {
             ),
             WhatsNewVersion(
                 version: "0.3",
-                date: "20-11-2025",
+                date: Date(year: 2025, month: 11, day: 20),
                 headline: String(localized: "Nuovo benvenuto e compatibilità iOS", bundle: .module),
                 features: [
                     WhatsNewFeature(
@@ -306,7 +306,7 @@ public enum AppConstants: Sendable {
             ),
             WhatsNewVersion(
                 version: "0.2",
-                date: "19-11-2025",
+                date: Date(year: 2025, month: 11, day: 19),
                 headline: String(localized: "Scorri i giorni e nuovo calendario", bundle: .module),
                 features: [
                     WhatsNewFeature(
@@ -341,7 +341,7 @@ public enum AppConstants: Sendable {
             ),
             WhatsNewVersion(
                 version: "0.1",
-                date: "20-10-2025",
+                date: Date(year: 2025, month: 10, day: 20),
                 headline: String(localized: "Nasce l'app, tutto parte da qui", bundle: .module),
                 features: [
                     WhatsNewFeature(

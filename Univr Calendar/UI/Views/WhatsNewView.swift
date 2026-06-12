@@ -279,7 +279,9 @@ struct WhatsNewView: View {
         .onAppear {
             Task { @MainActor in
                 fixAppearWidth.toggle()
-                try await Task.sleep(for: .seconds(0.01))
+                do {
+                    try await Task.sleep(for: .seconds(0.01))
+                } catch {}
                 fixAppearWidth.toggle()
             }
 
