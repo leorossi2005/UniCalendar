@@ -28,13 +28,6 @@ enum GlassEffectStyle {
         case .clear: return .clear
         }
     }
-    
-    var blurStyle: UIBlurEffect.Style {
-        switch self {
-        case .regular: return .regular
-        case .clear: return .regular
-        }
-    }
 }
 
 final class GlassContainerView: UIView {
@@ -153,7 +146,7 @@ final class GlassContainerView: UIView {
         }
     }
     
-    public var contentView: UIView {
+    var contentView: UIView {
         return glassView.contentView
     }
     
@@ -248,7 +241,6 @@ struct GlassContainer<Content: View>: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
         let controller = UIViewController()
         
-        // Crea il GlassContainerView (il vetro UIKit)
         let glassContainer = GlassContainerView()
         glassContainer.cornerRadii = radii
         glassContainer.style = style
@@ -322,12 +314,14 @@ struct GlassContainer<Content: View>: UIViewControllerRepresentable {
     class Coordinator: ObservableObject {
         @Published var content: Content
         
-        var glassContainer: GlassContainerView?
-        var hostingController: UIHostingController<BridgeView>?
+        weak var glassContainer: GlassContainerView?
+        weak var hostingController: UIHostingController<BridgeView>?
         
         init(content: Content) {
             self.content = content
         }
+        
+        deinit { }
     }
     
     struct BridgeView: View {

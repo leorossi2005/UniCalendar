@@ -35,7 +35,6 @@ struct CustomSheetView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.verticalSizeClass) var verticalSizeClass
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
-    var transition: Namespace.ID
     
     var positionObserver = WindowPositionObserver.shared
     
@@ -50,6 +49,7 @@ struct CustomSheetView: View {
     @Binding var selectedLesson: Lesson?
     @Binding var tempSettings: TempSettingsState
     @Binding var openCalendar: Bool
+    @Binding var openAddToCalendar: Bool
     
     // Gesture & Layout States
     @State private var enableBackground: Bool = false
@@ -59,8 +59,6 @@ struct CustomSheetView: View {
     
     @State private var dragY: CGFloat = .zero
     
-    @State private var lockSheet: Bool = false
-    
     @State private var basePadding: CGFloat = .zero
     @State private var initialPadding: CGFloat = .zero
     @State private var sheetPadding: CGFloat = .zero
@@ -69,12 +67,9 @@ struct CustomSheetView: View {
     
     private var liveHeight: CGFloat { baseHeight - dragY }
     
-    enum GestureDirection {
-        case horizontal, vertical
-    }
-    
     // TEMP
     @State private var isGoingLarge: Bool = false
+    @State private var lockSheet: Bool = false
     
     var body: some View {
         Group {
@@ -174,6 +169,13 @@ struct CustomSheetView: View {
                 offset = 0
             }
         }
+        .onChange(of: lockSheet) { _, newValue in
+            if selectedDetent == .large {
+                detents = newValue ? [.large] : [.small, .medium, .large]
+            } else {
+                lockSheet = false
+            }
+        }
         .onAppear {
             if #available(iOS 26, *) {
                 sheetPadding = 8
@@ -193,6 +195,7 @@ struct CustomSheetView: View {
                 selectedWeek: $selectedWeek,
                 selectedDetent: $selectedDetent,
                 selectedLesson: $selectedLesson,
+                openAddToCalendar: $openAddToCalendar,
                 openSettings: $openSettings,
                 openWhatsNew: $openWhatsNew,
                 tempSettings: $tempSettings,
@@ -200,19 +203,21 @@ struct CustomSheetView: View {
                 isGoingLarge: isGoingLarge
             )
             .overlay(alignment: .top) {
-                RoundedRectangle(cornerRadius: 2.5)
-                    .fill(.tertiary)
-                    .frame(width: 35, height: 5)
-                    .padding(.top, 5)
-                    .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
-                    .hoverEffect(.highlight)
+                if !lockSheet {
+                    RoundedRectangle(cornerRadius: 2.5)
+                        .fill(.tertiary)
+                        .frame(width: 35, height: 5)
+                        .padding(.top, 5)
+                        .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
+                        .hoverEffect(.highlight)
+                }
             }
         }
         .clipShape(sheetShape)
         .overlay {
             VerticalDragger(
-                onDrag: { translationY, direction in
-                    handleDragUpdating(value: translationY, direction: direction, state: &self.dragY)
+                onDrag: { translationY, _ in
+                    handleDragUpdating(value: translationY, state: &self.dragY)
                 },
                 onEnded: { translationY, predictedEndTranslation in
                     handleDragEnded(translationY, predictedEndTranslation)
@@ -243,7 +248,7 @@ struct CustomSheetView: View {
         return (1.0 - (1.0 / ((offset * coefficient / dimension) + 1.0))) * dimension
     }
     
-    private func handleDragUpdating(value: CGFloat, direction: CustomSheetDraggingDirection, state: inout CGFloat) {
+    private func handleDragUpdating(value: CGFloat, state: inout CGFloat) {
         if isGoingLarge {
             isGoingLarge = false
         }
@@ -438,6 +443,7 @@ struct DynamicSheetContent: View {
     @Binding var selectedWeek: Date
     @Binding var selectedDetent: CustomSheetDetent
     @Binding var selectedLesson: Lesson?
+    @Binding var openAddToCalendar: Bool
     @Binding var openSettings: Bool
     @Binding var openWhatsNew: Bool
     @Binding var tempSettings: TempSettingsState
@@ -445,6 +451,14 @@ struct DynamicSheetContent: View {
     // TEMP
     @Binding var lockSheet: Bool
     let isGoingLarge: Bool
+    
+    var padding: CGFloat {
+        if #available(iOS 26, *) {
+            8
+        } else {
+            0
+        }
+    }
     
     var body: some View {
         ZStack {
@@ -468,12 +482,12 @@ struct DynamicSheetContent: View {
                     FractionDatePickerContainer(selectedWeek: $selectedWeek)
                         .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == .small)
-                        .frame(width: UIApplication.shared.windowSize.width - 16)
+                        .frame(width: UIApplication.shared.windowSize.width - padding * 2)
                     
                     DatePickerContainer(selectedWeek: $selectedWeek)
                         .opacity(mediumIsHidden ? 0 : min(max(mediumOpacity, 0), 1))
                         .allowsHitTesting(selectedDetent == .medium)
-                        .frame(width: UIApplication.shared.windowSize.width - 16)
+                        .frame(width: UIApplication.shared.windowSize.width - padding * 2)
                     
                     NavigationStack {
                         if openWhatsNew {
@@ -488,7 +502,13 @@ struct DynamicSheetContent: View {
                             )
                             .ignoresSafeArea(.keyboard)
                         } else {
-                            LessonDetailsView(lesson: $selectedLesson)
+                            LessonDetailsView(lesson: $selectedLesson, lockSheet: $lockSheet, openAddToCalendar: openAddToCalendar) {
+                                selectedDetent = .small
+                                selectedLesson = nil
+                                openAddToCalendar = false
+                            }
+                            .opacity(min(max(largeOpacity, 0), 1))
+                            .allowsHitTesting(selectedDetent == .large)
                         }
                     }
                     .id(openSettings)

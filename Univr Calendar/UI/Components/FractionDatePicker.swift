@@ -30,9 +30,7 @@ struct FractionDatePickerView: View {
                 
                 Button {
                     if !day.isOutOfBounds {
-                        withAnimation {
-                            selection = day.date
-                        }
+                        selection = day.date
                     }
                 } label: {
                     dayContent(for: day, isSelected: isSelected)
@@ -148,29 +146,29 @@ struct FractionDatePickerContainer: View {
     // MARK: - Logic
     private func handleFractionSelectionChange(oldIndex: Int, newIndex: Int) {
         guard let yearInt = Int(settings.selectedYear) else { return }
-        let newDate: Date
+        
         let difference = abs(newIndex - oldIndex)
-        if oldIndex < newIndex {
-            newDate = selectedWeek.add(type: .day, value: difference * (isDualMode ? 14 : 7))
-        } else {
-            newDate = selectedWeek.remove(type: .day, value: difference * (isDualMode ? 14 : 7))
-        }
+        let daysToShift = difference * (isDualMode ? 14 : 7)
         
-        let isLeftOutOfBounds = newDate.month == 9 && newDate.year == yearInt
-        let isRightOutOfBounds = (newDate.month == 10 && newDate.year == yearInt + 1)
+        let newDate = oldIndex < newIndex
+            ? selectedWeek.add(type: .day, value: daysToShift)
+            : selectedWeek.remove(type: .day, value: daysToShift)
         
-        if isLeftOutOfBounds {
-            let limitDateStr = "01-10-\(yearInt)"
-            if selectedWeek.formatUnivrStyle() != limitDateStr {
-                selectedWeek = limitDateStr.toDateModern() ?? newDate
+        let minDate = Date(year: yearInt, month: 10, day: 1)
+        let maxDate = Date(year: yearInt + 1, month: 9, day: 30)
+        
+        let calendar = Calendar.current
+        
+        if newDate < minDate {
+            if !calendar.isDate(selectedWeek, inSameDayAs: minDate) {
+                selectedWeek = minDate
             }
-        } else if isRightOutOfBounds {
-            let limitDateStr = "30-09-\(yearInt + 1)"
-            if selectedWeek.formatUnivrStyle() != limitDateStr {
-                selectedWeek = limitDateStr.toDateModern() ?? newDate
+        } else if newDate > maxDate {
+            if !calendar.isDate(selectedWeek, inSameDayAs: maxDate) {
+                selectedWeek = maxDate
             }
         } else {
-            if selectedWeek.formatUnivrStyle() != newDate.formatUnivrStyle() {
+            if !calendar.isDate(selectedWeek, inSameDayAs: newDate) {
                 selectedWeek = newDate
             }
         }
@@ -196,7 +194,6 @@ struct FractionDatePickerContainer: View {
                 .presentationDetents([.fraction(0.15)])
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-                //.sheetDesign(transition, sourceID: "", detent: $selectedDetent)
         }
         .environment(UserSettings.shared)
 }

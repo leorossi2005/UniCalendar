@@ -37,6 +37,13 @@ extension Color {
     }
 }
 
+extension Lesson {
+    var uiColor: Color {
+        guard let components = HexColorParser.parse(color) else { return .secondary }
+        return Color(red: components.red, green: components.green, blue: components.blue, opacity: components.opacity)
+    }
+}
+
 struct ShimmeringGradient: View {
     @Environment(\.colorScheme) var colorScheme
     
@@ -143,21 +150,6 @@ extension View {
             self
                 .buttonStyle(.bordered)
                 .buttonBorderShape(.capsule)
-            
-        }
-    }
-    
-    @ViewBuilder
-    func sheetDesign(_ namespace: Namespace.ID, sourceID: String, detent: Binding<PresentationDetent>) -> some View {
-        if #available(iOS 26, *) {
-            self
-                .navigationTransition(.zoom(sourceID: sourceID, in: namespace))
-                .presentationCornerRadius(detent.wrappedValue != .large ? .deviceCornerRadius - 8 : nil)
-                .animation(.easeInOut, value: detent.wrappedValue)
-        } else {
-            self
-                .presentationCornerRadius(detent.wrappedValue != .large ? .deviceCornerRadius : nil)
-                .animation(.easeInOut, value: detent.wrappedValue)
             
         }
     }
@@ -275,12 +267,6 @@ extension UIApplication {
             .first?.keyWindow?.safeAreaInsets ?? .zero
     }
     
-    var screenSize: CGRect {
-        connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?.screen.bounds ?? .zero
-    }
-    
     var windowSize: CGRect {
         connectedScenes
             .compactMap { $0 as? UIWindowScene }
@@ -297,6 +283,13 @@ extension UIDevice {
 
 extension EnvironmentValues {
     @Entry var safeAreaInsets: UIEdgeInsets = .zero
+}
+
+extension Array where Element == Corso {
+    public func filtered(by searchText: String) -> [Corso] {
+        guard !searchText.isEmpty else { return self }
+        return self.filter { $0.label.localizedCaseInsensitiveContains(searchText) }
+    }
 }
 
 extension CGFloat {

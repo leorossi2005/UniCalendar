@@ -9,18 +9,13 @@
 
 import Foundation
 
-public actor CacheManager: Sendable {
+actor CacheManager: Sendable {
     static let shared = CacheManager()
     
-    private let cacheDirectory: URL?
+    private let folder: URL = .cachesDirectory
     
-    private init() {
-        self.cacheDirectory = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
-    }
-    
-    func save<T: Encodable & Sendable>(_ object: T, fileName: String) async {
-        guard let folder = cacheDirectory else { return }
-        let fileUrl = folder.appendingPathComponent(fileName)
+    func save<T: Encodable >(_ object: T, fileName: String) async {
+        let fileUrl = folder.appending(path: fileName)
         
         do {
             let data = try JSONEncoder().encode(object)
@@ -32,9 +27,8 @@ public actor CacheManager: Sendable {
         }
     }
     
-    func load<T: Decodable & Sendable>(fileName: String, type: T.Type) async -> T? {
-        guard let folder = cacheDirectory else { return nil }
-        let fileUrl = folder.appendingPathComponent(fileName)
+    func load<T: Decodable & Sendable >(fileName: String, type: T.Type) async -> T? {
+        let fileUrl = folder.appending(path: fileName)
         
         guard FileManager.default.fileExists(atPath: fileUrl.path()) else { return nil }
         
@@ -42,17 +36,16 @@ public actor CacheManager: Sendable {
             let data = try await Task.detached(priority: .utility) {
                 try Data(contentsOf: fileUrl)
             }.value
-            let object = try JSONDecoder().decode(type, from: data)
-            return object
+            return try JSONDecoder().decode(type, from: data)
         } catch {
             print("Error loading cache \(fileName): \(error)")
+            try? FileManager.default.removeItem(at: fileUrl)
             return nil
         }
     }
     
     func clear(fileName: String) async {
-        guard let folder = cacheDirectory else { return }
-        let fileUrl = folder.appendingPathComponent(fileName)
+        let fileUrl = folder.appending(path: fileName)
         
         do {
             try await Task.detached(priority: .utility) {

@@ -30,21 +30,10 @@ struct WindowAccessor: UIViewRepresentable {
 
 // MARK: - Edge Detection
 struct WindowEdges: Equatable {
-    var touchesTop: Bool = false
     var touchesBottom: Bool = false
     var touchesLeft: Bool = false
     var touchesRight: Bool = false
     
-    var isFullscreen: Bool {
-        touchesTop && touchesBottom && touchesLeft && touchesRight
-    }
-    
-    var isFloating: Bool {
-        !touchesTop && !touchesBottom && !touchesLeft && !touchesRight
-    }
-    
-    var topLeftSquare: Bool { touchesTop && touchesLeft }
-    var topRightSquare: Bool { touchesTop && touchesRight }
     var bottomLeftSquare: Bool { touchesBottom && touchesLeft }
     var bottomRightSquare: Bool { touchesBottom && touchesRight }
 }
@@ -73,12 +62,6 @@ final class WindowPositionObserver {
         checkFrame()
     }
     
-    func stopObserving() {
-        displayLink?.invalidate()
-        displayLink = nil
-        observedWindow = nil
-    }
-    
     @objc private func checkFrame() {
         guard let window = observedWindow,
               let windowScene = window.windowScene else { return }
@@ -103,35 +86,30 @@ final class WindowPositionObserver {
         switch orientation {
         case .portrait:
             newEdges = WindowEdges(
-                touchesTop: touchesFixedTop,
                 touchesBottom: touchesFixedBottom,
                 touchesLeft: touchesFixedLeft,
                 touchesRight: touchesFixedRight
             )
         case .portraitUpsideDown:
             newEdges = WindowEdges(
-                touchesTop: touchesFixedBottom,
                 touchesBottom: touchesFixedTop,
                 touchesLeft: touchesFixedRight,
                 touchesRight: touchesFixedLeft
             )
         case .landscapeLeft:
             newEdges = WindowEdges(
-                touchesTop: touchesFixedLeft,
                 touchesBottom: touchesFixedRight,
                 touchesLeft: touchesFixedBottom,
                 touchesRight: touchesFixedTop
             )
         case .landscapeRight:
             newEdges = WindowEdges(
-                touchesTop: touchesFixedRight,
                 touchesBottom: touchesFixedLeft,
                 touchesLeft: touchesFixedTop,
                 touchesRight: touchesFixedBottom
             )
         default:
             newEdges = WindowEdges(
-                touchesTop: touchesFixedTop,
                 touchesBottom: touchesFixedBottom,
                 touchesLeft: touchesFixedLeft,
                 touchesRight: touchesFixedRight

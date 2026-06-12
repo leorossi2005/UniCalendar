@@ -9,8 +9,8 @@
 
 import Foundation
 
-public struct AppConstants: Sendable {
-    public struct URLs {
+public enum AppConstants: Sendable {
+    public enum URLs {
         public static let donation = URL(string: "https://revolut.me/leorossi05?currency=EUR&amount=100")!
         public static let portfolio = URL(string: "https://www.leonardorossi.dev")!
         public static let github = URL(string: "https://github.com/leorossi2005")!
@@ -19,7 +19,7 @@ public struct AppConstants: Sendable {
         public static let email = URL(string: "mailto:leonardo.rossi1922005@gmail.com")!
     }
     
-    public struct AppInfo {
+    public enum AppInfo {
         public static let appName = String(localized: "Calendario per UniVR", bundle: .module)
         public static let developerName = "Leonardo Rossi"
     }
@@ -40,7 +40,7 @@ public struct AppConstants: Sendable {
         }
     }
     
-    public struct Credits {
+    public enum Credits {
         public static let contributors: [Contributor] = [
             Contributor(name: "Gaia", role: String(localized: "Aiuto Sviluppo", bundle: .module), image: "GaiaPhoto"),
             Contributor(name: "Nicola", role: String(localized: "Aiuto Testing", bundle: .module), image: "NicolaPhoto"),

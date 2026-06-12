@@ -14,23 +14,18 @@ struct Onboarding: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
+    @Environment(NetworkStateObserver.self) private var net
     
-    private let net: NetworkMonitor = .shared
     @State private var viewModel = UniversityDataManager()
     
     @State private var currentIndex: Int? = 0
     @State private var nextIndexLoading: Int = -1
     @State private var errorText: String = "nope"
     
-    @State private var offlineScale: CGFloat = 1
-    @State private var offlineOffset: CGPoint = .zero
-    
     @State private var searchTextFieldFocus: Bool = false
     
     let animation: Namespace.ID
     @Binding var showSplash: Bool
-    
-    private let screenSize: CGRect = UIApplication.shared.screenSize
     
     var body: some View {
         @Bindable var settings = settings
@@ -69,8 +64,8 @@ struct Onboarding: View {
                     isTopContent: false,
                     content: {
                         Picker(selection: $settings.selectedYear) {
-                            ForEach(viewModel.years, id: \.valore) { year in
-                                Text(year.label).tag(year.valore)
+                            ForEach(viewModel.years) { year in
+                                Text(year.label).tag(year.id)
                             }
                         } label: {}
                         .pickerStyle(.segmented)
@@ -92,7 +87,7 @@ struct Onboarding: View {
                 .id(1)
                 OnboardingPage(
                     title: "Bene! Ora scegli un corso",
-                    subtitle: "Sono mostrati i corsi per l'anno \(viewModel.years.filter{$0.valore == settings.selectedYear}.first?.label ?? "")",
+                    subtitle: "Sono mostrati i corsi per l'anno \(viewModel.years.filter{$0.id == settings.selectedYear}.first?.label ?? "")",
                     errorMessage: $errorText,
                     isTopContent: false,
                     content: {
@@ -113,11 +108,11 @@ struct Onboarding: View {
                         settings.foundMatricola = false
                         
                         handlePageTransition(to: 3) {
-                            viewModel.updateAcademicYears(for: settings.selectedCourse, year: settings.selectedYear)
+                            viewModel.updateAcademicYears(for: settings.selectedCourse)
                             
                             if let firstYear = viewModel.academicYears.first {
                                 await MainActor.run {
-                                    settings.selectedAcademicYear = firstYear.valore
+                                    settings.selectedAcademicYear = firstYear.id
                                     settings.foundMatricola = viewModel.checkForMatricola(in: settings.selectedAcademicYear)
                                 }
                             }
@@ -132,8 +127,8 @@ struct Onboarding: View {
                     isTopContent: false,
                     content: {
                         Picker(selection: $settings.selectedAcademicYear) {
-                            ForEach(viewModel.academicYears, id: \.valore) { year in
-                                Text(year.label).tag(year.valore)
+                            ForEach(viewModel.academicYears) { year in
+                                Text(year.label).tag(year.id)
                             }
                         } label: {}
                         .pickerStyle(.segmented)
@@ -163,8 +158,8 @@ struct Onboarding: View {
                     isTopContent: false,
                     content: {
                         Picker(selection: $settings.matricola) {
-                            Text("Pari").tag("pari")
-                            Text("Dispari").tag("dispari")
+                            Text("Pari").tag("even")
+                            Text("Dispari").tag("odd")
                         } label: {}
                         .pickerStyle(.segmented)
                         .padding()
@@ -214,7 +209,7 @@ struct Onboarding: View {
             }
         }
         .onAppear {
-            viewModel.loadFromCache()
+            //viewModel.loadFromCache()
         }
         .scrollTargetBehavior(.paging)
         .scrollIndicators(.never, axes: .horizontal)
@@ -252,7 +247,7 @@ struct Onboarding: View {
         }
     }
     
-    public func completeOnboarding() {
+    func completeOnboarding() {
         settings.latestVersion = Bundle.main.clearAppVersion
         settings.onboardingCompleted = true
     }

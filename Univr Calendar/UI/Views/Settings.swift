@@ -13,11 +13,10 @@ import UnivrCore
 struct Settings: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
+    @Environment(NetworkStateObserver.self) private var net
     
-    private let net: NetworkMonitor = .shared
     @State private var viewModel = UniversityDataManager()
     @State private var showDeleteAlert = false
-    @State private var initialIsContentAtTop: Bool? = nil
     @State private var searchTextFieldFocus: Bool = false
     
     @Binding var selectedYear: String
@@ -25,8 +24,6 @@ struct Settings: View {
     @Binding var selectedAcademicYear: String
     @Binding var matricola: String
     @Binding var lockSheet: Bool
-    
-    private let screenSize: CGRect = UIApplication.shared.screenSize
     
     var body: some View {
         List {
@@ -36,8 +33,8 @@ struct Settings: View {
                         .foregroundStyle(.primary)
                         .padding(.trailing)
                     Picker(selection: $selectedYear) {
-                        ForEach(viewModel.years, id: \.valore) { year in
-                            Text(year.label).tag(year.valore)
+                        ForEach(viewModel.years) { year in
+                            Text(year.label).tag(year.id)
                         }
                     } label: {}
                         .pickerStyle(.segmented)
@@ -55,8 +52,8 @@ struct Settings: View {
                 }
                 if selectedCourse != "0" {
                     Picker(selection: $selectedAcademicYear) {
-                        ForEach(viewModel.academicYears, id: \.valore) { year in
-                            Text(year.label).tag(year.valore)
+                        ForEach(viewModel.academicYears) { year in
+                            Text(year.label).tag(year.id)
                         }
                     } label: {
                         Label("Anno di Corso", systemImage: "calendar.badge.clock")
@@ -74,8 +71,8 @@ struct Settings: View {
                             .foregroundStyle(.primary)
                             .padding(.trailing)
                         Picker("", selection: $matricola) {
-                            Text("Pari").tag("pari")
-                            Text("Dispari").tag("dispari")
+                            Text("Pari").tag("even")
+                            Text("Dispari").tag("odd")
                         }
                         .pickerStyle(.segmented)
                     }
@@ -133,7 +130,7 @@ struct Settings: View {
         .onChange(of: searchTextFieldFocus) {
             if searchTextFieldFocus {
                 lockSheet = true
-            } else {
+            } else if selectedCourse != "0" {
                 lockSheet = false
             }
         }
@@ -151,7 +148,9 @@ struct Settings: View {
         selectedAcademicYear = "0"
         
         Task {
-            try await viewModel.loadCourses(year: selectedYear)
+            do {
+                try await viewModel.loadCourses(year: selectedYear)
+            } catch {}
         }
     }
     
@@ -162,10 +161,10 @@ struct Settings: View {
             viewModel.academicYears = []
             selectedAcademicYear = "0"
             
-            viewModel.updateAcademicYears(for: selectedCourse, year: selectedYear)
+            viewModel.updateAcademicYears(for: selectedCourse)
             
             if let firstYear = viewModel.academicYears.first {
-                selectedAcademicYear = firstYear.valore
+                selectedAcademicYear = firstYear.id
                 if selectedAcademicYear != "0" {
                     settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                 }
@@ -188,44 +187,50 @@ struct Settings: View {
     }
     
     private func loadInitialData() {
-        viewModel.loadFromCache()
+        Task {
+            await viewModel.loadFromCache()
+        }
         
         if viewModel.years.isEmpty {
             Task {
-                try await viewModel.loadYears()
+                do {
+                    try await viewModel.loadYears()
+                } catch {}
             }
         }
         
         if viewModel.courses.isEmpty {
             Task {
-                try await viewModel.loadCourses(year: selectedYear)
-                
-                await MainActor.run {
-                    if !["pari", "dispari"].contains(matricola) {
-                        matricola = "pari"
-                    }
+                do {
+                    try await viewModel.loadCourses(year: selectedYear)
                     
-                    if !viewModel.years.contains(where: { $0.valore == selectedYear }) {
-                        if let lastYear = viewModel.years.last {
-                            selectedYear = lastYear.valore
+                    await MainActor.run {
+                        if !["even", "odd"].contains(matricola) {
+                            matricola = "even"
                         }
-                    }
-                    
-                    if selectedCourse != "0" {
-                        if let course = viewModel.courses.first(where: { $0.valore == selectedCourse }) {
-                            viewModel.academicYears = course.elenco_anni
-                            
-                            if !viewModel.academicYears.contains(where: { $0.valore == selectedAcademicYear }) {
-                                if let firstAcademicYear = viewModel.academicYears.last {
-                                    selectedAcademicYear = firstAcademicYear.valore
-                                }
+                        
+                        if !viewModel.years.contains(where: { $0.id == selectedYear }) {
+                            if let lastYear = viewModel.years.last {
+                                selectedYear = lastYear.id
                             }
-                            settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                         }
-                    } else {
-                        lockSheet = true
+                        
+                        if selectedCourse != "0" {
+                            if let course = viewModel.courses.first(where: { $0.id == selectedCourse }) {
+                                viewModel.academicYears = course.years
+                                
+                                if !viewModel.academicYears.contains(where: { $0.id == selectedAcademicYear }) {
+                                    if let firstAcademicYear = viewModel.academicYears.last {
+                                        selectedAcademicYear = firstAcademicYear.id
+                                    }
+                                }
+                                settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
+                            }
+                        } else {
+                            lockSheet = true
+                        }
                     }
-                }
+                } catch {}
             }
         }
     }
@@ -237,7 +242,7 @@ struct Settings: View {
     @Previewable @State var selectedYear: String = "2025"
     @Previewable @State var selectedCourse: String = "0"
     @Previewable @State var selectedAcademicYear: String = "0"
-    @Previewable @State var matricola: String = "pari"
+    @Previewable @State var matricola: String = "even"
     @Previewable @State var isFocused: Bool = false
     @Previewable @State var lockSheet: Bool = false
     
