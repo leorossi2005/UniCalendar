@@ -12,8 +12,6 @@ import UnivrCore
 
 // MARK: - WhatsNewView
 struct WhatsNewView: View {
-    @Environment(\.colorScheme) private var colorScheme
-    
     @State private var previousVersionIndex: Int = 0
     @State private var selectedVersionIndex: Int = 0
     @State private var expandedFeatures: Set<UUID> = []

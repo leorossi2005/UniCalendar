@@ -27,6 +27,7 @@ struct CalendarView: View {
     
     @State private var selectedDetent: CustomSheetDetent = .small
     @State private var openSettings: Bool = false
+    // periphery:ignore
     @State private var openAddToCalendar: Bool = false
     @State private var openWhatsNew: Bool = false
     @State private var openCalendar: Bool = false
