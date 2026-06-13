@@ -235,9 +235,6 @@
         }
       }
     },
-    "Ciao" : {
-
-    },
     "Comincia!" : {
       "localizations" : {
         "en" : {
@@ -650,6 +647,9 @@
     "Open Settings" : {
 
     },
+    "Open sheet" : {
+
+    },
     "Pari" : {
       "localizations" : {
         "en" : {
@@ -819,6 +819,9 @@
           }
         }
       }
+    },
+    "Sheet Testing View" : {
+
     },
     "Si è verificato un errore" : {
       "localizations" : {

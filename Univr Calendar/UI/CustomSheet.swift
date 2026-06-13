@@ -21,7 +21,6 @@ struct MainView: View {
     @State var openWhatsNew: Bool = false
     @State var tempSettings: TempSettingsState = .init()
     @State var lockSheet: Bool = false
-    @State var isGoingLarge: Bool = false
     @State var selectedDetent: CustomSheetDetent = .small
     
     @State private var networkObserver = NetworkStateObserver(
@@ -29,56 +28,113 @@ struct MainView: View {
     )
     
     var body: some View {
-        VStack {
-            Toggle("Ciao", isOn: $isPresented)
-            Button("Open Settings") {
-                openSettings = true
-                selectedDetent = .large
+        NavigationStack {
+            List {
+                Toggle(isOn: $isPresented) {
+                    Label("Open sheet", systemImage: "iphone")
+                }
+                Button {
+                    openSettings = true
+                    selectedDetent = .large
+                } label: {
+                    Label("Open Settings", systemImage: "gearshape.fill")
+                }
+                Button {
+                    openWhatsNew = true
+                    selectedDetent = .large
+                } label: {
+                    Label("Open News", systemImage: "sparkles")
+                }
+                Button {
+                    selectedLesson = .sample
+                    openAddToCalendar = true
+                    selectedDetent = .large
+                } label: {
+                    Label("Open Calendar", systemImage: "calendar")
+                }
+                Button {
+                    selectedLesson = .sample
+                    selectedDetent = .large
+                } label: {
+                    Label("Open Lesson", systemImage: "graduationcap.fill")
+                }
             }
-            Button("Open News") {
-                openWhatsNew = true
-                selectedDetent = .large
+            .navigationTitle("Sheet Testing View")
+            .customSheet(isPresented: $isPresented, selectedDetent: $selectedDetent, lockSheet: $lockSheet) {
+                DynamicSheetContent(
+                    selectedWeek: $selectedWeek,
+                    selectedDetent: $selectedDetent,
+                    selectedLesson: $selectedLesson,
+                    openAddToCalendar: $openAddToCalendar,
+                    openSettings: $openSettings,
+                    openWhatsNew: $openWhatsNew,
+                    tempSettings: $tempSettings,
+                    lockSheet: $lockSheet
+                )
             }
-            Button("Open Calendar") {
-                selectedLesson = .sample
-                openAddToCalendar = true
-                selectedDetent = .large
-            }
-            Button("Open Lesson") {
-                selectedLesson = .sample
-                selectedDetent = .large
+            .environment(networkObserver)
+            .environment(UserSettings.shared)
+        }
+    }
+}
+
+public enum CustomSheetDetent {
+    case small, medium, large
+
+    var value: CGFloat {
+        switch self {
+        case .small:  return (((500 - 70) / 7) * 1.35) + 50
+        case .medium: return 350 + 75
+        case .large:
+            let windowHeight = UIApplication.shared.windowSize.height
+            let topSafeArea = UIApplication.shared.safeAreas.top
+            let topMargin = topSafeArea > 0 ? topSafeArea : 20
+            
+            if UIDevice.isIpad {
+                return windowHeight - 75
+            } else {
+                return windowHeight - topMargin - 10
             }
         }
-        .customSheet(isPresented: $isPresented, selectedDetent: $selectedDetent) {
-            DynamicSheetContent(
-                selectedWeek: $selectedWeek,
-                selectedDetent: $selectedDetent,
-                selectedLesson: $selectedLesson,
-                openAddToCalendar: $openAddToCalendar,
-                openSettings: $openSettings,
-                openWhatsNew: $openWhatsNew,
-                tempSettings: $tempSettings,
-                lockSheet: $lockSheet,
-                isGoingLarge: isGoingLarge
-            )
-        }
-        .padding()
-        .ignoresSafeArea(edges: .bottom)
-        .environment(networkObserver)
-        .environment(UserSettings.shared)
+    }
+}
+
+@Observable
+public class GlobalSheetManager {
+    // MARK: - Sensori (Stati in sola lettura per l'utente)
+    public var liveHeight: CGFloat = 0
+    public var isDragging: Bool = false
+    public var presentationProgress: CGFloat = 0.0 // Da 0.0 (small) a 1.0 (large)
+    
+    // MARK: - Motore Interno (Chiusure collegate dalla CustomSheet)
+    var actionChangeDetent: ((CustomSheetDetent) -> Void)?
+    var actionDismiss: (() -> Void)?
+    
+    public init() {}
+    
+    // MARK: - Comandi Pubblici (Quelli che userai nella tua app)
+    public func setDetent(_ detent: CustomSheetDetent) {
+        actionChangeDetent?(detent)
+    }
+    
+    public func dismiss() {
+        actionDismiss?()
     }
 }
 
 struct CustomSheet<Content: View>: View {
     @Binding var isPresented: Bool
     @Binding var selectedDetent: CustomSheetDetent
-    @State var sheetShape: UnevenRoundedRectangle = UnevenRoundedRectangle()
-    @State var sheetShapeRadii: SheetCornerRadii = SheetCornerRadii(tl: 62, tr: 62, bl: 62, br: 62)
+    
+    @Binding var lockSheet: Bool
+    var detents: [CustomSheetDetent]
+    
+    @State var sheetShapeRadii: SheetCornerRadii = SheetCornerRadii(tl: .deviceCornerRadius, tr: .deviceCornerRadius, bl: .deviceCornerRadius, br: .deviceCornerRadius)
+    
+    @State private var manager = GlobalSheetManager()
     
     // Gesture & Layout States
     @State private var enableBackground: Bool = false
-    @State private var trigger: Int = 0
-    @State private var detents: [CustomSheetDetent] = [.small, .medium]
     @State private var baseHeight: CGFloat = CustomSheetDetent.small.value
     
     @State private var dragY: CGFloat = .zero
@@ -96,17 +152,17 @@ struct CustomSheet<Content: View>: View {
     init(
         isPresented: Binding<Bool>,
         selectedDetent: Binding<CustomSheetDetent>,
+        lockSheet: Binding<Bool>,
+        detents: [CustomSheetDetent],
         @ViewBuilder content: () -> Content
     ) {
         self._isPresented = isPresented
         self._selectedDetent = selectedDetent
         self._baseHeight = State(initialValue: selectedDetent.wrappedValue.value)
+        self._lockSheet = lockSheet
+        self.detents = detents
         self.content = content()
     }
-    
-    // TEMP
-    @State private var isGoingLarge: Bool = false
-    @State private var lockSheet: Bool = false
     
     var body: some View {
         Group {
@@ -114,79 +170,43 @@ struct CustomSheet<Content: View>: View {
                 ZStack {
                     if enableBackground {
                         Color.black.opacity(0.37)
-                            .ignoresSafeArea()
                             .transition(.opacity)
                     }
                 }
                 .animation(.easeInOut(duration: 0.2), value: enableBackground)
                 
-                if #available(iOS 26, *) {
-                    GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground, resetGlassEffect: trigger) {
-                        if isPresented {
-                            mainSheet
-                                .ignoresSafeArea()
-                                .transition(.blurReplace)
-                        } else {
-                            Button {
-                                changeOpenCalendar(true)
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "calendar")
-                                        .font(.title2)
-                                    Text("Calendario")
-                                        .fixedSize()
-                                }
-                                .padding(.vertical, 12.2)
-                                .padding(.horizontal, 10)
-                            }
-                            .contentShape(.capsule)
-                            .contentShape(.hoverEffect, .capsule)
-                            .hoverEffect(.highlight)
-                            .buttonStyle(.plain)
-                            .ignoresSafeArea()
-                            .transition(.blurReplace)
-                        }
-                    }
-                    .frame(width: isPresented ? nil : 123.3, height: isPresented ? liveHeight : 47.7)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .offset(y: -offset)
-                    .padding(.horizontal, isPresented ? sheetPadding : UIApplication.shared.safeAreas.bottom)
-                    .padding(.bottom, isPresented ? sheetPadding : UIApplication.shared.safeAreas.bottom)
-                    .ignoresSafeArea()
-                } else {
-                    GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground, resetGlassEffect: trigger) {
-                        mainSheet
-                            .ignoresSafeArea()
-                    }
-                    .frame(height: liveHeight)
-                    .offset(y: -offset)
-                    .padding(.horizontal, sheetPadding)
-                    .padding(.bottom, sheetPadding)
-                    .ignoresSafeArea()
+                GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground) {
+                    mainSheet
+                        .ignoresSafeArea()
                 }
+                .frame(height: liveHeight)
+                .frame(maxWidth: .infinity)
+                .offset(y: isPresented ? -offset : liveHeight + basePadding)
+                .padding(.horizontal, sheetPadding)
+                .padding(.bottom, sheetPadding)
+                .opacity(isPresented ? 1 : 0)
             }
             .frame(maxHeight: .infinity, alignment: .bottom)
+            .environment(manager)
+            .animation(.smooth(duration: 0.3), value: isPresented)
         }
         //.background(WindowAccessor { window in
         //    if UIDevice.isIpad {
         //        positionObserver.startObserving(window: window)
         //    }
         //})
-        .onChange(of: isPresented) { oldValue, newValue in
-            if newValue {
-                trigger += 1
+        .onChange(of: isPresented) { _, newValue in
+            if !newValue {
+                selectedDetent = .small
             }
         }
         .onChange(of: selectedDetent) { oldValue, newValue in
             enableBackground = newValue == .large
-            changeOpenCalendar(true)
             
             if oldValue == .large {
-                isGoingLarge = false
-                detents = [.small, .medium]
+                //detents = [.small, .medium]
             } else if newValue == .large {
-                isGoingLarge = true
-                detents = [.small, .medium, .large]
+                //detents = [.small, .medium, .large]
             }
             
             withAnimation(.interpolatingSpring(
@@ -197,10 +217,10 @@ struct CustomSheet<Content: View>: View {
             )) {
                 if newValue == .large {
                     sheetPadding = 0
-                    setSheetShape(isOpen: true, sheetCornerRadius: 37)
+                    setSheetShape(sheetCornerRadius: 37)
                 } else {
                     sheetPadding = initialPadding
-                    setSheetShape(isOpen: true)
+                    setSheetShape()
                 }
                 
                 baseHeight = newValue.value
@@ -209,10 +229,13 @@ struct CustomSheet<Content: View>: View {
         }
         .onChange(of: lockSheet) { _, newValue in
             if selectedDetent == .large {
-                detents = newValue ? [.large] : [.small, .medium, .large]
+                //detents = newValue ? [.large] : [.small, .medium, .large]
             } else {
                 lockSheet = false
             }
+        }
+        .onChange(of: liveHeight) { _, newHeight in
+            manager.liveHeight = newHeight
         }
         .onAppear {
             if #available(iOS 26, *) {
@@ -220,7 +243,7 @@ struct CustomSheet<Content: View>: View {
             }
             initialPadding = sheetPadding
             basePadding = sheetPadding
-            setSheetShape(isOpen: false)
+            setSheetShape()
         }
     }
     
@@ -241,7 +264,6 @@ struct CustomSheet<Content: View>: View {
                 }
             }
         }
-        .clipShape(sheetShape)
         .overlay {
             VerticalDragger(
                 onDrag: { translationY, _ in
@@ -270,17 +292,13 @@ struct CustomSheet<Content: View>: View {
         }
     }
     
-    // MARK: - Logic
+    // MARK: - Drag Logic
     func rubberBandDistance(offset: CGFloat, dimension: CGFloat) -> CGFloat {
         let coefficient: CGFloat = 0.55
         return (1.0 - (1.0 / ((offset * coefficient / dimension) + 1.0))) * dimension
     }
     
     private func handleDragUpdating(value: CGFloat, state: inout CGFloat) {
-        if isGoingLarge {
-            isGoingLarge = false
-        }
-        
         if selectedDetent == .large {
             if value < 0 {
                 state = 0
@@ -307,12 +325,12 @@ struct CustomSheet<Content: View>: View {
 
             if predictedHeight > CustomSheetDetent.large.value * 0.8 {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    setSheetShape(isOpen: true, sheetCornerRadius: 37)
+                    setSheetShape(sheetCornerRadius: 37)
                 }
                 enableBackground = true
             } else {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    setSheetShape(isOpen: true)
+                    setSheetShape()
                 }
                 enableBackground = false
             }
@@ -389,12 +407,12 @@ struct CustomSheet<Content: View>: View {
         
         if target == .large {
             withAnimation(.easeInOut(duration: 0.2)) {
-                setSheetShape(isOpen: true, sheetCornerRadius: 37)
+                setSheetShape(sheetCornerRadius: 37)
             }
             enableBackground = true
         } else {
             withAnimation(.easeInOut(duration: 0.2)) {
-                setSheetShape(isOpen: true)
+                setSheetShape()
             }
             enableBackground = false
         }
@@ -424,44 +442,31 @@ struct CustomSheet<Content: View>: View {
         }
     }
     
-    private func changeOpenCalendar(_ toOpen: Bool) {
-        guard isPresented != toOpen else { return }
-
-        var transaction = Transaction()
-        transaction.disablesAnimations = true
-        withTransaction(transaction) {
-            setSheetShape(isOpen: toOpen)
-        }
-
-        withAnimation(.spring(duration: 0.5, bounce: 0.3)) {
-            isPresented = toOpen
-        }
-    }
+    // MARK: - Logic
+    //private func changeOpenCalendar(_ toOpen: Bool) {
+    //    guard isPresented != toOpen else { return }
+    //    withAnimation(.spring(duration: 0.5, bounce: 0.3)) {
+    //        isPresented = toOpen
+    //    }
+    //}
     
-    private func setSheetShape(isOpen: Bool, sheetCornerRadius: CGFloat = -1) {
+    private func setSheetShape(sheetCornerRadius: CGFloat = -1) {
         withAnimation {
             if UIDevice.isIpad {
                 sheetShapeRadii = .init(
-                    tl: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.7 / 2 + initialPadding)) - initialPadding : sheetCornerRadius,
-                    tr: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.7 / 2 + initialPadding)) - initialPadding : sheetCornerRadius,
-                    bl: initialPadding == 0 ? 0 : (isOpen ? 32 : (47.7 / 2 + initialPadding)) - initialPadding,
-                    br: initialPadding == 0 ? 0 : (isOpen ? 32 : (47.7 / 2 + initialPadding)) - initialPadding
+                    tl: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
+                    tr: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
+                    bl: initialPadding == 0 ? 0 : 32,
+                    br: initialPadding == 0 ? 0 : 32
                 )
             } else {
-                let radius: CGFloat = (isOpen ? .deviceCornerRadius : (47.7 / 2 + initialPadding)) - initialPadding
                 sheetShapeRadii = .init(
-                    tl: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
-                    tr: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
-                    bl: initialPadding == 0 ? 0 : radius,
-                    br: initialPadding == 0 ? 0 : radius
+                    tl: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
+                    tr: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
+                    bl: initialPadding == 0 ? 0 : .deviceCornerRadius,
+                    br: initialPadding == 0 ? 0 : .deviceCornerRadius
                 )
             }
-            sheetShape = UnevenRoundedRectangle(
-                topLeadingRadius: sheetShapeRadii.tl,
-                bottomLeadingRadius: sheetShapeRadii.bl,
-                bottomTrailingRadius: sheetShapeRadii.br,
-                topTrailingRadius: sheetShapeRadii.tr
-            )
         }
     }
 }
@@ -476,6 +481,9 @@ struct customSheetModifier<SheetContent: View>: ViewModifier {
     
     @Binding var isPresented: Bool
     @Binding var selectedDetent: CustomSheetDetent
+    @Binding var lockSheet: Bool
+    var availableDetents: [CustomSheetDetent]
+    
     let sheetContent: () -> SheetContent
     
     func body(content: Content) -> some View {
@@ -485,6 +493,8 @@ struct customSheetModifier<SheetContent: View>: ViewModifier {
                     capturedEnvironment: completeEnvironment,
                     isPresented: $isPresented,
                     selectedDetent: $selectedDetent,
+                    lockSheet: $lockSheet,
+                    availableDetents: availableDetents,
                     sheetContent: sheetContent
                 )
             )
@@ -495,11 +505,15 @@ extension View {
     func customSheet<Content: View>(
         isPresented: Binding<Bool>,
         selectedDetent: Binding<CustomSheetDetent>,
+        lockSheet: Binding<Bool>,
+        availableDetents: [CustomSheetDetent] = [.small, .medium, .large],
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
         modifier(customSheetModifier(
             isPresented: isPresented,
             selectedDetent: selectedDetent,
+            lockSheet: lockSheet,
+            availableDetents: availableDetents,
             sheetContent: content
         ))
     }
@@ -565,6 +579,8 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
     
     @Binding var isPresented: Bool
     @Binding var selectedDetent: CustomSheetDetent
+    @Binding var lockSheet: Bool
+    var availableDetents: [CustomSheetDetent]
     
     let sheetContent: () -> SheetContent
     
@@ -580,6 +596,8 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
             CustomSheet(
                 isPresented: $isPresented,
                 selectedDetent: $selectedDetent,
+                lockSheet: $lockSheet,
+                detents: availableDetents,
                 content: sheetContent
             )
             .environment(\.self, capturedEnvironment)

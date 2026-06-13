@@ -10,27 +10,6 @@
 import SwiftUI
 import UnivrCore
 
-enum CustomSheetDetent {
-    case small, medium, large
-
-    var value: CGFloat {
-        switch self {
-        case .small:  return (((500 - 70) / 7) * 1.35) + 50
-        case .medium: return 350 + 75
-        case .large:
-            let windowHeight = UIApplication.shared.windowSize.height
-            let topSafeArea = UIApplication.shared.safeAreas.top
-            let topMargin = topSafeArea > 0 ? topSafeArea : 20
-            
-            if UIDevice.isIpad {
-                return windowHeight - 75
-            } else {
-                return windowHeight - topMargin - 10
-            }
-        }
-    }
-}
-
 struct CustomSheetView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.verticalSizeClass) var verticalSizeClass
@@ -199,8 +178,7 @@ struct CustomSheetView: View {
                 openSettings: $openSettings,
                 openWhatsNew: $openWhatsNew,
                 tempSettings: $tempSettings,
-                lockSheet: $lockSheet,
-                isGoingLarge: isGoingLarge
+                lockSheet: $lockSheet
             )
             .overlay(alignment: .top) {
                 if !lockSheet {
@@ -450,7 +428,6 @@ struct DynamicSheetContent: View {
     
     // TEMP
     @Binding var lockSheet: Bool
-    let isGoingLarge: Bool
     
     var padding: CGFloat {
         if #available(iOS 26, *) {
@@ -476,8 +453,8 @@ struct DynamicSheetContent: View {
                 let mediumOpacity = 1.0 - ((currentHeight < mediumHeightHigh ? Double(mediumHeightLow - currentHeight) : Double(currentHeight - mediumHeightHigh)) / Double(fadeRange))
                 let smallOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
         
-                let smallIsHidden = currentHeight > smallHeight + fadeRange || isGoingLarge
-                let mediumIsHidden = currentHeight > mediumHeightHigh + fadeRange || isGoingLarge
+                let smallIsHidden = currentHeight > smallHeight + fadeRange
+                let mediumIsHidden = currentHeight > mediumHeightHigh + fadeRange
                 ZStack(alignment: .topLeading) {
                     FractionDatePickerContainer(selectedWeek: $selectedWeek)
                         .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
