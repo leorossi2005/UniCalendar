@@ -10,6 +10,26 @@
 import SwiftUI
 import UnivrCore
 
+extension AppColor {
+    var color: Color {
+        switch self {
+        case .blue: .blue
+        case .orange: .orange
+        case .purple: .purple
+        case .gray: .gray
+        case .green: .green
+        case .red: .red
+        case .teal: .teal
+        case .pink: .pink
+        case .yellow: .yellow
+        case .indigo: .indigo
+        case .mint: .mint
+        case .cyan: .cyan
+        case .brown: .brown
+        }
+    }
+}
+
 extension Color {
     init?(hex: String) {
         guard let components = HexColorParser.parse(hex) else { return nil }
@@ -75,6 +95,11 @@ extension View {
         } else {
             self
         }
+    }
+    
+    @ViewBuilder
+    func modify<Content: View>(@ViewBuilder _ transform: (Self) -> Content) -> some View {
+        transform(self)
     }
     
     @ViewBuilder
@@ -204,6 +229,21 @@ extension View {
             self
                 .contentTransition(.symbolEffect(.replace))
             
+        }
+    }
+    
+    @ViewBuilder
+    func backgroundVisibility(_ visibility: Color) -> some View {
+        if #unavailable(iOS 26) {
+            if #available(iOS 18, *) {
+                self
+                    .toolbarBackgroundVisibility(.visible, for: .bottomBar)
+                    .toolbarBackground(visibility, for: .bottomBar)
+            } else {
+                self
+            }
+        } else {
+            self
         }
     }
 }

@@ -199,7 +199,6 @@ struct DeveloperProfileView: View {
             }
             .padding(.horizontal, 20)
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             appear = true
             rotateRings = true
@@ -272,14 +271,14 @@ private struct CustomList: View {
                             
                             Text(item.subtitle)
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color(.lightGray))
                         }
                         
                         Spacer()
                         
                         Image(systemName: "arrow.up.forward.square")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color(.lightGray))
                     }
                     .padding(16)
                     .contentShape(Rectangle())

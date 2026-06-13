@@ -27,7 +27,9 @@ struct CalendarView: View {
     
     @State private var selectedDetent: CustomSheetDetent = .small
     @State private var openSettings: Bool = false
+    // periphery:ignore
     @State private var openAddToCalendar: Bool = false
+    @State private var openWhatsNew: Bool = false
     @State private var openCalendar: Bool = false
     @State private var oldOpenCalendar: Bool = false
     
@@ -73,6 +75,7 @@ struct CalendarView: View {
         .overlay(alignment: .bottom) {
             CustomSheetView(
                 openSettings: $openSettings,
+                openWhatsNew: $openWhatsNew,
                 selectedDetent: $selectedDetent,
                 sheetShape: $sheetShape,
                 sheetShapeRadii: $sheetShapeRadii,
@@ -387,6 +390,12 @@ struct CalendarView: View {
             try? await Task.sleep(for: .seconds(0.2))
             changeOpenCalendar(true)
             oldOpenCalendar = true
+            
+            if !settings.latestVersion.isEmpty && settings.latestVersion != Bundle.main.clearAppVersion {
+                try? await Task.sleep(for: .seconds(0.2))
+                openWhatsNew = true
+                selectedDetent = .large
+            }
         }
         
         Task {
@@ -483,11 +492,16 @@ struct CalendarView: View {
                     changeOpenCalendar(oldOpenCalendar)
                 }
             } else if oldValue == .large {
+                if openWhatsNew {
+                    settings.latestVersion = Bundle.main.clearAppVersion
+                }
+                
                 changeOpenCalendar(oldOpenCalendar)
             }
             
             selectedLesson = nil
             openSettings = false
+            openWhatsNew = false
         } else {
             oldOpenCalendar = openCalendar
         }

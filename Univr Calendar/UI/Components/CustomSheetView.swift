@@ -40,6 +40,7 @@ struct CustomSheetView: View {
     
     // MARK: - Binding dal Padre
     @Binding var openSettings: Bool
+    @Binding var openWhatsNew: Bool
     @Binding var selectedDetent: CustomSheetDetent
     @Binding var sheetShape: UnevenRoundedRectangle
     @Binding var sheetShapeRadii: SheetCornerRadii
@@ -196,6 +197,7 @@ struct CustomSheetView: View {
                 selectedLesson: $selectedLesson,
                 openAddToCalendar: $openAddToCalendar,
                 openSettings: $openSettings,
+                openWhatsNew: $openWhatsNew,
                 tempSettings: $tempSettings,
                 lockSheet: $lockSheet,
                 isGoingLarge: isGoingLarge
@@ -443,6 +445,7 @@ struct DynamicSheetContent: View {
     @Binding var selectedLesson: Lesson?
     @Binding var openAddToCalendar: Bool
     @Binding var openSettings: Bool
+    @Binding var openWhatsNew: Bool
     @Binding var tempSettings: TempSettingsState
     
     // TEMP
@@ -487,7 +490,9 @@ struct DynamicSheetContent: View {
                         .frame(width: UIApplication.shared.windowSize.width - padding * 2)
                     
                     NavigationStack {
-                        if openSettings {
+                        if openWhatsNew {
+                            WhatsNewView()
+                        } else if openSettings {
                             Settings(
                                 selectedYear: $tempSettings.selectedYear,
                                 selectedCourse: $tempSettings.selectedCourse,

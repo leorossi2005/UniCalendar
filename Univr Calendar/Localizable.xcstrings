@@ -245,6 +245,16 @@
         }
       }
     },
+    "Comprimi tutto" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collapse all"
+          }
+        }
+      }
+    },
     "Conferma" : {
       "localizations" : {
         "en" : {
@@ -371,6 +381,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Donate something if you want to help"
+          }
+        }
+      }
+    },
+    "Espandi tutto" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expand all"
           }
         }
       }
@@ -581,6 +601,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Not specified"
+          }
+        }
+      }
+    },
+    "Novità" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "News"
           }
         }
       }

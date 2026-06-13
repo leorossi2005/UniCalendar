@@ -97,6 +97,10 @@ struct Settings: View {
                     Label("Lo Sviluppatore", systemImage: "chevron.left.forwardslash.chevron.right")
                         .foregroundStyle(.primary)
                 }
+                NavigationLink(destination: WhatsNewView()) {
+                    Label("Novità", systemImage: "sparkles")
+                        .foregroundStyle(.primary)
+                }
             }
             Section("DANGER ZONE") {
                 Button {
