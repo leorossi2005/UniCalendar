@@ -18,7 +18,7 @@ struct Univr_CalendarApp: App {
     
     var body: some Scene {
         WindowGroup {
-            RootView()
+            MainView()
                 .environment(networkObserver)
                 .environment(UserSettings.shared)
                 .environment(\.safeAreaInsets, UIApplication.shared.safeAreas)

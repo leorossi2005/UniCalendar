@@ -235,6 +235,9 @@
         }
       }
     },
+    "Ciao" : {
+
+    },
     "Comincia!" : {
       "localizations" : {
         "en" : {
@@ -634,6 +637,18 @@
           }
         }
       }
+    },
+    "Open Calendar" : {
+
+    },
+    "Open Lesson" : {
+
+    },
+    "Open News" : {
+
+    },
+    "Open Settings" : {
+
     },
     "Pari" : {
       "localizations" : {
