@@ -14,6 +14,8 @@ import CustomSheet
 @MainActor
 @Observable
 class CalendarSheetRouter {
+    let manager: GlobalSheetManager
+    
     var selectedLesson: Lesson? = nil
     var openSettings: Bool = false
     var openWhatsNew: Bool = false
@@ -21,20 +23,28 @@ class CalendarSheetRouter {
     
     var detents: [CustomSheetDetent] = [.small, .medium]
     
+    init(selectedDetent: CustomSheetDetent? = nil) {
+        if let detent = selectedDetent {
+            manager = .init(initialDetent: detent)
+        } else {
+            manager = .init()
+        }
+    }
+    
     // MARK: - Azioni di navigazione
-    func routeToSettings(manager: GlobalSheetManager) {
+    func routeToSettings() {
         openSettings = true
         detents = [.small, .medium, .large]
         manager.setDetent(.large)
     }
     
-    func routeToWhatsNew(manager: GlobalSheetManager) {
+    func routeToWhatsNew() {
         openWhatsNew = true
         detents = [.small, .medium, .large]
         manager.setDetent(.large)
     }
     
-    func routeToLesson(_ lesson: Lesson, addToCalendar: Bool = false, manager: GlobalSheetManager) {
+    func routeToLesson(_ lesson: Lesson, addToCalendar: Bool = false) {
         selectedLesson = lesson
         openAddToCalendar = addToCalendar
         detents = [.small, .medium, .large]
@@ -57,7 +67,6 @@ struct CalendarView: View {
     @Environment(UserSettings.self) var settings
     @Environment(NetworkStateObserver.self) private var net
   
-    @State private var sheetManager: GlobalSheetManager = .init()
     @State private var sheetRouter: CalendarSheetRouter = .init()
     
     @State private var viewModel = CalendarViewModel()
@@ -72,7 +81,7 @@ struct CalendarView: View {
                 .toolbar {
                     buildToolbar()
                 }
-                .onChange(of: sheetManager.selectedDetent) { oldValue, newValue in
+                .onChange(of: sheetRouter.manager.selectedDetent) { oldValue, newValue in
                     handleDetentChange(oldValue: oldValue, newValue: newValue)
                 }
                 .onAppear {
@@ -99,7 +108,7 @@ struct CalendarView: View {
                 .animation(.default, value: viewModel.updateAvailable)
                 .animation(.default, value: net.status)
         }
-        .customSheet(isPresented: .constant(true), manager: sheetManager, detents: sheetRouter.detents) {
+        .customSheet(isPresented: .constant(true), manager: sheetRouter.manager, detents: sheetRouter.detents) {
             DynamicSheetContent(
                 selectedWeek: $selectedWeek,
                 selectedLesson: $sheetRouter.selectedLesson,
@@ -110,7 +119,7 @@ struct CalendarView: View {
             )
             .disabled((viewModel.state == .loading || viewModel.state == .empty || viewModel.schedule.isEmpty) && !sheetRouter.openSettings)
         }
-        .environment(sheetManager)
+        .environment(sheetRouter.manager)
     }
     
     // MARK: - Main Content
@@ -166,7 +175,7 @@ struct CalendarView: View {
         .onChange(of: selectedWeek) { oldValue, newValue in
             if !Calendar.current.isDate(oldValue, inSameDayAs: newValue) {
                 Haptics.play(.selection, state: "selection")
-                if !sheetRouter.openSettings { sheetManager.setDetent(.small) }
+                if !sheetRouter.openSettings { sheetRouter.manager.setDetent(.small) }
                 Task {
                     try? await Task.sleep(for: .seconds(0.2))
                     GlobalHaptics.shared.state = ""
@@ -393,7 +402,7 @@ struct CalendarView: View {
     // MARK: - Logic Methods
     private func openSettingsAction() {
         Haptics.play(.impact(weight: .light))
-        sheetRouter.routeToSettings(manager: sheetManager)
+        sheetRouter.routeToSettings()
     }
     
     private func inizializeData() {
@@ -405,7 +414,7 @@ struct CalendarView: View {
             try? await Task.sleep(for: .seconds(0.2))
             if !settings.latestVersion.isEmpty && settings.latestVersion != Bundle.main.clearAppVersion {
                 try? await Task.sleep(for: .seconds(0.2))
-                sheetRouter.routeToWhatsNew(manager: sheetManager)
+                sheetRouter.routeToWhatsNew()
             }
         }
         
@@ -510,7 +519,6 @@ struct CalendarView: View {
 // MARK: - Subviews
 struct CalendarViewDay: View {
     @Environment(\.colorScheme) var colorScheme
-    @Environment(GlobalSheetManager.self) var sheetManager
     
     let filteredLessons: [Lesson]
     var sheetRouter: CalendarSheetRouter
@@ -523,20 +531,20 @@ struct CalendarViewDay: View {
                         LessonCard(lesson: lesson)
                             .onTapGesture {
                                 Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                sheetRouter.routeToLesson(lesson, manager: sheetManager)
+                                sheetRouter.routeToLesson(lesson)
                             }
                             .contextMenu(
                                 menuItems: {
                                     Button(action: {
                                         Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                        sheetRouter.routeToLesson(lesson, addToCalendar: true, manager: sheetManager)
+                                        sheetRouter.routeToLesson(lesson, addToCalendar: true)
 
                                     }) {
                                         Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
                                     }
                                     Button(action: {
                                         Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                        sheetRouter.routeToLesson(lesson, manager: sheetManager)
+                                        sheetRouter.routeToLesson(lesson)
                                     }) {
                                         Label("Vedi più dettagli", systemImage: "ellipsis")
                                     }
