@@ -173,33 +173,6 @@ extension View {
     }
     
     @ViewBuilder
-    func onScrollGeometry(
-        openCalendar: Binding<Bool>,
-        selectedDetent: Binding<CustomSheetDetent>,
-        firstLoading: Binding<Bool>,
-        changeOpenCalendar: ((_ isOpen: Bool) -> Void)?
-    ) -> some View {
-        if #available(iOS 26, *) {
-            self
-                .onScrollGeometryChange(for: CGFloat.self, of: { geometry in
-                    (geometry.contentOffset.y + geometry.contentInsets.top)
-                }) { oldValue, newValue in
-                    if !firstLoading.wrappedValue {
-                        let isLarge = selectedDetent.wrappedValue == .large
-                        
-                        if newValue <= 0 && !openCalendar.wrappedValue {
-                            changeOpenCalendar?(true)
-                        } else if newValue > 10 && !isLarge && openCalendar.wrappedValue {
-                            changeOpenCalendar?(false)
-                        }
-                    }
-                }
-        } else {
-            self
-        }
-    }
-    
-    @ViewBuilder
     func toolbarTitleShadow(_ colorScheme: ColorScheme) -> some View {
         if #available(iOS 26, *) {
             self

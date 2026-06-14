@@ -11,31 +11,60 @@ import SwiftUI
 import UnivrCore
 import CustomSheet
 
+@MainActor
+@Observable
+class CalendarSheetRouter {
+    var selectedLesson: Lesson? = nil
+    var openSettings: Bool = false
+    var openWhatsNew: Bool = false
+    var openAddToCalendar: Bool = false
+    
+    var detents: [CustomSheetDetent] = [.small, .medium]
+    
+    // MARK: - Azioni di navigazione
+    func routeToSettings(manager: GlobalSheetManager) {
+        openSettings = true
+        detents = [.small, .medium, .large]
+        manager.setDetent(.large)
+    }
+    
+    func routeToWhatsNew(manager: GlobalSheetManager) {
+        openWhatsNew = true
+        detents = [.small, .medium, .large]
+        manager.setDetent(.large)
+    }
+    
+    func routeToLesson(_ lesson: Lesson, addToCalendar: Bool = false, manager: GlobalSheetManager) {
+        selectedLesson = lesson
+        openAddToCalendar = addToCalendar
+        detents = [.small, .medium, .large]
+        manager.setDetent(.large)
+    }
+    
+    // MARK: - Reset automatico
+    func resetToCalendar() {
+        selectedLesson = nil
+        openSettings = false
+        openWhatsNew = false
+        openAddToCalendar = false
+        detents = [.small, .medium]
+    }
+}
+
 struct CalendarView: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
     @Environment(NetworkStateObserver.self) private var net
+  
+    @State private var sheetManager: GlobalSheetManager = .init()
+    @State private var sheetRouter: CalendarSheetRouter = .init()
     
-    private let positionObserver = WindowPositionObserver.shared
     @State private var viewModel = CalendarViewModel()
-    @State private var tempSettings = TempSettingsState()
-    
-    @State private var selectedLesson: Lesson? = nil
     @State private var selectedWeek: Date = Calendar.current.startOfDay(for: Date())
-    
     @State private var firstLoading: Bool = true
     
-    @State private var selectedDetent: CustomSheetDetent = .small
-    @State private var openSettings: Bool = false
-    // periphery:ignore
-    @State private var openAddToCalendar: Bool = false
-    @State private var openWhatsNew: Bool = false
-    @State private var openCalendar: Bool = false
-    @State private var oldOpenCalendar: Bool = false
-    
-    @State private var sheetShape = UnevenRoundedRectangle()
-    @State private var sheetShapeRadii: SheetCornerRadii = .init(tl: 0, tr: 0, bl: 0, br: 0)
+    @State var tempSettings: TempSettingsState = .init()
     
     var body: some View {
         NavigationStack {
@@ -43,14 +72,11 @@ struct CalendarView: View {
                 .toolbar {
                     buildToolbar()
                 }
-                .onChange(of: selectedDetent) { oldValue, newValue in
+                .onChange(of: sheetManager.selectedDetent) { oldValue, newValue in
                     handleDetentChange(oldValue: oldValue, newValue: newValue)
                 }
                 .onAppear {
                     inizializeData()
-                }
-                .onChange(of: openCalendar) { oldValue, newValue in
-                    oldOpenCalendar = oldValue
                 }
                 .onChange(of: viewModel.state == .loading) { _, isLoading in
                     handleLoadingChange(isLoading)
@@ -73,22 +99,18 @@ struct CalendarView: View {
                 .animation(.default, value: viewModel.updateAvailable)
                 .animation(.default, value: net.status)
         }
-        .overlay(alignment: .bottom) {
-            CustomSheetView(
-                openSettings: $openSettings,
-                openWhatsNew: $openWhatsNew,
-                selectedDetent: $selectedDetent,
-                sheetShape: $sheetShape,
-                sheetShapeRadii: $sheetShapeRadii,
+        .customSheet(isPresented: .constant(true), manager: sheetManager, detents: sheetRouter.detents) {
+            DynamicSheetContent(
                 selectedWeek: $selectedWeek,
-                selectedLesson: $selectedLesson,
-                tempSettings: $tempSettings,
-                openCalendar: $openCalendar,
-                openAddToCalendar: $openAddToCalendar
+                selectedLesson: $sheetRouter.selectedLesson,
+                openAddToCalendar: $sheetRouter.openAddToCalendar,
+                openSettings: $sheetRouter.openSettings,
+                openWhatsNew: $sheetRouter.openWhatsNew,
+                tempSettings: $tempSettings
             )
-            .disabled((viewModel.state == .loading || viewModel.state == .empty || viewModel.schedule.isEmpty) && !openSettings)
+            .disabled((viewModel.state == .loading || viewModel.state == .empty || viewModel.schedule.isEmpty) && !sheetRouter.openSettings)
         }
-        .ignoresSafeArea(edges: .bottom)
+        .environment(sheetManager)
     }
     
     // MARK: - Main Content
@@ -115,12 +137,7 @@ struct CalendarView: View {
                         if !dailyLessons.isEmpty {
                             CalendarViewDay(
                                 filteredLessons: dailyLessons,
-                                selectedLesson: $selectedLesson,
-                                openCalendar: $openCalendar,
-                                openAddToCalendar: $openAddToCalendar,
-                                selectedDetent: $selectedDetent,
-                                firstLoading: $firstLoading,
-                                changeOpenCalendar: changeOpenCalendar
+                                sheetRouter: sheetRouter
                             )
                         } else {
                             ContentUnavailableView(
@@ -149,7 +166,7 @@ struct CalendarView: View {
         .onChange(of: selectedWeek) { oldValue, newValue in
             if !Calendar.current.isDate(oldValue, inSameDayAs: newValue) {
                 Haptics.play(.selection, state: "selection")
-                if !openSettings { selectedDetent = .small }
+                if !sheetRouter.openSettings { sheetManager.setDetent(.small) }
                 Task {
                     try? await Task.sleep(for: .seconds(0.2))
                     GlobalHaptics.shared.state = ""
@@ -376,26 +393,19 @@ struct CalendarView: View {
     // MARK: - Logic Methods
     private func openSettingsAction() {
         Haptics.play(.impact(weight: .light))
-        openSettings = true
-        selectedDetent = .large
+        sheetRouter.routeToSettings(manager: sheetManager)
     }
     
     private func inizializeData() {
         viewModel.generateAcademicYearDays(for: settings.selectedYear)
-        
         updateDate()
-        
         tempSettings.sync(with: settings)
         
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.2))
-            changeOpenCalendar(true)
-            oldOpenCalendar = true
-            
             if !settings.latestVersion.isEmpty && settings.latestVersion != Bundle.main.clearAppVersion {
                 try? await Task.sleep(for: .seconds(0.2))
-                openWhatsNew = true
-                selectedDetent = .large
+                sheetRouter.routeToWhatsNew(manager: sheetManager)
             }
         }
         
@@ -454,17 +464,14 @@ struct CalendarView: View {
         }
     }
     
-    // MARK: - Find a way to move
     private func handleDetentChange(oldValue: CustomSheetDetent, newValue: CustomSheetDetent) {
         if newValue != .large {
-            if openSettings {
+            if sheetRouter.openSettings {
                 let hasChanged = tempSettings.hasChanged(from: settings)
                 
                 if hasChanged {
                     viewModel.state = .loading
                     tempSettings.apply(to: settings)
-                    
-                    changeOpenCalendar(true)
                     
                     if settings.selectedCourse != "0" {
                         updateDate()
@@ -485,103 +492,28 @@ struct CalendarView: View {
                     }
                 } else if tempSettings.matricola != settings.matricola {
                     settings.matricola = tempSettings.matricola
-                    changeOpenCalendar(true)
                     Task {
                         await viewModel.loadFromCache(matricola: settings.matricola)
                     }
-                } else {
-                    changeOpenCalendar(oldOpenCalendar)
                 }
             } else if oldValue == .large {
-                if openWhatsNew {
+                if sheetRouter.openWhatsNew {
                     settings.latestVersion = Bundle.main.clearAppVersion
                 }
-                
-                changeOpenCalendar(oldOpenCalendar)
             }
             
-            selectedLesson = nil
-            openSettings = false
-            openWhatsNew = false
-        } else {
-            oldOpenCalendar = openCalendar
-        }
-    }
-    
-    // MARK: - To remove
-    private func changeOpenCalendar(_ toOpen: Bool) {
-        guard openCalendar != toOpen else { return }
-
-        var transaction = Transaction()
-        transaction.disablesAnimations = true
-        withTransaction(transaction) {
-            setSheetShape(isOpen: toOpen)
-        }
-
-        withAnimation(.spring(duration: 0.5, bounce: 0.3)) {
-            openCalendar = toOpen
-        }
-    }
-    
-    private func setSheetShape(isOpen: Bool, sheetCornerRadius: CGFloat = -1) {
-        withAnimation {
-            if #available(iOS 26, *) {
-                if UIDevice.isIpad {
-                    sheetShapeRadii = .init(
-                        tl: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.4 / 2 + 8)) - 8 : sheetCornerRadius,
-                        tr: sheetCornerRadius == -1 ? (isOpen ? 32 : (47.4 / 2 + 8)) - 8 : sheetCornerRadius,
-                        bl: (isOpen ? (positionObserver.edges.bottomLeftSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8,
-                        br: (isOpen ? (positionObserver.edges.bottomRightSquare ? 18 : 32) : (47.4 / 2 + 8)) - 8
-                    )
-                } else {
-                    let radius: CGFloat = (isOpen ? .deviceCornerRadius : (47.4 / 2 + 8)) - 8
-                    sheetShapeRadii = .init(
-                        tl: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
-                        tr: sheetCornerRadius == -1 ? radius : sheetCornerRadius,
-                        bl: radius,
-                        br: radius
-                    )
-                }
-            } else {
-                if UIDevice.isIpad {
-                    sheetShapeRadii = .init(
-                        tl: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
-                        tr: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
-                        bl: 0,
-                        br: 0
-                    )
-                } else {
-                    sheetShapeRadii = .init(
-                        tl: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
-                        tr: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
-                        bl: 0,
-                        br: 0
-                    )
-                }
-            }
-            sheetShape = UnevenRoundedRectangle(
-                topLeadingRadius: sheetShapeRadii.tl,
-                bottomLeadingRadius: sheetShapeRadii.bl,
-                bottomTrailingRadius: sheetShapeRadii.br,
-                topTrailingRadius: sheetShapeRadii.tr
-            )
+            sheetRouter.resetToCalendar()
         }
     }
 }
 
 // MARK: - Subviews
 struct CalendarViewDay: View {
-    @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
-    let filteredLessons: [Lesson]
+    @Environment(GlobalSheetManager.self) var sheetManager
     
-    @Binding var selectedLesson: Lesson?
-    @Binding var openCalendar: Bool
-    @Binding var openAddToCalendar: Bool
-    @Binding var selectedDetent: CustomSheetDetent
-    @Binding var firstLoading: Bool
-
-    var changeOpenCalendar: ((_ isOpen: Bool) -> Void)
+    let filteredLessons: [Lesson]
+    var sheetRouter: CalendarSheetRouter
     
     var body: some View {
         ScrollView {
@@ -591,23 +523,20 @@ struct CalendarViewDay: View {
                         LessonCard(lesson: lesson)
                             .onTapGesture {
                                 Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                selectedLesson = lesson
-                                selectedDetent = .large
+                                sheetRouter.routeToLesson(lesson, manager: sheetManager)
                             }
                             .contextMenu(
                                 menuItems: {
                                     Button(action: {
                                         Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                        selectedLesson = lesson
-                                        openAddToCalendar = true
-                                        selectedDetent = .large
+                                        sheetRouter.routeToLesson(lesson, addToCalendar: true, manager: sheetManager)
+
                                     }) {
                                         Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
                                     }
                                     Button(action: {
                                         Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                        selectedLesson = lesson
-                                        selectedDetent = .large
+                                        sheetRouter.routeToLesson(lesson, manager: sheetManager)
                                     }) {
                                         Label("Vedi più dettagli", systemImage: "ellipsis")
                                     }
@@ -633,12 +562,6 @@ struct CalendarViewDay: View {
         .scrollViewTopPadding()
         .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
         .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
-        .onScrollGeometry(
-            openCalendar: $openCalendar,
-            selectedDetent: $selectedDetent,
-            firstLoading: $firstLoading,
-            changeOpenCalendar: changeOpenCalendar
-        )
     }
 }
 

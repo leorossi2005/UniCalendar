@@ -66,31 +66,6 @@ struct MainView: View {
                 }
             }
             .navigationTitle("Sheet Testing View")
-            //.sheet(isPresented: .constant(true)) {
-            //    DynamicSheetContent(
-            //        selectedWeek: $selectedWeek,
-            //        selectedLesson: $selectedLesson,
-            //        openAddToCalendar: $openAddToCalendar,
-            //        openSettings: $openSettings,
-            //        openWhatsNew: $openWhatsNew,
-            //        tempSettings: $tempSettings
-            //    )
-            //    .environment(sheetManager)
-            //    .presentationDetents([.medium, .large])
-            //    .presentationBackgroundInteraction(.enabled)
-            //}
-            .customSheet(isPresented: $isPresented, manager: sheetManager, detents: detents) {
-                DynamicSheetContent(
-                    selectedWeek: $selectedWeek,
-                    selectedLesson: $selectedLesson,
-                    openAddToCalendar: $openAddToCalendar,
-                    openSettings: $openSettings,
-                    openWhatsNew: $openWhatsNew,
-                    tempSettings: $tempSettings
-                )
-            }
-            .environment(networkObserver)
-            .environment(UserSettings.shared)
             .onChange(of: sheetManager.selectedDetent) { _, newDetent in
                 if newDetent != .large {
                     openSettings = false
@@ -101,6 +76,18 @@ struct MainView: View {
                 }
             }
         }
+        .customSheet(isPresented: $isPresented, manager: sheetManager, detents: detents) {
+            DynamicSheetContent(
+                selectedWeek: $selectedWeek,
+                selectedLesson: $selectedLesson,
+                openAddToCalendar: $openAddToCalendar,
+                openSettings: $openSettings,
+                openWhatsNew: $openWhatsNew,
+                tempSettings: $tempSettings
+            )
+        }
+        .environment(networkObserver)
+        .environment(UserSettings.shared)
     }
 }
 

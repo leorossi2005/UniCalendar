@@ -522,17 +522,19 @@ class OverlayAnchorUIView: UIView {
         hc.view.backgroundColor = .clear
         hc.view.translatesAutoresizingMaskIntoConstraints = false
         hc.safeAreaRegions = []
-        
+
         let container = PassthroughContainerView()
         container.backgroundColor = .clear
         container.translatesAutoresizingMaskIntoConstraints = false
         container.hostingView = hc.view
         
         container.addSubview(hc.view)
-
-        guard let rootVC = window.rootViewController else { return }
-        rootVC.addChild(hc)
-        rootVC.view.addSubview(container)
+        window.addSubview(container)
+        
+        if let rootVC = window.rootViewController {
+            rootVC.addChild(hc)
+            hc.didMove(toParent: rootVC)
+        }
         
         self.hostingController = hc
         self.containerView = container
@@ -543,13 +545,11 @@ class OverlayAnchorUIView: UIView {
             hc.view.topAnchor.constraint(equalTo: container.topAnchor),
             hc.view.bottomAnchor.constraint(equalTo: container.bottomAnchor),
             
-            container.leadingAnchor.constraint(equalTo: rootVC.view.leadingAnchor),
-            container.trailingAnchor.constraint(equalTo: rootVC.view.trailingAnchor),
-            container.topAnchor.constraint(equalTo: rootVC.view.topAnchor),
-            container.bottomAnchor.constraint(equalTo: rootVC.view.bottomAnchor)
+            container.leadingAnchor.constraint(equalTo: window.leadingAnchor),
+            container.trailingAnchor.constraint(equalTo: window.trailingAnchor),
+            container.topAnchor.constraint(equalTo: window.topAnchor),
+            container.bottomAnchor.constraint(equalTo: window.bottomAnchor)
         ])
-        
-        hc.didMove(toParent: rootVC)
     }
     
     func updateNavigationSafeArea(isLarge: Bool) {

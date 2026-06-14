@@ -186,6 +186,7 @@
       }
     },
     "Calendario" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
