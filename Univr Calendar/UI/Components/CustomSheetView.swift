@@ -9,6 +9,7 @@
 
 import SwiftUI
 import UnivrCore
+import CustomSheet
 
 struct CustomSheetView: View {
     @Environment(\.colorScheme) var colorScheme
