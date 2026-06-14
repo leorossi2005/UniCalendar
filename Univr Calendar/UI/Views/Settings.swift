@@ -14,6 +14,7 @@ struct Settings: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
     @Environment(NetworkStateObserver.self) private var net
+    @Environment(GlobalSheetManager.self) private var sheetManager
     
     @State private var viewModel = UniversityDataManager()
     @State private var showDeleteAlert = false
@@ -23,7 +24,6 @@ struct Settings: View {
     @Binding var selectedCourse: String
     @Binding var selectedAcademicYear: String
     @Binding var matricola: String
-    @Binding var lockSheet: Bool
     
     var body: some View {
         List {
@@ -129,9 +129,9 @@ struct Settings: View {
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: searchTextFieldFocus) {
             if searchTextFieldFocus {
-                lockSheet = true
+                sheetManager.setLock(true)
             } else if selectedCourse != "0" {
-                lockSheet = false
+                sheetManager.setLock(false)
             }
         }
         .onAppear {
@@ -141,7 +141,7 @@ struct Settings: View {
     
     // MARK: - Logic Methods
     private func handleYearChange() {
-        lockSheet = true
+        sheetManager.setLock(true)
         viewModel.courses = []
         selectedCourse = "0"
         viewModel.academicYears = []
@@ -157,7 +157,7 @@ struct Settings: View {
     private func handleCourseChange() {
         if selectedCourse != "0" {
             settings.foundMatricola = false
-            lockSheet = false
+            sheetManager.setLock(false)
             viewModel.academicYears = []
             selectedAcademicYear = "0"
             
@@ -170,7 +170,7 @@ struct Settings: View {
                 }
             }
         } else {
-            lockSheet = true
+            sheetManager.setLock(true)
             viewModel.academicYears = []
             selectedAcademicYear = "0"
             settings.foundMatricola = false
@@ -227,7 +227,7 @@ struct Settings: View {
                                 settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
                             }
                         } else {
-                            lockSheet = true
+                            sheetManager.setLock(true)
                         }
                     }
                 } catch {}
@@ -244,10 +244,9 @@ struct Settings: View {
     @Previewable @State var selectedAcademicYear: String = "0"
     @Previewable @State var matricola: String = "even"
     @Previewable @State var isFocused: Bool = false
-    @Previewable @State var lockSheet: Bool = false
     
     NavigationStack {
-        Settings(selectedYear: $selectedYear, selectedCourse: $selectedCourse, selectedAcademicYear: $selectedAcademicYear, matricola: $matricola, lockSheet: $lockSheet)
+        Settings(selectedYear: $selectedYear, selectedCourse: $selectedCourse, selectedAcademicYear: $selectedAcademicYear, matricola: $matricola)
         .toolbar {
             ToolbarItem(placement: .principal) {
                 Text("Impostazioni")

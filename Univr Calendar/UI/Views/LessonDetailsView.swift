@@ -14,8 +14,9 @@ import UnivrCore
 import EventKit
 
 struct LessonDetailsView: View {
+    @Environment(GlobalSheetManager.self) private var sheetManager
+    
     @Binding var lesson: Lesson?
-    @Binding var lockSheet: Bool
     
     @State private var showOriginalName: Bool = false
     @State private var calendarEvent: EKEvent?
@@ -75,7 +76,7 @@ struct LessonDetailsView: View {
                 }
             }
             .onChange(of: calendarEvent) { _, newValue in
-                lockSheet = newValue != nil
+                sheetManager.setLock(newValue != nil)
                 if openAddToCalendar, newValue == nil, let onDismiss = onDismiss {
                     onDismiss()
                 }
@@ -328,11 +329,10 @@ struct StableMapView: View {
 #Preview {
     @Previewable @Namespace var transition
     @Previewable @State var lesson: Lesson? = Lesson.sample
-    @Previewable @State var lockSheet: Bool = false
     
     Text("")
         .sheet(isPresented: .constant(true)) {
-            LessonDetailsView(lesson: $lesson, lockSheet: $lockSheet, openAddToCalendar: false)
+            LessonDetailsView(lesson: $lesson, openAddToCalendar: false)
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
         }

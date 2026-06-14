@@ -172,13 +172,11 @@ struct CustomSheetView: View {
             
             DynamicSheetContent(
                 selectedWeek: $selectedWeek,
-                selectedDetent: $selectedDetent,
                 selectedLesson: $selectedLesson,
                 openAddToCalendar: $openAddToCalendar,
                 openSettings: $openSettings,
                 openWhatsNew: $openWhatsNew,
-                tempSettings: $tempSettings,
-                lockSheet: $lockSheet
+                tempSettings: $tempSettings
             )
             .overlay(alignment: .top) {
                 if !lockSheet {
@@ -412,92 +410,6 @@ struct CustomSheetView: View {
                 bottomTrailingRadius: sheetShapeRadii.br,
                 topTrailingRadius: sheetShapeRadii.tr
             )
-        }
-    }
-}
-
-// MARK: - Subviews
-struct DynamicSheetContent: View {
-    @Binding var selectedWeek: Date
-    @Binding var selectedDetent: CustomSheetDetent
-    @Binding var selectedLesson: Lesson?
-    @Binding var openAddToCalendar: Bool
-    @Binding var openSettings: Bool
-    @Binding var openWhatsNew: Bool
-    @Binding var tempSettings: TempSettingsState
-    
-    // TEMP
-    @Binding var lockSheet: Bool
-    
-    var padding: CGFloat {
-        if #available(iOS 26, *) {
-            8
-        } else {
-            0
-        }
-    }
-    
-    var body: some View {
-        ZStack {
-            GeometryReader { proxy in
-                let currentHeight = proxy.size.height
-                let windowHeight = UIApplication.shared.windowSize.height
-        
-                let largeHeight = CustomSheetDetent.large.value
-                let mediumHeightHigh = CustomSheetDetent.medium.value * 1.05
-                let mediumHeightLow = CustomSheetDetent.medium.value * 0.95
-                let smallHeight = CustomSheetDetent.small.value
-                let fadeRange: CGFloat = windowHeight * 0.05
-        
-                let largeOpacity = 1.0 - (Double(largeHeight - currentHeight) / Double(fadeRange))
-                let mediumOpacity = 1.0 - ((currentHeight < mediumHeightHigh ? Double(mediumHeightLow - currentHeight) : Double(currentHeight - mediumHeightHigh)) / Double(fadeRange))
-                let smallOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
-        
-                let smallIsHidden = currentHeight > smallHeight + fadeRange
-                let mediumIsHidden = currentHeight > mediumHeightHigh + fadeRange
-                ZStack(alignment: .topLeading) {
-                    FractionDatePickerContainer(selectedWeek: $selectedWeek)
-                        .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
-                        .allowsHitTesting(selectedDetent == .small)
-                        .frame(width: UIApplication.shared.windowSize.width - padding * 2)
-                    
-                    DatePickerContainer(selectedWeek: $selectedWeek)
-                        .opacity(mediumIsHidden ? 0 : min(max(mediumOpacity, 0), 1))
-                        .allowsHitTesting(selectedDetent == .medium)
-                        .frame(width: UIApplication.shared.windowSize.width - padding * 2)
-                    
-                    NavigationStack {
-                        if openWhatsNew {
-                            WhatsNewView()
-                        } else if openSettings {
-                            Settings(
-                                selectedYear: $tempSettings.selectedYear,
-                                selectedCourse: $tempSettings.selectedCourse,
-                                selectedAcademicYear: $tempSettings.selectedAcademicYear,
-                                matricola: $tempSettings.matricola,
-                                lockSheet: $lockSheet
-                            )
-                            .ignoresSafeArea(.keyboard)
-                        } else {
-                            LessonDetailsView(lesson: $selectedLesson, lockSheet: $lockSheet, openAddToCalendar: openAddToCalendar) {
-                                selectedDetent = .small
-                                selectedLesson = nil
-                                openAddToCalendar = false
-                            }
-                            .opacity(min(max(largeOpacity, 0), 1))
-                            .allowsHitTesting(selectedDetent == .large)
-                        }
-                    }
-                    .id(openSettings)
-                    .if(!UIDevice.isIpad) { view in
-                        view
-                            .customSafeAreaInsets(top: 16)
-                    }
-                    .opacity(min(max(largeOpacity, 0), 1))
-                    .allowsHitTesting(selectedDetent == .large)
-                    .frame(width: UIApplication.shared.windowSize.width, height: CustomSheetDetent.large.value)
-                }
-            }
         }
     }
 }

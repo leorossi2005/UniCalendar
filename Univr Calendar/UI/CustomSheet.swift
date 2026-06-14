@@ -11,17 +11,18 @@ import SwiftUI
 import UnivrCore
 
 struct MainView: View {
+    @State private var sheetManager = GlobalSheetManager()
     @State var isPresented: Bool = true
+    
+    @State var detents: [CustomSheetDetent] = [.small, .medium]
     
     // Test
     @State var selectedWeek: Date = Date()
     @State var selectedLesson: Lesson? = nil
     @State var openAddToCalendar: Bool = false
-    @State var openSettings: Bool = false
+    @State var openSettings: Bool = true
     @State var openWhatsNew: Bool = false
     @State var tempSettings: TempSettingsState = .init()
-    @State var lockSheet: Bool = false
-    @State var selectedDetent: CustomSheetDetent = .small
     
     @State private var networkObserver = NetworkStateObserver(
         provider: IOSNetworkMonitor.createProvider()
@@ -35,46 +36,70 @@ struct MainView: View {
                 }
                 Button {
                     openSettings = true
-                    selectedDetent = .large
+                    detents = [.small, .medium, .large]
+                    sheetManager.setDetent(.large)
                 } label: {
                     Label("Open Settings", systemImage: "gearshape.fill")
                 }
                 Button {
                     openWhatsNew = true
-                    selectedDetent = .large
+                    detents = [.small, .medium, .large]
+                    sheetManager.setDetent(.large)
                 } label: {
                     Label("Open News", systemImage: "sparkles")
                 }
                 Button {
                     selectedLesson = .sample
                     openAddToCalendar = true
-                    selectedDetent = .large
+                    detents = [.small, .medium, .large]
+                    sheetManager.setDetent(.large)
                 } label: {
                     Label("Open Calendar", systemImage: "calendar")
                 }
                 Button {
                     selectedLesson = .sample
-                    selectedDetent = .large
+                    detents = [.small, .medium, .large]
+                    sheetManager.setDetent(.large)
                 } label: {
                     Label("Open Lesson", systemImage: "graduationcap.fill")
                 }
             }
             .navigationTitle("Sheet Testing View")
-            .customSheet(isPresented: $isPresented, selectedDetent: $selectedDetent, lockSheet: $lockSheet) {
-                DynamicSheetContent(
-                    selectedWeek: $selectedWeek,
-                    selectedDetent: $selectedDetent,
-                    selectedLesson: $selectedLesson,
-                    openAddToCalendar: $openAddToCalendar,
-                    openSettings: $openSettings,
-                    openWhatsNew: $openWhatsNew,
-                    tempSettings: $tempSettings,
-                    lockSheet: $lockSheet
-                )
+            //.sheet(isPresented: .constant(true)) {
+            //    DynamicSheetContent(
+            //        selectedWeek: $selectedWeek,
+            //        selectedLesson: $selectedLesson,
+            //        openAddToCalendar: $openAddToCalendar,
+            //        openSettings: $openSettings,
+            //        openWhatsNew: $openWhatsNew,
+            //        tempSettings: $tempSettings
+            //    )
+            //    .environment(sheetManager)
+            //    .presentationDetents([.medium, .large])
+            //    .presentationBackgroundInteraction(.enabled)
+            //}
+            .onChange(of: sheetManager.selectedDetent) { _, newDetent in
+                if newDetent != .large {
+                    openSettings = false
+                    openWhatsNew = false
+                    openAddToCalendar = false
+                    selectedLesson = nil
+                    detents = [.small, .medium]
+                }
             }
-            .environment(networkObserver)
-            .environment(UserSettings.shared)
         }
+        .customSheet(isPresented: $isPresented, manager: sheetManager, detents: detents) {
+            DynamicSheetContent(
+                selectedWeek: $selectedWeek,
+                selectedLesson: $selectedLesson,
+                openAddToCalendar: $openAddToCalendar,
+                openSettings: $openSettings,
+                openWhatsNew: $openWhatsNew,
+                tempSettings: $tempSettings
+            )
+        }
+        .environment(networkObserver)
+        .environment(UserSettings.shared)
     }
 }
 
@@ -93,7 +118,7 @@ public enum CustomSheetDetent {
             if UIDevice.isIpad {
                 return windowHeight - 75
             } else {
-                return windowHeight - topMargin - 10
+                return windowHeight - topMargin
             }
         }
     }
@@ -104,38 +129,42 @@ public class GlobalSheetManager {
     // MARK: - Sensori (Stati in sola lettura per l'utente)
     public var liveHeight: CGFloat = 0
     public var isDragging: Bool = false
-    public var presentationProgress: CGFloat = 0.0 // Da 0.0 (small) a 1.0 (large)
+    public var locked: Bool = false
+    public var selectedDetent: CustomSheetDetent
     
     // MARK: - Motore Interno (Chiusure collegate dalla CustomSheet)
-    var actionChangeDetent: ((CustomSheetDetent) -> Void)?
     var actionDismiss: (() -> Void)?
-    
-    public init() {}
-    
+        
     // MARK: - Comandi Pubblici (Quelli che userai nella tua app)
     public func setDetent(_ detent: CustomSheetDetent) {
-        actionChangeDetent?(detent)
+        selectedDetent = detent
     }
     
     public func dismiss() {
         actionDismiss?()
     }
+    
+    public func setLock(_ lock: Bool) {
+        locked = lock
+    }
+    
+    public init(initialDetent: CustomSheetDetent = .small) {
+        self.selectedDetent = initialDetent
+    }
 }
 
 struct CustomSheet<Content: View>: View {
     @Binding var isPresented: Bool
-    @Binding var selectedDetent: CustomSheetDetent
-    
-    @Binding var lockSheet: Bool
     var detents: [CustomSheetDetent]
     
+    @State private var manager: GlobalSheetManager
+    @State private var activeDetents: [CustomSheetDetent]
+    
     @State var sheetShapeRadii: SheetCornerRadii = SheetCornerRadii(tl: .deviceCornerRadius, tr: .deviceCornerRadius, bl: .deviceCornerRadius, br: .deviceCornerRadius)
-    
-    @State private var manager = GlobalSheetManager()
-    
+        
     // Gesture & Layout States
-    @State private var enableBackground: Bool = false
-    @State private var baseHeight: CGFloat = CustomSheetDetent.small.value
+    @State private var enableBackground: Bool
+    @State private var baseHeight: CGFloat
     
     @State private var dragY: CGFloat = .zero
     
@@ -151,16 +180,59 @@ struct CustomSheet<Content: View>: View {
     
     init(
         isPresented: Binding<Bool>,
-        selectedDetent: Binding<CustomSheetDetent>,
-        lockSheet: Binding<Bool>,
         detents: [CustomSheetDetent],
+        manager: GlobalSheetManager?,
         @ViewBuilder content: () -> Content
     ) {
         self._isPresented = isPresented
-        self._selectedDetent = selectedDetent
-        self._baseHeight = State(initialValue: selectedDetent.wrappedValue.value)
-        self._lockSheet = lockSheet
         self.detents = detents
+        
+        let safeDefault = detents.min(by: { $0.value < $1.value }) ?? .small
+        let initialManager: GlobalSheetManager
+        
+        if let providedManager = manager {
+            if !detents.contains(providedManager.selectedDetent) {
+                providedManager.selectedDetent = safeDefault
+            }
+            initialManager = providedManager
+        } else {
+            initialManager = GlobalSheetManager(initialDetent: safeDefault)
+        }
+        
+        self._manager = State(initialValue: initialManager)
+        self._activeDetents = State(initialValue: detents)
+        
+        // 2. ESTRAGGO IL DETENT DI PARTENZA
+        let startingDetent = initialManager.selectedDetent
+        
+        // 3. IMPOSTO L'ALTEZZA E LO SFONDO INIZIALI
+        self._baseHeight = State(initialValue: startingDetent.value)
+        self._enableBackground = State(initialValue: startingDetent == .large)
+        
+        // 4. CALCOLO IL PADDING INIZIALE
+        let basePad: CGFloat
+        if #available(iOS 26, *) {
+            basePad = 8
+        } else {
+            basePad = 0
+        }
+        
+        self._initialPadding = State(initialValue: basePad)
+        self._basePadding = State(initialValue: basePad)
+        // Se partiamo da large, il padding orizzontale è 0, altrimenti è il basePad
+        self._sheetPadding = State(initialValue: startingDetent == .large ? 0 : basePad)
+        
+        // 5. CALCOLO I CORNER RADIUS INIZIALI (Replicando la tua setSheetShape)
+        let isLarge = (startingDetent == .large)
+        let topRadius: CGFloat = isLarge ? 37 : .deviceCornerRadius
+        let bottomRadius: CGFloat = basePad == 0 ? 0 : topRadius
+        
+        if UIDevice.isIpad {
+            self._sheetShapeRadii = State(initialValue: .init(tl: 32, tr: 32, bl: basePad == 0 ? 0 : 32, br: basePad == 0 ? 0 : 32))
+        } else {
+            self._sheetShapeRadii = State(initialValue: .init(tl: topRadius, tr: topRadius, bl: bottomRadius, br: bottomRadius))
+        }
+        
         self.content = content()
     }
     
@@ -197,17 +269,12 @@ struct CustomSheet<Content: View>: View {
         //})
         .onChange(of: isPresented) { _, newValue in
             if !newValue {
-                selectedDetent = .small
+                let lowestDetent = detents.min(by: { $0.value < $1.value }) ?? .small
+                manager.setDetent(lowestDetent)
             }
         }
-        .onChange(of: selectedDetent) { oldValue, newValue in
+        .onChange(of: manager.selectedDetent) { oldValue, newValue in
             enableBackground = newValue == .large
-            
-            if oldValue == .large {
-                //detents = [.small, .medium]
-            } else if newValue == .large {
-                //detents = [.small, .medium, .large]
-            }
             
             withAnimation(.interpolatingSpring(
                 mass: 1.0,
@@ -227,23 +294,30 @@ struct CustomSheet<Content: View>: View {
                 offset = 0
             }
         }
-        .onChange(of: lockSheet) { _, newValue in
-            if selectedDetent == .large {
-                //detents = newValue ? [.large] : [.small, .medium, .large]
+        .onChange(of: manager.locked) { _, isLocked in
+            if isLocked {
+                activeDetents = [manager.selectedDetent]
             } else {
-                lockSheet = false
+                activeDetents = detents
+            }
+        }
+        .onChange(of: detents) { _, newDetents in
+            if !manager.locked {
+                activeDetents = newDetents
+                
+                if !newDetents.contains(manager.selectedDetent) {
+                    let safeFallback = newDetents.min(by: { $0.value < $1.value }) ?? .small
+                    manager.setDetent(safeFallback)
+                }
             }
         }
         .onChange(of: liveHeight) { _, newHeight in
             manager.liveHeight = newHeight
         }
         .onAppear {
-            if #available(iOS 26, *) {
-                sheetPadding = 8
+            manager.actionDismiss = {
+                self.isPresented = false
             }
-            initialPadding = sheetPadding
-            basePadding = sheetPadding
-            setSheetShape()
         }
     }
     
@@ -253,16 +327,16 @@ struct CustomSheet<Content: View>: View {
                 .opacity(enableBackground ? 1 : 0)
             
             content
-            .overlay(alignment: .top) {
-                if !lockSheet {
-                    RoundedRectangle(cornerRadius: 2.5)
-                        .fill(.tertiary)
-                        .frame(width: 35, height: 5)
-                        .padding(.top, 5)
-                        .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
-                        .hoverEffect(.highlight)
+                .overlay(alignment: .top) {
+                    if !manager.locked && activeDetents.count > 1 {
+                        RoundedRectangle(cornerRadius: 2.5)
+                            .fill(.tertiary)
+                            .frame(width: 35, height: 5)
+                            .padding(.top, 5)
+                            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
+                            .hoverEffect(.highlight)
+                    }
                 }
-            }
         }
         .overlay {
             VerticalDragger(
@@ -276,7 +350,7 @@ struct CustomSheet<Content: View>: View {
             .allowsHitTesting(false)
         }
         //.onChange(of: positionObserver.edges) {
-        //    setSheetShape(isOpen: openCalendar)
+        //    setSheetShape()
         //}
         //.onChange(of: positionObserver.windowFrame) {
         //    if selectedDetent == .large {
@@ -285,7 +359,7 @@ struct CustomSheet<Content: View>: View {
         //}
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             DispatchQueue.main.async {
-                if selectedDetent == .large {
+                if manager.selectedDetent == .large {
                     baseHeight = CustomSheetDetent.large.value
                 }
             }
@@ -299,7 +373,9 @@ struct CustomSheet<Content: View>: View {
     }
     
     private func handleDragUpdating(value: CGFloat, state: inout CGFloat) {
-        if selectedDetent == .large {
+        if !manager.isDragging { manager.isDragging = true }
+        
+        if manager.selectedDetent == .large {
             if value < 0 {
                 state = 0
                 return
@@ -307,10 +383,10 @@ struct CustomSheet<Content: View>: View {
         }
         
         let predictedHeight = baseHeight - value
-        let minDetent = detents.first!.value
-        let maxDetent = detents.last!.value
+        let minDetent = activeDetents.first!.value
+        let maxDetent = activeDetents.last!.value
         
-        if maxDetent == CustomSheetDetent.large.value && detents.contains(.medium) {
+        if maxDetent == CustomSheetDetent.large.value && activeDetents.contains(.medium) {
             if predictedHeight >= CustomSheetDetent.medium.value && predictedHeight <= CustomSheetDetent.large.value {
                 sheetPadding = min(max(initialPadding - ((initialPadding * (predictedHeight - CustomSheetDetent.medium.value)) / (CustomSheetDetent.large.value - CustomSheetDetent.medium.value)), 0), initialPadding)
             } else if predictedHeight > CustomSheetDetent.large.value {
@@ -352,15 +428,15 @@ struct CustomSheet<Content: View>: View {
     }
     
     private func handleDragEnded(_ value: CGFloat, _ predictedEndTranslation: CGFloat) {
-        if selectedDetent == .large {
+        if manager.selectedDetent == .large {
             if value < 0 {
                 return
             }
         }
         
         let rawPredictedHeight = baseHeight - value
-        let minDetent = detents.first!
-        let maxDetent = detents.last!
+        let minDetent = activeDetents.first!
+        let maxDetent = activeDetents.last!
         
         var effectiveTranslation = rawPredictedHeight
         
@@ -377,7 +453,7 @@ struct CustomSheet<Content: View>: View {
                 
         let predictedTranslation = predictedEndTranslation
         let predictedHeight = baseHeight - predictedTranslation
-        var target = detents.min(by: { abs($0.value - predictedHeight) < abs($1.value - predictedHeight) }) ?? .small
+        var target = activeDetents.min(by: { abs($0.value - predictedHeight) < abs($1.value - predictedHeight) }) ?? .small
         
         if currentH < minDetent.value || rawPredictedHeight < minDetent.value {
             target = minDetent
@@ -417,12 +493,13 @@ struct CustomSheet<Content: View>: View {
             enableBackground = false
         }
         
-        var limit: CGFloat = isGoingDown ? selectedDetent == .large ? 30 : 45 : 45
-        if baseHeight - dragY > detents.last!.value {
+        var limit: CGFloat = isGoingDown ? manager.selectedDetent == .large ? 30 : 45 : 45
+        if baseHeight - dragY > activeDetents.last!.value {
             limit = 0
         }
         
-        selectedDetent = target
+        manager.isDragging = false
+        manager.setDetent(target)
         dragY = 0
         
         withAnimation(.interpolatingSpring(
@@ -443,13 +520,6 @@ struct CustomSheet<Content: View>: View {
     }
     
     // MARK: - Logic
-    //private func changeOpenCalendar(_ toOpen: Bool) {
-    //    guard isPresented != toOpen else { return }
-    //    withAnimation(.spring(duration: 0.5, bounce: 0.3)) {
-    //        isPresented = toOpen
-    //    }
-    //}
-    
     private func setSheetShape(sheetCornerRadius: CGFloat = -1) {
         withAnimation {
             if UIDevice.isIpad {
@@ -471,18 +541,95 @@ struct CustomSheet<Content: View>: View {
     }
 }
 
+// MARK: - Subviews
+struct DynamicSheetContent: View {
+    @Environment(GlobalSheetManager.self) private var sheetManager
+    
+    @Binding var selectedWeek: Date
+    @Binding var selectedLesson: Lesson?
+    @Binding var openAddToCalendar: Bool
+    @Binding var openSettings: Bool
+    @Binding var openWhatsNew: Bool
+    @Binding var tempSettings: TempSettingsState
+    
+    var padding: CGFloat {
+        if #available(iOS 26, *) {
+            8
+        } else {
+            0
+        }
+    }
+    
+    var body: some View {
+        GeometryReader { proxy in
+            let currentHeight = proxy.size.height
+            let windowHeight = UIApplication.shared.windowSize.height
+            
+            let largeHeight = CustomSheetDetent.large.value
+            let mediumHeightHigh = CustomSheetDetent.medium.value * 1.05
+            let mediumHeightLow = CustomSheetDetent.medium.value * 0.95
+            let smallHeight = CustomSheetDetent.small.value
+            let fadeRange: CGFloat = windowHeight * 0.05
+            
+            let largeOpacity = 1.0 - (Double(largeHeight - currentHeight) / Double(fadeRange))
+            let mediumOpacity = 1.0 - ((currentHeight < mediumHeightHigh ? Double(mediumHeightLow - currentHeight) : Double(currentHeight - mediumHeightHigh)) / Double(fadeRange))
+            let smallOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
+            
+            let smallIsHidden = currentHeight > smallHeight + fadeRange
+            let mediumIsHidden = currentHeight > mediumHeightHigh + fadeRange
+            ZStack(alignment: .topLeading) {
+                FractionDatePickerContainer(selectedWeek: $selectedWeek)
+                    .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
+                    .allowsHitTesting(sheetManager.selectedDetent == .small)
+                    .frame(width: UIApplication.shared.windowSize.width - padding * 2)
+                
+                DatePickerContainer(selectedWeek: $selectedWeek)
+                    .opacity(mediumIsHidden ? 0 : min(max(mediumOpacity, 0), 1))
+                    .allowsHitTesting(sheetManager.selectedDetent == .medium)
+                    .frame(width: UIApplication.shared.windowSize.width - padding * 2)
+                
+                NavigationStack {
+                    if openWhatsNew {
+                        WhatsNewView()
+                    } else if openSettings {
+                        Settings(
+                            selectedYear: $tempSettings.selectedYear,
+                            selectedCourse: $tempSettings.selectedCourse,
+                            selectedAcademicYear: $tempSettings.selectedAcademicYear,
+                            matricola: $tempSettings.matricola
+                        )
+                        .ignoresSafeArea(.keyboard)
+                    } else {
+                        LessonDetailsView(lesson: $selectedLesson, openAddToCalendar: openAddToCalendar) {
+                            sheetManager.setDetent(.small)
+                            selectedLesson = nil
+                            openAddToCalendar = false
+                        }
+                        .opacity(min(max(largeOpacity, 0), 1))
+                        .allowsHitTesting(sheetManager.selectedDetent == .large)
+                    }
+                }
+                .id(openSettings)
+                .opacity(min(max(largeOpacity, 0), 1))
+                .allowsHitTesting(sheetManager.selectedDetent == .large)
+                .frame(width: UIApplication.shared.windowSize.width, height: CustomSheetDetent.large.value)
+            }
+        }
+    }
+}
+
 #Preview {
     MainView()
 }
+
 
 // MARK: - Don't Ask
 struct customSheetModifier<SheetContent: View>: ViewModifier {
     @Environment(\.self) var completeEnvironment
     
     @Binding var isPresented: Bool
-    @Binding var selectedDetent: CustomSheetDetent
-    @Binding var lockSheet: Bool
-    var availableDetents: [CustomSheetDetent]
+    var manager: GlobalSheetManager?
+    var detents: [CustomSheetDetent]
     
     let sheetContent: () -> SheetContent
     
@@ -492,9 +639,8 @@ struct customSheetModifier<SheetContent: View>: ViewModifier {
                 OverlayAnchorView(
                     capturedEnvironment: completeEnvironment,
                     isPresented: $isPresented,
-                    selectedDetent: $selectedDetent,
-                    lockSheet: $lockSheet,
-                    availableDetents: availableDetents,
+                    manager: manager,
+                    detents: detents,
                     sheetContent: sheetContent
                 )
             )
@@ -504,16 +650,14 @@ struct customSheetModifier<SheetContent: View>: ViewModifier {
 extension View {
     func customSheet<Content: View>(
         isPresented: Binding<Bool>,
-        selectedDetent: Binding<CustomSheetDetent>,
-        lockSheet: Binding<Bool>,
-        availableDetents: [CustomSheetDetent] = [.small, .medium, .large],
+        manager: GlobalSheetManager? = nil,
+        detents: [CustomSheetDetent] = [.large],
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
         modifier(customSheetModifier(
             isPresented: isPresented,
-            selectedDetent: selectedDetent,
-            lockSheet: lockSheet,
-            availableDetents: availableDetents,
+            manager: manager,
+            detents: detents,
             sheetContent: content
         ))
     }
@@ -533,44 +677,92 @@ class PassthroughContainerView: UIView {
     }
 }
 
+class PassthroughWindow: UIWindow {
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        let hitView = super.hitTest(point, with: event)
+        if hitView == self { return nil }
+        return hitView
+    }
+}
+
 class OverlayAnchorUIView: UIView {
     var hostingController: UIHostingController<AnyView>?
-    var containerView: PassthroughContainerView?
+    var sheetWindow: PassthroughWindow?
     var pendingRootView: AnyView?
+    
+    func cleanup() {
+        hostingController?.willMove(toParent: nil)
+        hostingController?.view.removeFromSuperview()
+        hostingController?.removeFromParent()
+        sheetWindow?.isHidden = true
+        sheetWindow = nil
+        hostingController = nil
+    }
     
     override func didMoveToWindow() {
         super.didMoveToWindow()
         
-        guard let window = self.window, hostingController == nil,
+        guard let parentWindow = self.window,
+              let windowScene = parentWindow.windowScene,
+              sheetWindow == nil,
               let rootView = pendingRootView else { return }
+        
+        let newWindow = PassthroughWindow(windowScene: windowScene)
+        
+        let container = PassthroughContainerView()
+        container.backgroundColor = .clear
+        
+        let rootVC = UIViewController()
+        rootVC.view = container
         
         let hc = UIHostingController(rootView: rootView)
         hc.view.backgroundColor = .clear
         hc.view.translatesAutoresizingMaskIntoConstraints = false
         hc.safeAreaRegions = []
-
-        let container = PassthroughContainerView()
-        container.backgroundColor = .clear
-        container.translatesAutoresizingMaskIntoConstraints = false
+        
         container.hostingView = hc.view
-        
         container.addSubview(hc.view)
-        window.addSubview(container)
         
-        self.hostingController = hc
-        self.containerView = container
+        rootVC.addChild(hc)
+        hc.didMove(toParent: rootVC)
+        
+        newWindow.rootViewController = rootVC
         
         NSLayoutConstraint.activate([
             hc.view.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             hc.view.trailingAnchor.constraint(equalTo: container.trailingAnchor),
             hc.view.topAnchor.constraint(equalTo: container.topAnchor),
-            hc.view.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            
-            container.leadingAnchor.constraint(equalTo: window.leadingAnchor),
-            container.trailingAnchor.constraint(equalTo: window.trailingAnchor),
-            container.topAnchor.constraint(equalTo: window.topAnchor),
-            container.bottomAnchor.constraint(equalTo: window.bottomAnchor)
+            hc.view.bottomAnchor.constraint(equalTo: container.bottomAnchor)
         ])
+        
+        self.hostingController = hc
+        self.sheetWindow = newWindow
+        
+        newWindow.isHidden = false
+    }
+    
+    func updateNavigationSafeArea(isLarge: Bool) {
+        guard let hc = hostingController else { return }
+        
+        func findNav(in vc: UIViewController) -> UINavigationController? {
+            if let nav = vc as? UINavigationController { return nav }
+            for child in vc.children {
+                if let nav = findNav(in: child) { return nav }
+            }
+            return nil
+        }
+        
+        DispatchQueue.main.async {
+            if let nav = findNav(in: hc) {
+                let targetInset: CGFloat = isLarge ? 16 : 0
+                if nav.additionalSafeAreaInsets.top != targetInset {
+                    UIView.animate(withDuration: 0.2) {
+                        nav.additionalSafeAreaInsets.top = targetInset
+                        nav.view.layoutIfNeeded()
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -578,9 +770,8 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
     var capturedEnvironment: EnvironmentValues
     
     @Binding var isPresented: Bool
-    @Binding var selectedDetent: CustomSheetDetent
-    @Binding var lockSheet: Bool
-    var availableDetents: [CustomSheetDetent]
+    var manager: GlobalSheetManager?
+    var detents: [CustomSheetDetent]
     
     let sheetContent: () -> SheetContent
     
@@ -595,9 +786,8 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
         let updatedView = AnyView(
             CustomSheet(
                 isPresented: $isPresented,
-                selectedDetent: $selectedDetent,
-                lockSheet: $lockSheet,
-                detents: availableDetents,
+                detents: detents,
+                manager: manager,
                 content: sheetContent
             )
             .environment(\.self, capturedEnvironment)
@@ -608,5 +798,12 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
         } else {
             uiView.pendingRootView = updatedView
         }
+        
+        let isLarge = manager?.selectedDetent == .large
+        uiView.updateNavigationSafeArea(isLarge: isLarge)
+    }
+    
+    static func dismantleUIView(_ uiView: OverlayAnchorUIView, coordinator: ()) {
+        uiView.cleanup()
     }
 }
