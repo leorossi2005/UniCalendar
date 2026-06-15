@@ -196,5 +196,19 @@ struct VerticalDragger: UIViewRepresentable {
             }
             return false
         }
+        
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+            let otherClass = String(describing: type(of: otherGestureRecognizer))
+            let viewClass = otherGestureRecognizer.view.map { String(describing: type(of: $0)) } ?? ""
+            
+            let isStageManagerDrag = otherClass.contains("WindowScene") || otherClass.contains("DragInteraction") || otherClass.contains("SystemGesture")
+            let isNavBarGesture = viewClass.contains("NavigationBar")
+            
+            if isStageManagerDrag || isNavBarGesture {
+                return true
+            }
+            
+            return false
+        }
     }
 }
