@@ -154,7 +154,7 @@ struct CustomSheet<Content: View>: View {
                         .ignoresSafeArea()
                 }
                 .frame(height: liveHeight)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: 580)
                 .offset(y: isPresented ? -offset : liveHeight + basePadding)
                 .padding(.horizontal, sheetPadding)
                 .padding(.bottom, sheetPadding)
@@ -234,10 +234,10 @@ struct CustomSheet<Content: View>: View {
                 .overlay(alignment: .top) {
                     if !manager.locked && activeDetents.count > 1 {
                         RoundedRectangle(cornerRadius: 2.5)
-                            .fill(.tertiary)
-                            .frame(width: 35, height: 5)
-                            .padding(.top, 5)
-                            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2.5))
+                            .fill(Color(.systemGray2))
+                            .frame(width: 60, height: 4)
+                            .padding(.top, 6)
+                            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2))
                             .hoverEffect(.highlight)
                     }
                 }
@@ -602,6 +602,7 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
                 manager: manager,
                 content: sheetContent
             )
+            .environment(\.colorScheme, capturedEnvironment.colorScheme)
             .environment(\.self, capturedEnvironment)
         )
         
