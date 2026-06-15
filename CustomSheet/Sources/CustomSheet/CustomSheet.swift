@@ -31,6 +31,21 @@ public enum CustomSheetDetent {
     }
 }
 
+struct ClampedPadding: ViewModifier, Animatable {
+    var padding: CGFloat
+    
+    var animatableData: CGFloat {
+        get { padding }
+        set { padding = newValue }
+    }
+    
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, max(0, padding))
+            .padding(.bottom, max(0, padding))
+    }
+}
+
 @MainActor
 @Observable
 public class GlobalSheetManager {
@@ -67,7 +82,7 @@ struct CustomSheet<Content: View>: View {
     @State private var manager: GlobalSheetManager
     @State private var activeDetents: [CustomSheetDetent]
     
-    @State var sheetShapeRadii: SheetCornerRadii = SheetCornerRadii(tl: .deviceCornerRadius, tr: .deviceCornerRadius, bl: .deviceCornerRadius, br: .deviceCornerRadius)
+    @State var sheetShapeRadii: SheetCornerRadii = SheetCornerRadii(all: .deviceCornerRadius)
         
     // Gesture & Layout States
     @State private var enableBackground: Bool
@@ -75,9 +90,8 @@ struct CustomSheet<Content: View>: View {
     
     @State private var dragY: CGFloat = .zero
     
-    @State private var basePadding: CGFloat = .zero
-    @State private var initialPadding: CGFloat = .zero
-    @State private var sheetPadding: CGFloat = .zero
+    private let defaultPadding: CGFloat
+    @State private var sheetPadding: CGFloat
     
     @State private var offset: CGFloat = .zero
     
@@ -121,8 +135,7 @@ struct CustomSheet<Content: View>: View {
             basePad = 0
         }
         
-        self._initialPadding = State(initialValue: basePad)
-        self._basePadding = State(initialValue: basePad)
+        self.defaultPadding = basePad
         self._sheetPadding = State(initialValue: startingDetent == .large ? 0 : basePad)
         
         let isLarge = (startingDetent == .large)
@@ -153,9 +166,8 @@ struct CustomSheet<Content: View>: View {
                 }
                 .frame(height: liveHeight)
                 .frame(maxWidth: 580)
-                .offset(y: isPresented ? -offset : liveHeight + basePadding)
-                .padding(.horizontal, sheetPadding)
-                .padding(.bottom, sheetPadding)
+                .offset(y: isPresented ? -offset : liveHeight + defaultPadding)
+                .modifier(ClampedPadding(padding: sheetPadding))
                 .opacity(isPresented ? 1 : 0)
                 .compositingGroup()
             }
@@ -192,7 +204,7 @@ struct CustomSheet<Content: View>: View {
                     sheetPadding = 0
                     setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37)
                 } else {
-                    sheetPadding = initialPadding
+                    sheetPadding = defaultPadding
                     setSheetShape()
                 }
                 
@@ -225,12 +237,13 @@ struct CustomSheet<Content: View>: View {
     }
     
     private var mainSheet: some View {
-        ZStack {
+        ZStack(alignment: .bottom) {
             Color(.systemBackground)
                 .opacity(enableBackground ? 1 : 0)
             
             content
                 .frame(width: min(580, UIApplication.shared.windowSize.width))
+                .frame(maxHeight: CustomSheetDetent.large.value)
                 .overlay(alignment: .top) {
                     if !manager.locked && activeDetents.count > 1 {
                         RoundedRectangle(cornerRadius: 2.5)
@@ -284,11 +297,11 @@ struct CustomSheet<Content: View>: View {
         
         if maxDetent == CustomSheetDetent.large.value && activeDetents.contains(.medium) {
             if predictedHeight >= CustomSheetDetent.medium.value && predictedHeight <= CustomSheetDetent.large.value {
-                sheetPadding = min(max(initialPadding - ((initialPadding * (predictedHeight - CustomSheetDetent.medium.value)) / (CustomSheetDetent.large.value - CustomSheetDetent.medium.value)), 0), initialPadding)
+                sheetPadding = min(max(defaultPadding - ((defaultPadding * (predictedHeight - CustomSheetDetent.medium.value)) / (CustomSheetDetent.large.value - CustomSheetDetent.medium.value)), 0), defaultPadding)
             } else if predictedHeight > CustomSheetDetent.large.value {
                 sheetPadding = 0
             } else {
-                sheetPadding = initialPadding
+                sheetPadding = defaultPadding
             }
         }
         
@@ -410,7 +423,7 @@ struct CustomSheet<Content: View>: View {
             if target == .large {
                 sheetPadding = 0
             } else {
-                sheetPadding = initialPadding
+                sheetPadding = defaultPadding
             }
         }
     }
@@ -422,15 +435,15 @@ struct CustomSheet<Content: View>: View {
                 sheetShapeRadii = .init(
                     tl: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
                     tr: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
-                    bl: initialPadding == 0 ? 0 : 32,
-                    br: initialPadding == 0 ? 0 : 32
+                    bl: defaultPadding == 0 ? 0 : 32,
+                    br: defaultPadding == 0 ? 0 : 32
                 )
             } else {
                 sheetShapeRadii = .init(
                     tl: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
                     tr: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
-                    bl: initialPadding == 0 ? 0 : .deviceCornerRadius,
-                    br: initialPadding == 0 ? 0 : .deviceCornerRadius
+                    bl: defaultPadding == 0 ? 0 : .deviceCornerRadius,
+                    br: defaultPadding == 0 ? 0 : .deviceCornerRadius
                 )
             }
         }

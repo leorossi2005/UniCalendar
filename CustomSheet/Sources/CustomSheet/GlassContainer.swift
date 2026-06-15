@@ -15,6 +15,20 @@ struct SheetCornerRadii: Equatable {
     var tr: CGFloat
     var bl: CGFloat
     var br: CGFloat
+    
+    init(tl: CGFloat, tr: CGFloat, bl: CGFloat, br: CGFloat) {
+        self.tl = tl
+        self.tr = tr
+        self.bl = bl
+        self.br = br
+    }
+    
+    init (all: CGFloat) {
+        self.tl = all
+        self.tr = all
+        self.bl = all
+        self.br = all
+    }
 }
 
 enum GlassEffectStyle {
