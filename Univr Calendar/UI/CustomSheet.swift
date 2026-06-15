@@ -131,12 +131,10 @@ struct DynamicSheetContent: View {
                 FractionDatePickerContainer(selectedWeek: $selectedWeek)
                     .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
                     .allowsHitTesting(sheetManager.selectedDetent == .small)
-                    .frame(maxWidth: 580 - padding * 2)
                 
                 DatePickerContainer(selectedWeek: $selectedWeek)
                     .opacity(mediumIsHidden ? 0 : min(max(mediumOpacity, 0), 1))
                     .allowsHitTesting(sheetManager.selectedDetent == .medium)
-                    .frame(maxWidth: 580 - padding * 2)
                 
                 NavigationStack {
                     if openWhatsNew {
@@ -162,8 +160,7 @@ struct DynamicSheetContent: View {
                 .id(openSettings)
                 .opacity(min(max(largeOpacity, 0), 1))
                 .allowsHitTesting(sheetManager.selectedDetent == .large)
-                .frame(height: CustomSheetDetent.large.value)
-                .frame(maxWidth: 580)
+                .frame(width: min(580, UIApplication.shared.windowSize.width), height: CustomSheetDetent.large.value)
             }
         }
     }

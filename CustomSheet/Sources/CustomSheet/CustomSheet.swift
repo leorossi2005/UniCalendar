@@ -23,7 +23,7 @@ public enum CustomSheetDetent {
             let topMargin = topSafeArea > 0 ? topSafeArea : 20
             
             if UIDevice.isIpad {
-                return windowHeight - 75
+                return windowHeight - 108
             } else {
                 return windowHeight - topMargin
             }
@@ -141,13 +141,11 @@ struct CustomSheet<Content: View>: View {
     var body: some View {
         Group {
             ZStack(alignment: .bottom) {
-                ZStack {
-                    if enableBackground {
-                        Color.black.opacity(0.37)
-                            .transition(.opacity)
-                    }
-                }
-                .animation(.easeInOut(duration: 0.2), value: enableBackground)
+                Color.black
+                    .opacity(enableBackground ? 0.37 : 0)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(enableBackground)
+                    .animation(.easeInOut(duration: 0.2), value: enableBackground)
                 
                 GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground) {
                     mainSheet
@@ -159,6 +157,7 @@ struct CustomSheet<Content: View>: View {
                 .padding(.horizontal, sheetPadding)
                 .padding(.bottom, sheetPadding)
                 .opacity(isPresented ? 1 : 0)
+                .compositingGroup()
             }
             .frame(maxHeight: .infinity, alignment: .bottom)
             .environment(manager)
@@ -231,6 +230,7 @@ struct CustomSheet<Content: View>: View {
                 .opacity(enableBackground ? 1 : 0)
             
             content
+                .frame(width: min(580, UIApplication.shared.windowSize.width))
                 .overlay(alignment: .top) {
                     if !manager.locked && activeDetents.count > 1 {
                         RoundedRectangle(cornerRadius: 2.5)
@@ -253,14 +253,6 @@ struct CustomSheet<Content: View>: View {
             )
             .allowsHitTesting(false)
         }
-        //.onChange(of: positionObserver.edges) {
-        //    setSheetShape()
-        //}
-        //.onChange(of: positionObserver.windowFrame) {
-        //    if selectedDetent == .large {
-        //        baseHeight = CustomSheetDetent.large.value
-        //    }
-        //}
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             DispatchQueue.main.async {
                 if manager.selectedDetent == .large {
@@ -487,12 +479,48 @@ extension View {
 
 class PassthroughContainerView: UIView {
     weak var hostingView: UIView?
+    
+    private var lastDeepHitTime: TimeInterval = 0
+    private var lastDeepHitPoint: CGPoint = .zero
+    
+    private let isIOS26: Bool = {
+        let majorVersion = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+        return majorVersion == 26
+    }()
 
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let hitView = super.hitTest(point, with: event)
         
-        if hitView == hostingView || hitView == self {
+        if hitView == self {
             return nil
+        }
+        
+        // MARK: - Logica Standard (iOS 17, 18, 27+)
+        if !isIOS26 {
+            if hitView == hostingView {
+                return nil
+            }
+            return hitView
+        }
+        
+        // MARK: - Fix Specifico per iOS 26 (View Flattening Bypass)
+        let currentTime = Date().timeIntervalSince1970
+        
+        if hitView != hostingView && hitView != nil {
+            lastDeepHitTime = currentTime
+            lastDeepHitPoint = point
+            return hitView
+        }
+        
+        if hitView == hostingView {
+            let timeElapsed = currentTime - lastDeepHitTime
+            let isSamePoint = point == lastDeepHitPoint
+            
+            if timeElapsed < 0.05 && isSamePoint {
+                return hitView
+            } else {
+                return nil
+            }
         }
         
         return hitView

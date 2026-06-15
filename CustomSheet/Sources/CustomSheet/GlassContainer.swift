@@ -265,6 +265,7 @@ struct GlassContainer<Content: View>: UIViewControllerRepresentable {
         let hosting = UIHostingController(rootView: bridge)
         hosting.view.backgroundColor = .clear
         hosting.view.insetsLayoutMarginsFromSafeArea = false
+        hosting.safeAreaRegions = []
         hosting.traitOverrides.userInterfaceLevel = .elevated
         if lockGesture { hosting.view.tag = 422 }
         
@@ -303,7 +304,6 @@ struct GlassContainer<Content: View>: UIViewControllerRepresentable {
                     context.coordinator.content = content
                 }
             }
-            context.coordinator.hostingController?.view.setNeedsLayout()
         }
     }
     
