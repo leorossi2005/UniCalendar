@@ -35,7 +35,6 @@ public enum CustomSheetDetent {
 @Observable
 public class GlobalSheetManager {
     // MARK: - Sensori (Stati in sola lettura per l'utente)
-    public var liveHeight: CGFloat = 0
     public var isDragging: Bool = false
     public var locked: Bool = false
     public var selectedDetent: CustomSheetDetent
@@ -165,11 +164,16 @@ struct CustomSheet<Content: View>: View {
             .environment(manager)
             .animation(.smooth(duration: 0.3), value: isPresented)
         }
-        //.background(WindowAccessor { window in
-        //    if UIDevice.isIpad {
-        //        positionObserver.startObserving(window: window)
-        //    }
-        //})
+        .background {
+            GeometryReader { proxy in
+                Color.clear
+                    .onChange(of: proxy.size.height) { _, newSize in
+                        if manager.selectedDetent == .large && !manager.isDragging {
+                            baseHeight = CustomSheetDetent.large.value
+                        }
+                    }
+            }
+        }
         .onChange(of: isPresented) { _, newValue in
             if !newValue {
                 let lowestDetent = detents.min(by: { $0.value < $1.value }) ?? .small
@@ -187,7 +191,7 @@ struct CustomSheet<Content: View>: View {
             )) {
                 if newValue == .large {
                     sheetPadding = 0
-                    setSheetShape(sheetCornerRadius: 37)
+                    setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37)
                 } else {
                     sheetPadding = initialPadding
                     setSheetShape()
@@ -213,9 +217,6 @@ struct CustomSheet<Content: View>: View {
                     manager.setDetent(safeFallback)
                 }
             }
-        }
-        .onChange(of: liveHeight) { _, newHeight in
-            manager.liveHeight = newHeight
         }
         .onAppear {
             manager.actionDismiss = {
@@ -304,7 +305,7 @@ struct CustomSheet<Content: View>: View {
 
             if predictedHeight > CustomSheetDetent.large.value * 0.8 {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    setSheetShape(sheetCornerRadius: 37)
+                    setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37)
                 }
                 enableBackground = true
             } else {
@@ -386,7 +387,7 @@ struct CustomSheet<Content: View>: View {
         
         if target == .large {
             withAnimation(.easeInOut(duration: 0.2)) {
-                setSheetShape(sheetCornerRadius: 37)
+                setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37)
             }
             enableBackground = true
         } else {
@@ -565,7 +566,7 @@ class OverlayAnchorUIView: UIView {
         
         DispatchQueue.main.async {
             if let nav = findNav(in: hc) {
-                let targetInset: CGFloat = isLarge ? 16 : 0
+                let targetInset: CGFloat = isLarge ? UIDevice.isIpad ? 8 : 16 : 0
                 if nav.additionalSafeAreaInsets.top != targetInset {
                     UIView.animate(withDuration: 0.2) {
                         nav.additionalSafeAreaInsets.top = targetInset
