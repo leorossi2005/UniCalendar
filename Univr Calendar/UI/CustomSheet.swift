@@ -125,8 +125,8 @@ struct DynamicSheetContent: View {
             let mediumOpacity = 1.0 - ((currentHeight < mediumHeightHigh ? Double(mediumHeightLow - currentHeight) : Double(currentHeight - mediumHeightHigh)) / Double(fadeRange))
             let smallOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
             
-            let smallIsHidden = currentHeight > smallHeight + fadeRange
-            let mediumIsHidden = currentHeight > mediumHeightHigh + fadeRange
+            let smallIsHidden = currentHeight > smallHeight + fadeRange || sheetManager.previousDetent != .large && sheetManager.selectedDetent == .large && !sheetManager.isDragging
+            let mediumIsHidden = currentHeight > mediumHeightHigh + fadeRange || sheetManager.previousDetent != .large && sheetManager.selectedDetent == .large && !sheetManager.isDragging
             ZStack(alignment: .top) {
                 FractionDatePickerContainer(selectedWeek: $selectedWeek)
                     .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))

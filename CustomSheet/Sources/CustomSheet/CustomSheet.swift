@@ -31,6 +31,32 @@ public enum CustomSheetDetent {
     }
 }
 
+enum DraggerValues {
+    static var width: CGFloat {
+        if #available(iOS 27, *) {
+            return 60
+        } else {
+            return 36
+        }
+    }
+    
+    static var height: CGFloat {
+        if #available(iOS 27, *) {
+            return 4
+        } else {
+            return 5
+        }
+    }
+    
+    static var topPadding: CGFloat {
+        if #available(iOS 27, *) {
+            return 6
+        } else {
+            return 5
+        }
+    }
+}
+
 struct ClampedPadding: ViewModifier, Animatable {
     var padding: CGFloat
     
@@ -53,6 +79,7 @@ public class GlobalSheetManager {
     public var isDragging: Bool = false
     public var locked: Bool = false
     public var selectedDetent: CustomSheetDetent
+    public var previousDetent: CustomSheetDetent?
     
     // MARK: - Motore Interno (Chiusure collegate dalla CustomSheet)
     var actionDismiss: (() -> Void)?
@@ -196,6 +223,7 @@ struct CustomSheet<Content: View>: View {
             }
         }
         .onChange(of: manager.selectedDetent) { oldValue, newValue in
+            manager.previousDetent = oldValue
             enableBackground = newValue == .large
             
             withAnimation(.interpolatingSpring(
@@ -250,11 +278,11 @@ struct CustomSheet<Content: View>: View {
                 .frame(maxHeight: CustomSheetDetent.large.value)
                 .overlay(alignment: .top) {
                     if !manager.locked && activeDetents.count > 1 {
-                        RoundedRectangle(cornerRadius: 2.5)
+                        RoundedRectangle(cornerRadius: DraggerValues.height / 2)
                             .fill(Color(.systemGray2))
-                            .frame(width: 60, height: 4)
-                            .padding(.top, 6)
-                            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 2))
+                            .frame(width: DraggerValues.width, height: DraggerValues.height)
+                            .padding(.top, DraggerValues.topPadding)
+                            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: DraggerValues.height / 2))
                             .hoverEffect(.highlight)
                     }
                 }
