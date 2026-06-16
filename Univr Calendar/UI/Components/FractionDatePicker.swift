@@ -78,7 +78,6 @@ struct FractionDatePickerContainer: View {
     
     // MARK: - Internal State
     @State private var internalIndex: Int = 0
-    @State private var isDualMode: Bool = false
     var indexBinding: Binding<Int> {
         Binding { internalIndex } set: { newIndex in
             handleFractionSelectionChange(oldIndex: internalIndex, newIndex: newIndex)
@@ -92,53 +91,23 @@ struct FractionDatePickerContainer: View {
             let width = proxy.size.width
             
             TabView(selection: indexBinding) {
-                if !isDualMode {
-                    ForEach(0..<viewModel.academicWeeks.count, id: \.self) { index in
-                        FractionDatePickerView(selection: $selectedWeek, week: viewModel.academicWeeks[index], width: width)
-                            .tag(index)
-                    }
-                } else {
-                    ForEach(0...viewModel.academicWeeks.count / 2, id: \.self) { index in
-                        let isLast = index == viewModel.academicWeeks.count / 2
-                        HStack {
-                            Spacer()
-                            FractionDatePickerView(selection: $selectedWeek, week: viewModel.academicWeeks[index * 2], width: width)
-                            Spacer()
-                            FractionDatePickerView(selection: $selectedWeek, week: isLast ? viewModel.additionalWeek : viewModel.academicWeeks[index * 2 + 1], width: width)
-                            Spacer()
-                        }
+                ForEach(0..<viewModel.academicWeeks.count, id: \.self) { index in
+                    FractionDatePickerView(selection: $selectedWeek, week: viewModel.academicWeeks[index], width: width)
                         .tag(index)
-                    }
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .frame(height: CustomSheetDetent.small.value)
-            .id(isDualMode)
             .task {
                 await viewModel.generateAcademicWeeks(selectedYear: settings.selectedYear)
-                internalIndex = calculateTargetIndex(for: selectedWeek, isDual: isDualMode)
+                internalIndex = calculateTargetIndex(for: selectedWeek)
             }
             .onChange(of: selectedWeek) { _, newSelection in
-                let week = viewModel.academicWeeks[isDualMode ? internalIndex * 2 : internalIndex]
+                guard internalIndex < viewModel.academicWeeks.count else { return }
+                let week = viewModel.academicWeeks[internalIndex]
                 let filtered = week.filter { $0.date.month == newSelection.month && $0.date.day == newSelection.day }
                 if filtered.isEmpty {
-                    internalIndex = calculateTargetIndex(for: newSelection, isDual: isDualMode)
-                }
-            }
-            .onChange(of: width) {
-                let newIsDualMode = width >= 1000
-                if isDualMode != newIsDualMode {
-                    if newIsDualMode {
-                        internalIndex /= 2
-                    } else {
-                        let newIndex = calculateTargetIndex(for: selectedWeek, isDual: newIsDualMode)
-                        if newIndex == internalIndex * 2 + 1 {
-                            internalIndex = newIndex
-                        } else {
-                            internalIndex *= 2
-                        }
-                    }
-                    isDualMode = newIsDualMode
+                    internalIndex = calculateTargetIndex(for: newSelection)
                 }
             }
         }
@@ -149,7 +118,7 @@ struct FractionDatePickerContainer: View {
         guard let yearInt = Int(settings.selectedYear) else { return }
         
         let difference = abs(newIndex - oldIndex)
-        let daysToShift = difference * (isDualMode ? 14 : 7)
+        let daysToShift = difference * 7
         
         let newDate = oldIndex < newIndex
             ? selectedWeek.add(type: .day, value: daysToShift)
@@ -175,13 +144,12 @@ struct FractionDatePickerContainer: View {
         }
     }
     
-    private func calculateTargetIndex(for index: Date, isDual: Bool) -> Int {
-        let newIndex = viewModel.academicWeeks.firstIndex(where: { week in
+    private func calculateTargetIndex(for index: Date) -> Int {
+        viewModel.academicWeeks.firstIndex(where: { week in
             return week.contains(where: { day in
                 return day.date.year == index.year && day.date.month == index.month && day.date.day == index.day
             })
         }) ?? 0
-        return isDual ? newIndex / 2 : newIndex
     }
 }
 

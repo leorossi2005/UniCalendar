@@ -121,82 +121,36 @@ struct DatePickerContainer: View {
     
     // MARK: - Internal State
     @State private var internalIndex: Int = 0
-    @State private var isDualMode: Bool = false
     
     private let academicMonths = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     
     var body: some View {
-        GeometryReader { proxy in
-            let width = proxy.size.width
-            let year = Int(settings.selectedYear) ?? selectedWeek.year
-            
-            TabView(selection: $internalIndex) {
-                if !isDualMode {
-                    ForEach(0..<12, id: \.self) { index in
-                        let date = dateForIndex(index, year: year)
-                        DatePicker(
-                            selection: $selectedWeek,
-                            date: date
-                        )
-                        .equatable()
-                        .tag(index)
-                    }
-                } else {
-                    ForEach(0..<6, id: \.self) { index in
-                        let dateLeft = dateForIndex(index * 2, year: year)
-                        let dateRight = dateForIndex(index * 2 + 1, year: year)
-                        
-                        HStack(spacing: 0) {
-                            Spacer()
-                            DatePicker(
-                                selection: $selectedWeek,
-                                date: dateLeft
-                            )
-                            .equatable()
-                            Spacer()
-                            DatePicker(
-                                selection: $selectedWeek,
-                                date: dateRight
-                            )
-                            .equatable()
-                            Spacer()
-                        }
-                        .tag(index)
-                    }
-                }
+        let year = Int(settings.selectedYear) ?? selectedWeek.year
+        
+        TabView(selection: $internalIndex) {
+            ForEach(0..<12, id: \.self) { index in
+                let date = dateForIndex(index, year: year)
+                DatePicker(
+                    selection: $selectedWeek,
+                    date: date
+                )
+                .equatable()
+                .tag(index)
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
-            .frame(height: CustomSheetDetent.medium.value)
-            .id(isDualMode)
-            .onAppear {
-                isDualMode = width >= 700
-                internalIndex = calculateTargetIndex(for: selectedWeek.month, isDual: isDualMode)
-            }
-            .onChange(of: selectedWeek) { _, newSelection in
-                internalIndex = calculateTargetIndex(for: selectedWeek.month, isDual: isDualMode)
-            }
-            .onChange(of: width) {
-                let newIsDualMode = width >= 700
-                if isDualMode != newIsDualMode {
-                    if newIsDualMode {
-                        internalIndex /= 2
-                    } else {
-                        let newIndex = calculateTargetIndex(for: selectedWeek.month, isDual: newIsDualMode)
-                        if newIndex == internalIndex * 2 + 1 {
-                            internalIndex = newIndex
-                        } else {
-                            internalIndex *= 2
-                        }
-                    }
-                    isDualMode = newIsDualMode
-                }
-            }
-            .onChange(of: internalIndex) {
-                if GlobalHaptics.shared.state != "selection" {
-                    Haptics.play(.selection)
-                } else {
-                    GlobalHaptics.shared.state = ""
-                }
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .frame(height: CustomSheetDetent.medium.value)
+        .onAppear {
+            internalIndex = calculateTargetIndex(for: selectedWeek.month)
+        }
+        .onChange(of: selectedWeek) { _, newSelection in
+            internalIndex = calculateTargetIndex(for: selectedWeek.month)
+        }
+        .onChange(of: internalIndex) {
+            if GlobalHaptics.shared.state != "selection" {
+                Haptics.play(.selection)
+            } else {
+                GlobalHaptics.shared.state = ""
             }
         }
     }
@@ -207,9 +161,9 @@ struct DatePickerContainer: View {
         return baseDate.add(type: .month, value: index)
     }
     
-    private func calculateTargetIndex(for month: Int, isDual: Bool) -> Int {
+    private func calculateTargetIndex(for month: Int) -> Int {
         guard let academicIndex = academicMonths.firstIndex(of: month) else { return 0 }
-        return isDual ? academicIndex / 2 : academicIndex
+        return academicIndex
     }
 }
 
