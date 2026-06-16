@@ -120,6 +120,7 @@ final class GlassContainerView: UIView {
         super.layoutSubviews()
         if #unavailable(iOS 26) {
             applyCornerMask()
+            updateShadowPath()
         }
     }
     
@@ -152,7 +153,7 @@ final class GlassContainerView: UIView {
         let shouldShowShadow = traitCollection.userInterfaceStyle != .dark
         
         UIView.animate(withDuration: 0.2) {
-            self.shadowView.layer.shadowOpacity = shouldShowShadow ? 0.12 : 0.0
+            self.shadowView.layer.shadowOpacity = shouldShowShadow ? 0.1 : 0.0
         }
     }
     
