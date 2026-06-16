@@ -71,7 +71,7 @@ struct CalendarSheetContent: View {
                 .id(openSettings)
                 .opacity(min(max(largeOpacity, 0), 1))
                 .allowsHitTesting(sheetManager.selectedDetent == .large)
-                .frame(width: min(580, UIApplication.shared.windowSize.width), height: CustomSheetDetent.large.value)
+                .frame(height: CustomSheetDetent.large.value)
             }
         }
     }

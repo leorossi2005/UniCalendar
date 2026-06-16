@@ -9,13 +9,12 @@
 
 import SwiftUI
 
-
 @MainActor
 extension UIApplication {
     var safeAreas: UIEdgeInsets {
         connectedScenes
             .compactMap { $0 as? UIWindowScene }
-            .first?.windows.first(where: \.isKeyWindow)?.safeAreaInsets ?? .zero
+            .first?.keyWindow?.safeAreaInsets ?? .zero
     }
     
     var windowSize: CGRect {
@@ -38,10 +37,20 @@ extension CGFloat {
         var systemInfo = utsname()
         uname(&systemInfo)
         let machineMirror = Mirror(reflecting: systemInfo.machine)
-        let modelIdentifier = machineMirror.children.reduce("") { identifier, element in
-            guard let value = element.value as? Int8, value != 0 else { return identifier }
-            return identifier + String(UnicodeScalar(UInt8(value)))
-        }
+        
+        let modelIdentifier: String = {
+            if let simulatorModel = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] {
+                return simulatorModel
+            }
+            
+            var systemInfo = utsname()
+            uname(&systemInfo)
+            let machineMirror = Mirror(reflecting: systemInfo.machine)
+            return machineMirror.children.reduce("") { identifier, element in
+                guard let value = element.value as? Int8, value != 0 else { return identifier }
+                return identifier + String(UnicodeScalar(UInt8(value)))
+            }
+        }()
         
         let radii: [String: CGFloat] = [
             // iPhone 17 Series

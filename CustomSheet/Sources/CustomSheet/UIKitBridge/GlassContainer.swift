@@ -8,7 +8,6 @@
 //
 
 import SwiftUI
-internal import Combine
 
 public struct SheetCornerRadii: Equatable {
     var tl: CGFloat
@@ -211,7 +210,6 @@ final class GlassContainerView: UIView {
         return path
     }
     
-    // 3. Nuova funzione per disegnare l'ombra seguendo i corner
     private func updateShadowPath() {
         let path = generatePath(rect: bounds)
         shadowView.layer.shadowPath = path.cgPath
@@ -240,7 +238,6 @@ public struct GlassContainer<Content: View>: UIViewControllerRepresentable {
     var tint: Color? = nil
     var animationDuration: TimeInterval = 0.2
     var isEnabled: Bool = true
-    var lockGesture: Bool = false
     var resetGlassEffect: Int = 0
     private let content: Content
     
@@ -250,7 +247,6 @@ public struct GlassContainer<Content: View>: UIViewControllerRepresentable {
         tint: Color? = nil,
         animationDuration: TimeInterval = 0.2,
         isEnabled: Bool = true,
-        lockGesture: Bool = false,
         resetGlassEffect: Int = 0,
         @ViewBuilder content: @escaping () -> Content
     ) {
@@ -259,7 +255,6 @@ public struct GlassContainer<Content: View>: UIViewControllerRepresentable {
         self.tint = tint
         self.animationDuration = animationDuration
         self.isEnabled = isEnabled
-        self.lockGesture = lockGesture
         self.resetGlassEffect = resetGlassEffect
         self.content = content()
     }
@@ -292,7 +287,6 @@ public struct GlassContainer<Content: View>: UIViewControllerRepresentable {
         hosting.view.insetsLayoutMarginsFromSafeArea = false
         hosting.safeAreaRegions = []
         hosting.traitOverrides.userInterfaceLevel = .elevated
-        if lockGesture { hosting.view.tag = 422 }
         
         glassContainer.contentView.addSubview(hosting.view)
         hosting.view.translatesAutoresizingMaskIntoConstraints = false

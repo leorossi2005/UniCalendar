@@ -1,5 +1,5 @@
 //
-//  VerticalDragger.swift
+//  SheetDragger.swift
 //  CustomSheet
 //
 //  Created by Leonardo Rossi on 16/12/25.
@@ -8,13 +8,12 @@
 //
 
 import SwiftUI
-import UIKit
 
 enum CustomSheetDraggingDirection {
     case up, down, none
 }
 
-struct VerticalDragger: UIViewRepresentable {
+struct SheetDragger: UIViewRepresentable {
     var direction: CustomSheetDraggingDirection = .none
     
     var onDrag: (CGFloat, CustomSheetDraggingDirection) -> Void
@@ -57,14 +56,14 @@ struct VerticalDragger: UIViewRepresentable {
 
     // MARK: - Coordinator
     class Coordinator: NSObject, UIGestureRecognizerDelegate {
-        var parent: VerticalDragger
+        var parent: SheetDragger
         weak var targetView: UIView?
         weak var window: UIWindow?
         weak var trackedScrollView: UIScrollView?
         var initialIsAtTop: Bool?
         var gesture: UIPanGestureRecognizer?
         
-        init(parent: VerticalDragger) {
+        init(parent: SheetDragger) {
             self.parent = parent
         }
         
@@ -171,16 +170,6 @@ struct VerticalDragger: UIViewRepresentable {
                 } else if isDraggingDown {
                     parent.direction = .down
                 }
-            }
-            
-            return true
-        }
-        
-        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-            guard let touchedView = touch.view else { return true }
-            
-            if touchedView.tag == 422 {
-                return false
             }
             
             return true

@@ -42,7 +42,7 @@ struct CustomSheet<Content: View>: View {
     @State private var manager: GlobalSheetManager
     @State private var activeDetents: [CustomSheetDetent]
     
-    @State var sheetShapeRadii: SheetCornerRadii = SheetCornerRadii(all: .deviceCornerRadius)
+    @State var sheetShapeRadii: SheetCornerRadii
         
     // Gesture & Layout States
     @State private var enableBackground: Bool
@@ -98,12 +98,13 @@ struct CustomSheet<Content: View>: View {
         }
         
         self.defaultPadding = basePad
-        self._sheetPadding = State(initialValue: startingDetent == .large ? 0 : basePad)
+        let actualPadding = startingDetent == .large ? 0 : basePad
+        self._sheetPadding = State(initialValue: actualPadding)
         
         let isLarge = (startingDetent == .large)
-        let topRadius: CGFloat = isLarge ? 37 : .deviceCornerRadius
-        let bottomRadius: CGFloat = basePad == 0 ? 0 : topRadius
-        
+        let topRadius: CGFloat = isLarge ? 37 : max(0, .deviceCornerRadius - actualPadding)
+        let bottomRadius: CGFloat = basePad == 0 ? 0 : max(0, .deviceCornerRadius - actualPadding)
+                
         if UIDevice.isIpad {
             self._sheetShapeRadii = State(initialValue: .init(tl: 32, tr: 32, bl: basePad == 0 ? 0 : 32, br: basePad == 0 ? 0 : 32))
         } else {
@@ -226,7 +227,7 @@ struct CustomSheet<Content: View>: View {
                 }
         }
         .overlay {
-            VerticalDragger(
+            SheetDragger(
                 onDrag: { translationY, _ in
                     handleDragUpdating(value: translationY, state: &self.dragY)
                 },
@@ -411,10 +412,10 @@ struct CustomSheet<Content: View>: View {
                 )
             } else {
                 sheetShapeRadii = .init(
-                    tl: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
-                    tr: sheetCornerRadius == -1 ? .deviceCornerRadius : sheetCornerRadius,
-                    bl: defaultPadding == 0 ? 0 : .deviceCornerRadius,
-                    br: defaultPadding == 0 ? 0 : .deviceCornerRadius
+                    tl: sheetCornerRadius == -1 ? max(0, .deviceCornerRadius - sheetPadding) : sheetCornerRadius,
+                    tr: sheetCornerRadius == -1 ? max(0, .deviceCornerRadius - sheetPadding) : sheetCornerRadius,
+                    bl: defaultPadding == 0 ? 0 : max(0, .deviceCornerRadius - sheetPadding),
+                    br: defaultPadding == 0 ? 0 : max(0, .deviceCornerRadius - sheetPadding)
                 )
             }
         }

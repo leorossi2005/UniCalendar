@@ -245,7 +245,7 @@ struct StableMapView: View {
     private func openInMapsButton(coordinate: CLLocationCoordinate2D, name: String, color: Color) -> some View {
         Group {
             if #available(iOS 26.0, *) {
-                GlassContainer(radii: .init(tl: 25, tr: 25, bl: 25, br: 25), tint: color.opacity(0.4), lockGesture: true) {
+                GlassContainer(radii: .init(all: 25), tint: color.opacity(0.4)) {
                     Button(action: {
                         Haptics.play(.impact(weight: .light))
                         openMaps(coordinate: coordinate, name: name)

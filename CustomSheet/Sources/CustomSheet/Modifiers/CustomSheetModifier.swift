@@ -24,7 +24,7 @@ struct ClampedPadding: ViewModifier, Animatable {
     }
 }
 
-struct customSheetModifier<SheetContent: View>: ViewModifier {
+struct CustomSheetModifier<SheetContent: View>: ViewModifier {
     @Environment(\.self) var completeEnvironment
     
     @Binding var isPresented: Bool
@@ -54,7 +54,7 @@ extension View {
         detents: [CustomSheetDetent] = [.large],
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
-        modifier(customSheetModifier(
+        modifier(CustomSheetModifier(
             isPresented: isPresented,
             manager: manager,
             detents: detents,
