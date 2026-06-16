@@ -51,14 +51,12 @@ final class GlassContainerView: UIView {
     
     private let shadowView = UIView()
     private let glassView = UIVisualEffectView()
+    var cornerRadii: SheetCornerRadii = .init(tl: 0, tr: 0, bl: 0, br: 0)
     var style: GlassEffectStyle = .regular {
         didSet { updateAppearance() }
     }
     var tint: UIColor? = nil {
         didSet { updateAppearance() }
-    }
-    var cornerRadii: SheetCornerRadii = .init(tl: 0, tr: 0, bl: 0, br: 0) {
-        didSet { applyCorners(animated: true, duration: 0.2)  }
     }
     var isEnabled = true {
         didSet { updateAppearance() }
@@ -315,12 +313,14 @@ public struct GlassContainer<Content: View>: UIViewControllerRepresentable {
     }
     
     public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+        let shouldAnimate = (context.transaction.animation != nil)
         if let glass = context.coordinator.glassContainer {
             if glass.cornerRadii != radii { glass.cornerRadii = radii }
             if glass.style != style { glass.style = style }
             glass.tint = tint.map { UIColor($0) }
             if glass.isEnabled != isEnabled { glass.isEnabled = isEnabled }
             if glass.resetTrigger != resetGlassEffect { glass.resetTrigger = resetGlassEffect }
+            glass.applyCorners(animated: shouldAnimate, duration: animationDuration)
             
             let transaction = context.transaction
             withTransaction(transaction) {

@@ -203,10 +203,6 @@ struct CustomSheet<Content: View>: View {
                 try? await Task.sleep(for: .milliseconds(20))
                 hasMounted = true
             }
-            
-            manager.actionDismiss = {
-                self.isPresented = false
-            }
         }
     }
     

@@ -21,14 +21,6 @@ struct CalendarSheetContent: View {
     @Binding var openWhatsNew: Bool
     @Binding var tempSettings: TempSettingsState
     
-    var padding: CGFloat {
-        if #available(iOS 26, *) {
-            8
-        } else {
-            0
-        }
-    }
-    
     var body: some View {
         GeometryReader { proxy in
             let currentHeight = proxy.size.height

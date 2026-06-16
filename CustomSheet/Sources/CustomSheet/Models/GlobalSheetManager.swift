@@ -39,17 +39,10 @@ public class GlobalSheetManager {
     public private(set) var locked: Bool = false
     public private(set) var selectedDetent: CustomSheetDetent
     public internal(set) var previousDetent: CustomSheetDetent?
-    
-    // MARK: - Motore Interno (Chiusure collegate dalla CustomSheet)
-    var actionDismiss: (() -> Void)?
-        
+            
     // MARK: - Comandi Pubblici (Quelli che userai nella tua app)
     public func setDetent(_ detent: CustomSheetDetent) {
         selectedDetent = detent
-    }
-    
-    public func dismiss() {
-        actionDismiss?()
     }
     
     public func setLock(_ lock: Bool) {
