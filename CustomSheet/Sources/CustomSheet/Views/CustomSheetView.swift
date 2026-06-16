@@ -48,6 +48,7 @@ struct CustomSheet<Content: View>: View {
     @State private var enableBackground: Bool
     @State private var baseHeight: CGFloat
     @State private var width: CGFloat
+    @State private var hasMounted: Bool = false
     
     @State private var dragY: CGFloat = .zero
     
@@ -122,6 +123,8 @@ struct CustomSheet<Content: View>: View {
                     .ignoresSafeArea()
                     .allowsHitTesting(enableBackground)
                     .animation(.easeInOut(duration: 0.2), value: enableBackground)
+                    .animation(.easeInOut(duration: 0.2), value: isPresented)
+                    .animation(.easeInOut(duration: 0.2), value: hasMounted)
                 
                 GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground) {
                     mainSheet
@@ -129,7 +132,7 @@ struct CustomSheet<Content: View>: View {
                 }
                 .frame(height: liveHeight)
                 .frame(maxWidth: 580)
-                .offset(y: isPresented ? -offset : liveHeight + defaultPadding)
+                .offset(y: (isPresented && hasMounted) ? -offset : liveHeight + defaultPadding)
                 .modifier(ClampedPadding(padding: sheetPadding))
                 .opacity(isPresented ? 1 : 0)
                 .compositingGroup()
@@ -137,6 +140,7 @@ struct CustomSheet<Content: View>: View {
             .frame(maxHeight: .infinity)
             .environment(manager)
             .animation(.smooth(duration: 0.3), value: isPresented)
+            .animation(.smooth(duration: 0.3), value: hasMounted)
         }
         .background {
             GeometryReader { proxy in
@@ -195,6 +199,11 @@ struct CustomSheet<Content: View>: View {
             }
         }
         .onAppear {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(20))
+                hasMounted = true
+            }
+            
             manager.actionDismiss = {
                 self.isPresented = false
             }
