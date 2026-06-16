@@ -165,7 +165,7 @@ struct CalendarView: View {
         .scrollTargetBehavior(.paging)
         .scrollIndicators(.never, axes: .horizontal)
         .scrollPosition(id: Binding<Date?>(
-                get: { self.selectedWeek },
+                get: { self.firstLoading ? nil : self.selectedWeek },
                 set: { newValue in
                     if let validDate = newValue {
                         self.selectedWeek = validDate

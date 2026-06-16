@@ -201,7 +201,7 @@ struct CustomSheet<Content: View>: View {
                 .opacity(isPresented ? 1 : 0)
                 .compositingGroup()
             }
-            .frame(maxHeight: .infinity, alignment: .bottom)
+            .frame(maxHeight: .infinity)
             .environment(manager)
             .animation(.smooth(duration: 0.3), value: isPresented)
         }
