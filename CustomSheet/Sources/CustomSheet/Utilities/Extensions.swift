@@ -15,7 +15,7 @@ extension UIApplication {
     var safeAreas: UIEdgeInsets {
         connectedScenes
             .compactMap { $0 as? UIWindowScene }
-            .first?.keyWindow?.safeAreaInsets ?? .zero
+            .first?.windows.first(where: \.isKeyWindow)?.safeAreaInsets ?? .zero
     }
     
     var windowSize: CGRect {

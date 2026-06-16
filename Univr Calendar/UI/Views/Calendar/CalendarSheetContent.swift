@@ -1,8 +1,8 @@
 //
-//  CustomSheet.swift
+//  CalendarSheetContent.swift
 //  Univr Calendar
 //
-//  Created by Leonardo Rossi on 13/06/2026.
+//  Created by Leonardo Rossi on 16/06/2026.
 //  Copyright (C) 2026 Leonardo Rossi
 //  SPDX-License-Identifier: GPL-3.0-or-later
 //
@@ -11,88 +11,7 @@ import SwiftUI
 import UnivrCore
 import CustomSheet
 
-struct MainView: View {
-    @State private var sheetManager = GlobalSheetManager()
-    @State var isPresented: Bool = true
-    
-    @State var detents: [CustomSheetDetent] = [.small, .medium]
-    
-    // Test
-    @State var selectedWeek: Date = Date()
-    @State var selectedLesson: Lesson? = nil
-    @State var openAddToCalendar: Bool = false
-    @State var openSettings: Bool = true
-    @State var openWhatsNew: Bool = false
-    @State var tempSettings: TempSettingsState = .init()
-    
-    @State private var networkObserver = NetworkStateObserver(
-        provider: IOSNetworkMonitor.createProvider()
-    )
-    
-    var body: some View {
-        NavigationStack {
-            List {
-                Toggle(isOn: $isPresented) {
-                    Label("Open sheet", systemImage: "iphone")
-                }
-                Button {
-                    openSettings = true
-                    detents = [.small, .medium, .large]
-                    sheetManager.setDetent(.large)
-                } label: {
-                    Label("Open Settings", systemImage: "gearshape.fill")
-                }
-                Button {
-                    openWhatsNew = true
-                    detents = [.small, .medium, .large]
-                    sheetManager.setDetent(.large)
-                } label: {
-                    Label("Open News", systemImage: "sparkles")
-                }
-                Button {
-                    selectedLesson = .sample
-                    openAddToCalendar = true
-                    detents = [.small, .medium, .large]
-                    sheetManager.setDetent(.large)
-                } label: {
-                    Label("Open Calendar", systemImage: "calendar")
-                }
-                Button {
-                    selectedLesson = .sample
-                    detents = [.small, .medium, .large]
-                    sheetManager.setDetent(.large)
-                } label: {
-                    Label("Open Lesson", systemImage: "graduationcap.fill")
-                }
-            }
-            .navigationTitle("Sheet Testing View")
-            .onChange(of: sheetManager.selectedDetent) { _, newDetent in
-                if newDetent != .large {
-                    openSettings = false
-                    openWhatsNew = false
-                    openAddToCalendar = false
-                    selectedLesson = nil
-                    detents = [.small, .medium]
-                }
-            }
-        }
-        .customSheet(isPresented: $isPresented, manager: sheetManager, detents: detents) {
-            DynamicSheetContent(
-                selectedWeek: $selectedWeek,
-                selectedLesson: $selectedLesson,
-                openAddToCalendar: $openAddToCalendar,
-                openSettings: $openSettings,
-                openWhatsNew: $openWhatsNew,
-                tempSettings: $tempSettings
-            )
-        }
-        .environment(networkObserver)
-        .environment(UserSettings.shared)
-    }
-}
-
-// MARK: - Subviews
-struct DynamicSheetContent: View {
+struct CalendarSheetContent: View {
     @Environment(GlobalSheetManager.self) private var sheetManager
     
     @Binding var selectedWeek: Date
@@ -164,8 +83,4 @@ struct DynamicSheetContent: View {
             }
         }
     }
-}
-
-#Preview {
-    MainView()
 }

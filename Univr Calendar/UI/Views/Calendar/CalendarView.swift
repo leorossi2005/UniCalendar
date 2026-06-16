@@ -11,56 +11,6 @@ import SwiftUI
 import UnivrCore
 import CustomSheet
 
-@MainActor
-@Observable
-class CalendarSheetRouter {
-    let manager: GlobalSheetManager
-    
-    var selectedLesson: Lesson? = nil
-    var openSettings: Bool = false
-    var openWhatsNew: Bool = false
-    var openAddToCalendar: Bool = false
-    
-    var detents: [CustomSheetDetent] = [.small, .medium]
-    
-    init(selectedDetent: CustomSheetDetent? = nil) {
-        if let detent = selectedDetent {
-            manager = .init(initialDetent: detent)
-        } else {
-            manager = .init()
-        }
-    }
-    
-    // MARK: - Azioni di navigazione
-    func routeToSettings() {
-        openSettings = true
-        detents = [.small, .medium, .large]
-        manager.setDetent(.large)
-    }
-    
-    func routeToWhatsNew() {
-        openWhatsNew = true
-        detents = [.small, .medium, .large]
-        manager.setDetent(.large)
-    }
-    
-    func routeToLesson(_ lesson: Lesson, addToCalendar: Bool = false) {
-        selectedLesson = lesson
-        openAddToCalendar = addToCalendar
-        detents = [.small, .medium, .large]
-        manager.setDetent(.large)
-    }
-    
-    // MARK: - Reset automatico
-    func resetToCalendar() {
-        selectedLesson = nil
-        openSettings = false
-        openWhatsNew = false
-        openAddToCalendar = false
-        detents = [.small, .medium]
-    }
-}
-
 struct CalendarView: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
@@ -109,7 +59,7 @@ struct CalendarView: View {
                 .animation(.default, value: net.status)
         }
         .customSheet(isPresented: .constant(true), manager: sheetRouter.manager, detents: sheetRouter.detents) {
-            DynamicSheetContent(
+            CalendarSheetContent(
                 selectedWeek: $selectedWeek,
                 selectedLesson: $sheetRouter.selectedLesson,
                 openAddToCalendar: $sheetRouter.openAddToCalendar,

@@ -185,17 +185,6 @@
         }
       }
     },
-    "Calendario" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Calendar"
-          }
-        }
-      }
-    },
     "Cerca un corso" : {
       "localizations" : {
         "en" : {
@@ -636,21 +625,6 @@
         }
       }
     },
-    "Open Calendar" : {
-
-    },
-    "Open Lesson" : {
-
-    },
-    "Open News" : {
-
-    },
-    "Open Settings" : {
-
-    },
-    "Open sheet" : {
-
-    },
     "Pari" : {
       "localizations" : {
         "en" : {
@@ -820,9 +794,6 @@
           }
         }
       }
-    },
-    "Sheet Testing View" : {
-
     },
     "Si è verificato un errore" : {
       "localizations" : {

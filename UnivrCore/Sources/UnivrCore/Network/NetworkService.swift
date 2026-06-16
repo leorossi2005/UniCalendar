@@ -1,62 +1,13 @@
 //
-//  Network.swift
+//  NetworkService.swift
 //  UnivrCore
 //
-//  Created by Leonardo Rossi on 08/10/25.
+//  Created by Leonardo Rossi on 16/06/2026.
 //  Copyright (C) 2026 Leonardo Rossi
 //  SPDX-License-Identifier: GPL-3.0-or-later
 //
 
 import Foundation
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
-
-public struct NetworkCacheData: Codable, Sendable {
-    public let years: [AcademicYear]
-    public let courses: [String: [Corso]]
-}
-
-@MainActor
-public final class NetworkCache: Sendable {
-    public static let shared = NetworkCache()
-    
-    public var years: [AcademicYear] = []
-    public var courses: [String: [Corso]] = [:]
-    
-    private init() {}
-    
-    public func toData() -> NetworkCacheData {
-        return NetworkCacheData(years: self.years, courses: self.courses)
-    }
-    
-    public func update(from data: NetworkCacheData) {
-        self.years = data.years
-        self.courses = data.courses
-    }
-}
-
-enum NetworkError: Error {
-    case badURL
-    case badServerResponse(statusCode: Int)
-    case emptyData
-    case decodingError(Error)
-    case offline
-    case timeout
-    case unknown(Error)
-    
-    var errorDescription: String? {
-        switch self {
-        case .offline: return "Il dispositivo è offline."
-        case .timeout: return "La richiesta è scaduta (Timeout)."
-        case .badURL: return "L'URL non è valido."
-        case .badServerResponse(let code): return "Errore Server: \(code)."
-        case .emptyData: return "Nessun dato ricevuto dal server."
-        case .decodingError(let err): return "Errore di decodifica: \(err.localizedDescription)"
-        case .unknown(let err): return "Errore sconosciuto: \(err.localizedDescription)"
-        }
-    }
-}
 
 struct NetworkService {
     private let session: URLSession
@@ -91,11 +42,20 @@ struct NetworkService {
             }
             
             let decoder = JSONDecoder()
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-            formatter.locale = Locale(identifier: "en_US_POSIX")
-            formatter.timeZone = TimeZone(identifier: "Europe/Rome")
-            decoder.dateDecodingStrategy = .formatted(formatter)
+            decoder.dateDecodingStrategy = .custom { decoder in
+                let container = try decoder.singleValueContainer()
+                let dateString = try container.decode(String.self)
+                
+                let strategy = Date.ParseStrategy(
+                    format: "\(year: .defaultDigits)-\(month: .defaultDigits)-\(day: .defaultDigits)T\(hour: .defaultDigits(clock: .twentyFourHour, hourCycle: .zeroBased)):\(minute: .defaultDigits):\(second: .defaultDigits)",
+                    timeZone: TimeZone(identifier: "Europe/Rome")!
+                )
+                
+                if let date = try? Date(dateString, strategy: strategy) {
+                    return date
+                }
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Formato data non valido")
+            }
             
             return try decoder.decode(T.self, from: data)
             
