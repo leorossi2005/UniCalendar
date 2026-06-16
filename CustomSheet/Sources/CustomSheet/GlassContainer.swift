@@ -45,6 +45,10 @@ enum GlassEffectStyle {
 }
 
 final class GlassContainerView: UIView {
+    private var cornerMaskLayer: CAShapeLayer?
+    private var lastMaskBounds: CGRect = .zero
+    private var lastMaskRadii: SheetCornerRadii?
+    
     private let shadowView = UIView()
     private let glassView = UIVisualEffectView()
     var style: GlassEffectStyle = .regular {
@@ -215,10 +219,19 @@ final class GlassContainerView: UIView {
     }
     
     private func applyCornerMask() {
+        guard glassView.bounds != lastMaskBounds || cornerRadii != lastMaskRadii else { return }
+        
+        lastMaskBounds = glassView.bounds
+        lastMaskRadii = cornerRadii
+        
         let path = generatePath(rect: glassView.bounds)
-        let mask = CAShapeLayer()
-        mask.path = path.cgPath
-        glassView.layer.mask = mask
+        
+        if cornerMaskLayer == nil {
+            cornerMaskLayer = CAShapeLayer()
+            glassView.layer.mask = cornerMaskLayer
+        }
+        
+        cornerMaskLayer?.path = path.cgPath
     }
 }
 
@@ -275,8 +288,7 @@ struct GlassContainer<Content: View>: UIViewControllerRepresentable {
             glassContainer.bottomAnchor.constraint(equalTo: controller.view.bottomAnchor)
         ])
         
-        let bridge = BridgeView(coordinator: context.coordinator)
-        let hosting = UIHostingController(rootView: bridge)
+        let hosting = UIHostingController(rootView: content)
         hosting.view.backgroundColor = .clear
         hosting.view.insetsLayoutMarginsFromSafeArea = false
         hosting.safeAreaRegions = []
@@ -295,7 +307,6 @@ struct GlassContainer<Content: View>: UIViewControllerRepresentable {
         controller.addChild(hosting)
         hosting.didMove(toParent: controller)
         
-        // Store per update
         context.coordinator.glassContainer = glassContainer
         context.coordinator.hostingController = hosting
         
@@ -303,46 +314,26 @@ struct GlassContainer<Content: View>: UIViewControllerRepresentable {
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        let shouldAnimate = (context.transaction.animation != nil)
         if let glass = context.coordinator.glassContainer {
             if glass.cornerRadii != radii { glass.cornerRadii = radii }
             if glass.style != style { glass.style = style }
             glass.tint = tint.map { UIColor($0) }
             if glass.isEnabled != isEnabled { glass.isEnabled = isEnabled }
             if glass.resetTrigger != resetGlassEffect { glass.resetTrigger = resetGlassEffect }
-            glass.applyCorners(animated: shouldAnimate, duration: animationDuration)
             
             let transaction = context.transaction
-            DispatchQueue.main.async {
-                withTransaction(transaction) {
-                    context.coordinator.content = content
-                }
+            withTransaction(transaction) {
+                context.coordinator.hostingController?.rootView = content
             }
         }
     }
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(content: content)
+        Coordinator()
     }
     
-    class Coordinator: ObservableObject {
-        @Published var content: Content
-        
+    class Coordinator {
         weak var glassContainer: GlassContainerView?
-        weak var hostingController: UIHostingController<BridgeView>?
-        
-        init(content: Content) {
-            self.content = content
-        }
-        
-        deinit { }
-    }
-    
-    struct BridgeView: View {
-        @ObservedObject var coordinator: Coordinator
-        
-        var body: some View {
-            coordinator.content
-        }
+        weak var hostingController: UIHostingController<Content>?
     }
 }

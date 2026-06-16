@@ -87,6 +87,7 @@ struct CustomSheet<Content: View>: View {
     // Gesture & Layout States
     @State private var enableBackground: Bool
     @State private var baseHeight: CGFloat
+    @State private var width: CGFloat
     
     @State private var dragY: CGFloat = .zero
     
@@ -148,6 +149,8 @@ struct CustomSheet<Content: View>: View {
             self._sheetShapeRadii = State(initialValue: .init(tl: topRadius, tr: topRadius, bl: bottomRadius, br: bottomRadius))
         }
         
+        self._width = State(initialValue: UIApplication.shared.windowSize.width)
+        
         self.content = content()
     }
     
@@ -178,10 +181,11 @@ struct CustomSheet<Content: View>: View {
         .background {
             GeometryReader { proxy in
                 Color.clear
-                    .onChange(of: proxy.size.height) { _, newSize in
+                    .onChange(of: proxy.size) { _, newSize in
                         if manager.selectedDetent == .large && !manager.isDragging {
                             baseHeight = CustomSheetDetent.large.value
                         }
+                        width = UIApplication.shared.windowSize.width
                     }
             }
         }
@@ -242,7 +246,7 @@ struct CustomSheet<Content: View>: View {
                 .opacity(enableBackground ? 1 : 0)
             
             content
-                .frame(width: min(580, UIApplication.shared.windowSize.width))
+                .frame(width: min(580, width))
                 .frame(maxHeight: CustomSheetDetent.large.value)
                 .overlay(alignment: .top) {
                     if !manager.locked && activeDetents.count > 1 {
@@ -308,16 +312,17 @@ struct CustomSheet<Content: View>: View {
         if predictedHeight >= minDetent && predictedHeight <= maxDetent {
             state = value
 
-            if predictedHeight > CustomSheetDetent.large.value * 0.8 {
+            let shouldEnableBackground = predictedHeight > CustomSheetDetent.large.value * 0.8
+
+            if enableBackground != shouldEnableBackground {
                 withAnimation(.easeInOut(duration: 0.2)) {
-                    setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37)
+                    if shouldEnableBackground {
+                        setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37)
+                    } else {
+                        setSheetShape()
+                    }
                 }
-                enableBackground = true
-            } else {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    setSheetShape()
-                }
-                enableBackground = false
+                enableBackground = shouldEnableBackground
             }
             
             offset = 0

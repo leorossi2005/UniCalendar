@@ -29,7 +29,9 @@ struct VerticalDragger: UIViewRepresentable {
         return view
     }
 
-    func updateUIView(_ uiView: UIView, context: Context) {}
+    func updateUIView(_ uiView: UIView, context: Context) {
+        context.coordinator.parent = self
+    }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
