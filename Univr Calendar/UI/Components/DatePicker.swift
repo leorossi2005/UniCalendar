@@ -17,60 +17,51 @@ struct DatePicker: View, Equatable {
     @Environment(\.calendar) var calendar
     
     var viewModel = DatePickerCache.shared
-    
     @Binding var selection: Date
     let date: Date
     
     private let cellSize: CGFloat = 40
     private let spacing: CGFloat = 8
-
+    
     private var monthName: String { date.getCurrentMonthSymbol(length: .wide) }
-    private var daysHeader: [String] { date.getWeekdaySymbols(length: .short) }
+    private let columns = Array(repeating: GridItem(.fixed(40), spacing: 8), count: 7)
     
     static func == (lhs: DatePicker, rhs: DatePicker) -> Bool {
-        if lhs.date != rhs.date { return false }
-        
-        let lhsIsSelectedMonth = Calendar.current.isDate(lhs.selection, equalTo: lhs.date, toGranularity: .month)
-        let rhsIsSelectedMonth = Calendar.current.isDate(rhs.selection, equalTo: rhs.date, toGranularity: .month)
-        
-        if !lhsIsSelectedMonth && !rhsIsSelectedMonth { return true }
-        
-        return lhs.selection == rhs.selection
+        guard lhs.date == rhs.date else { return false }
+        let cal = Calendar.current
+        let lhsActive = cal.isDate(lhs.selection, equalTo: lhs.date, toGranularity: .month)
+        let rhsActive = cal.isDate(rhs.selection, equalTo: rhs.date, toGranularity: .month)
+        return (!lhsActive && !rhsActive) ? true : lhs.selection == rhs.selection
     }
     
     var body: some View {
         VStack(spacing: 10) {
             headerView
+            
             HStack(spacing: spacing) {
-                ForEach(daysHeader, id: \.self) { day in
+                ForEach(date.getWeekdaySymbols(length: .short), id: \.self) { day in
                     Text(day.capitalized)
                         .frame(width: cellSize, height: cellSize)
                 }
             }
             .opacity(isEnabled ? 1 : 0.3)
-            Grid(horizontalSpacing: spacing, verticalSpacing: spacing) {
+            
+            LazyVGrid(columns: columns, spacing: spacing) {
                 if let monthCell = viewModel.monthGrids["\(monthName)-\(date.yearSymbol)"] {
-                    ForEach(0..<6, id: \.self) { row in
-                        GridRow {
-                            ForEach(0..<7, id: \.self) { column in
-                                let index = (row * 7) + column
-                                if index < monthCell.count {
-                                    let cell = monthCell[index]
-                                    DayCellView(
-                                        cell: cell,
-                                        isSelected: calendar.isDate(selection, inSameDayAs: cell.date),
-                                        isToday: calendar.isDateInToday(cell.date),
-                                        isOutsideBounds: cell.date.isOutOfAcademicBounds(for: Int(settings.selectedYear) ?? 0)
-                                    ) {
-                                        handleSelection(for: cell)
-                                    }
-                                }
+                    ForEach(monthCell, id: \.date) { cell in
+                        DayCellView(
+                            cell: cell,
+                            isSelected: calendar.isDate(selection, inSameDayAs: cell.date),
+                            isToday: calendar.isDateInToday(cell.date),
+                            isOutsideBounds: cell.date.isOutOfAcademicBounds(for: Int(settings.selectedYear) ?? 0)
+                        ) {
+                            if selection != cell.date && !cell.date.isOutOfAcademicBounds(for: Int(settings.selectedYear) ?? 0) {
+                                selection = cell.date
                             }
                         }
                     }
                 }
             }
-            .drawingGroup()
         }
         .frame(maxWidth: 328, maxHeight: .infinity)
         .ignoresSafeArea()
@@ -81,22 +72,21 @@ struct DatePicker: View, Equatable {
     
     private var headerView: some View {
         HStack {
-            let today = Date()
             HStack {
-                Text(monthName)
-                    .fontWeight(.bold)
+                Text(monthName).fontWeight(.bold)
                 Text("•")
                 Text(date.yearSymbol)
             }
             .opacity(isEnabled ? 1 : 0.3)
+            
             Spacer()
-            if today.isInAcademicYear(for: settings.selectedYear) {
+            
+            if Date().isInAcademicYear(for: settings.selectedYear) {
                 Button("Oggi") {
-                    let midnightToday = Calendar.current.startOfDay(for: today)
-                    
-                    if !Calendar.current.isDate(selection, inSameDayAs: midnightToday) {
+                    let today = Calendar.current.startOfDay(for: Date())
+                    if !Calendar.current.isDate(selection, inSameDayAs: today) {
                         Haptics.play(.impact(weight: .medium), state: "selection")
-                        selection = midnightToday
+                        selection = today
                     }
                 }
                 .glassIfAvailable()
@@ -105,47 +95,28 @@ struct DatePicker: View, Equatable {
         }
         .frame(height: 30)
     }
-    
-    private func handleSelection(for cell: CalendarCell) {
-        guard let yearInt = Int(settings.selectedYear) else { return }
-        if selection != cell.date && !cell.date.isOutOfAcademicBounds(for: yearInt) {
-            selection = cell.date
-        }
-    }
 }
 
 struct DatePickerContainer: View {
     @Environment(UserSettings.self) var settings
-    
     @Binding var selectedWeek: Date
-    
-    // MARK: - Internal State
     @State private var internalIndex: Int = 0
-    
-    private let academicMonths = [10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     
     var body: some View {
         let year = Int(settings.selectedYear) ?? selectedWeek.year
         
         TabView(selection: $internalIndex) {
             ForEach(0..<12, id: \.self) { index in
-                let date = dateForIndex(index, year: year)
-                DatePicker(
-                    selection: $selectedWeek,
-                    date: date
-                )
-                .equatable()
-                .tag(index)
+                DatePicker(selection: $selectedWeek, date: Date(year: year, month: 10, day: 1).add(type: .month, value: index))
+                    .equatable()
+                    .tag(index)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .frame(height: CustomSheetDetent.medium.value)
-        .onAppear {
-            internalIndex = calculateTargetIndex(for: selectedWeek.month)
-        }
-        .onChange(of: selectedWeek) { _, newSelection in
-            internalIndex = calculateTargetIndex(for: selectedWeek.month)
-        }
+        // Matematica pura al posto dell'array: Ottobre(10) -> 0, Gennaio(1) -> 3, ecc.
+        .onAppear { internalIndex = (selectedWeek.month + 2) % 12 }
+        .onChange(of: selectedWeek) { _, new in internalIndex = (new.month + 2) % 12 }
         .onChange(of: internalIndex) {
             if GlobalHaptics.shared.state != "selection" {
                 Haptics.play(.selection)
@@ -153,17 +124,6 @@ struct DatePickerContainer: View {
                 GlobalHaptics.shared.state = ""
             }
         }
-    }
-    
-    // MARK: - Logic
-    private func dateForIndex(_ index: Int, year: Int) -> Date {
-        let baseDate = Date(year: year, month: 10, day: 1)
-        return baseDate.add(type: .month, value: index)
-    }
-    
-    private func calculateTargetIndex(for month: Int) -> Int {
-        guard let academicIndex = academicMonths.firstIndex(of: month) else { return 0 }
-        return academicIndex
     }
 }
 
@@ -173,81 +133,54 @@ private struct DayCellView: View {
     @Environment(\.isEnabled) var isEnabled
     
     let cell: CalendarCell
-    let isSelected: Bool
-    let isToday: Bool
-    let isOutsideBounds: Bool
-    let action: () -> ()
+    let isSelected, isToday, isOutsideBounds: Bool
+    let action: () -> Void
     
     var progressColor: Color {
-        if cell.activityQuantity >= 8 {
-            return .red
-        } else if cell.activityQuantity >= 5 {
-            return .orange
-        } else if cell.activityQuantity > 2 {
-            return .yellow
-        } else {
-            return .green
+        switch cell.activityQuantity {
+        case 8...: return .red
+        case 5..<8: return .orange
+        case 3..<5: return .yellow
+        default: return .green
         }
     }
     
     var body: some View {
         Text(cell.dayNumber)
             .frame(width: 40, height: 40)
-            .fontWeight(fontWeight)
+            .fontWeight(isToday && !isSelected ? .black : .regular)
             .foregroundStyle(!isSelected ? Color.primary : colorScheme == .light ? .white : .black)
             .background {
-                if isSelected {
-                    Circle()
-                        .fill(colorScheme == .light ? .black : .white)
-                }
+                if isSelected { Circle().fill(colorScheme == .light ? .black : .white) }
             }
             .overlay(alignment: .bottom) {
                 if cell.hasActivity && isEnabled {
-                    RoundedRectangle(cornerRadius: 2, style: .continuous)
-                        .fill(progressColor)
-                        .frame(width: 15, height: 4)
-                        .opacity(0.2)
+                    RoundedRectangle(cornerRadius: 2, style: .continuous).fill(progressColor).opacity(0.2).frame(width: 15, height: 4)
                         .overlay(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 2, style: .continuous)
-                                .fill(progressColor)
+                            RoundedRectangle(cornerRadius: 2, style: .continuous).fill(progressColor)
                                 .frame(width: (min(8, cell.activityQuantity) * 15) / 8, height: 4)
                         }
                         .background {
-                            if isSelected  {
-                                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                                    .fill(colorScheme == .dark ? .black : .white)
+                            if isSelected {
+                                RoundedRectangle(cornerRadius: 2, style: .continuous).fill(colorScheme == .dark ? .black : .white)
                                     .opacity(progressColor != .yellow ? 0.1 : 0.05)
                             }
                         }
                         .padding(.bottom, 4)
                 }
             }
-            .opacity(opacityLevel)
+            .opacity(isEnabled ? (cell.isCurrentMonth ? 1 : 0.3) : (cell.isCurrentMonth ? 0.3 : 0.1))
             .contentShape(.rect)
             .clipShape(.circle)
             .if(!isOutsideBounds) { view in
-                view
-                    .contentShape(.hoverEffect, .circle)
-                    .hoverEffect(isSelected ? .lift : .highlight)
+                view.contentShape(.hoverEffect, .circle).hoverEffect(isSelected ? .lift : .highlight)
             }
             .onTapGesture(perform: action)
-    }
-    
-    // MARK: - Computed Properties per pulizia
-    private var opacityLevel: Double {
-        if isEnabled { return cell.isCurrentMonth ? 1 : 0.3 }
-        return cell.isCurrentMonth ? 0.3 : 0.1
-    }
-    
-    private var fontWeight: Font.Weight {
-        (isToday && !isSelected) ? .black : .regular
     }
 }
 
 #Preview {
-    @Previewable @State var selectedMonth: Int = 11
     @Previewable @State var selectedWeek: Date = Date()
-    
     DatePickerContainer(selectedWeek: $selectedWeek)
         .environment(UserSettings.shared)
 }

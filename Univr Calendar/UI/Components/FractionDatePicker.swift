@@ -20,9 +20,7 @@ struct FractionDatePickerView: View {
     let week: [FractionDay]
     let width: CGFloat
         
-    private var itemWidth: CGFloat {
-        (min(width, 500) - 70) / 7
-    }
+    private var itemWidth: CGFloat { (min(width, 500) - 70) / 7 }
     
     var body: some View {
         HStack(spacing: 5) {
@@ -30,11 +28,19 @@ struct FractionDatePickerView: View {
                 let isSelected = calendar.isDate(day.date, inSameDayAs: selection)
                 
                 Button {
-                    if !day.isOutOfBounds {
-                        selection = day.date
-                    }
+                    if !day.isOutOfBounds { selection = day.date }
                 } label: {
-                    dayContent(for: day, isSelected: isSelected)
+                    VStack(spacing: 3) {
+                        Text(day.dayNumber)
+                            .font(.system(size: itemWidth * 0.40)).bold()
+                        Text(day.weekdayString)
+                            .font(.system(size: itemWidth * 0.35))
+                    }
+                    .foregroundStyle(isSelected ? (colorScheme == .light ? .white : .black) : .primary)
+                    .frame(width: itemWidth, height: itemWidth * 1.35)
+                    .background(Color.primary.opacity(isSelected ? 1 : 0.05))
+                    .clipShape(RoundedRectangle(cornerRadius: itemWidth / 2.5, style: .continuous))
+                    .opacity(day.isOutOfBounds || !isEnabled ? 0.3 : 1)
                 }
                 .disabled(day.isOutOfBounds)
                 .if(!day.isOutOfBounds) { view in
@@ -48,51 +54,26 @@ struct FractionDatePickerView: View {
         .padding(.horizontal, 20)
         .ignoresSafeArea()
     }
-    
-    @ViewBuilder
-    private func dayContent(for day: FractionDay, isSelected: Bool) -> some View {
-        let foreground: Color = isSelected ? (colorScheme == .light ? .white : .black) : .primary
-        
-        VStack(spacing: 3) {
-            Text(day.dayNumber)
-                .font(.system(size: itemWidth * 0.40))
-                .bold()
-                .foregroundStyle(foreground)
-            Text(day.weekdayString)
-                .font(.system(size: itemWidth * 0.35))
-                .foregroundStyle(foreground)
-        }
-        .frame(width: itemWidth, height: itemWidth * 1.35)
-        .background(Color.primary.opacity(isSelected ? 1 : 0.05))
-        .clipShape(RoundedRectangle(cornerRadius: itemWidth / 2.5, style: .continuous))
-        .opacity(day.isOutOfBounds || !isEnabled ? 0.3 : 1)
-    }
 }
 
 struct FractionDatePickerContainer: View {
     @Environment(UserSettings.self) var settings
-    
     var viewModel = DatePickerCache.shared
-    
     @Binding var selectedWeek: Date
     
-    // MARK: - Internal State
     @State private var internalIndex: Int = 0
-    var indexBinding: Binding<Int> {
-        Binding { internalIndex } set: { newIndex in
-            handleFractionSelectionChange(oldIndex: internalIndex, newIndex: newIndex)
-            internalIndex = newIndex
-        }
-
-    }
     
     var body: some View {
         GeometryReader { proxy in
-            let width = proxy.size.width
-            
-            TabView(selection: indexBinding) {
+            TabView(selection: Binding(
+                get: { internalIndex },
+                set: { newIndex in
+                    shiftWeek(diff: newIndex - internalIndex)
+                    internalIndex = newIndex
+                }
+            )) {
                 ForEach(0..<viewModel.academicWeeks.count, id: \.self) { index in
-                    FractionDatePickerView(selection: $selectedWeek, week: viewModel.academicWeeks[index], width: width)
+                    FractionDatePickerView(selection: $selectedWeek, week: viewModel.academicWeeks[index], width: proxy.size.width)
                         .tag(index)
                 }
             }
@@ -100,56 +81,34 @@ struct FractionDatePickerContainer: View {
             .frame(height: CustomSheetDetent.small.value)
             .task {
                 await viewModel.generateAcademicWeeks(selectedYear: settings.selectedYear)
-                internalIndex = calculateTargetIndex(for: selectedWeek)
+                internalIndex = targetIndex(for: selectedWeek)
             }
             .onChange(of: selectedWeek) { _, newSelection in
-                guard internalIndex < viewModel.academicWeeks.count else { return }
-                let week = viewModel.academicWeeks[internalIndex]
-                let filtered = week.filter { $0.date.month == newSelection.month && $0.date.day == newSelection.day }
-                if filtered.isEmpty {
-                    internalIndex = calculateTargetIndex(for: newSelection)
+                if internalIndex < viewModel.academicWeeks.count,
+                   !viewModel.academicWeeks[internalIndex].contains(where: { Calendar.current.isDate($0.date, inSameDayAs: newSelection) }) {
+                    internalIndex = targetIndex(for: newSelection)
                 }
             }
         }
     }
     
     // MARK: - Logic
-    private func handleFractionSelectionChange(oldIndex: Int, newIndex: Int) {
-        guard let yearInt = Int(settings.selectedYear) else { return }
+    private func shiftWeek(diff: Int) {
+        guard diff != 0, let year = Int(settings.selectedYear) else { return }
         
-        let difference = abs(newIndex - oldIndex)
-        let daysToShift = difference * 7
+        let shift = abs(diff) * 7
+        let newDate = diff > 0 ? selectedWeek.add(type: .day, value: shift) : selectedWeek.remove(type: .day, value: shift)
         
-        let newDate = oldIndex < newIndex
-            ? selectedWeek.add(type: .day, value: daysToShift)
-            : selectedWeek.remove(type: .day, value: daysToShift)
+        let minDate = Date(year: year, month: 10, day: 1)
+        let maxDate = Date(year: year + 1, month: 9, day: 30)
         
-        let minDate = Date(year: yearInt, month: 10, day: 1)
-        let maxDate = Date(year: yearInt + 1, month: 9, day: 30)
-        
-        let calendar = Calendar.current
-        
-        if newDate < minDate {
-            if !calendar.isDate(selectedWeek, inSameDayAs: minDate) {
-                selectedWeek = minDate
-            }
-        } else if newDate > maxDate {
-            if !calendar.isDate(selectedWeek, inSameDayAs: maxDate) {
-                selectedWeek = maxDate
-            }
-        } else {
-            if !calendar.isDate(selectedWeek, inSameDayAs: newDate) {
-                selectedWeek = newDate
-            }
-        }
+        selectedWeek = max(minDate, min(newDate, maxDate))
     }
     
-    private func calculateTargetIndex(for index: Date) -> Int {
-        viewModel.academicWeeks.firstIndex(where: { week in
-            return week.contains(where: { day in
-                return day.date.year == index.year && day.date.month == index.month && day.date.day == index.day
-            })
-        }) ?? 0
+    private func targetIndex(for date: Date) -> Int {
+        viewModel.academicWeeks.firstIndex { week in
+            week.contains { Calendar.current.isDate($0.date, inSameDayAs: date) }
+        } ?? 0
     }
 }
 

@@ -529,9 +529,9 @@ class PassthroughContainerView: UIView {
     private var lastDeepHitTime: TimeInterval = 0
     private var lastDeepHitPoint: CGPoint = .zero
     
-    private let isIOS26: Bool = {
+    private let fixIsNeeded: Bool = {
         let majorVersion = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
-        return majorVersion == 26
+        return majorVersion == 26 || majorVersion == 18
     }()
 
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
@@ -542,7 +542,7 @@ class PassthroughContainerView: UIView {
         }
         
         // MARK: - Logica Standard (iOS 17, 18, 27+)
-        if !isIOS26 {
+        if !fixIsNeeded {
             if hitView == hostingView {
                 return nil
             }
