@@ -1,6 +1,6 @@
 //
-//  VerticalDragger.swift
-//  Univr Calendar
+//  SheetDragger.swift
+//  CustomSheet
 //
 //  Created by Leonardo Rossi on 16/12/25.
 //  Copyright (C) 2026 Leonardo Rossi
@@ -8,13 +8,12 @@
 //
 
 import SwiftUI
-import UIKit
 
 enum CustomSheetDraggingDirection {
     case up, down, none
 }
 
-struct VerticalDragger: UIViewRepresentable {
+struct SheetDragger: UIViewRepresentable {
     var direction: CustomSheetDraggingDirection = .none
     
     var onDrag: (CGFloat, CustomSheetDraggingDirection) -> Void
@@ -29,13 +28,14 @@ struct VerticalDragger: UIViewRepresentable {
         return view
     }
 
-    func updateUIView(_ uiView: UIView, context: Context) {}
+    func updateUIView(_ uiView: UIView, context: Context) {
+        context.coordinator.parent = self
+    }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
     }
 
-    // MARK: - Custom View per il "Pass Through"
     class PassThroughView: UIView {
         weak var coordinator: Coordinator?
         
@@ -53,16 +53,15 @@ struct VerticalDragger: UIViewRepresentable {
         }
     }
 
-    // MARK: - Coordinator
     class Coordinator: NSObject, UIGestureRecognizerDelegate {
-        var parent: VerticalDragger
+        var parent: SheetDragger
         weak var targetView: UIView?
         weak var window: UIWindow?
         weak var trackedScrollView: UIScrollView?
         var initialIsAtTop: Bool?
         var gesture: UIPanGestureRecognizer?
         
-        init(parent: VerticalDragger) {
+        init(parent: SheetDragger) {
             self.parent = parent
         }
         
@@ -174,16 +173,6 @@ struct VerticalDragger: UIViewRepresentable {
             return true
         }
         
-        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
-            guard let touchedView = touch.view else { return true }
-            
-            if touchedView.tag == 422 {
-                return false
-            }
-            
-            return true
-        }
-        
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
             if otherGestureRecognizer.view is UIControl {
                 return true
@@ -194,6 +183,20 @@ struct VerticalDragger: UIViewRepresentable {
                 
                 return true
             }
+            return false
+        }
+        
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+            let otherClass = String(describing: type(of: otherGestureRecognizer))
+            let viewClass = otherGestureRecognizer.view.map { String(describing: type(of: $0)) } ?? ""
+            
+            let isStageManagerDrag = otherClass.contains("WindowScene") || otherClass.contains("DragInteraction") || otherClass.contains("SystemGesture")
+            let isNavBarGesture = viewClass.contains("NavigationBar")
+            
+            if isStageManagerDrag || isNavBarGesture {
+                return true
+            }
+            
             return false
         }
     }

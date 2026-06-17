@@ -185,16 +185,6 @@
         }
       }
     },
-    "Calendario" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Calendar"
-          }
-        }
-      }
-    },
     "Cerca un corso" : {
       "localizations" : {
         "en" : {

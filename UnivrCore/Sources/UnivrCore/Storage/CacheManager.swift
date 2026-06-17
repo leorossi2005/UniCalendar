@@ -1,6 +1,6 @@
 //
 //  CacheManager.swift
-//  Univr Code
+//  UnivrCore
 //
 //  Created by Leonardo Rossi on 21/11/25.
 //  Copyright (C) 2026 Leonardo Rossi
@@ -54,29 +54,5 @@ actor CacheManager: Sendable {
         } catch {
             print("Error clearing cache \(fileName): \(error)")
         }
-    }
-}
-
-public struct Coordinate: Sendable {
-    public let latitude: Double
-    public let longitude: Double
-    
-    public init(latitude: Double, longitude: Double) {
-        self.latitude = latitude
-        self.longitude = longitude
-    }
-}
-
-public actor CoordinateCache {
-    public static let shared = CoordinateCache()
-    
-    private var cache: [String: Coordinate] = [:]
-    
-    public func coordinate(for address: String) -> Coordinate? {
-        cache[address]
-    }
-    
-    public func save(_ coordinate: Coordinate, for address: String) {
-        cache[address] = coordinate
     }
 }

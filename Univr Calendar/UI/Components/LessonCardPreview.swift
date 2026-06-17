@@ -9,6 +9,7 @@
 
 import SwiftUI
 import UnivrCore
+import CustomSheet
 
 struct LessonCardPreview: View {
     let lesson: Lesson

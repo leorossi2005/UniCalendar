@@ -1,6 +1,6 @@
 //
 //  Extensions.swift
-//  Univr Core
+//  UnivrCore
 //
 //  Created by Leonardo Rossi on 10/10/25.
 //  Copyright (C) 2026 Leonardo Rossi

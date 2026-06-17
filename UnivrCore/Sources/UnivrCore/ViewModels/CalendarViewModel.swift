@@ -1,6 +1,6 @@
 //
 //  CalendarViewModel.swift
-//  Univr Core
+//  UnivrCore
 //
 //  Created by Leonardo Rossi on 22/10/25.
 //  Copyright (C) 2026 Leonardo Rossi

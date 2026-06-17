@@ -4,29 +4,25 @@
 import PackageDescription
 
 let package = Package(
-    name: "UnivrCore",
+    name: "CustomSheet",
     defaultLocalization: "it",
     platforms: [
-        .iOS(.v17),
-        .macOS(.v14)
+        .iOS(.v17)
     ],
     products: [
         .library(
-            name: "UnivrCore",
-            type: .static,
-            targets: ["UnivrCore"]
-        ),
+            name: "CustomSheet",
+            targets: ["CustomSheet"]
+        )
     ],
     targets: [
         .target(
-            name: "UnivrCore",
-            resources: [
-                .process("Localizable.xcstrings")
-            ],
+            name: "CustomSheet",
             swiftSettings: [
                 .enableUpcomingFeature("ApproachableConcurrency"),
-            ],
-        )
+            ]
+        ),
+
     ],
     swiftLanguageModes: [.v6]
 )

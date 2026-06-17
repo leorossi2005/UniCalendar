@@ -27,7 +27,25 @@ struct DeveloperProfileView: View {
 
     var body: some View {
         ZStack {
-            deepBg.ignoresSafeArea()
+            deepBg
+                .ignoresSafeArea()
+                .overlay(alignment: .bottomTrailing) {
+                    Circle()
+                        .fill(Color.blue.opacity(0.2))
+                        .frame(width: 400, height: 400)
+                        .blur(radius: 100)
+                        // Lo spingiamo un po' fuori dal bordo in basso a destra
+                        .offset(x: 100, y: 100)
+                }
+                // 3. Cerchio in alto a sinistra (Viola)
+                .overlay(alignment: .topLeading) {
+                    Circle()
+                        .fill(Color.purple.opacity(0.15))
+                        .frame(width: 350, height: 350)
+                        .blur(radius: 90)
+                        // Lo spingiamo un po' fuori dal bordo in alto a sinistra
+                        .offset(x: -80, y: -80)
+                }
             
             GeometryReader { _ in
                 ForEach(0..<DeveloperProfileView.starPositions.count, id: \.self) { index in
@@ -38,20 +56,6 @@ struct DeveloperProfileView: View {
                 }
             }
             .ignoresSafeArea()
-            
-            ZStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.2))
-                    .frame(width: 400, height: 400)
-                    .blur(radius: 100)
-                    .offset(x: 150, y: 350)
-            
-                Circle()
-                    .fill(Color.purple.opacity(0.15))
-                    .frame(width: 350, height: 350)
-                    .blur(radius: 90)
-                    .offset(x: -150, y: -300)
-            }
             
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 30) {
@@ -272,6 +276,7 @@ private struct CustomList: View {
                             Text(item.subtitle)
                                 .font(.caption)
                                 .foregroundStyle(Color(.lightGray))
+                                .multilineTextAlignment(.leading)
                         }
                         
                         Spacer()

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A70C43732FDED6ED002D17EC /* CustomSheet in Frameworks */ = {isa = PBXBuildFile; productRef = A70C43722FDED6ED002D17EC /* CustomSheet */; };
 		A72DAEED2EE0B35300F86639 /* UnivrCore in Frameworks */ = {isa = PBXBuildFile; productRef = A72DAEEC2EE0B35300F86639 /* UnivrCore */; };
 /* End PBXBuildFile section */
 
@@ -28,6 +29,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A72DAEED2EE0B35300F86639 /* UnivrCore in Frameworks */,
+				A70C43732FDED6ED002D17EC /* CustomSheet in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -71,6 +73,7 @@
 			name = "Univr Calendar";
 			packageProductDependencies = (
 				A72DAEEC2EE0B35300F86639 /* UnivrCore */,
+				A70C43722FDED6ED002D17EC /* CustomSheet */,
 			);
 			productName = "Univr Calendar";
 			productReference = A74C008D2E960653001AB35D /* Univr Calendar.app */;
@@ -103,6 +106,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				A72DAEEB2EE0B35300F86639 /* XCLocalSwiftPackageReference "UnivrCore" */,
+				A70C43712FDED6ED002D17EC /* XCLocalSwiftPackageReference "CustomSheet" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A74C008E2E960653001AB35D /* Products */;
@@ -268,7 +272,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1443;
+				CURRENT_PROJECT_VERSION = 1967;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = KP9752B26L;
 				ENABLE_APP_SANDBOX = YES;
@@ -323,7 +327,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1443;
+				CURRENT_PROJECT_VERSION = 1967;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = KP9752B26L;
 				ENABLE_APP_SANDBOX = YES;
@@ -395,6 +399,10 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
+		A70C43712FDED6ED002D17EC /* XCLocalSwiftPackageReference "CustomSheet" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = CustomSheet;
+		};
 		A72DAEEB2EE0B35300F86639 /* XCLocalSwiftPackageReference "UnivrCore" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = UnivrCore;
@@ -402,6 +410,10 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A70C43722FDED6ED002D17EC /* CustomSheet */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CustomSheet;
+		};
 		A72DAEEC2EE0B35300F86639 /* UnivrCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = UnivrCore;

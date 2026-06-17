@@ -1,6 +1,6 @@
 //
 //  UniversityDataManager.swift
-//  Univr Core
+//  UnivrCore
 //
 //  Created by Leonardo Rossi on 19/11/25.
 //  Copyright (C) 2026 Leonardo Rossi

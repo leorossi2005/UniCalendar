@@ -10,12 +10,14 @@
 import SwiftUI
 import MapKit
 import CoreLocation
-import UnivrCore
 import EventKit
+import UnivrCore
+import CustomSheet
 
 struct LessonDetailsView: View {
+    @Environment(GlobalSheetManager.self) private var sheetManager
+    
     @Binding var lesson: Lesson?
-    @Binding var lockSheet: Bool
     
     @State private var showOriginalName: Bool = false
     @State private var calendarEvent: EKEvent?
@@ -75,7 +77,7 @@ struct LessonDetailsView: View {
                 }
             }
             .onChange(of: calendarEvent) { _, newValue in
-                lockSheet = newValue != nil
+                sheetManager.setLock(newValue != nil)
                 if openAddToCalendar, newValue == nil, let onDismiss = onDismiss {
                     onDismiss()
                 }
@@ -243,7 +245,7 @@ struct StableMapView: View {
     private func openInMapsButton(coordinate: CLLocationCoordinate2D, name: String, color: Color) -> some View {
         Group {
             if #available(iOS 26.0, *) {
-                GlassContainer(radii: .init(tl: 25, tr: 25, bl: 25, br: 25), tint: color.opacity(0.4), lockGesture: true) {
+                GlassContainer(radii: .init(all: 25), tint: color.opacity(0.4)) {
                     Button(action: {
                         Haptics.play(.impact(weight: .light))
                         openMaps(coordinate: coordinate, name: name)
@@ -328,11 +330,10 @@ struct StableMapView: View {
 #Preview {
     @Previewable @Namespace var transition
     @Previewable @State var lesson: Lesson? = Lesson.sample
-    @Previewable @State var lockSheet: Bool = false
     
     Text("")
         .sheet(isPresented: .constant(true)) {
-            LessonDetailsView(lesson: $lesson, lockSheet: $lockSheet, openAddToCalendar: false)
+            LessonDetailsView(lesson: $lesson, openAddToCalendar: false)
                 .interactiveDismissDisabled(true)
                 .presentationBackgroundInteraction(.enabled(upThrough: .medium))
         }
