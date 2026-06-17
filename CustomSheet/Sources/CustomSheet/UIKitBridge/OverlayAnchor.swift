@@ -147,6 +147,16 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
     
     let sheetContent: () -> SheetContent
     
+    // 1. Define the Coordinator
+    class Coordinator {
+        var lastPhase: ScenePhase?
+    }
+    
+    // 2. Implement makeCoordinator
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+    
     func makeUIView(context: Context) -> OverlayAnchorUIView {
         let view = OverlayAnchorUIView()
         view.backgroundColor = .clear
@@ -155,6 +165,11 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: OverlayAnchorUIView, context: Context) {
+        let currentPhase = context.environment.scenePhase
+        let lastPhase = context.coordinator.lastPhase
+        
+        let didPhaseChange = (lastPhase == .inactive && currentPhase == .active)
+        
         let updatedView = AnyView(
             CustomSheet(
                 isPresented: $isPresented,
@@ -162,15 +177,27 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
                 manager: manager,
                 content: sheetContent
             )
+            .environment(\.scenePhase, capturedEnvironment.scenePhase)
             .environment(\.colorScheme, capturedEnvironment.colorScheme)
             .environment(\.self, capturedEnvironment)
         )
         
         if let hc = uiView.hostingController {
-            hc.rootView = updatedView
+            if didPhaseChange {
+                UIView.transition(with: hc.view, duration: 0.2, options: .transitionCrossDissolve, animations: {
+                    hc.rootView = updatedView
+                    print("1", currentPhase)
+                }, completion: nil)
+            } else {
+                hc.rootView = updatedView
+                print("2", currentPhase)
+            }
         } else {
             uiView.pendingRootView = updatedView
         }
+        
+        // 4. Update the stored value in the coordinator
+        context.coordinator.lastPhase = currentPhase
         
         let isLarge = manager?.selectedDetent == .large
         uiView.updateNavigationSafeArea(isLarge: isLarge)
