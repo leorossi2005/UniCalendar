@@ -206,6 +206,7 @@
       }
     },
     "Ci sono novita!" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -224,6 +225,9 @@
           }
         }
       }
+    },
+    "Ciao" : {
+
     },
     "Comincia!" : {
       "localizations" : {
@@ -306,6 +310,7 @@
       }
     },
     "Controllo aggiornamenti..." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -516,6 +521,7 @@
       }
     },
     "Modalità offline" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

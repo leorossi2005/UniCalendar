@@ -11,6 +11,11 @@ import SwiftUI
 import UnivrCore
 import CustomSheet
 
+enum Pages {
+    case main
+    case classrooms
+}
+
 struct CalendarView: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
@@ -26,38 +31,53 @@ struct CalendarView: View {
     
     @State var tempSettings: TempSettingsState = .init()
     
+    @State var page: Pages = .main
+    
     var body: some View {
         NavigationStack {
-            mainScrollView
-                .toolbar {
-                    buildToolbar()
+            Group {
+                switch page {
+                case .main:
+                    mainView
+                case .classrooms:
+                    classroomView
                 }
-                .onChange(of: sheetRouter.manager.selectedDetent) { oldValue, newValue in
-                    handleDetentChange(oldValue: oldValue, newValue: newValue)
+            }
+            .toolbar {
+                buildToolbar()
+            }
+            .modify { view in
+                if #available(iOS 26, *) { view } else {
+                    view
+                        .toolbarBackground(.visible, for: .navigationBar)
                 }
-                .onAppear {
-                    inizializeData()
-                }
-                .onChange(of: viewModel.state == .loading) { _, isLoading in
-                    handleLoadingChange(isLoading)
-                }
-                .onChange(of: net.status) { _, newStatus in
-                    if newStatus == .connected {
-                        Task {
-                            await viewModel.loadLessons(
-                                corso: settings.selectedCourse,
-                                anno: settings.selectedAcademicYear,
-                                selYear: settings.selectedYear,
-                                matricola: settings.matricola,
-                                updating: false
-                            )
-                        }
+            }
+            .onChange(of: sheetRouter.manager.selectedDetent) { oldValue, newValue in
+                handleDetentChange(oldValue: oldValue, newValue: newValue)
+            }
+            .onAppear {
+                inizializeData()
+            }
+            .onChange(of: viewModel.state == .loading) { _, isLoading in
+                handleLoadingChange(isLoading)
+            }
+            .onChange(of: net.status) { _, newStatus in
+                if newStatus == .connected {
+                    Task {
+                        await viewModel.loadLessons(
+                            corso: settings.selectedCourse,
+                            anno: settings.selectedAcademicYear,
+                            selYear: settings.selectedYear,
+                            matricola: settings.matricola,
+                            updating: false
+                        )
                     }
                 }
-                .removeTopSafeArea()
-                .animation(.default, value: viewModel.checkingUpdates)
-                .animation(.default, value: viewModel.updateAvailable)
-                .animation(.default, value: net.status)
+            }
+            .removeTopSafeArea()
+            .animation(.default, value: viewModel.checkingUpdates)
+            .animation(.default, value: viewModel.updateAvailable)
+            .animation(.default, value: net.status)
         }
         .customSheet(isPresented: $showSheet, manager: sheetRouter.manager, detents: sheetRouter.detents) {
             CalendarSheetContent(
@@ -73,8 +93,8 @@ struct CalendarView: View {
         .environment(sheetRouter.manager)
     }
     
-    // MARK: - Main Content
-    private var mainScrollView: some View {
+    // MARK: - MainView
+    private var mainView: some View {
         ZStack {
             calendarScrollView
             
@@ -202,152 +222,72 @@ struct CalendarView: View {
         }
     }
     
+    // MARK: - ClassRoomView
+    private var classroomView: some View {
+        ScrollView {
+            Text("Ciao")
+        }
+    }
+    
     // MARK: - Toolbar Builder
     @ToolbarContentBuilder
     private func buildToolbar() -> some ToolbarContent {
-        ToolbarItem(placement: .navigationBarLeading) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(selectedWeek.getCurrentWeekdaySymbol(length: .wide))
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                Text("\(selectedWeek.day) \(selectedWeek.getCurrentMonthSymbol(length: .wide))")
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
+        ToolbarItem(placement: .topBarLeading) {
+            HStack {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(selectedWeek.getCurrentWeekdaySymbol(length: .wide))
+                        .font(.headline)
+                    Text("\(selectedWeek.day) \(selectedWeek.getCurrentMonthSymbol(length: .wide))")
+                        .font(.subheadline)
+                }
+                
+                Image(systemName: "wifi.slash")
+                    .symbolEffect(.appear.up.byLayer, isActive: net.status == .connected)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.yellow.opacity(0.8))
             }
-            .toolbarTitleShadow(colorScheme)
-            .fixedSize(horizontal: true, vertical: false)
+            .fixedSize()
+            .modify { view in
+                if #available(iOS 26, *) { view } else {
+                    view
+                        .padding(.bottom, 8)
+                }
+            }
         }
         .toolbarBackgroundVisibility(.hidden)
         
-        if viewModel.checkingUpdates || viewModel.updateAvailable {
-            ToolbarItem {
-                if #available(iOS 26, *) {
-                    modernUpdateStatus
-                } else {
-                    legacyUpdateStatus
-                }
+        if viewModel.checkingUpdates {
+            ToolbarItem(placement: .topBarTrailing) {
+                ProgressView()
+                    .controlSize(.small)
             }
-        } else if net.status == .disconnected {
-            ToolbarItem {
-                if #available(iOS 26, *) {
-                    Button {} label: {
-                        Text("Modalità offline")
-                            .foregroundStyle(.black)
-                            .font(.caption)
-                            .bold()
+        } else if viewModel.updateAvailable {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Aggiorna") {
+                    Task { @MainActor in
+                        await viewModel.confirmUpdate(matricola: settings.matricola)
                     }
-                    .tint(.yellow.opacity(0.7))
-                    .buttonStyle(.glassProminent)
-                } else {
-                    Text("Modalità offline")
-                        .blur(radius: net.status != .connected ? 0 : 20)
-                        .foregroundStyle(.black)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background {
-                            RoundedRectangle(cornerRadius: 25)
-                                .fill(colorScheme == .light ? .yellow : Color(hex: "#CCAA00")!)
-                                .strokeBorder(colorScheme == .light ? Color(hex: "#CCAA00")! : Color(hex: "#B39500")!, lineWidth: 2)
-                        }
+                }
+                .font(.caption)
+            }
+        }
+        
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                page = page == .main ? .classrooms : .main
+            } label: {
+                HStack {
+                    Image(systemName: page == .main ? "calendar" : "clock")
+                        .symbolReplace()
                 }
             }
         }
         
-        if #available(iOS 26.0, *) {
-            ToolbarSpacer(.flexible)
-        }
-        
-        ToolbarItem {
-            if #available(iOS 26, *) {
-                modernSettingsButton
-            } else {
-                legacySettingsButton
+        ToolbarItem(placement: .topBarTrailing) {
+            Button(action: openSettingsAction) {
+                Label("", systemImage: "gearshape.fill")
             }
         }
-    }
-    
-    // MARK: - Toolbar Components
-    private var modernUpdateStatus: some View {
-        Group {
-            if viewModel.updateAvailable {
-                HStack {
-                    Button("Aggiorna") {
-                        Task { @MainActor in
-                            await viewModel.confirmUpdate(matricola: settings.matricola)
-                        }
-                    }
-                    .font(.caption)
-                    Text("Ci sono novita!")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                HStack {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Controllo aggiornamenti...")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .padding(8)
-    }
-    
-    private var legacyUpdateStatus: some View {
-        Group {
-            if viewModel.updateAvailable {
-                HStack {
-                    Button("Aggiorna") {
-                        Haptics.play(.start)
-                        Task { @MainActor in
-                            await viewModel.confirmUpdate(matricola: settings.matricola)
-                        }
-                    }
-                    .font(.caption)
-                    .padding(3)
-                    .foregroundStyle(colorScheme == .light ? .black : .white)
-                    Text("Ci sono novita!")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                HStack {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Controllo aggiornamenti...")
-                        .font(.caption2)
-                        .padding(7)
-                        .foregroundStyle(colorScheme == .light ? .black : .white)
-                }
-            }
-        }
-        .frame(height: 45)
-        .padding(.horizontal, 12)
-        .background(colorScheme == .light ? .white.opacity(0.7) : .black.opacity(0.7))
-        .clipShape(.capsule)
-        .overlay(Capsule().stroke(colorScheme == .light ? .black.opacity(0.1) : .white.opacity(0.1), lineWidth: 2))
-    }
-    
-    var modernSettingsButton: some View {
-        Button(action: openSettingsAction) {
-            Label("", systemImage: "gearshape.fill")
-        }
-    }
-    
-    var legacySettingsButton: some View {
-        Button(action: openSettingsAction) {
-            Label("", systemImage: "gearshape.fill")
-                .font(Font.system(size: 25))
-                .padding(3)
-                .foregroundStyle(colorScheme == .light ? .black : .white)
-        }
-        .frame(height: 45)
-        .buttonStyle(.borderedProminent)
-        .buttonBorderShape(.circle)
-        .tint(colorScheme == .light ? .white.opacity(0.7) : .black.opacity(0.7))
-        .clipShape(.circle)
-        .overlay(Circle().stroke(colorScheme == .light ? .black.opacity(0.1) : .white.opacity(0.1), lineWidth: 2))
     }
     
     // MARK: - Logic Methods

@@ -42,6 +42,7 @@ struct CalendarSheetContent: View {
                 FractionDatePickerContainer(selectedWeek: $selectedWeek)
                     .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
                     .allowsHitTesting(sheetManager.selectedDetent == .small)
+                    .frame(height: CustomSheetDetent.small.value)
                 
                 DatePickerContainer(selectedWeek: $selectedWeek)
                     .opacity(mediumIsHidden ? 0 : min(max(mediumOpacity, 0), 1))
