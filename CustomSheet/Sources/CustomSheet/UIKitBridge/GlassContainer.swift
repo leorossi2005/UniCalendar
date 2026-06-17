@@ -44,38 +44,24 @@ public enum GlassEffectStyle {
 }
 
 final class GlassContainerView: UIView {
-    private var cornerMaskLayer: CAShapeLayer?
-    private var lastMaskBounds: CGRect = .zero
-    private var lastMaskRadii: SheetCornerRadii?
-    
     private let shadowView = UIView()
     private let glassView = UIVisualEffectView()
-    var cornerRadii: SheetCornerRadii = .init(tl: 0, tr: 0, bl: 0, br: 0)
-    var style: GlassEffectStyle = .regular {
-        didSet { updateAppearance() }
-    }
-    var tint: UIColor? = nil {
-        didSet { updateAppearance() }
-    }
-    var isEnabled = true {
-        didSet { updateAppearance() }
-    }
-    var resetTrigger: Int = 0 {
-        didSet { resetEffect() }
-    }
+    
+    var cornerRadii: SheetCornerRadii = .init(all: 0)
+    var style: GlassEffectStyle = .regular { didSet { updateAppearance() } }
+    var tint: UIColor? = nil { didSet { updateAppearance() } }
+    var isEnabled = true { didSet { updateAppearance() } }
+    var resetTrigger: Int = 0 { didSet { resetEffect() } }
     
     override init(frame: CGRect) {
         super.init(frame: frame)
         setup()
     }
     
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     
     private func setup() {
         if #unavailable(iOS 26) {
-            shadowView.translatesAutoresizingMaskIntoConstraints = false
             shadowView.backgroundColor = .clear
             shadowView.layer.shadowColor = UIColor.black.cgColor
             shadowView.layer.shadowOffset = CGSize(width: 0, height: 0)
@@ -83,25 +69,7 @@ final class GlassContainerView: UIView {
             addSubview(shadowView)
         }
         
-        glassView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(glassView)
-        
-        if #unavailable(iOS 26) {
-            NSLayoutConstraint.activate([
-                shadowView.leadingAnchor.constraint(equalTo: leadingAnchor),
-                shadowView.trailingAnchor.constraint(equalTo: trailingAnchor),
-                shadowView.topAnchor.constraint(equalTo: topAnchor),
-                shadowView.bottomAnchor.constraint(equalTo: bottomAnchor)
-            ])
-        }
-        
-        NSLayoutConstraint.activate([
-            glassView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            glassView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            glassView.topAnchor.constraint(equalTo: topAnchor),
-            glassView.bottomAnchor.constraint(equalTo: bottomAnchor)
-        ])
-        
         glassView.clipsToBounds = true
         
         if #unavailable(iOS 26) {
@@ -109,12 +77,15 @@ final class GlassContainerView: UIView {
                 self.updateAppearance()
             }
         }
-        
         updateAppearance()
     }
     
     override func layoutSubviews() {
         super.layoutSubviews()
+        
+        if #unavailable(iOS 26) { shadowView.frame = bounds }
+        glassView.frame = bounds
+        
         if #unavailable(iOS 26) {
             applyCornerMask()
             updateShadowPath()
@@ -123,9 +94,7 @@ final class GlassContainerView: UIView {
     
     private func updateAppearance() {
         updateEffect()
-        if #unavailable(iOS 26) {
-            updateShadow()
-        }
+        if #unavailable(iOS 26) { updateShadow() }
     }
     
     private func updateEffect() {
@@ -148,7 +117,6 @@ final class GlassContainerView: UIView {
     
     private func updateShadow() {
         let shouldShowShadow = traitCollection.userInterfaceStyle != .dark
-        
         UIView.animate(withDuration: 0.2) {
             self.shadowView.layer.shadowOpacity = shouldShowShadow ? 0.1 : 0.0
         }
@@ -156,15 +124,10 @@ final class GlassContainerView: UIView {
     
     private func resetEffect() {
         glassView.effect = nil
-        
-        DispatchQueue.main.async {
-            self.updateEffect()
-        }
+        DispatchQueue.main.async { self.updateEffect() }
     }
     
-    var contentView: UIView {
-        return glassView.contentView
-    }
+    var contentView: UIView { return glassView.contentView }
     
     func applyCorners(animated: Bool, duration: TimeInterval) {
         let block = {
@@ -179,56 +142,37 @@ final class GlassContainerView: UIView {
                     self.glassView.cornerConfiguration = corners
                 }
             } else {
-                self.updateShadowPath()
                 self.applyCornerMask()
+                self.updateShadowPath()
             }
         }
         
         if animated {
             UIView.animate(withDuration: duration, animations: block)
-        } else {
-            block()
-        }
-    }
-    
-    private func generatePath(rect: CGRect) -> UIBezierPath {
-        let path = UIBezierPath()
-        path.move(to: CGPoint(x: rect.minX + cornerRadii.tl, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX - cornerRadii.tr, y: rect.minY))
-        path.addQuadCurve(to: CGPoint(x: rect.maxX, y: rect.minY + cornerRadii.tr),
-                          controlPoint: CGPoint(x: rect.maxX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - cornerRadii.br))
-        path.addQuadCurve(to: CGPoint(x: rect.maxX - cornerRadii.br, y: rect.maxY),
-                          controlPoint: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX + cornerRadii.bl, y: rect.maxY))
-        path.addQuadCurve(to: CGPoint(x: rect.minX, y: rect.maxY - cornerRadii.bl),
-                          controlPoint: CGPoint(x: rect.minX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + cornerRadii.tl))
-        path.addQuadCurve(to: CGPoint(x: rect.minX + cornerRadii.tl, y: rect.minY),
-                          controlPoint: CGPoint(x: rect.minX, y: rect.minY))
-        path.close()
-        return path
-    }
-    
-    private func updateShadowPath() {
-        let path = generatePath(rect: bounds)
-        shadowView.layer.shadowPath = path.cgPath
+        } else { block() }
     }
     
     private func applyCornerMask() {
-        guard glassView.bounds != lastMaskBounds || cornerRadii != lastMaskRadii else { return }
+        let maxRadius = max(cornerRadii.tl, cornerRadii.tr, cornerRadii.bl, cornerRadii.br)
         
-        lastMaskBounds = glassView.bounds
-        lastMaskRadii = cornerRadii
+        var maskedCorners: CACornerMask = []
+        if cornerRadii.tl > 0 { maskedCorners.insert(.layerMinXMinYCorner) }
+        if cornerRadii.tr > 0 { maskedCorners.insert(.layerMaxXMinYCorner) }
+        if cornerRadii.bl > 0 { maskedCorners.insert(.layerMinXMaxYCorner) }
+        if cornerRadii.br > 0 { maskedCorners.insert(.layerMaxXMaxYCorner) }
         
-        let path = generatePath(rect: glassView.bounds)
+        glassView.layer.cornerRadius = maxRadius
+        glassView.layer.maskedCorners = maskedCorners
         
-        if cornerMaskLayer == nil {
-            cornerMaskLayer = CAShapeLayer()
-            glassView.layer.mask = cornerMaskLayer
-        }
-        
-        cornerMaskLayer?.path = path.cgPath
+        shadowView.layer.cornerRadius = maxRadius
+        shadowView.layer.maskedCorners = maskedCorners
+    }
+    
+    private func updateShadowPath() {
+        shadowView.layer.shadowPath = UIBezierPath(
+            roundedRect: bounds,
+            cornerRadius: shadowView.layer.cornerRadius
+        ).cgPath
     }
 }
 
@@ -265,22 +209,13 @@ public struct GlassContainer<Content: View>: UIViewControllerRepresentable {
         let glassContainer = GlassContainerView()
         glassContainer.cornerRadii = radii
         glassContainer.style = style
-        if let tint {
-            glassContainer.tint = UIColor(tint)
-        } else {
-            glassContainer.tint = nil
-        }
+        if let tint { glassContainer.tint = UIColor(tint) }
         glassContainer.isEnabled = isEnabled
         glassContainer.resetTrigger = resetGlassEffect
         
         controller.view.addSubview(glassContainer)
-        glassContainer.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            glassContainer.leadingAnchor.constraint(equalTo: controller.view.leadingAnchor),
-            glassContainer.trailingAnchor.constraint(equalTo: controller.view.trailingAnchor),
-            glassContainer.topAnchor.constraint(equalTo: controller.view.topAnchor),
-            glassContainer.bottomAnchor.constraint(equalTo: controller.view.bottomAnchor)
-        ])
+        glassContainer.frame = controller.view.bounds
+        glassContainer.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         
         let hosting = UIHostingController(rootView: content)
         hosting.view.backgroundColor = .clear
@@ -289,13 +224,8 @@ public struct GlassContainer<Content: View>: UIViewControllerRepresentable {
         hosting.traitOverrides.userInterfaceLevel = .elevated
         
         glassContainer.contentView.addSubview(hosting.view)
-        hosting.view.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            hosting.view.leadingAnchor.constraint(equalTo: glassContainer.contentView.leadingAnchor),
-            hosting.view.trailingAnchor.constraint(equalTo: glassContainer.contentView.trailingAnchor),
-            hosting.view.topAnchor.constraint(equalTo: glassContainer.contentView.topAnchor),
-            hosting.view.bottomAnchor.constraint(equalTo: glassContainer.contentView.bottomAnchor)
-        ])
+        hosting.view.frame = glassContainer.contentView.bounds
+        hosting.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         
         controller.addChild(hosting)
         hosting.didMove(toParent: controller)

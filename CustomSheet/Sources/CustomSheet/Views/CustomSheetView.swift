@@ -131,12 +131,22 @@ struct CustomSheet<Content: View>: View {
                     mainSheet
                         .ignoresSafeArea()
                 }
+                .overlay {
+                    SheetDragger(
+                        onDrag: { translationY, _ in
+                            handleDragUpdating(value: translationY, state: &self.dragY)
+                        },
+                        onEnded: { translationY, predictedEndTranslation in
+                            handleDragEnded(translationY, predictedEndTranslation)
+                        }
+                    )
+                    .allowsHitTesting(false)
+                }
                 .frame(height: liveHeight)
                 .frame(maxWidth: 580)
                 .offset(y: (isPresented && hasMounted) ? -offset : liveHeight + defaultPadding)
                 .modifier(ClampedPadding(padding: sheetPadding))
                 .opacity(isPresented ? 1 : 0)
-                .compositingGroup()
             }
             .frame(maxHeight: .infinity)
             .environment(manager)
@@ -225,17 +235,6 @@ struct CustomSheet<Content: View>: View {
                             .hoverEffect(.highlight)
                     }
                 }
-        }
-        .overlay {
-            SheetDragger(
-                onDrag: { translationY, _ in
-                    handleDragUpdating(value: translationY, state: &self.dragY)
-                },
-                onEnded: { translationY, predictedEndTranslation in
-                    handleDragEnded(translationY, predictedEndTranslation)
-                }
-            )
-            .allowsHitTesting(false)
         }
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
             DispatchQueue.main.async {

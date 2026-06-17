@@ -11,13 +11,13 @@ import SwiftUI
 
 @MainActor
 extension UIApplication {
-    var safeAreas: UIEdgeInsets {
+    public var safeAreas: UIEdgeInsets {
         connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .first?.keyWindow?.safeAreaInsets ?? .zero
     }
     
-    var windowSize: CGRect {
+    public var windowSize: CGRect {
         connectedScenes
             .compactMap { $0 as? UIWindowScene }
             .first?.keyWindow?.bounds ?? .zero
@@ -26,14 +26,14 @@ extension UIApplication {
 
 @MainActor
 extension UIDevice {
-    static var isIpad: Bool {
+    public static var isIpad: Bool {
         current.userInterfaceIdiom == .pad
     }
 }
 
 @MainActor
 extension CGFloat {
-    static var deviceCornerRadius: CGFloat = {
+    public static var deviceCornerRadius: CGFloat = {
         var systemInfo = utsname()
         uname(&systemInfo)
         let machineMirror = Mirror(reflecting: systemInfo.machine)
