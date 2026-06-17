@@ -22,6 +22,7 @@ struct CalendarView: View {
     @State private var viewModel = CalendarViewModel()
     @State private var selectedWeek: Date = Calendar.current.startOfDay(for: Date())
     @State private var firstLoading: Bool = true
+    @State private var showSheet: Bool = true
     
     @State var tempSettings: TempSettingsState = .init()
     
@@ -58,7 +59,7 @@ struct CalendarView: View {
                 .animation(.default, value: viewModel.updateAvailable)
                 .animation(.default, value: net.status)
         }
-        .customSheet(isPresented: .constant(true), manager: sheetRouter.manager, detents: sheetRouter.detents) {
+        .customSheet(isPresented: $showSheet, manager: sheetRouter.manager, detents: sheetRouter.detents) {
             CalendarSheetContent(
                 selectedWeek: $selectedWeek,
                 selectedLesson: $sheetRouter.selectedLesson,

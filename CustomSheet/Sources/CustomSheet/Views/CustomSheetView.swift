@@ -210,10 +210,13 @@ struct CustomSheet<Content: View>: View {
             }
         }
         .onAppear {
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(20))
-                hasMounted = true
+            manager.actionDismiss = {
+                isPresented = false
             }
+        }
+        .task {
+            try? await Task.sleep(for: .milliseconds(100))
+            hasMounted = true
         }
     }
     
@@ -262,8 +265,10 @@ struct CustomSheet<Content: View>: View {
         }
         
         let predictedHeight = baseHeight - value
-        let minDetent = activeDetents.first!.value
-        let maxDetent = activeDetents.last!.value
+        
+        guard let first = activeDetents.first, let last = activeDetents.last else { return }
+        let minDetent = first.value
+        let maxDetent = last.value
         
         if maxDetent == CustomSheetDetent.large.value && activeDetents.contains(.medium) {
             if predictedHeight >= CustomSheetDetent.medium.value && predictedHeight <= CustomSheetDetent.large.value {
@@ -315,8 +320,8 @@ struct CustomSheet<Content: View>: View {
         }
         
         let rawPredictedHeight = baseHeight - value
-        let minDetent = activeDetents.first!
-        let maxDetent = activeDetents.last!
+        
+        guard let minDetent = activeDetents.first, let maxDetent = activeDetents.last else { return }
         
         var effectiveTranslation = rawPredictedHeight
         

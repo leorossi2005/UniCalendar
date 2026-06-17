@@ -184,6 +184,7 @@ struct Settings: View {
             try? await Task.sleep(for: .seconds(0.1))
             await viewModel.clearCalendarCache()
             settings.reset()
+            sheetManager.dismiss()
         }
     }
     

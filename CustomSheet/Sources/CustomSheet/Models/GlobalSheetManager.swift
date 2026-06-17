@@ -34,13 +34,17 @@ public enum CustomSheetDetent {
 @MainActor
 @Observable
 public class GlobalSheetManager {
-    // MARK: - Sensori (Stati in sola lettura per l'utente)
     public internal(set) var isDragging: Bool = false
     public private(set) var locked: Bool = false
     public private(set) var selectedDetent: CustomSheetDetent
     public internal(set) var previousDetent: CustomSheetDetent?
-            
-    // MARK: - Comandi Pubblici (Quelli che userai nella tua app)
+    
+    var actionDismiss: (() -> Void)?
+    
+    public func dismiss() {
+        actionDismiss?()
+    }
+    
     public func setDetent(_ detent: CustomSheetDetent) {
         selectedDetent = detent
     }

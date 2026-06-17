@@ -36,7 +36,6 @@ struct SheetDragger: UIViewRepresentable {
         Coordinator(parent: self)
     }
 
-    // MARK: - Custom View per il "Pass Through"
     class PassThroughView: UIView {
         weak var coordinator: Coordinator?
         
@@ -54,7 +53,6 @@ struct SheetDragger: UIViewRepresentable {
         }
     }
 
-    // MARK: - Coordinator
     class Coordinator: NSObject, UIGestureRecognizerDelegate {
         var parent: SheetDragger
         weak var targetView: UIView?

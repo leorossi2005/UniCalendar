@@ -27,7 +27,6 @@ class PassthroughContainerView: UIView {
             return nil
         }
         
-        // MARK: - Logica Standard (iOS 17, 18, 27+)
         if !fixIsNeeded {
             if hitView == hostingView {
                 return nil
@@ -35,7 +34,6 @@ class PassthroughContainerView: UIView {
             return hitView
         }
         
-        // MARK: - Fix Specifico per iOS 26 (View Flattening Bypass)
         let currentTime = Date().timeIntervalSince1970
         
         if hitView != hostingView && hitView != nil {
@@ -147,12 +145,10 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
     
     let sheetContent: () -> SheetContent
     
-    // 1. Define the Coordinator
     class Coordinator {
         var lastPhase: ScenePhase?
     }
     
-    // 2. Implement makeCoordinator
     func makeCoordinator() -> Coordinator {
         Coordinator()
     }
@@ -168,7 +164,7 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
         let currentPhase = context.environment.scenePhase
         let lastPhase = context.coordinator.lastPhase
         
-        let didPhaseChange = (lastPhase == .inactive && currentPhase == .active)
+        let didPhaseChange = (lastPhase != nil && lastPhase == .inactive && lastPhase != currentPhase)
         
         let updatedView = AnyView(
             CustomSheet(
@@ -186,17 +182,14 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
             if didPhaseChange {
                 UIView.transition(with: hc.view, duration: 0.2, options: .transitionCrossDissolve, animations: {
                     hc.rootView = updatedView
-                    print("1", currentPhase)
                 }, completion: nil)
             } else {
                 hc.rootView = updatedView
-                print("2", currentPhase)
             }
         } else {
             uiView.pendingRootView = updatedView
         }
         
-        // 4. Update the stored value in the coordinator
         context.coordinator.lastPhase = currentPhase
         
         let isLarge = manager?.selectedDetent == .large
