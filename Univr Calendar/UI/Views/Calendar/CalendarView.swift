@@ -225,8 +225,16 @@ struct CalendarView: View {
     // MARK: - ClassRoomView
     private var classroomView: some View {
         ScrollView {
-            Text("Ciao")
+            VStack {
+                RoomCard(events: [])
+                RoomCard(events: [""])
+                RoomCard(events: ["", ""])
+                RoomCard(events: ["", "", "", "", "", ""])
+                RoomCard(events: ["", ".", ""])
+            }
         }
+        .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
+        .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
     }
     
     // MARK: - Toolbar Builder

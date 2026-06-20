@@ -95,6 +95,12 @@
         }
       }
     },
+    "14:30" : {
+
+    },
+    "17:00" : {
+
+    },
     "Aggiorna" : {
       "localizations" : {
         "en" : {
@@ -154,6 +160,9 @@
           }
         }
       }
+    },
+    "Aula Gino Tessari" : {
+
     },
     "Bene! Ora scegli un corso" : {
       "localizations" : {
@@ -225,9 +234,6 @@
           }
         }
       }
-    },
-    "Ciao" : {
-
     },
     "Comincia!" : {
       "localizations" : {
@@ -489,6 +495,12 @@
           }
         }
       }
+    },
+    "Libera ora (Fino alle 14:30)" : {
+
+    },
+    "Libera tutto il giorno" : {
+
     },
     "Lo Sviluppatore" : {
       "localizations" : {
