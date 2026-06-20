@@ -83,6 +83,7 @@ struct CalendarView: View {
             CalendarSheetContent(
                 selectedWeek: $selectedWeek,
                 selectedLesson: $sheetRouter.selectedLesson,
+                selectedRoom: $sheetRouter.selectedRoom,
                 openAddToCalendar: $sheetRouter.openAddToCalendar,
                 openSettings: $sheetRouter.openSettings,
                 openWhatsNew: $sheetRouter.openWhatsNew,
@@ -231,6 +232,10 @@ struct CalendarView: View {
                 RoomCard(events: ["", ""])
                 RoomCard(events: ["", "", "", "", "", ""])
                 RoomCard(events: ["", ".", ""])
+            }
+            .onTapGesture {
+                Haptics.play(.impact(weight: .light, intensity: 0.5))
+                sheetRouter.routeToRoom("")
             }
         }
         .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
