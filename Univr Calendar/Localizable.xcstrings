@@ -95,12 +95,6 @@
         }
       }
     },
-    "14:30" : {
-
-    },
-    "17:00" : {
-
-    },
     "Aggiorna" : {
       "localizations" : {
         "en" : {
@@ -161,7 +155,7 @@
         }
       }
     },
-    "Aula Gino Tessari" : {
+    "Aula libera tutto il giorno" : {
 
     },
     "Bene! Ora scegli un corso" : {
@@ -499,7 +493,7 @@
         }
       }
     },
-    "Libera ora (Fino alle 14:30)" : {
+    "Libera ora (fino alle %@)" : {
 
     },
     "Libera tutto il giorno" : {

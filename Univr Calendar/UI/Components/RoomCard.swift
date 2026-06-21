@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import UnivrCore
 
 struct HorizontalLine: View {
     var color: Color
@@ -133,13 +134,12 @@ private struct AdaptiveDashedLineShape: Shape {
 struct RoomCard: View {
     @Environment(\.colorScheme) var colorScheme
     
-    //let lesson: Lesson
-    var events: [String]
+    var room: Room
     
     var body: some View {
         VStack(spacing: 20) {
             lessonInfo
-            Timeline(events: events)
+            Timeline(room: room)
         }
         .padding()
         .padding(.bottom, 4)
@@ -159,11 +159,11 @@ struct RoomCard: View {
     
     private var lessonInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text("Aula Gino Tessari")
+            Text(room.name)
                 .foregroundStyle(.white)
                 .font(.headline)
                 .multilineTextAlignment(.leading)
-            Text(events.isEmpty ? "Libera tutto il giorno" : "Libera ora (Fino alle 14:30)")
+            Text(room.events.isEmpty ? "Libera tutto il giorno" : "Libera ora (fino alle \(room.events.first!.startTime.formatted(.dateTime.hour().minute())))")
                 .foregroundStyle(.white)
                 .font(.subheadline)
                 .multilineTextAlignment(.leading)
@@ -174,10 +174,10 @@ struct RoomCard: View {
 }
 
 struct Timeline: View {
-    var events: [String]
+    var room: Room
     
     var after: Bool {
-        events.count > 1 && !events[1].isEmpty
+        room.events.count > 1 && room.events[0].endTime == room.events[1].startTime
     }
     
     var body: some View {
@@ -200,15 +200,12 @@ struct Timeline: View {
                     }
                 HStack {
                     HorizontalLine(color: .green, lineWidth: 4)
-                        .if(events.isEmpty) { view in
-                            view
-                        }
-                    if !events.isEmpty {
+                    if let event = room.events.first {
                         Circle()
                             .fill(.red)
                             .frame(height: 12)
                             .overlay {
-                                Text("14:30")
+                                Text(event.startTime, format: .dateTime.hour().minute())
                                     .foregroundStyle(.red)
                                     .fixedSize()
                                     .font(.caption)
@@ -219,7 +216,7 @@ struct Timeline: View {
                             .fill(after ? .red : .green)
                             .frame(height: 12)
                             .overlay {
-                                Text("17:00")
+                                Text(event.endTime, format: .dateTime.hour().minute())
                                     .foregroundStyle(after ? .red : .green)
                                     .fixedSize()
                                     .font(.caption)
@@ -227,8 +224,8 @@ struct Timeline: View {
                             }
                         HorizontalLine(color: after ? .red : .green, lineWidth: 4)
                             .overlay(alignment: .trailing) {
-                                if events.count > 1 {
-                                    Text("+\(events.count - 1)")
+                                if room.events.count > 1 {
+                                    Text("+\(room.events.count - 1)")
                                         .foregroundStyle(Color(.lightGray))
                                         .fixedSize()
                                         .font(.caption)
@@ -246,11 +243,7 @@ struct Timeline: View {
 #Preview {
     ScrollView {
         VStack {
-            RoomCard(events: [])
-            RoomCard(events: [""])
-            RoomCard(events: ["", ""])
-            RoomCard(events: ["", "", "", "", "", ""])
-            RoomCard(events: ["", ".", ""])
+            //RoomCard(events: nil)
         }
     }
 }

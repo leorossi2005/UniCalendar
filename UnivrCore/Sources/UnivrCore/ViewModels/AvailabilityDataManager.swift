@@ -1,0 +1,50 @@
+//
+//  AvailabilityManager.swift
+//  UnivrCore
+//
+//  Created by Leonardo Rossi on 21/06/2026.
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
+//
+
+import Foundation
+
+@MainActor
+@Observable
+public final class AvailabilityDataManager {
+    public var locations: [String: String] = [:]
+    public var room: Room?
+    
+    public var loading: Bool = false
+    public var errorMessage: String?
+    
+    private let service = NetworkService()
+    
+    public init() {}
+    
+    public func getAvailability(date: String) async throws {
+        try await fetchAndRefresh(
+            fetchOperation: { try await self.service.getAvailability(date: date) },
+            updateState: { [weak self] availability in
+                self?.locations = availability.locations
+                self?.room = availability.events["1"]?["26"]
+            }
+        )
+    }
+    
+    private func fetchAndRefresh(
+        fetchOperation: @escaping @Sendable () async throws -> Availability,
+        updateState: @escaping @MainActor (Availability) -> Void
+    ) async throws {
+        do {
+            let newData = try await fetchOperation()
+            updateState(newData)
+        } catch let error as NetworkError {
+            self.errorMessage = error.errorDescription
+            throw error
+        } catch {
+            self.errorMessage = String(localized: "Errore generico: \(error.localizedDescription)", bundle: .module)
+            throw error
+        }
+    }
+}
