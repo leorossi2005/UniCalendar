@@ -16,7 +16,7 @@ struct CalendarSheetContent: View {
     
     @Binding var selectedWeek: Date
     @Binding var selectedLesson: Lesson?
-    @Binding var selectedRoom: String?
+    @Binding var selectedRoom: Room?
     @Binding var openAddToCalendar: Bool
     @Binding var openSettings: Bool
     @Binding var openWhatsNew: Bool
@@ -60,14 +60,14 @@ struct CalendarSheetContent: View {
                             matricola: $tempSettings.matricola
                         )
                         .ignoresSafeArea(.keyboard)
-                    } else if selectedLesson != nil {
-                        LessonDetailsView(lesson: $selectedLesson, openAddToCalendar: openAddToCalendar) {
+                    } else if let lesson = selectedLesson {
+                        LessonDetailsView(lesson: lesson, openAddToCalendar: openAddToCalendar) {
                             sheetManager.setDetent(.small)
                             selectedLesson = nil
                             openAddToCalendar = false
                         }
-                    } else {
-                        RoomDetailsView() {
+                    } else if let room = selectedRoom {
+                        RoomDetailsView(room: room) {
                             sheetManager.setDetent(.small)
                             selectedLesson = nil
                             openAddToCalendar = false

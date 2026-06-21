@@ -12,37 +12,35 @@ import UnivrCore
 import CustomSheet
 
 struct RoomDetailsView: View {
-    var lesson: Lesson? = .sample
+    var room: Room
     
     @State private var showOriginalName: Bool = false
     
     var onDismiss: (() -> Void)?
     
     var body: some View {
-        if let lesson = lesson {
-            VStack(alignment: .leading, spacing: 20) {
-                headerInfo(lesson: lesson)
-                detailRows(lesson: lesson)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 24)
-            .padding(.top, 24)
-            .onChange(of: lesson) {
-                showOriginalName = false
-            }
+        VStack(alignment: .leading, spacing: 20) {
+            headerInfo
+            detailRows
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 24)
+        .padding(.top, 24)
+        .onChange(of: room) {
+            showOriginalName = false
         }
     }
     
     // MARK: - Subviews
-    private func headerInfo(lesson: Lesson) -> some View {
+    private var headerInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(lesson.name ?? "")
+            Text(room.name)
                 .font(.title2.bold())
                 .contentShape(.rect)
                 .onTapGesture {
                     showOriginalName.toggle()
                 }
-            Text("Aula libera tutto il giorno")
+            Text(room.events.isEmpty ? "Libera tutto il giorno" : "Libera ora (fino alle \(room.events.first!.startTime.formatted(.dateTime.hour().minute())))")
                 .font(.title3)
                 .contentShape(.rect)
                 .onTapGesture {
@@ -51,9 +49,9 @@ struct RoomDetailsView: View {
         }
     }
     
-    private func detailRows(lesson: Lesson) -> some View {
+    private var detailRows: some View {
         ScrollView {
-            Grid {
+            Grid(verticalSpacing: 8) {
                 GridRow {
                     VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
                         .frame(height: 48)
@@ -71,16 +69,36 @@ struct RoomDetailsView: View {
                     VerticalLine(color: .green, lineWidth: 4)
                         .frame(height: 48)
                 }
-                ForEach(["", "", "", "", "", "", "", ""], id: \.self) { _ in
+                ForEach(Array(room.events.enumerated()), id: \.element.id) { index, event in
                     GridRow {
                         Circle()
                             .fill(.red)
                             .frame(width: 12)
-                        Text("Evento di prova")
+                        Text(event.startTime, format: .dateTime.hour().minute())
+                            .font(.caption)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .foregroundStyle(.red)
                     }
                     GridRow {
-                        VerticalLine(color: .green, lineWidth: 4)
-                            .frame(height: 48)
+                        VerticalLine(color: .red, lineWidth: 4)
+                        Text(event.cleanName)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.vertical, 16)
+                    }
+                    if (index != room.events.count - 1 && room.events[index].endTime != room.events[index + 1].startTime) || index == room.events.count - 1 {
+                        GridRow {
+                            Circle()
+                                .fill(.green)
+                                .frame(width: 12)
+                            Text(event.endTime, format: .dateTime.hour().minute())
+                                .font(.caption)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .foregroundStyle(.green)
+                        }
+                        GridRow {
+                            VerticalLine(color: .green, lineWidth: 4)
+                                .frame(height: 48)
+                        }
                     }
                 }
             }
@@ -91,11 +109,13 @@ struct RoomDetailsView: View {
 
 
 #Preview {
-    @Previewable @State var lesson: Lesson? = Lesson.sample
+    @Previewable @State var room: Room? = nil
     
     Text("")
         .customSheet(isPresented: .constant(true)) {
-            RoomDetailsView(lesson: lesson)
-                .interactiveDismissDisabled(true)
+            if let room = room {
+                RoomDetailsView(room: room)
+                    .interactiveDismissDisabled(true)
+            }
         }
 }

@@ -35,7 +35,7 @@ struct CalendarView: View {
     
     //TEMP
     @State private var availabilityManager = AvailabilityDataManager()
-    @State private var room: Room?
+    @State private var rooms: [Room]?
     
     var body: some View {
         NavigationStack {
@@ -231,18 +231,20 @@ struct CalendarView: View {
     private var classroomView: some View {
         ScrollView {
             VStack {
-                if let room = room {
-                    RoomCard(room: room)
+                if let rooms = rooms {
+                    ForEach(rooms) { room in
+                        RoomCard(room: room)
+                            .onTapGesture {
+                                Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                sheetRouter.routeToRoom(room)
+                            }
+                    }
                 }
-            }
-            .onTapGesture {
-                Haptics.play(.impact(weight: .light, intensity: 0.5))
-                sheetRouter.routeToRoom("")
             }
         }
         .task {
             try? await availabilityManager.getAvailability(date: "18-06-2026")
-            room = availabilityManager.room
+            rooms = availabilityManager.rooms
         }
         .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
         .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)

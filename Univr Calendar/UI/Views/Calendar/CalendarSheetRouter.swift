@@ -17,7 +17,7 @@ class CalendarSheetRouter {
     let manager: GlobalSheetManager
     
     var selectedLesson: Lesson? = nil
-    var selectedRoom: String? = nil
+    var selectedRoom: Room? = nil
     var openSettings: Bool = false
     var openWhatsNew: Bool = false
     var openAddToCalendar: Bool = false
@@ -52,7 +52,7 @@ class CalendarSheetRouter {
         manager.setDetent(.large)
     }
     
-    func routeToRoom(_ room: String) {
+    func routeToRoom(_ room: Room) {
         selectedRoom = room
         detents = [.small, .medium, .large]
         manager.setDetent(.large)

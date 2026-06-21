@@ -13,7 +13,7 @@ import Foundation
 @Observable
 public final class AvailabilityDataManager {
     public var locations: [String: String] = [:]
-    public var room: Room?
+    public var rooms: [Room]?
     
     public var loading: Bool = false
     public var errorMessage: String?
@@ -27,7 +27,7 @@ public final class AvailabilityDataManager {
             fetchOperation: { try await self.service.getAvailability(date: date) },
             updateState: { [weak self] availability in
                 self?.locations = availability.locations
-                self?.room = availability.events["1"]?["26"]
+                self?.rooms = availability.events["1"]
             }
         )
     }

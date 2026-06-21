@@ -17,7 +17,7 @@ import CustomSheet
 struct LessonDetailsView: View {
     @Environment(GlobalSheetManager.self) private var sheetManager
     
-    @Binding var lesson: Lesson?
+    var lesson: Lesson
     
     @State private var showOriginalName: Bool = false
     @State private var calendarEvent: EKEvent?
@@ -28,76 +28,74 @@ struct LessonDetailsView: View {
     var onDismiss: (() -> Void)?
     
     var body: some View {
-        if let lesson = lesson {
-            ZStack {
-                if let event = calendarEvent {
-                    EventEditViewController(
-                        event: event,
-                        eventStore: eventStore,
-                        onSaved: {
-                            Task { @MainActor in
-                                try? await Task.sleep(for: .seconds(0.1))
-                                eventSaved = !openAddToCalendar
-                            }
-                        },
-                        onDismiss: {
-                            calendarEvent = nil
+        ZStack {
+            if let event = calendarEvent {
+                EventEditViewController(
+                    event: event,
+                    eventStore: eventStore,
+                    onSaved: {
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .seconds(0.1))
+                            eventSaved = !openAddToCalendar
                         }
+                    },
+                    onDismiss: {
+                        calendarEvent = nil
+                    }
+                )
+                .ignoresSafeArea()
+            } else {
+                VStack(alignment: .leading, spacing: 20) {
+                    headerInfo
+                    detailRows
+                    StableMapView(
+                        lesson: lesson,
+                        corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
                     )
-                    .ignoresSafeArea()
-                } else {
-                    VStack(alignment: .leading, spacing: 20) {
-                        headerInfo(lesson: lesson)
-                        detailRows(lesson: lesson)
-                        StableMapView(
-                            lesson: lesson,
-                            corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
-                        )
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 24)
-                    .ignoresSafeArea(edges: .bottom)
-                    .onChange(of: lesson) {
-                        showOriginalName = false
-                    }
-                    .toolbar {
-                        ToolbarItem(placement: .primaryAction) {
-                            Button {
-                                if !eventSaved {
-                                    prepareAndShowEvent(for: lesson)
-                                }
-                            } label: {
-                                Image(systemName: eventSaved ? "checkmark" : "calendar.badge.plus")
-                                    .frame(width: 24, height: 24)
-                                    .symbolReplace()
-                                    .animation(.snappy, value: eventSaved)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
+                .ignoresSafeArea(edges: .bottom)
+                .onChange(of: lesson) {
+                    showOriginalName = false
+                }
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            if !eventSaved {
+                                prepareAndShowEvent(for: lesson)
                             }
+                        } label: {
+                            Image(systemName: eventSaved ? "checkmark" : "calendar.badge.plus")
+                                .frame(width: 24, height: 24)
+                                .symbolReplace()
+                                .animation(.snappy, value: eventSaved)
                         }
                     }
                 }
             }
-            .onChange(of: calendarEvent) { _, newValue in
-                sheetManager.setLock(newValue != nil)
-                if openAddToCalendar, newValue == nil, let onDismiss = onDismiss {
-                    onDismiss()
-                }
+        }
+        .onChange(of: calendarEvent) { _, newValue in
+            sheetManager.setLock(newValue != nil)
+            if openAddToCalendar, newValue == nil, let onDismiss = onDismiss {
+                onDismiss()
             }
-            .task(id: eventSaved) {
-                if eventSaved {
-                    try? await Task.sleep(for: .seconds(2))
-                    eventSaved = false
-                }
+        }
+        .task(id: eventSaved) {
+            if eventSaved {
+                try? await Task.sleep(for: .seconds(2))
+                eventSaved = false
             }
-            .onAppear {
-                if openAddToCalendar {
-                    prepareAndShowEvent(for: lesson)
-                }
+        }
+        .onAppear {
+            if openAddToCalendar {
+                prepareAndShowEvent(for: lesson)
             }
         }
     }
     
     // MARK: - Subviews
-    private func headerInfo(lesson: Lesson) -> some View {
+    private var headerInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text((showOriginalName ? lesson.name : lesson.cleanName) ?? "")
                 .font(.title2)
@@ -129,7 +127,7 @@ struct LessonDetailsView: View {
         }
     }
     
-    private func detailRows(lesson: Lesson) -> some View {
+    private var detailRows: some View {
         VStack(alignment: .leading, spacing: 15) {
             rowLabel(
                 text: "\(lesson.startTime.getCurrentWeekdaySymbol(length: .wide)), \(lesson.startTime.day) \(lesson.startTime.getCurrentMonthSymbol(length: .wide)) \(lesson.startTime.yearSymbol)",
@@ -333,8 +331,10 @@ struct StableMapView: View {
     
     Text("")
         .sheet(isPresented: .constant(true)) {
-            LessonDetailsView(lesson: $lesson, openAddToCalendar: false)
-                .interactiveDismissDisabled(true)
-                .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+            if let lesson = lesson {
+                LessonDetailsView(lesson: lesson, openAddToCalendar: false)
+                    .interactiveDismissDisabled(true)
+                    .presentationBackgroundInteraction(.enabled(upThrough: .medium))
+            }
         }
 }

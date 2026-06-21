@@ -155,9 +155,6 @@
         }
       }
     },
-    "Aula libera tutto il giorno" : {
-
-    },
     "Bene! Ora scegli un corso" : {
       "localizations" : {
         "en" : {
@@ -389,9 +386,6 @@
           }
         }
       }
-    },
-    "Evento di prova" : {
-
     },
     "Fammi un regalino" : {
       "localizations" : {

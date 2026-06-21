@@ -11,10 +11,11 @@ import Foundation
 
 struct Availability: Codable, Equatable, Sendable {
     let locations: [String: String]
-    let events: [String: [String: Room]]
+    let events: [String: [Room]]
 }
 
-public struct Room: Codable, Equatable, Sendable {
+public struct Room: Codable, Equatable, Sendable, Identifiable {
+    public let id: String
     public let name: String
     public let events: [Event]
 }
