@@ -35,7 +35,8 @@ struct CalendarView: View {
     
     //TEMP
     @State private var availabilityManager = AvailabilityDataManager()
-    @State private var rooms: [Room]?
+    @State private var rooms: [Room]? = nil
+    @State private var locationKey: String? = "1"
     
     var body: some View {
         NavigationStack {
@@ -229,25 +230,43 @@ struct CalendarView: View {
     
     // MARK: - ClassRoomView
     private var classroomView: some View {
-        ScrollView {
+        VStack {
             VStack {
-                if let rooms = rooms {
-                    ForEach(rooms) { room in
-                        RoomCard(room: room)
-                            .onTapGesture {
-                                Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                sheetRouter.routeToRoom(room)
-                            }
+                Picker("", selection: $locationKey) {
+                    ForEach(Array(availabilityManager.locations.keys), id: \.self) { key in
+                        Text(availabilityManager.locations[key] ?? "").tag(key)
                     }
                 }
             }
+            .frame(maxWidth: .infinity)
+            .background(Color(.secondarySystemBackground))
+            .padding()
+            ScrollView {
+                VStack {
+                    if let rooms = rooms {
+                        ForEach(rooms) { room in
+                            RoomCard(room: room)
+                                .onTapGesture {
+                                    Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                    sheetRouter.routeToRoom(room)
+                                }
+                        }
+                    }
+                }
+            }
+            .onChange(of: locationKey) { _, newValue in
+                Task {
+                    try? await availabilityManager.getAvailability(locationKey: newValue ?? "", date: "18-06-2026")
+                    rooms = availabilityManager.rooms
+                }
+            }
+            .task {
+                try? await availabilityManager.getAvailability(locationKey: locationKey ?? "", date: "18-06-2026")
+                rooms = availabilityManager.rooms
+            }
+            .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
+            .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
         }
-        .task {
-            try? await availabilityManager.getAvailability(date: "18-06-2026")
-            rooms = availabilityManager.rooms
-        }
-        .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
-        .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
     }
     
     // MARK: - Toolbar Builder

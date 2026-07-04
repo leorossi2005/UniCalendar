@@ -22,14 +22,17 @@ public final class AvailabilityDataManager {
     
     public init() {}
     
-    public func getAvailability(date: String) async throws {
-        try await fetchAndRefresh(
-            fetchOperation: { try await self.service.getAvailability(date: date) },
-            updateState: { [weak self] availability in
-                self?.locations = availability.locations
-                self?.rooms = availability.events["1"]
-            }
-        )
+    public func getAvailability(locationKey: String, date: String) async throws {
+        rooms = nil
+        if !locationKey.isEmpty {
+            try await fetchAndRefresh(
+                fetchOperation: { try await self.service.getAvailability(date: date) },
+                updateState: { [weak self] availability in
+                    self?.locations = availability.locations
+                    self?.rooms = availability.events[locationKey]
+                }
+            )
+        }
     }
     
     private func fetchAndRefresh(

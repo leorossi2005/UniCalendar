@@ -15,6 +15,7 @@ struct RoomDetailsView: View {
     var room: Room
     
     @State private var showOriginalName: Bool = false
+    @State private var date: Date = Date()
     
     var onDismiss: (() -> Void)?
     
@@ -52,52 +53,98 @@ struct RoomDetailsView: View {
     private var detailRows: some View {
         ScrollView {
             Grid(verticalSpacing: 8) {
-                GridRow {
-                    VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
-                        .frame(height: 48)
-                }
-                GridRow {
-                    Circle()
-                        .frame(height: 16)
-                        .overlay {
-                            Circle()
-                                .fill(.blue)
-                                .frame(height: 10)
+                if let firstEvent = room.events.first {
+                    let startOfDay = Calendar.current.startOfDay(for: firstEvent.startTime)
+                    let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+                    
+                    GridRow {
+                        VStack(spacing: 0) {
+                            if startOfDay > date {
+                                VerticalLine(color: .green, lineWidth: 4)
+                                    .frame(height: 48)
+                            } else if firstEvent.startTime > date {
+                                VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
+                                    .frame(height: 48)
+                                nowIndicator
+                                VerticalLine(color: .green, lineWidth: 4)
+                                    .frame(height: 48)
+                            } else {
+                                VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
+                                    .frame(height: 48)
+                            }
                         }
-                }
-                GridRow {
-                    VerticalLine(color: .green, lineWidth: 4)
-                        .frame(height: 48)
-                }
-                ForEach(Array(room.events.enumerated()), id: \.element.id) { index, event in
-                    GridRow {
-                        Circle()
-                            .fill(.red)
-                            .frame(width: 12)
-                        Text(event.startTime, format: .dateTime.hour().minute())
-                            .font(.caption)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .foregroundStyle(.red)
+                        Color.clear
                     }
-                    GridRow {
-                        VerticalLine(color: .red, lineWidth: 4)
-                        Text(event.cleanName)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, 16)
-                    }
-                    if (index != room.events.count - 1 && room.events[index].endTime != room.events[index + 1].startTime) || index == room.events.count - 1 {
+                    ForEach(Array(room.events.enumerated()), id: \.element.id) { index, event in
                         GridRow {
-                            Circle()
-                                .fill(.green)
-                                .frame(width: 12)
-                            Text(event.endTime, format: .dateTime.hour().minute())
+                            if event.startTime == date {
+                                nowIndicator
+                            } else {
+                                Circle()
+                                    .fill(event.startTime < date ? Color.primary : Color.red)
+                                    .frame(width: 12)
+                            }
+                            Text(event.startTime, format: .dateTime.hour().minute())
                                 .font(.caption)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(.green)
+                                .foregroundStyle(event.startTime <= date ? Color.primary : Color.red)
                         }
                         GridRow {
-                            VerticalLine(color: .green, lineWidth: 4)
-                                .frame(height: 48)
+                            VStack(spacing: 0) {
+                                if event.endTime <= date {
+                                    VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
+                                        .frame(minHeight: 48)
+                                } else if event.startTime >= date {
+                                    VerticalLine(color: .red, lineWidth: 4)
+                                        .frame(minHeight: 48)
+                                } else {
+                                    VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
+                                        .frame(minHeight: 48)
+                                    nowIndicator
+                                    VerticalLine(color: .red, lineWidth: 4)
+                                        .frame(minHeight: 48)
+                                }
+                            }
+                            Text(event.cleanName)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.vertical, 16)
+                        }
+                        let isLast = index == room.events.count - 1
+                        let hasGap = !isLast && event.endTime != room.events[index + 1].startTime
+                        if isLast || hasGap {
+                            GridRow {
+                                if event.endTime == date {
+                                    nowIndicator
+                                } else {
+                                    Circle()
+                                        .fill(event.endTime < date ? Color.primary : Color.green)
+                                        .frame(width: 12)
+                                }
+                                Text(event.endTime, format: .dateTime.hour().minute())
+                                    .font(.caption)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundStyle(event.endTime <= date ? Color.primary : Color.green)
+                            }
+                            let nextStartTime = isLast ? endOfDay : room.events[index + 1].startTime
+                            
+                            GridRow {
+                                VStack(spacing: 0) {
+                                    if nextStartTime <= date {
+                                        VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
+                                            .frame(height: 48)
+                                    } else if event.endTime >= date {
+                                        VerticalLine(color: .green, lineWidth: 4)
+                                            .frame(height: 48)
+                                    } else {
+                                        VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
+                                            .frame(height: 48)
+                                        nowIndicator
+                                        VerticalLine(color: .green, lineWidth: 4)
+                                            .frame(height: 48)
+                                    }
+                                }
+                                Color.clear
+                            }
                         }
                     }
                 }
@@ -105,8 +152,18 @@ struct RoomDetailsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
+    
+    private var nowIndicator: some View {
+        Circle()
+            .frame(height: 16)
+            .overlay {
+                Circle()
+                    .fill(.blue)
+                    .frame(height: 10)
+            }
+            .padding(.vertical, 8)
+    }
 }
-
 
 #Preview {
     @Previewable @State var room: Room? = nil
