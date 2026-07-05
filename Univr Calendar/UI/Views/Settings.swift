@@ -154,7 +154,7 @@ struct Settings: View {
         selectedAcademicYear = "0"
         
         Task {
-            try await viewModel.loadCourses(year: selectedYear)
+            try? await viewModel.loadCourses(year: selectedYear)
         }
     }
     
@@ -194,13 +194,13 @@ struct Settings: View {
         
         if viewModel.years.isEmpty {
             Task {
-                try await viewModel.loadYears()
+                try? await viewModel.loadYears()
             }
         }
         
         if viewModel.courses.isEmpty {
             Task {
-                try await viewModel.loadCourses(year: selectedYear)
+                try? await viewModel.loadCourses(year: selectedYear)
                 
                 await MainActor.run {
                     if !["pari", "dispari"].contains(matricola) {
