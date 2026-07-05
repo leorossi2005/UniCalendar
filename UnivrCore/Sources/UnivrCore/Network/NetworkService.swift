@@ -11,7 +11,7 @@ import Foundation
 
 struct NetworkService {
     private let session: URLSession
-    let baseURL = "http://192.168.0.3:3001/api/v1"
+    let baseURL = "http://192.168.0.10:3001/api/v1"
     
     init() {
         let configuration = URLSessionConfiguration.default

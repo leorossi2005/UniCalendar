@@ -19,19 +19,28 @@ public final class AvailabilityDataManager {
     public var errorMessage: String?
     
     private let service = NetworkService()
+    private var lastFetch: Availability? = nil
+    private var lastDate: String = ""
     
     public init() {}
     
-    public func getAvailability(locationKey: String, date: String) async throws {
+    public func getAvailability(locationKey: String, date: Date) async throws {
         rooms = nil
+        let dateString = String(format: "%02d-%02d-%04d", date.day, date.month, date.year)
         if !locationKey.isEmpty {
-            try await fetchAndRefresh(
-                fetchOperation: { try await self.service.getAvailability(date: date) },
-                updateState: { [weak self] availability in
-                    self?.locations = availability.locations
-                    self?.rooms = availability.events[locationKey]
-                }
-            )
+            if lastFetch == nil || lastDate != dateString {
+                lastDate = dateString
+                try await fetchAndRefresh(
+                    fetchOperation: { try await self.service.getAvailability(date: dateString) },
+                    updateState: { [weak self] availability in
+                        self?.lastFetch = availability
+                        self?.locations = availability.locations
+                        self?.rooms = availability.events[locationKey]
+                    }
+                )
+            } else if lastFetch != nil {
+                rooms = lastFetch?.events[locationKey]
+            }
         }
     }
     

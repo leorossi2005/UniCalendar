@@ -256,12 +256,24 @@ struct CalendarView: View {
             }
             .onChange(of: locationKey) { _, newValue in
                 Task {
-                    try? await availabilityManager.getAvailability(locationKey: newValue ?? "", date: "18-06-2026")
+                    try? await availabilityManager.getAvailability(locationKey: newValue ?? "", date: selectedWeek)
                     rooms = availabilityManager.rooms
                 }
             }
+            .onChange(of: selectedWeek) { oldValue, newValue in
+                if !Calendar.current.isDate(oldValue, inSameDayAs: newValue) {
+                    Haptics.play(.selection, state: "selection")
+                    if !sheetRouter.openSettings { sheetRouter.manager.setDetent(.small) }
+                    Task {
+                        try? await availabilityManager.getAvailability(locationKey: locationKey ?? "", date: newValue)
+                        rooms = availabilityManager.rooms
+                        try? await Task.sleep(for: .seconds(0.2))
+                        GlobalHaptics.shared.state = ""
+                    }
+                }
+            }
             .task {
-                try? await availabilityManager.getAvailability(locationKey: locationKey ?? "", date: "18-06-2026")
+                try? await availabilityManager.getAvailability(locationKey: locationKey ?? "", date: selectedWeek)
                 rooms = availabilityManager.rooms
             }
             .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
