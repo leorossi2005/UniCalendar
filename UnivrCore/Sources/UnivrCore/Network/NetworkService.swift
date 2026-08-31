@@ -11,11 +11,13 @@ import Foundation
 
 struct NetworkService {
     private let session: URLSession
-    let baseURL = "http://192.168.0.10:3001/api/v1"
+    let baseURL = "http://192.168.0.11:3001/api/v1"
     
     init() {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 30
+        configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        configuration.urlCache = nil
         
         // Da rendere per dispositivo
         configuration.httpAdditionalHeaders = [
@@ -63,6 +65,7 @@ struct NetworkService {
             switch error.code {
             case .notConnectedToInternet: throw NetworkError.offline
             case .timedOut: throw NetworkError.timeout
+            case .cancelled: throw CancellationError()
             default: throw NetworkError.unknown(error)
             }
         } catch let error as DecodingError {

@@ -67,7 +67,7 @@ struct CalendarSheetContent: View {
                             openAddToCalendar = false
                         }
                     } else if let room = selectedRoom {
-                        RoomDetailsView(room: room) {
+                        RoomDetailsView(room: room, selectedDate: selectedWeek) {
                             sheetManager.setDetent(.small)
                             selectedLesson = nil
                             openAddToCalendar = false

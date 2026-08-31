@@ -10,161 +10,47 @@
 import SwiftUI
 import UnivrCore
 
-struct HorizontalLine: View {
-    var color: Color
-    var lineWidth: CGFloat
-    var dash: [CGFloat] = []
-    
-    var body: some View {
-        if dash.isEmpty {
-            LineShape(lineWidth: lineWidth)
-                .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                .frame(height: lineWidth)
-        } else {
-            AdaptiveDashedLineShape(
-                lineWidth: lineWidth,
-                dashLength: dash[0],
-                gapLength: dash.count > 1 ? dash[1] : dash[0],
-                isHorizontal: true
-            )
-            .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)) // Niente parametro 'dash' qui!
-            .frame(height: lineWidth)
-        }
-    }
-    
-    private struct LineShape: Shape {
-        var lineWidth: CGFloat
-        
-        nonisolated func path(in rect: CGRect) -> Path {
-            var path = Path()
-            let inset = lineWidth / 2
-            
-            path.move(to: CGPoint(x: inset, y: rect.midY))
-            path.addLine(to: CGPoint(x: rect.width - inset, y: rect.midY))
-            return path
-        }
-    }
-}
-
-struct VerticalLine: View {
-    var color: Color
-    var lineWidth: CGFloat
-    var dash: [CGFloat] = []
-    
-    var body: some View {
-        if dash.isEmpty {
-            LineShape(lineWidth: lineWidth)
-                .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-                .frame(width: lineWidth)
-        } else {
-            AdaptiveDashedLineShape(
-                lineWidth: lineWidth,
-                dashLength: dash[0],
-                gapLength: dash.count > 1 ? dash[1] : dash[0],
-                isHorizontal: false
-            )
-            .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
-            .frame(width: lineWidth)
-        }
-    }
-    
-    private struct LineShape: Shape {
-        var lineWidth: CGFloat
-        
-        nonisolated func path(in rect: CGRect) -> Path {
-            var path = Path()
-            let inset = lineWidth / 2
-            
-            path.move(to: CGPoint(x: rect.midX, y: inset))
-            path.addLine(to: CGPoint(x: rect.midX, y: rect.height - inset))
-            return path
-        }
-    }
-}
-
-private struct AdaptiveDashedLineShape: Shape {
-    var lineWidth: CGFloat
-    var dashLength: CGFloat
-    var gapLength: CGFloat
-    var isHorizontal: Bool
-    
-    nonisolated func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let inset = lineWidth / 2
-        
-        let start = inset
-        let end = isHorizontal ? (rect.width - inset) : (rect.height - inset)
-        let totalLength = end - start
-        
-        guard totalLength > 0 else { return path }
-        
-        var count = Int(round((totalLength + gapLength) / (dashLength + gapLength)))
-        count = max(1, count)
-        
-        if count == 1 {
-            let maxDash = min(dashLength, totalLength)
-            if isHorizontal {
-                path.move(to: CGPoint(x: start, y: rect.midY))
-                path.addLine(to: CGPoint(x: start + maxDash, y: rect.midY))
-            } else {
-                path.move(to: CGPoint(x: rect.midX, y: start))
-                path.addLine(to: CGPoint(x: rect.midX, y: start + maxDash))
-            }
-            return path
-        }
-        
-        let actualGap = (totalLength - (CGFloat(count) * dashLength)) / CGFloat(count - 1)
-        
-        for i in 0..<count {
-            let offset = start + CGFloat(i) * (dashLength + actualGap)
-            if isHorizontal {
-                path.move(to: CGPoint(x: offset, y: rect.midY))
-                path.addLine(to: CGPoint(x: offset + dashLength, y: rect.midY))
-            } else {
-                path.move(to: CGPoint(x: rect.midX, y: offset))
-                path.addLine(to: CGPoint(x: rect.midX, y: offset + dashLength))
-            }
-        }
-        
-        return path
-    }
-}
-
-
 struct RoomCard: View {
     @Environment(\.colorScheme) var colorScheme
     
     var room: Room
-    
+    var selectedDate: Date
+        
     var body: some View {
-        VStack(spacing: 20) {
-            lessonInfo
-            Timeline(room: room)
+        TimelineView(.everyMinute) { context in
+            let currentStatus = RoomDailyStatus(room: room, selectedDate: selectedDate, now: context.date)
+            
+            VStack(spacing: 20) {
+                LessonInfo(room: room, status: currentStatus)
+                Timeline(room: room, now: context.date, currentStatus: currentStatus)
+            }
+            .padding()
+            .padding(.bottom, 4)
+            .background(backgroundLayer)
+            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
+            .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 35, style: .continuous))
+            .hoverEffect(.lift)
         }
-        .padding()
-        .padding(.bottom, 4)
-        .background(backgroundLayer)
-        .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
-        .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 35, style: .continuous))
-        .hoverEffect(.lift)
-        .padding(.horizontal, 15)
     }
     
     // MARK: - Components
     private var backgroundLayer: some View {
         RoundedRectangle(cornerRadius: 35, style: .continuous)
-            .fill(Color(.darkGray))
+            .fill(Color(colorScheme == .dark ? .secondarySystemGroupedBackground : .systemGroupedBackground))
         
     }
+}
+
+private struct LessonInfo: View {
+    var room: Room
+    var status: RoomDailyStatus
     
-    private var lessonInfo: some View {
+    var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(room.name)
-                .foregroundStyle(.white)
                 .font(.headline)
                 .multilineTextAlignment(.leading)
-            Text(room.events.isEmpty ? "Libera tutto il giorno" : "Libera ora (fino alle \(room.events.first!.startTime.formatted(.dateTime.hour().minute())))")
-                .foregroundStyle(.white)
+            Text(status.statusText)
                 .font(.subheadline)
                 .multilineTextAlignment(.leading)
             Spacer()
@@ -173,12 +59,10 @@ struct RoomCard: View {
     }
 }
 
-struct Timeline: View {
+private struct Timeline: View {
     var room: Room
-    
-    var after: Bool {
-        room.events.count > 1 && room.events[0].endTime == room.events[1].startTime
-    }
+    var now: Date
+    var currentStatus: RoomDailyStatus
     
     var body: some View {
         Grid(horizontalSpacing: 8, verticalSpacing: 0) {
@@ -189,53 +73,80 @@ struct Timeline: View {
             }
             
             GridRow {
-                HorizontalLine(color: .white, lineWidth: 4, dash: [12, 12])
-                Circle()
-                    .fill(.white)
-                    .frame(height: 16)
-                    .overlay {
-                        Circle()
-                            .fill(.blue)
-                            .frame(height: 10)
-                    }
+                switch currentStatus {
+                case .pastDay, .futureDay, .futureDayFree:
+                    EmptyView()
+                default:
+                    HorizontalLine(color: .primary, lineWidth: 4, dash: [12, 12])
+                    nowIndicator
+                }
+                
                 HStack {
-                    HorizontalLine(color: .green, lineWidth: 4)
-                    if let event = room.events.first {
-                        Circle()
-                            .fill(.red)
-                            .frame(height: 12)
-                            .overlay {
-                                Text(event.startTime, format: .dateTime.hour().minute())
-                                    .foregroundStyle(.red)
-                                    .fixedSize()
-                                    .font(.caption)
-                                    .offset(y: -16)
-                            }
-                        HorizontalLine(color: .red.opacity(0.9), lineWidth: 4)
-                        Circle()
-                            .fill(after ? .red : .green)
-                            .frame(height: 12)
-                            .overlay {
-                                Text(event.endTime, format: .dateTime.hour().minute())
-                                    .foregroundStyle(after ? .red : .green)
-                                    .fixedSize()
-                                    .font(.caption)
-                                    .offset(y: -16)
-                            }
-                        HorizontalLine(color: after ? .red : .green, lineWidth: 4)
-                            .overlay(alignment: .trailing) {
-                                if room.events.count > 1 {
-                                    Text("+\(room.events.count - 1)")
-                                        .foregroundStyle(Color(.lightGray))
-                                        .fixedSize()
-                                        .font(.caption)
-                                        .offset(y: -16)
-                                }
-                            }
+                    switch currentStatus {
+                    case .occupiedUntil(let event, let index, _):
+                        eventSegment(event: event, index: index, showStartMarker: false)
+                    case .freeUntil(let event, let index), .futureDay(let event, let index):
+                        eventSegment(event: event, index: index, showStartMarker: true)
+                    case .pastDay:
+                        HorizontalLine(color: .primary, lineWidth: 4, dash: [12, 12])
+                    default:
+                        HorizontalLine(color: .green, lineWidth: 4)
                     }
                 }
                 .gridCellColumns(3)
             }
+        }
+    }
+    
+    private var nowIndicator: some View {
+        Circle()
+            .frame(height: 16)
+            .overlay {
+                Circle()
+                    .fill(.blue)
+                    .frame(height: 10)
+            }
+    }
+    
+    private func eventSegment(event: Event, index: Int, showStartMarker: Bool) -> some View {
+        let subsequentEventsCount = room.events.count - (index + 1)
+        let after = subsequentEventsCount > 0 && event.endTime == room.events[index + 1].startTime
+        
+        return Group {
+            if showStartMarker {
+                HorizontalLine(color: .green, lineWidth: 4)
+                Circle()
+                    .fill(.red)
+                    .frame(height: 12)
+                    .overlay {
+                        Text(event.startTime, format: .dateTime.hour().minute())
+                            .foregroundStyle(.red)
+                            .fixedSize()
+                            .font(.caption)
+                            .offset(y: -16)
+                    }
+            }
+            HorizontalLine(color: .red.opacity(0.9), lineWidth: 4)
+            Circle()
+                .fill(after ? .red : .green)
+                .frame(height: 12)
+                .overlay {
+                    Text(event.endTime, format: .dateTime.hour().minute())
+                        .foregroundStyle(after ? .red : .green)
+                        .fixedSize()
+                        .font(.caption)
+                        .offset(y: -16)
+                }
+            HorizontalLine(color: after ? .red : .green, lineWidth: 4)
+                .overlay(alignment: .trailing) {
+                    if subsequentEventsCount > 0 {
+                        Text("+\(subsequentEventsCount)")
+                            .foregroundStyle(Color(.lightGray))
+                            .fixedSize()
+                            .font(.caption)
+                            .offset(y: -16)
+                    }
+                }
         }
     }
 }

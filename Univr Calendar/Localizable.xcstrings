@@ -185,6 +185,9 @@
         }
       }
     },
+    "Caricamento disponibilità..." : {
+
+    },
     "Cerca un corso" : {
       "localizations" : {
         "en" : {
@@ -201,17 +204,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "What year do you attend? "
-          }
-        }
-      }
-    },
-    "Ci sono novita!" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "There’s news!"
           }
         }
       }
@@ -276,6 +268,9 @@
         }
       }
     },
+    "Connettiti a internet per controllare le disponibilità di oggi." : {
+
+    },
     "Connettiti a internet per scaricare le tue lezioni." : {
       "localizations" : {
         "en" : {
@@ -302,17 +297,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Continue"
-          }
-        }
-      }
-    },
-    "Controllo aggiornamenti..." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Looking for updates…"
           }
         }
       }
@@ -487,12 +471,6 @@
         }
       }
     },
-    "Libera ora (fino alle %@)" : {
-
-    },
-    "Libera tutto il giorno" : {
-
-    },
     "Lo Sviluppatore" : {
       "localizations" : {
         "en" : {
@@ -519,17 +497,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Freshman"
-          }
-        }
-      }
-    },
-    "Modalità offline" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Offline mode"
           }
         }
       }

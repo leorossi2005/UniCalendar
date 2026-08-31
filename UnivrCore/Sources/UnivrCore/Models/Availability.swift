@@ -11,7 +11,7 @@ import Foundation
 
 struct Availability: Codable, Equatable, Sendable {
     let locations: [String: String]
-    let events: [String: [Room]]
+    let rooms: [String: [Room]]
 }
 
 public struct Room: Codable, Equatable, Sendable, Identifiable {
@@ -23,7 +23,7 @@ public struct Room: Codable, Equatable, Sendable, Identifiable {
 public struct Event: Codable, Equatable, Sendable, Identifiable {
     public let id: String
     public let name: String
-    public let cleanName: String
+    public let cleanName: String?
     public let startTime: Date
     public let endTime: Date
 }

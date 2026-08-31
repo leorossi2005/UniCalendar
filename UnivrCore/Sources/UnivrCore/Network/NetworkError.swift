@@ -7,7 +7,9 @@
 //  SPDX-License-Identifier: GPL-3.0-or-later
 //
 
-enum NetworkError: Error {
+import Foundation
+
+enum NetworkError: Error, LocalizedError {
     case badURL
     case badServerResponse(statusCode: Int)
     case emptyData

@@ -13,143 +13,170 @@ import CustomSheet
 
 struct RoomDetailsView: View {
     var room: Room
+    var selectedDate: Date
     
-    @State private var showOriginalName: Bool = false
-    @State private var date: Date = Date()
+    @State private var now: Date = Date()
     
     var onDismiss: (() -> Void)?
-    
+        
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            headerInfo
-            detailRows
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 24)
-        .padding(.top, 24)
-        .onChange(of: room) {
-            showOriginalName = false
+        TimelineView(.everyMinute) { context in
+            let currentStatus = RoomDailyStatus(room: room, selectedDate: selectedDate, now: context.date)
+            
+            VStack(alignment: .leading, spacing: 20) {
+                HeaderInfo(room: room, status: currentStatus)
+                Timeline(room: room, status: currentStatus, now: context.date)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 24)
+            .padding(.top, 24)
         }
     }
+}
+
+private struct HeaderInfo: View {
+    let room: Room
+    let status: RoomDailyStatus
     
-    // MARK: - Subviews
-    private var headerInfo: some View {
+    var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(room.name)
                 .font(.title2.bold())
                 .contentShape(.rect)
-                .onTapGesture {
-                    showOriginalName.toggle()
-                }
-            Text(room.events.isEmpty ? "Libera tutto il giorno" : "Libera ora (fino alle \(room.events.first!.startTime.formatted(.dateTime.hour().minute())))")
+            Text(status.statusText)
                 .font(.title3)
                 .contentShape(.rect)
-                .onTapGesture {
-                    showOriginalName.toggle()
-                }
         }
     }
+}
+
+private struct Timeline: View {
+    let room: Room
+    let status: RoomDailyStatus
+    let now: Date
     
-    private var detailRows: some View {
-        ScrollView {
-            Grid(verticalSpacing: 8) {
-                if let firstEvent = room.events.first {
-                    let startOfDay = Calendar.current.startOfDay(for: firstEvent.startTime)
-                    let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
-                    
-                    GridRow {
-                        VStack(spacing: 0) {
-                            if startOfDay > date {
-                                VerticalLine(color: .green, lineWidth: 4)
-                                    .frame(height: 48)
-                            } else if firstEvent.startTime > date {
-                                VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
-                                    .frame(height: 48)
-                                nowIndicator
-                                VerticalLine(color: .green, lineWidth: 4)
-                                    .frame(height: 48)
-                            } else {
-                                VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
-                                    .frame(height: 48)
-                            }
-                        }
-                        Color.clear
-                    }
-                    ForEach(Array(room.events.enumerated()), id: \.element.id) { index, event in
-                        GridRow {
-                            if event.startTime == date {
-                                nowIndicator
-                            } else {
-                                Circle()
-                                    .fill(event.startTime < date ? Color.primary : Color.red)
-                                    .frame(width: 12)
-                            }
-                            Text(event.startTime, format: .dateTime.hour().minute())
-                                .font(.caption)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .foregroundStyle(event.startTime <= date ? Color.primary : Color.red)
-                        }
+    var body: some View {
+        Group {
+            if let firstEvent = room.events.first {
+                ScrollView {
+                    Grid(verticalSpacing: 8) {
+                        let startOfDay = Calendar.current.startOfDay(for: firstEvent.startTime)
+                        let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay)!
+                        
                         GridRow {
                             VStack(spacing: 0) {
-                                if event.endTime <= date {
+                                if startOfDay > now {
+                                    VerticalLine(color: .green, lineWidth: 4)
+                                        .frame(height: 48)
+                                } else if firstEvent.startTime > now {
                                     VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
-                                        .frame(minHeight: 48)
-                                } else if event.startTime >= date {
-                                    VerticalLine(color: .red, lineWidth: 4)
-                                        .frame(minHeight: 48)
+                                        .frame(height: 48)
+                                    nowIndicator
+                                    VerticalLine(color: .green, lineWidth: 4)
+                                        .frame(height: 48)
                                 } else {
                                     VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
-                                        .frame(minHeight: 48)
-                                    nowIndicator
-                                    VerticalLine(color: .red, lineWidth: 4)
-                                        .frame(minHeight: 48)
+                                        .frame(height: 48)
                                 }
                             }
-                            Text(event.cleanName)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.vertical, 16)
+                            Color.clear
                         }
-                        let isLast = index == room.events.count - 1
-                        let hasGap = !isLast && event.endTime != room.events[index + 1].startTime
-                        if isLast || hasGap {
+                        ForEach(Array(room.events.enumerated()), id: \.element.id) { index, event in
                             GridRow {
-                                if event.endTime == date {
+                                if event.startTime == now {
                                     nowIndicator
                                 } else {
                                     Circle()
-                                        .fill(event.endTime < date ? Color.primary : Color.green)
+                                        .fill(event.startTime < now ? Color.primary : Color.red)
                                         .frame(width: 12)
                                 }
-                                Text(event.endTime, format: .dateTime.hour().minute())
+                                Text(event.startTime, format: .dateTime.hour().minute())
                                     .font(.caption)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .foregroundStyle(event.endTime <= date ? Color.primary : Color.green)
+                                    .foregroundStyle(event.startTime <= now ? Color.primary : Color.red)
                             }
-                            let nextStartTime = isLast ? endOfDay : room.events[index + 1].startTime
-                            
                             GridRow {
                                 VStack(spacing: 0) {
-                                    if nextStartTime <= date {
+                                    if event.endTime <= now {
                                         VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
-                                            .frame(height: 48)
-                                    } else if event.endTime >= date {
-                                        VerticalLine(color: .green, lineWidth: 4)
-                                            .frame(height: 48)
+                                            .frame(minHeight: 48)
+                                    } else if event.startTime >= now {
+                                        VerticalLine(color: .red, lineWidth: 4)
+                                            .frame(minHeight: 48)
                                     } else {
                                         VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
-                                            .frame(height: 48)
+                                            .frame(minHeight: 48)
                                         nowIndicator
-                                        VerticalLine(color: .green, lineWidth: 4)
-                                            .frame(height: 48)
+                                        VerticalLine(color: .red, lineWidth: 4)
+                                            .frame(minHeight: 48)
                                     }
                                 }
-                                Color.clear
+                                Text(event.cleanName ?? event.name)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.vertical, 16)
+                            }
+                            let isLast = index == room.events.count - 1
+                            let hasGap = !isLast && event.endTime != room.events[index + 1].startTime
+                            if isLast || hasGap {
+                                GridRow {
+                                    if event.endTime == now {
+                                        nowIndicator
+                                    } else {
+                                        Circle()
+                                            .fill(event.endTime < now ? Color.primary : Color.green)
+                                            .frame(width: 12)
+                                    }
+                                    Text(event.endTime, format: .dateTime.hour().minute())
+                                        .font(.caption)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .foregroundStyle(event.endTime <= now ? Color.primary : Color.green)
+                                }
+                                let nextStartTime = isLast ? endOfDay : room.events[index + 1].startTime
+                                
+                                GridRow {
+                                    VStack(spacing: 0) {
+                                        if nextStartTime <= now {
+                                            VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
+                                                .frame(height: 48)
+                                        } else if event.endTime >= now {
+                                            VerticalLine(color: .green, lineWidth: 4)
+                                                .frame(height: 48)
+                                        } else {
+                                            VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
+                                                .frame(height: 48)
+                                            nowIndicator
+                                            VerticalLine(color: .green, lineWidth: 4)
+                                                .frame(height: 48)
+                                        }
+                                    }
+                                    Color.clear
+                                }
                             }
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+            } else if status == .pastDay {
+                VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
+                    .frame(maxHeight: .infinity)
+            } else if status == .freeAllDay {
+                Grid(verticalSpacing: 8) {
+                    GridRow {
+                        VStack(spacing: 0) {
+                            VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
+                                .frame(height: 48)
+                            nowIndicator
+                            VerticalLine(color: .green, lineWidth: 4)
+                                .frame(maxHeight: .infinity)
+                        }
+                        Color.clear
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                VerticalLine(color: .green, lineWidth: 4)
+                    .frame(maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
     
@@ -171,7 +198,7 @@ struct RoomDetailsView: View {
     Text("")
         .customSheet(isPresented: .constant(true)) {
             if let room = room {
-                RoomDetailsView(room: room)
+                RoomDetailsView(room: room, selectedDate: Date())
                     .interactiveDismissDisabled(true)
             }
         }

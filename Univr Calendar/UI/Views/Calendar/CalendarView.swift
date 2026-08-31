@@ -11,9 +11,15 @@ import SwiftUI
 import UnivrCore
 import CustomSheet
 
-enum Pages {
+private enum Pages {
     case main
     case classrooms
+}
+
+private struct AvailabilityRequestKey: Equatable {
+    let locationKey: String
+    let date: Date
+    let isOnline: Bool
 }
 
 struct CalendarView: View {
@@ -25,18 +31,14 @@ struct CalendarView: View {
     @State private var sheetRouter: CalendarSheetRouter = .init()
     
     @State private var viewModel = CalendarViewModel()
+    @State private var availabilityManager = AvailabilityDataManager()
     @State private var selectedWeek: Date = Calendar.current.startOfDay(for: Date())
     @State private var firstLoading: Bool = true
     @State private var showSheet: Bool = true
     
     @State var tempSettings: TempSettingsState = .init()
     
-    @State var page: Pages = .main
-    
-    //TEMP
-    @State private var availabilityManager = AvailabilityDataManager()
-    @State private var rooms: [Room]? = nil
-    @State private var locationKey: String? = "1"
+    @State private var page: Pages = .main
     
     var body: some View {
         NavigationStack {
@@ -232,49 +234,78 @@ struct CalendarView: View {
     private var classroomView: some View {
         VStack {
             VStack {
-                Picker("", selection: $locationKey) {
-                    ForEach(Array(availabilityManager.locations.keys), id: \.self) { key in
+                Picker("", selection: Bindable(settings).locationKey) {
+                    ForEach(Array(availabilityManager.locations.keys.sorted()), id: \.self) { key in
                         Text(availabilityManager.locations[key] ?? "").tag(key)
                     }
                 }
             }
             .frame(maxWidth: .infinity)
+            .frame(height: 48)
             .background(Color(.secondarySystemBackground))
-            .padding()
-            ScrollView {
-                VStack {
-                    if let rooms = rooms {
-                        ForEach(rooms) { room in
-                            RoomCard(room: room)
-                                .onTapGesture {
-                                    Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                    sheetRouter.routeToRoom(room)
+            .cornerRadius(35)
+            .padding(.horizontal, 15)
+            Group {
+                if net.status == .connected {
+                    switch availabilityManager.state {
+                    case .loading:
+                        ProgressView("Caricamento disponibilità...")
+                            .frame(maxHeight: .infinity)
+                    case .loaded:
+                        ScrollView {
+                            VStack {
+                                if let rooms = availabilityManager.rooms {
+                                    ForEach(rooms) { room in
+                                        RoomCard(room: room, selectedDate: selectedWeek)
+                                            .onTapGesture {
+                                                Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                                sheetRouter.routeToRoom(room)
+                                            }
+                                    }
                                 }
+                            }
                         }
+                        .cornerRadius(35)
+                        .padding(.horizontal, 15)
+                    case .offline:
+                        ContentUnavailableView(
+                            "Sei Offline",
+                            systemImage: "wifi.slash",
+                            description: Text("Connettiti a internet per controllare le disponibilità di oggi.")
+                        )
+                    case .error(let msg):
+                        ContentUnavailableView(
+                            "Si è verificato un errore",
+                            systemImage: "exclamationmark.triangle",
+                            description: Text(msg)
+                        )
                     }
-                }
-            }
-            .onChange(of: locationKey) { _, newValue in
-                Task {
-                    try? await availabilityManager.getAvailability(locationKey: newValue ?? "", date: selectedWeek)
-                    rooms = availabilityManager.rooms
+                } else {
+                    ContentUnavailableView(
+                        "Sei Offline",
+                        systemImage: "wifi.slash",
+                        description: Text("Connettiti a internet per controllare le disponibilità di oggi.")
+                    )
                 }
             }
             .onChange(of: selectedWeek) { oldValue, newValue in
                 if !Calendar.current.isDate(oldValue, inSameDayAs: newValue) {
                     Haptics.play(.selection, state: "selection")
                     if !sheetRouter.openSettings { sheetRouter.manager.setDetent(.small) }
+                    availabilityManager.reset()
                     Task {
-                        try? await availabilityManager.getAvailability(locationKey: locationKey ?? "", date: newValue)
-                        rooms = availabilityManager.rooms
                         try? await Task.sleep(for: .seconds(0.2))
                         GlobalHaptics.shared.state = ""
                     }
                 }
             }
-            .task {
-                try? await availabilityManager.getAvailability(locationKey: locationKey ?? "", date: selectedWeek)
-                rooms = availabilityManager.rooms
+            .task(id: AvailabilityRequestKey(
+                locationKey: settings.locationKey,
+                date: selectedWeek,
+                isOnline: net.status == .connected
+            )) {
+                guard net.status == .connected else { return }
+                await availabilityManager.getAvailability(locationKey: settings.locationKey, date: selectedWeek)
             }
             .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
             .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
