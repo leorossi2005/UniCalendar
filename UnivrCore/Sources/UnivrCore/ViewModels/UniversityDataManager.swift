@@ -12,50 +12,56 @@ import Foundation
 @MainActor
 @Observable
 public final class UniversityDataManager {
-    public var years: [AcademicYear] = []
-    public var courses: [Corso] = []
+    private let cache: NetworkCache = .shared
+    private let service: NetworkService = .init()
+    private let cacheManager: CacheManager = .shared
+    private let cacheFileName = "network_cache.json"
+    
+    private var currentCoursesYear: String = ""
+    
+    public var years: [AcademicYear] { cache.years }
+    public var courses: [Corso] { cache.courses[currentCoursesYear] ?? [] }
     public var academicYears: [AcademicYear] = []
     
     public var loading: Bool = false
     public var errorMessage: String?
     
-    private let service = NetworkService()
-    private let cacheKey = "network_cache.json"
-    
     public init() {}
     
     public func loadFromCache() async {
-        if let cacheResponse = await CacheManager.shared.load(fileName: cacheKey, type: NetworkCacheData.self) {
-            NetworkCache.shared.update(from: cacheResponse)
-            self.years = NetworkCache.shared.years
+        if let cacheResponse = await cacheManager.load(fileName: cacheFileName, type: NetworkCacheData.self) {
+            cache.update(from: cacheResponse)
         }
     }
     
     public func clearCalendarCache() async {
-        await CacheManager.shared.clear(fileName: "calendar_cache.json")
+        await cacheManager.clear(fileName: "calendar_cache.json")
+    }
+    
+    public func resetCourses() {
+        currentCoursesYear = ""
     }
     
     public func loadYears() async throws {
         try await fetchAndRefresh(
-            currentData: NetworkCache.shared.years,
+            currentData: cache.years,
             fetchOperation: { try await self.service.getYears() },
             updateState: { [weak self] newYears in
-                NetworkCache.shared.years = newYears
-                self?.years = newYears
+                self?.cache.years = newYears
             }
         )
     }
     
     public func loadCourses(year: String) async throws {
+        currentCoursesYear = year
         self.loading = true
         defer { self.loading = false }
         
         try await fetchAndRefresh(
-            currentData: NetworkCache.shared.courses[year] ?? [],
+            currentData: cache.courses[year] ?? [],
             fetchOperation: { try await self.service.getCourses(year: year) },
             updateState: { [weak self] newCourses in
-                NetworkCache.shared.courses[year] = newCourses
-                self?.courses = newCourses
+                self?.cache.courses[year] = newCourses
             }
         )
     }
@@ -68,7 +74,7 @@ public final class UniversityDataManager {
         return academicYears.first(where: { $0.id == academicYearValue })?.hasGroup ?? false
     }
     
-    private func fetchAndRefresh<T: Collection & Equatable & Sendable >(
+    private func fetchAndRefresh<T: Collection & Equatable & Sendable>(
         currentData: T,
         fetchOperation: @escaping @Sendable () async throws -> T,
         updateState: @escaping @MainActor (T) -> Void
@@ -99,7 +105,7 @@ public final class UniversityDataManager {
     }
     
     private func saveCache() async {
-        let data = NetworkCache.shared.toData()
-        await CacheManager.shared.save(data, fileName: cacheKey)
+        let data = cache.toData()
+        await cacheManager.save(data, fileName: cacheFileName)
     }
 }

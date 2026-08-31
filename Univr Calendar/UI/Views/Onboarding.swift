@@ -76,7 +76,7 @@ struct Onboarding: View {
                     isLoading: nextIndexLoading > 1,
                     isButtonDisabled: net.status != .connected,
                     buttonAction: {
-                        viewModel.courses = []
+                        viewModel.resetCourses()
                         settings.selectedCourse = "0"
                         
                         handlePageTransition(to: 2) {

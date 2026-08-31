@@ -143,7 +143,7 @@ struct Settings: View {
     // MARK: - Logic Methods
     private func handleYearChange() {
         sheetManager.setLock(true)
-        viewModel.courses = []
+        viewModel.resetCourses()
         selectedCourse = "0"
         viewModel.academicYears = []
         selectedAcademicYear = "0"

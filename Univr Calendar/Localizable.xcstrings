@@ -186,7 +186,14 @@
       }
     },
     "Caricamento disponibilità..." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading availability…"
+          }
+        }
+      }
     },
     "Cerca un corso" : {
       "localizations" : {
@@ -269,7 +276,14 @@
       }
     },
     "Connettiti a internet per controllare le disponibilità di oggi." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect to the internet to check today availability."
+          }
+        }
+      }
     },
     "Connettiti a internet per scaricare le tue lezioni." : {
       "localizations" : {

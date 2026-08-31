@@ -7,12 +7,15 @@
 //  SPDX-License-Identifier: GPL-3.0-or-later
 //
 
+import Foundation
+
 public struct NetworkCacheData: Codable, Sendable {
     public let years: [AcademicYear]
     public let courses: [String: [Corso]]
 }
 
 @MainActor
+@Observable
 public final class NetworkCache: Sendable {
     public static let shared = NetworkCache()
     
