@@ -29,14 +29,21 @@ struct CalendarView: View {
     @Environment(NetworkStateObserver.self) private var net
   
     @State private var sheetRouter: CalendarSheetRouter = .init()
+    @State private var coordinator = CalendarCoordinator()
     
     @State private var viewModel = CalendarViewModel()
     @State private var availabilityManager = AvailabilityDataManager()
-    @State private var selectedWeek: Date = Calendar.current.startOfDay(for: Date())
     @State private var firstLoading: Bool = true
     @State private var showSheet: Bool = true
     
     @State private var page: Pages = .main
+    
+    private var selectedWeekBinding: Binding<Date> {
+        Binding(
+            get: { coordinator.selectedWeek },
+            set: { coordinator.selectDate($0) }
+        )
+    }
     
     var body: some View {
         NavigationStack {
@@ -79,6 +86,16 @@ struct CalendarView: View {
                     }
                 }
             }
+            .onChange(of: coordinator.selectedWeek) { oldValue, newValue in
+                guard !Calendar.current.isDate(oldValue, inSameDayAs: newValue) else { return }
+                Haptics.play(.selection, state: "selection")
+                if !sheetRouter.openSettings { sheetRouter.manager.setDetent(.small) }
+                availabilityManager.reset()
+                Task {
+                    try? await Task.sleep(for: .seconds(0.2))
+                    GlobalHaptics.shared.state = ""
+                }
+            }
             .removeTopSafeArea()
             .animation(.default, value: viewModel.checkingUpdates)
             .animation(.default, value: viewModel.updateAvailable)
@@ -87,7 +104,7 @@ struct CalendarView: View {
         .customSheet(isPresented: $showSheet, manager: sheetRouter.manager, detents: sheetRouter.detents) {
             CalendarSheetContent(
                 router: sheetRouter,
-                selectedWeek: $selectedWeek
+                selectedWeek: selectedWeekBinding
             )
             .disabled((viewModel.state == .loading || viewModel.state == .empty || viewModel.schedule.isEmpty) && !sheetRouter.openSettings)
         }
@@ -137,23 +154,13 @@ struct CalendarView: View {
         .scrollTargetBehavior(.paging)
         .scrollIndicators(.never, axes: .horizontal)
         .scrollPosition(id: Binding<Date?>(
-                get: { self.firstLoading ? nil : self.selectedWeek },
+                get: { self.firstLoading ? nil : coordinator.selectedWeek },
                 set: { newValue in
                     if let validDate = newValue {
-                        self.selectedWeek = validDate
+                        coordinator.selectDate(validDate)
                     }
                 }
             ), anchor: .center)
-        .onChange(of: selectedWeek) { oldValue, newValue in
-            if !Calendar.current.isDate(oldValue, inSameDayAs: newValue) {
-                Haptics.play(.selection, state: "selection")
-                if !sheetRouter.openSettings { sheetRouter.manager.setDetent(.small) }
-                Task {
-                    try? await Task.sleep(for: .seconds(0.2))
-                    GlobalHaptics.shared.state = ""
-                }
-            }
-        }
     }
     
     @ViewBuilder
@@ -249,7 +256,7 @@ struct CalendarView: View {
                             VStack {
                                 if let rooms = availabilityManager.rooms {
                                     ForEach(rooms) { room in
-                                        RoomCard(room: room, selectedDate: selectedWeek)
+                                        RoomCard(room: room, selectedDate: coordinator.selectedWeek)
                                             .onTapGesture {
                                                 Haptics.play(.impact(weight: .light, intensity: 0.5))
                                                 sheetRouter.routeToRoom(room)
@@ -281,24 +288,13 @@ struct CalendarView: View {
                     )
                 }
             }
-            .onChange(of: selectedWeek) { oldValue, newValue in
-                if !Calendar.current.isDate(oldValue, inSameDayAs: newValue) {
-                    Haptics.play(.selection, state: "selection")
-                    if !sheetRouter.openSettings { sheetRouter.manager.setDetent(.small) }
-                    availabilityManager.reset()
-                    Task {
-                        try? await Task.sleep(for: .seconds(0.2))
-                        GlobalHaptics.shared.state = ""
-                    }
-                }
-            }
             .task(id: AvailabilityRequestKey(
                 locationKey: settings.locationKey,
-                date: selectedWeek,
+                date: coordinator.selectedWeek,
                 isOnline: net.status == .connected
             )) {
                 guard net.status == .connected else { return }
-                await availabilityManager.getAvailability(locationKey: settings.locationKey, date: selectedWeek)
+                await availabilityManager.getAvailability(locationKey: settings.locationKey, date: coordinator.selectedWeek)
             }
             .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
             .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
@@ -311,9 +307,9 @@ struct CalendarView: View {
         ToolbarItem(placement: .topBarLeading) {
             HStack {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(selectedWeek.getCurrentWeekdaySymbol(length: .wide))
+                    Text(coordinator.selectedWeek.getCurrentWeekdaySymbol(length: .wide))
                         .font(.headline)
-                    Text("\(selectedWeek.day) \(selectedWeek.getCurrentMonthSymbol(length: .wide))")
+                    Text("\(coordinator.selectedWeek.day) \(coordinator.selectedWeek.getCurrentMonthSymbol(length: .wide))")
                         .font(.subheadline)
                 }
                 
@@ -407,14 +403,9 @@ struct CalendarView: View {
            let currentYear = Int(years.id),
            let year = Int(settings.selectedYear),
            year != currentYear {
-            let startAcademic = Date(year: year, month: 10, day: 1)
-            if !Calendar.current.isDate(selectedWeek, inSameDayAs: startAcademic) {
-                selectedWeek = startAcademic
-            }
+            coordinator.selectDate(Date(year: year, month: 10, day: 1))
         } else {
-            if !Calendar.current.isDate(selectedWeek, inSameDayAs: today) {
-                selectedWeek = today
-            }
+            coordinator.selectDate(today)
         }
     }
     
@@ -427,10 +418,10 @@ struct CalendarView: View {
                 var transaction = Transaction()
                 transaction.disablesAnimations = true
                 withTransaction(transaction) {
-                    if let exactMatch = viewModel.academicYearDays.first(where: { Calendar.current.isDate($0, inSameDayAs: selectedWeek) }) {
-                        selectedWeek = exactMatch
+                    if let exactMatch = viewModel.academicYearDays.first(where: { Calendar.current.isDate($0, inSameDayAs: coordinator.selectedWeek) }) {
+                        coordinator.selectDate(exactMatch)
                     } else {
-                        selectedWeek = viewModel.academicYearDays.first ?? Calendar.current.startOfDay(for: Date())
+                        coordinator.selectDate(viewModel.academicYearDays.first ?? Calendar.current.startOfDay(for: Date()))
                     }
                     firstLoading = false
                     Haptics.play(.success)
