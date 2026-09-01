@@ -182,17 +182,13 @@ struct Settings: View {
         Haptics.play(.impact(weight: .heavy))
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.1))
-            await viewModel.clearCalendarCache()
+            await CacheManager.shared.clear(file: .calendarSchedule)
             settings.reset()
             sheetManager.dismiss()
         }
     }
     
     private func loadInitialData() {
-        Task {
-            await viewModel.loadFromCache()
-        }
-        
         if viewModel.years.isEmpty {
             Task {
                 do {

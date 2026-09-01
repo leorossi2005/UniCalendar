@@ -9,13 +9,13 @@
 
 import Foundation
 
-actor CacheManager: Sendable {
-    static let shared = CacheManager()
+public actor CacheManager: Sendable {
+    public static let shared = CacheManager()
     
     private let folder: URL = .cachesDirectory
     
-    func save<T: Encodable >(_ object: T, fileName: String) async {
-        let fileUrl = folder.appending(path: fileName)
+    func save<T: Encodable>(_ object: T, file: CacheFile) async {
+        let fileUrl = folder.appending(path: file.fileName)
         
         do {
             let data = try JSONEncoder().encode(object)
@@ -23,12 +23,12 @@ actor CacheManager: Sendable {
                 try data.write(to: fileUrl)
             }.value
         } catch {
-            print("Error saving cache \(fileName): \(error)")
+            print("Error saving cache \(file.fileName): \(error)")
         }
     }
     
-    func load<T: Decodable & Sendable >(fileName: String, type: T.Type) async -> T? {
-        let fileUrl = folder.appending(path: fileName)
+    func load<T: Decodable & Sendable>(file: CacheFile, type: T.Type) async -> T? {
+        let fileUrl = folder.appending(path: file.fileName)
         
         guard FileManager.default.fileExists(atPath: fileUrl.path()) else { return nil }
         
@@ -38,21 +38,21 @@ actor CacheManager: Sendable {
             }.value
             return try JSONDecoder().decode(type, from: data)
         } catch {
-            print("Error loading cache \(fileName): \(error)")
+            print("Error loading cache \(file.fileName): \(error)")
             try? FileManager.default.removeItem(at: fileUrl)
             return nil
         }
     }
     
-    func clear(fileName: String) async {
-        let fileUrl = folder.appending(path: fileName)
+    public func clear(file: CacheFile) async {
+        let fileUrl = folder.appending(path: file.fileName)
         
         do {
             try await Task.detached(priority: .utility) {
                 try FileManager.default.removeItem(at: fileUrl)
             }.value
         } catch {
-            print("Error clearing cache \(fileName): \(error)")
+            print("Error clearing cache \(file.fileName): \(error)")
         }
     }
 }
