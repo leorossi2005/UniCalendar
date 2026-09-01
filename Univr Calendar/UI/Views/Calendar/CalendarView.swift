@@ -36,8 +36,6 @@ struct CalendarView: View {
     @State private var firstLoading: Bool = true
     @State private var showSheet: Bool = true
     
-    @State var tempSettings: TempSettingsState = .init()
-    
     @State private var page: Pages = .main
     
     var body: some View {
@@ -88,13 +86,8 @@ struct CalendarView: View {
         }
         .customSheet(isPresented: $showSheet, manager: sheetRouter.manager, detents: sheetRouter.detents) {
             CalendarSheetContent(
-                selectedWeek: $selectedWeek,
-                selectedLesson: $sheetRouter.selectedLesson,
-                selectedRoom: $sheetRouter.selectedRoom,
-                openAddToCalendar: $sheetRouter.openAddToCalendar,
-                openSettings: $sheetRouter.openSettings,
-                openWhatsNew: $sheetRouter.openWhatsNew,
-                tempSettings: $tempSettings
+                router: sheetRouter,
+                selectedWeek: $selectedWeek
             )
             .disabled((viewModel.state == .loading || viewModel.state == .empty || viewModel.schedule.isEmpty) && !sheetRouter.openSettings)
         }
@@ -382,7 +375,7 @@ struct CalendarView: View {
     private func inizializeData() {
         viewModel.generateAcademicYearDays(for: settings.selectedYear)
         updateDate()
-        tempSettings.sync(with: settings)
+        sheetRouter.tempSettings.sync(with: settings)
         
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.2))
@@ -394,7 +387,6 @@ struct CalendarView: View {
         
         Task {
             if settings.selectedCourse != "0" {
-                await viewModel.loadNetworkFromCache()
                 await viewModel.loadFromCache(matricola: settings.matricola)
             }
             
@@ -450,11 +442,11 @@ struct CalendarView: View {
     private func handleDetentChange(oldValue: CustomSheetDetent, newValue: CustomSheetDetent) {
         if newValue != .large {
             if sheetRouter.openSettings {
-                let hasChanged = tempSettings.hasChanged(from: settings)
+                let hasChanged = sheetRouter.tempSettings.hasChanged(from: settings)
                 
                 if hasChanged {
                     viewModel.state = .loading
-                    tempSettings.apply(to: settings)
+                    sheetRouter.tempSettings.apply(to: settings)
                     
                     if settings.selectedCourse != "0" {
                         updateDate()
@@ -473,8 +465,8 @@ struct CalendarView: View {
                             await viewModel.clearAll()
                         }
                     }
-                } else if tempSettings.matricola != settings.matricola {
-                    settings.matricola = tempSettings.matricola
+                } else if sheetRouter.tempSettings.matricola != settings.matricola {
+                    settings.matricola = sheetRouter.tempSettings.matricola
                     Task {
                         await viewModel.loadFromCache(matricola: settings.matricola)
                     }

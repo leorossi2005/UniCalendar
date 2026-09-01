@@ -14,13 +14,8 @@ import CustomSheet
 struct CalendarSheetContent: View {
     @Environment(GlobalSheetManager.self) private var sheetManager
     
+    @Bindable var router: CalendarSheetRouter
     @Binding var selectedWeek: Date
-    @Binding var selectedLesson: Lesson?
-    @Binding var selectedRoom: Room?
-    @Binding var openAddToCalendar: Bool
-    @Binding var openSettings: Bool
-    @Binding var openWhatsNew: Bool
-    @Binding var tempSettings: TempSettingsState
     
     var body: some View {
         GeometryReader { proxy in
@@ -50,31 +45,31 @@ struct CalendarSheetContent: View {
                     .allowsHitTesting(sheetManager.selectedDetent == .medium)
                 
                 NavigationStack {
-                    if openWhatsNew {
+                    if router.openWhatsNew {
                         WhatsNewView()
-                    } else if openSettings {
+                    } else if router.openSettings {
                         Settings(
-                            selectedYear: $tempSettings.selectedYear,
-                            selectedCourse: $tempSettings.selectedCourse,
-                            selectedAcademicYear: $tempSettings.selectedAcademicYear,
-                            matricola: $tempSettings.matricola
+                            selectedYear: $router.tempSettings.selectedYear,
+                            selectedCourse: $router.tempSettings.selectedCourse,
+                            selectedAcademicYear: $router.tempSettings.selectedAcademicYear,
+                            matricola: $router.tempSettings.matricola
                         )
                         .ignoresSafeArea(.keyboard)
-                    } else if let lesson = selectedLesson {
-                        LessonDetailsView(lesson: lesson, openAddToCalendar: openAddToCalendar) {
+                    } else if let lesson = router.selectedLesson {
+                        LessonDetailsView(lesson: lesson, openAddToCalendar: router.openAddToCalendar) {
                             sheetManager.setDetent(.small)
-                            selectedLesson = nil
-                            openAddToCalendar = false
+                            router.selectedLesson = nil
+                            router.openAddToCalendar = false
                         }
-                    } else if let room = selectedRoom {
+                    } else if let room = router.selectedRoom {
                         RoomDetailsView(room: room, selectedDate: selectedWeek) {
                             sheetManager.setDetent(.small)
-                            selectedLesson = nil
-                            openAddToCalendar = false
+                            router.selectedLesson = nil
+                            router.openAddToCalendar = false
                         }
                     }
                 }
-                .id(openSettings)
+                .id(router.openSettings)
                 .opacity(min(max(largeOpacity, 0), 1))
                 .allowsHitTesting(sheetManager.selectedDetent == .large)
                 .frame(height: CustomSheetDetent.large.value)

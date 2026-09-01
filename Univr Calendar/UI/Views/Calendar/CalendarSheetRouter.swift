@@ -21,6 +21,7 @@ class CalendarSheetRouter {
     var openSettings: Bool = false
     var openWhatsNew: Bool = false
     var openAddToCalendar: Bool = false
+    var tempSettings: TempSettingsState = .init()
     
     var detents: [CustomSheetDetent] = [.small, .medium]
     
