@@ -62,11 +62,7 @@ struct CalendarSheetContent: View {
                             router.openAddToCalendar = false
                         }
                     } else if let room = router.selectedRoom {
-                        RoomDetailsView(room: room, selectedDate: selectedWeek) {
-                            sheetManager.setDetent(.small)
-                            router.selectedLesson = nil
-                            router.openAddToCalendar = false
-                        }
+                        RoomDetailsView(room: room, selectedDate: selectedWeek)
                     }
                 }
                 .id(router.openSettings)

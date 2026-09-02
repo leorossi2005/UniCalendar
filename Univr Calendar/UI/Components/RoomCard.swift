@@ -22,7 +22,7 @@ struct RoomCard: View {
             
             VStack(spacing: 20) {
                 LessonInfo(room: room, status: currentStatus)
-                Timeline(room: room, now: context.date, currentStatus: currentStatus)
+                Timeline(room: room, currentStatus: currentStatus)
             }
             .padding()
             .padding(.bottom, 4)
@@ -61,7 +61,6 @@ private struct LessonInfo: View {
 
 private struct Timeline: View {
     var room: Room
-    var now: Date
     var currentStatus: RoomDailyStatus
     
     var body: some View {

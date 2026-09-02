@@ -16,12 +16,6 @@ private enum Pages {
     case classrooms
 }
 
-private struct AvailabilityRequestKey: Equatable {
-    let locationKey: String
-    let date: Date
-    let isOnline: Bool
-}
-
 struct CalendarView: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
@@ -32,7 +26,6 @@ struct CalendarView: View {
     @State private var coordinator = CalendarCoordinator()
     
     @State private var viewModel = CalendarViewModel()
-    @State private var availabilityManager = AvailabilityDataManager()
     @State private var firstLoading: Bool = true
     @State private var showSheet: Bool = true
     
@@ -52,7 +45,7 @@ struct CalendarView: View {
                 case .main:
                     mainView
                 case .classrooms:
-                    classroomView
+                    ClassroomAvailabilityView(coordinator: coordinator, sheetRouter: sheetRouter)
                 }
             }
             .toolbar {
@@ -90,7 +83,6 @@ struct CalendarView: View {
                 guard !Calendar.current.isDate(oldValue, inSameDayAs: newValue) else { return }
                 Haptics.play(.selection, state: "selection")
                 if !sheetRouter.openSettings { sheetRouter.manager.setDetent(.small) }
-                availabilityManager.reset()
                 Task {
                     try? await Task.sleep(for: .seconds(0.2))
                     GlobalHaptics.shared.state = ""
@@ -230,77 +222,6 @@ struct CalendarView: View {
         }
     }
     
-    // MARK: - ClassRoomView
-    private var classroomView: some View {
-        VStack {
-            VStack {
-                Picker("", selection: Bindable(settings).locationKey) {
-                    ForEach(Array(availabilityManager.locations.keys.sorted()), id: \.self) { key in
-                        Text(availabilityManager.locations[key] ?? "").tag(key)
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 48)
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(35)
-            .padding(.horizontal, 15)
-            Group {
-                if net.status == .connected {
-                    switch availabilityManager.state {
-                    case .loading:
-                        ProgressView("Caricamento disponibilità...")
-                            .frame(maxHeight: .infinity)
-                    case .loaded:
-                        ScrollView {
-                            VStack {
-                                if let rooms = availabilityManager.rooms {
-                                    ForEach(rooms) { room in
-                                        RoomCard(room: room, selectedDate: coordinator.selectedWeek)
-                                            .onTapGesture {
-                                                Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                                sheetRouter.routeToRoom(room)
-                                            }
-                                    }
-                                }
-                            }
-                        }
-                        .cornerRadius(35)
-                        .padding(.horizontal, 15)
-                    case .offline:
-                        ContentUnavailableView(
-                            "Sei Offline",
-                            systemImage: "wifi.slash",
-                            description: Text("Connettiti a internet per controllare le disponibilità di oggi.")
-                        )
-                    case .error(let msg):
-                        ContentUnavailableView(
-                            "Si è verificato un errore",
-                            systemImage: "exclamationmark.triangle",
-                            description: Text(msg)
-                        )
-                    }
-                } else {
-                    ContentUnavailableView(
-                        "Sei Offline",
-                        systemImage: "wifi.slash",
-                        description: Text("Connettiti a internet per controllare le disponibilità di oggi.")
-                    )
-                }
-            }
-            .task(id: AvailabilityRequestKey(
-                locationKey: settings.locationKey,
-                date: coordinator.selectedWeek,
-                isOnline: net.status == .connected
-            )) {
-                guard net.status == .connected else { return }
-                await availabilityManager.getAvailability(locationKey: settings.locationKey, date: coordinator.selectedWeek)
-            }
-            .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
-            .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
-        }
-    }
-    
     // MARK: - Toolbar Builder
     @ToolbarContentBuilder
     private func buildToolbar() -> some ToolbarContent {
@@ -397,16 +318,23 @@ struct CalendarView: View {
     }
     
     private func updateDate() {
-        let today = Calendar.current.startOfDay(for: Date())
+        guard let selectedYearInt = Int(settings.selectedYear) else { return }
         
-        if let years = NetworkCache.shared.years.last,
-           let currentYear = Int(years.id),
-           let year = Int(settings.selectedYear),
-           year != currentYear {
-            coordinator.selectDate(Date(year: year, month: 10, day: 1))
-        } else {
+        let today = Calendar.current.startOfDay(for: Date())
+        let currentAcademicYear = academicYearId(for: today)
+        
+        if selectedYearInt == currentAcademicYear {
             coordinator.selectDate(today)
+        } else {
+            coordinator.selectDate(Date(year: selectedYearInt, month: 10, day: 1))
         }
+    }
+    
+    private func academicYearId(for date: Date) -> Int {
+        let comps = Calendar.current.dateComponents([.year, .month], from: date)
+        let year = comps.year ?? 0
+        let month = comps.month ?? 1
+        return month >= 10 ? year : year - 1
     }
     
     private func handleLoadingChange(_ isLoading: Bool) {

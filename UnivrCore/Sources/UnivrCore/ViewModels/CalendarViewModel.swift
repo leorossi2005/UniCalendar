@@ -144,12 +144,6 @@ public class CalendarViewModel {
         }
     }
     
-    public func loadNetworkFromCache() async {
-        if let cacheResponse = await CacheManager.shared.load(file: .legacyNetworkCache, type: NetworkCacheData.self) {
-            NetworkCache.shared.update(from: cacheResponse)
-        }
-    }
-    
     public func clearAll(state: CalendarViewState = .empty) async {
         self.state = state
         await resource.clear()

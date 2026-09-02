@@ -196,7 +196,7 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
         uiView.updateNavigationSafeArea(isLarge: isLarge)
     }
     
-    static func dismantleUIView(_ uiView: OverlayAnchorUIView, coordinator: ()) {
+    static func dismantleUIView(_ uiView: OverlayAnchorUIView, coordinator: Coordinator) {
         uiView.cleanup()
     }
 }

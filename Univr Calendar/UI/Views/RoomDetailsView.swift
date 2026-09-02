@@ -15,10 +15,6 @@ struct RoomDetailsView: View {
     var room: Room
     var selectedDate: Date
     
-    @State private var now: Date = Date()
-    
-    var onDismiss: (() -> Void)?
-        
     var body: some View {
         TimelineView(.everyMinute) { context in
             let currentStatus = RoomDailyStatus(room: room, selectedDate: selectedDate, now: context.date)
