@@ -536,7 +536,14 @@
       }
     },
     "Nessuna aula disponibile" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No room available"
+          }
+        }
+      }
     },
     "Nessuna Lezione" : {
       "localizations" : {
@@ -559,7 +566,14 @@
       }
     },
     "Non ci sono aule disponibili per questa sede." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There are no rooms for this location."
+          }
+        }
+      }
     },
     "Non ci sono lezioni in programma per oggi." : {
       "localizations" : {
