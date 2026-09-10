@@ -535,6 +535,9 @@
         }
       }
     },
+    "Nessuna aula disponibile" : {
+
+    },
     "Nessuna Lezione" : {
       "localizations" : {
         "en" : {
@@ -554,6 +557,9 @@
           }
         }
       }
+    },
+    "Non ci sono aule disponibili per questa sede." : {
+
     },
     "Non ci sono lezioni in programma per oggi." : {
       "localizations" : {

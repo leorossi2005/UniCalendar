@@ -10,29 +10,77 @@
 import Foundation
 import Observation
 
-public enum CalendarViewState: Equatable, Sendable {
-    case loading, loaded, empty, offline, error(String)
-}
-
 @MainActor
 @Observable
 public class CalendarViewModel {
     public var schedule: [DailySchedule] = []
     public var academicYearDays: [Date] = []
     
-    public var state: CalendarViewState = .loading
+    public var state: ResourcePhase = .loading
     public var updateAvailable: Bool = false
     public var checkingUpdates: Bool = false
+    public var isOffline: Bool { NetworkStatusMonitor.shared.status == .disconnected }
     
     private var pendingNewLessons: [DailySchedule]? = nil
     private let service: NetworkService = .init()
     private let resource: CachedResource<[DailySchedule]> = CachedResource(cacheFileName: .calendarSchedule, cacheManager: .shared)
+    private var lastMatricola: String = ""
     
-    public init() {}
+    public init() {
+        observeResource()
+        observeNetworkStatus()
+    }
+    
+    private func observeResource() {
+        withObservationTracking {
+            _ = resource.phase
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.reactToResourceChange()
+                self.observeResource()
+            }
+        }
+    }
+    
+    private func reactToResourceChange() {
+        switch resource.phase {
+        case .loaded:
+            if let fetched = resource.value {
+                handleNewData(fetched, matricola: lastMatricola, update: false)
+            }
+        case .offline:
+            if schedule.isEmpty { state = .offline }
+        case .error(let message):
+            if schedule.isEmpty { state = .error(message) }
+        case .loading:
+            if schedule.isEmpty { state = .loading }
+        case .idle, .empty:
+            break
+        }
+    }
+    
+    private func observeNetworkStatus() {
+        withObservationTracking {
+            _ = NetworkStatusMonitor.shared.status
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let offline = NetworkStatusMonitor.shared.status == .disconnected
+                if offline, self.schedule.isEmpty, self.resource.value == nil {
+                    self.state = .offline
+                } else if !offline, self.state == .offline, self.resource.value == nil, self.schedule.isEmpty, !self.resource.hasLastFetch {
+                    self.state = .empty
+                }
+                self.observeNetworkStatus()
+            }
+        }
+    }
     
     public func loadLessons(corso: String, anno: String, selYear: String, matricola: String, updating: Bool) async {
+        lastMatricola = matricola
         guard corso != "0" else {
-            await clearAll()
+            await clearAll(state: NetworkStatusMonitor.shared.status == .disconnected ? .offline : .empty)
             return
         }
         
@@ -84,12 +132,12 @@ public class CalendarViewModel {
     }
     
     private func handleFetchFailure() {
-        switch resource.state {
+        switch resource.phase {
         case .offline:
             if schedule.isEmpty { state = .offline }
         case .error(let message):
             state = .error(message)
-        case .idle, .loading, .loaded:
+        case .idle, .loading, .loaded, .empty:
             break
         }
     }
@@ -144,7 +192,7 @@ public class CalendarViewModel {
         }
     }
     
-    public func clearAll(state: CalendarViewState = .empty) async {
+    public func clearAll(state: ResourcePhase = .empty) async {
         self.state = state
         await resource.clear()
         schedule.removeAll()

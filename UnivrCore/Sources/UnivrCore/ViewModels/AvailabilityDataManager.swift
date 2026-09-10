@@ -74,45 +74,101 @@ public enum RoomDailyStatus: Equatable {
         }
 }
 
-public enum ClassroomViewState: Equatable, Sendable {
-    case loading, loaded, offline, error(String)
-}
-
 @MainActor
 @Observable
 public final class AvailabilityDataManager {
     public var locations: [String: String] = [:]
     public var rooms: [Room]?
     
-    public var state: ClassroomViewState = .loading
+    public var state: ResourcePhase = .loading
     
     private let service = NetworkService()
-    private var lastFetch: Availability? = nil
-    private var lastDate: String = ""
+    private let resource = CachedResource<Availability>()
+    private var locationKey: String = ""
+    private var loadedDate: String?
     
-    public init() {}
+    public init() {
+        observeResource()
+        observeNetworkStatus()
+    }
+
+    private func observeResource() {
+        withObservationTracking {
+            _ = resource.phase
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.applyResourceState()
+                self.observeResource()
+            }
+        }
+    }
+
+    private func observeNetworkStatus() {
+        withObservationTracking {
+            _ = NetworkStatusMonitor.shared.status
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if NetworkStatusMonitor.shared.status == .disconnected {
+                    self.rooms = nil
+                    self.state = .offline
+                }
+                self.observeNetworkStatus()
+            }
+        }
+    }
+
+    private func applyResourceState() {
+        state = resource.phase
+
+        switch resource.phase {
+        case .idle:
+            break
+        case .loading:
+            break
+        case .loaded:
+            if let availability = resource.value {
+                locations = availability.locations
+                rooms = availability.rooms[locationKey]
+            }
+        case .empty:
+            rooms = nil
+        case .offline:
+            rooms = nil
+        case .error(let message):
+            rooms = nil
+            state = .error(message)
+        }
+    }
     
     public func getAvailability(locationKey: String, date: Date) async {
         let dateString = String(format: "%02d-%02d-%04d", date.day, date.month, date.year)
+        self.locationKey = locationKey
+
+        if loadedDate == dateString,
+           NetworkStatusMonitor.shared.status == .connected,
+           let availability = resource.value {
+            locations = availability.locations
+            rooms = availability.rooms[locationKey]
+            state = .loaded
+            return
+        }
+
+        loadedDate = dateString
         state = .loading
         rooms = nil
         do {
-            if lastFetch == nil || lastDate != dateString {
-                let availability = try await service.getAvailability(date: dateString)
-                try Task.checkCancellation()
-                lastDate = dateString
-                lastFetch = availability
-                locations = availability.locations
-                rooms = availability.rooms[locationKey]
-            } else {
-                rooms = lastFetch?.rooms[locationKey]
+            let availability = try await resource.refresh {
+                try await self.service.getAvailability(date: dateString)
             }
+            try Task.checkCancellation()
+            locations = availability.locations
+            rooms = availability.rooms[locationKey]
             state = .loaded
         } catch is CancellationError {
-        } catch let error as NetworkError {
-            state = .error(error.localizedDescription)
         } catch {
-            state = .error(String(localized: "Errore generico: \(error.localizedDescription)", bundle: .module))
+            applyResourceState()
         }
     }
     

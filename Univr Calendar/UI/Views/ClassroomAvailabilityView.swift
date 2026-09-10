@@ -13,7 +13,6 @@ import CustomSheet
 
 struct ClassroomAvailabilityView: View {
     @Environment(UserSettings.self) var settings
-    @Environment(NetworkStateObserver.self) private var net
     
     var coordinator: CalendarCoordinator
     var sheetRouter: CalendarSheetRouter
@@ -23,7 +22,6 @@ struct ClassroomAvailabilityView: View {
     private struct RequestKey: Equatable {
         let locationKey: String
         let date: Date
-        let isOnline: Bool
     }
     
     var body: some View {
@@ -37,10 +35,8 @@ struct ClassroomAvailabilityView: View {
                 }
                 .task(id: RequestKey(
                     locationKey: settings.locationKey,
-                    date: coordinator.selectedWeek,
-                    isOnline: net.status == .connected
+                    date: coordinator.selectedWeek
                 )) {
-                    guard net.status == .connected else { return }
                     await availabilityManager.getAvailability(locationKey: settings.locationKey, date: coordinator.selectedWeek)
                 }
                 .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
@@ -63,45 +59,43 @@ struct ClassroomAvailabilityView: View {
     
     @ViewBuilder
     private var content: some View {
-        if net.status == .connected {
-            switch availabilityManager.state {
-            case .loading:
-                ProgressView("Caricamento disponibilità...")
-                    .frame(maxHeight: .infinity)
-            case .loaded:
-                ScrollView {
-                    VStack {
-                        if let rooms = availabilityManager.rooms {
-                            ForEach(rooms) { room in
-                                RoomCard(room: room, selectedDate: coordinator.selectedWeek)
-                                    .onTapGesture {
-                                        Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                        sheetRouter.routeToRoom(room)
-                                    }
-                            }
+        switch availabilityManager.state {
+        case .idle, .loading:
+            ProgressView("Caricamento disponibilità...")
+                .frame(maxHeight: .infinity)
+        case .loaded:
+            ScrollView {
+                VStack {
+                    if let rooms = availabilityManager.rooms {
+                        ForEach(rooms) { room in
+                            RoomCard(room: room, selectedDate: coordinator.selectedWeek)
+                                .onTapGesture {
+                                    Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                    sheetRouter.routeToRoom(room)
+                                }
                         }
                     }
                 }
-                .cornerRadius(35)
-                .padding(.horizontal, 15)
-            case .offline:
-                ContentUnavailableView(
-                    "Sei Offline",
-                    systemImage: "wifi.slash",
-                    description: Text("Connettiti a internet per controllare le disponibilità di oggi.")
-                )
-            case .error(let msg):
-                ContentUnavailableView(
-                    "Si è verificato un errore",
-                    systemImage: "exclamationmark.triangle",
-                    description: Text(msg)
-                )
             }
-        } else {
+            .cornerRadius(35)
+            .padding(.horizontal, 15)
+        case .empty:
+            ContentUnavailableView(
+                "Nessuna aula disponibile",
+                systemImage: "building.2",
+                description: Text("Non ci sono aule disponibili per questa sede.")
+            )
+        case .offline:
             ContentUnavailableView(
                 "Sei Offline",
                 systemImage: "wifi.slash",
                 description: Text("Connettiti a internet per controllare le disponibilità di oggi.")
+            )
+        case .error(let msg):
+            ContentUnavailableView(
+                "Si è verificato un errore",
+                systemImage: "exclamationmark.triangle",
+                description: Text(msg)
             )
         }
     }

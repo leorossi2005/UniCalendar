@@ -62,6 +62,7 @@ class CalendarSheetRouter {
     // MARK: - Reset automatico
     func resetToCalendar() {
         selectedLesson = nil
+        selectedRoom = nil
         openSettings = false
         openWhatsNew = false
         openAddToCalendar = false

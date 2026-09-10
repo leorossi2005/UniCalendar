@@ -9,6 +9,15 @@
 
 import Foundation
 
+public enum ResourcePhase: Equatable, Sendable {
+    case idle
+    case loading
+    case loaded
+    case empty
+    case offline
+    case error(String)
+}
+
 public enum CacheFile: Equatable, Sendable {
     case years
     case courses(year: String)
@@ -26,53 +35,79 @@ public enum CacheFile: Equatable, Sendable {
 @MainActor
 @Observable
 final class CachedResource<T: Codable & Equatable & Sendable> {
-    public enum State: Equatable {
-        case idle
-        case loading
-        case loaded(T)
-        case offline
-        case error(String)
-    }
-
-    private(set) var state: State = .idle
+    private(set) var phase: ResourcePhase = .idle
     private(set) var value: T?
+    var hasLastFetch: Bool { lastFetch != nil }
 
     private let cacheFileName: CacheFile?
     private let cacheManager: CacheManager
+    private var lastFetch: (@Sendable () async throws -> T)?
 
     init(cacheFileName: CacheFile? = nil, cacheManager: CacheManager = .shared) {
         self.cacheFileName = cacheFileName
         self.cacheManager = cacheManager
+        observeNetworkStatus()
+    }
+
+    // MARK: - Network reactivity
+    private func observeNetworkStatus() {
+        withObservationTracking {
+            _ = NetworkStatusMonitor.shared.status
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.handleNetworkChange(NetworkStatusMonitor.shared.status)
+                self.observeNetworkStatus()
+            }
+        }
+    }
+
+    private func handleNetworkChange(_ status: NetworkStatus) {
+        switch status {
+        case .disconnected:
+            if value == nil { phase = .offline }
+        case .connected:
+            if let lastFetch {
+                Task { try? await self.refresh(fetch: lastFetch) }
+            }
+        }
     }
 
     func loadFromDisk() async {
         guard let cacheFileName, value == nil,
               let cached = await cacheManager.load(file: cacheFileName, type: T.self) else { return }
         value = cached
-        state = .loaded(cached)
+        phase = .loaded
     }
 
     @discardableResult
-    func refresh(fetch: @Sendable () async throws -> T) async throws -> T {
-        state = .loading
+    func refresh(fetch: @escaping @Sendable () async throws -> T) async throws -> T {
+        lastFetch = fetch
+        phase = .loading
         do {
             let fresh = try await fetch()
             try Task.checkCancellation()
             value = fresh
-            state = .loaded(fresh)
+            phase = .loaded
             if let cacheFileName { await cacheManager.save(fresh, file: cacheFileName) }
             return fresh
-        } catch let error as NetworkError {
-            switch error {
-            case .offline: state = .offline
-            default: state = .error(error.errorDescription ?? String(localized: "Errore sconosciuto", bundle: .module))
-            }
-            throw error
         } catch {
             if error is CancellationError { throw error }
-            state = .error(String(localized: "Errore generico: \(error.localizedDescription)", bundle: .module))
+            if isOfflineFailure(error) {
+                phase = .offline
+            } else if let networkError = error as? NetworkError {
+                phase = .error(networkError.errorDescription ?? String(localized: "Errore sconosciuto", bundle: .module))
+            } else {
+                phase = .error(String(localized: "Errore generico: \(error.localizedDescription)", bundle: .module))
+            }
             throw error
         }
+    }
+    
+    private func isOfflineFailure(_ error: Error) -> Bool {
+        if NetworkStatusMonitor.shared.status == .disconnected { return true }
+        if case NetworkError.offline = error { return true }
+        return false
     }
     
     @discardableResult
@@ -80,6 +115,7 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
         if value == nil { await loadFromDisk() }
         
         if let currentValue = value {
+            lastFetch = fetch
             Task { try? await self.refresh(fetch: fetch) }
             return currentValue
         }
@@ -88,9 +124,11 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
 
     func clear() async {
         value = nil
-        state = .idle
+        phase = .idle
+        lastFetch = nil
         if let cacheFileName {
             await cacheManager.clear(file: cacheFileName)
         }
     }
+
 }

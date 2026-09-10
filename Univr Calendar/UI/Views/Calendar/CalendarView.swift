@@ -20,7 +20,6 @@ struct CalendarView: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
-    @Environment(NetworkStateObserver.self) private var net
   
     @State private var sheetRouter: CalendarSheetRouter = .init()
     @State private var coordinator = CalendarCoordinator()
@@ -66,19 +65,6 @@ struct CalendarView: View {
             .onChange(of: viewModel.state == .loading) { _, isLoading in
                 handleLoadingChange(isLoading)
             }
-            .onChange(of: net.status) { _, newStatus in
-                if newStatus == .connected {
-                    Task {
-                        await viewModel.loadLessons(
-                            corso: settings.selectedCourse,
-                            anno: settings.selectedAcademicYear,
-                            selYear: settings.selectedYear,
-                            matricola: settings.matricola,
-                            updating: false
-                        )
-                    }
-                }
-            }
             .onChange(of: coordinator.selectedWeek) { oldValue, newValue in
                 guard !Calendar.current.isDate(oldValue, inSameDayAs: newValue) else { return }
                 Haptics.play(.selection, state: "selection")
@@ -91,7 +77,7 @@ struct CalendarView: View {
             .removeTopSafeArea()
             .animation(.default, value: viewModel.checkingUpdates)
             .animation(.default, value: viewModel.updateAvailable)
-            .animation(.default, value: net.status)
+            .animation(.default, value: viewModel.state)
         }
         .customSheet(isPresented: $showSheet, manager: sheetRouter.manager, detents: sheetRouter.detents) {
             CalendarSheetContent(
@@ -159,42 +145,34 @@ struct CalendarView: View {
     private var stateOverlays: some View {
         let hasCourse = settings.selectedCourse != "0"
         
-        if net.status != .connected && (viewModel.schedule.isEmpty || !hasCourse) {
+        switch viewModel.state {
+        case .idle, .loading:
+            loadingStateOverlay(hasCourse: hasCourse)
+            
+        case .empty:
+            ContentUnavailableView(
+                "Nessuna Lezione",
+                systemImage: "graduationcap",
+                description: Text(hasCourse ? "Non è stata trovata nessuna lezione per questo corso." : "Scegli un corso dalle impostazioni per iniziare.")
+            )
+            
+        case .offline:
             ContentUnavailableView(
                 "Sei Offline",
                 systemImage: "wifi.slash",
                 description: Text(hasCourse ? "Connettiti a internet per scaricare le tue lezioni." : "Connettiti a internet per configurare il tuo corso.")
             )
-        } else {
-            switch viewModel.state {
-            case .loading:
+            
+        case .error(let msg):
+            ContentUnavailableView(
+                "Si è verificato un errore",
+                systemImage: "exclamationmark.triangle",
+                description: Text(msg)
+            )
+            
+        case .loaded:
+            if firstLoading {
                 loadingStateOverlay(hasCourse: hasCourse)
-                
-            case .empty:
-                ContentUnavailableView(
-                    "Nessuna Lezione",
-                    systemImage: "graduationcap",
-                    description: Text(hasCourse ? "Non è stata trovata nessuna lezione per questo corso." : "Scegli un corso dalle impostazioni per iniziare.")
-                )
-                
-            case .offline:
-                ContentUnavailableView(
-                    "Sei Offline",
-                    systemImage: "wifi.slash",
-                    description: Text(hasCourse ? "Connettiti a internet per scaricare le tue lezioni." : "Connettiti a internet per configurare il tuo corso.")
-                )
-                
-            case .error(let msg):
-                ContentUnavailableView(
-                    "Si è verificato un errore",
-                    systemImage: "exclamationmark.triangle",
-                    description: Text(msg)
-                )
-                
-            case .loaded:
-                if firstLoading {
-                    loadingStateOverlay(hasCourse: hasCourse)
-                }
             }
         }
     }
@@ -235,7 +213,7 @@ struct CalendarView: View {
                 }
                 
                 Image(systemName: "wifi.slash")
-                    .symbolEffect(.appear.up.byLayer, isActive: net.status == .connected)
+                    .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isOffline)
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(.yellow.opacity(0.8))
             }

@@ -13,17 +13,15 @@ import CustomSheet
 
 @main
 struct Univr_CalendarApp: App {
-    @State private var networkObserver = NetworkStateObserver(
-        provider: IOSNetworkMonitor.createProvider()
-    )
-    
     var body: some Scene {
         WindowGroup {
             RootView()
-                .environment(networkObserver)
                 .environment(UserSettings.shared)
                 .environment(\.safeAreaInsets, UIApplication.shared.safeAreas)
                 .enableGlobalHaptics()
+                .task {
+                    NetworkStatusMonitor.shared.start(provider: IOSNetworkMonitor.createProvider())
+                }
         }
     }
 }

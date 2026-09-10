@@ -14,7 +14,6 @@ import CustomSheet
 struct Settings: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
-    @Environment(NetworkStateObserver.self) private var net
     @Environment(GlobalSheetManager.self) private var sheetManager
     
     @State private var viewModel = UniversityDataManager()
@@ -82,13 +81,13 @@ struct Settings: View {
                 VStack(alignment: .leading, spacing: 5) {
                     Text("Usa questa sezione per modificare le impostazioni dell'app, cambia pure l'anno, il corso, l'anno di corso o la matricola se presente.")
                     
-                    if net.status != .connected {
+                    if viewModel.isOffline {
                         Text("In modalità offline non puoi modificare queste opzioni.")
                             .foregroundStyle(.yellow)
                     }
                 }
             }
-            .disabled(net.status != .connected)
+            .disabled(viewModel.isOffline)
             Section {
                 NavigationLink(destination: AboutView()) {
                     Label("Informazioni", systemImage: .infoPageDynamic)
