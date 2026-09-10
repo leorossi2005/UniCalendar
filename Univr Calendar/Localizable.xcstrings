@@ -95,6 +95,15 @@
         }
       }
     },
+    "5 minuti prima" : {
+
+    },
+    "15 minuti prima" : {
+
+    },
+    "30 minuti prima" : {
+
+    },
     "Aggiorna" : {
       "localizations" : {
         "en" : {
@@ -114,6 +123,9 @@
           }
         }
       }
+    },
+    "Al momento dell'inizio" : {
+
     },
     "Al momento sei offline." : {
       "localizations" : {
@@ -375,6 +387,9 @@
         }
       }
     },
+    "Elimina" : {
+
+    },
     "Espandi tutto" : {
       "localizations" : {
         "en" : {
@@ -555,6 +570,9 @@
         }
       }
     },
+    "Nessuna notifica" : {
+
+    },
     "Non capisci mai che lezioni hai? Non hai voglia di aprire il sito ogni volta o usare app obsolete? Ora puoi fare tutto qui!" : {
       "localizations" : {
         "en" : {
@@ -595,6 +613,9 @@
         }
       }
     },
+    "Non hai ancora programmato alcuna notifica per le tue lezioni." : {
+
+    },
     "Non specificato" : {
       "localizations" : {
         "en" : {
@@ -604,6 +625,12 @@
           }
         }
       }
+    },
+    "Notifiche" : {
+
+    },
+    "Notifiche Programmate" : {
+
     },
     "Novità" : {
       "localizations" : {
@@ -694,6 +721,9 @@
           }
         }
       }
+    },
+    "Rimuovi notifica" : {
+
     },
     "Scegli un anno" : {
       "localizations" : {
@@ -824,6 +854,12 @@
           }
         }
       }
+    },
+    "Suona %lld minuti prima" : {
+
+    },
+    "Suona all'inizio della lezione" : {
+
     },
     "SVILUPPATORE" : {
       "localizations" : {

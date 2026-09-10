@@ -89,6 +89,10 @@ struct Settings: View {
             }
             .disabled(viewModel.isOffline)
             Section {
+                NavigationLink(destination: NotificationsView()) {
+                    Label("Notifiche Programmate", systemImage: "bell.badge")
+                        .foregroundStyle(.primary)
+                }
                 NavigationLink(destination: AboutView()) {
                     Label("Informazioni", systemImage: .infoPageDynamic)
                         .foregroundStyle(.primary)
