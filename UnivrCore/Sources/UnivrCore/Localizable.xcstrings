@@ -62,6 +62,27 @@
         }
       }
     },
+    "Errore sconosciuto" : {
+
+    },
+    "Giornata conclusa" : {
+
+    },
+    "Libera fino alle %@" : {
+
+    },
+    "Libera per il resto della giornata" : {
+
+    },
+    "Libera tutto il giorno" : {
+
+    },
+    "Occupata fino alle %@" : {
+
+    },
+    "Primo impegno alle %@" : {
+
+    },
     "v0_1-00-long" : {
       "extractionState" : "manual",
       "localizations" : {

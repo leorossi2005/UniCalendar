@@ -13,10 +13,31 @@ public enum NetworkStatus: Sendable, Equatable {
     case connected
     case disconnected
 }
+
 public struct NetworkProvider: Sendable {
     public var statusStream: @Sendable () -> AsyncStream<NetworkStatus>
     
     public init(statusStream: @escaping @Sendable () -> AsyncStream<NetworkStatus>) {
         self.statusStream = statusStream
+    }
+}
+
+@MainActor
+@Observable
+public final class NetworkStatusMonitor {
+    public static let shared = NetworkStatusMonitor()
+    
+    public private(set) var status: NetworkStatus = .connected
+    private var listenTask: Task<Void, Never>?
+    
+    private init() {}
+    
+    public func start(provider: NetworkProvider) {
+        listenTask?.cancel()
+        listenTask = Task {
+            for await newStatus in provider.statusStream() {
+                self.status = newStatus
+            }
+        }
     }
 }

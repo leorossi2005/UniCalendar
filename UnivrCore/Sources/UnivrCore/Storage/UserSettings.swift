@@ -17,7 +17,7 @@ public class UserSettings {
     private enum Key: String {
         case selectedYear, selectedCourse, selectedAcademicYear
         case foundMatricola, matricola, onboardingCompleted
-        case settingsVersion, latestVersion
+        case settingsVersion, latestVersion, locationKey
     }
     
     private enum Default {
@@ -26,6 +26,7 @@ public class UserSettings {
         static let academicYear = "0"
         static let matricola = "even"
         static let latestVersion: String = Bundle.main.clearAppVersion
+        static let locationKey = "1"
         static let boolFalse = false
         static let currentVersion = 1
     }
@@ -58,6 +59,10 @@ public class UserSettings {
         didSet { Self.save(latestVersion, key: .latestVersion) }
     }
     
+    public var locationKey: String {
+        didSet { Self.save(locationKey, key: .locationKey) }
+    }
+    
     private init() {
         let savedVersion = Self.load(.settingsVersion, fallback: 0)
         if savedVersion < 1 { Self.performV1Migration() }
@@ -69,6 +74,7 @@ public class UserSettings {
         self.matricola = Self.load(.matricola, fallback: Default.matricola)
         self.onboardingCompleted = Self.load(.onboardingCompleted, fallback: Default.boolFalse)
         self.latestVersion = Self.load(.latestVersion, fallback: Default.latestVersion)
+        self.locationKey = Self.load(.locationKey, fallback: Default.locationKey)
     }
     
     private static func performV1Migration() {
@@ -86,6 +92,7 @@ public class UserSettings {
         matricola = Default.matricola
         onboardingCompleted =  Default.boolFalse
         latestVersion =  Default.latestVersion
+        locationKey =  Default.locationKey
     }
     
     private static func save(_ value: Any, key: Key) {

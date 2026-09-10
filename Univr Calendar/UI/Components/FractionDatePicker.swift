@@ -78,8 +78,7 @@ struct FractionDatePickerContainer: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
-            .frame(height: CustomSheetDetent.small.value)
-            .task {
+            .task(id: settings.selectedYear) {
                 await viewModel.generateAcademicWeeks(selectedYear: settings.selectedYear)
                 internalIndex = targetIndex(for: selectedWeek)
             }

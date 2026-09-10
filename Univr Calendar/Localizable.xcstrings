@@ -185,6 +185,16 @@
         }
       }
     },
+    "Caricamento disponibilità..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading availability…"
+          }
+        }
+      }
+    },
     "Cerca un corso" : {
       "localizations" : {
         "en" : {
@@ -201,16 +211,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "What year do you attend? "
-          }
-        }
-      }
-    },
-    "Ci sono novita!" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "There’s news!"
           }
         }
       }
@@ -275,6 +275,16 @@
         }
       }
     },
+    "Connettiti a internet per controllare le disponibilità di oggi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connect to the internet to check today availability."
+          }
+        }
+      }
+    },
     "Connettiti a internet per scaricare le tue lezioni." : {
       "localizations" : {
         "en" : {
@@ -301,16 +311,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Continue"
-          }
-        }
-      }
-    },
-    "Controllo aggiornamenti..." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Looking for updates…"
           }
         }
       }
@@ -515,16 +515,6 @@
         }
       }
     },
-    "Modalità offline" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Offline mode"
-          }
-        }
-      }
-    },
     "Nessun corso" : {
       "localizations" : {
         "en" : {
@@ -545,6 +535,16 @@
         }
       }
     },
+    "Nessuna aula disponibile" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No room available"
+          }
+        }
+      }
+    },
     "Nessuna Lezione" : {
       "localizations" : {
         "en" : {
@@ -561,6 +561,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Don't you ever understand what classes you have? Don't you want to open the site every time or use outdated apps? Now you can do everything here!"
+          }
+        }
+      }
+    },
+    "Non ci sono aule disponibili per questa sede." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There are no rooms for this location."
           }
         }
       }

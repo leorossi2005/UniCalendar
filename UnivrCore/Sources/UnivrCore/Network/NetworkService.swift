@@ -16,6 +16,8 @@ struct NetworkService {
     init() {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 30
+        configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+        configuration.urlCache = nil
         
         // Da rendere per dispositivo
         configuration.httpAdditionalHeaders = [
@@ -63,6 +65,7 @@ struct NetworkService {
             switch error.code {
             case .notConnectedToInternet: throw NetworkError.offline
             case .timedOut: throw NetworkError.timeout
+            case .cancelled: throw CancellationError()
             default: throw NetworkError.unknown(error)
             }
         } catch let error as DecodingError {
@@ -88,5 +91,11 @@ struct NetworkService {
     
     func fetchOrario(corso: String, anno: String, selyear: String) async throws -> [DailySchedule] {
         return try await fetch(from: "/schedule?course=\(corso)&academicYear=\(anno)&year=\(selyear)")
+    }
+    
+    func getAvailability(date: String) async throws -> Availability {
+        struct RootWrapper: Decodable { let availability: Availability }
+        let wrapper: RootWrapper = try await fetch(from: "/roomsavailability?date=\(date)")
+        return wrapper.availability
     }
 }

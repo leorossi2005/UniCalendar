@@ -10,30 +10,77 @@
 import Foundation
 import Observation
 
-public enum CalendarViewState: Equatable, Sendable {
-    case loading, loaded, empty, offline, error(String)
-}
-
 @MainActor
 @Observable
 public class CalendarViewModel {
     public var schedule: [DailySchedule] = []
     public var academicYearDays: [Date] = []
     
-    public var state: CalendarViewState = .loading
+    public var state: ResourcePhase = .loading
     public var updateAvailable: Bool = false
     public var checkingUpdates: Bool = false
+    public var isOffline: Bool { NetworkStatusMonitor.shared.status == .disconnected }
     
     private var pendingNewLessons: [DailySchedule]? = nil
-    private let service = NetworkService()
-    private let cacheKey = "calendar_cache.json"
+    private let service: NetworkService = .init()
+    private let resource: CachedResource<[DailySchedule]> = CachedResource(cacheFileName: .calendarSchedule, cacheManager: .shared)
+    private var lastMatricola: String = ""
     
-    public init() {}
+    public init() {
+        observeResource()
+        observeNetworkStatus()
+    }
     
-    // MARK: - Core Loading
+    private func observeResource() {
+        withObservationTracking {
+            _ = resource.phase
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.reactToResourceChange()
+                self.observeResource()
+            }
+        }
+    }
+    
+    private func reactToResourceChange() {
+        switch resource.phase {
+        case .loaded:
+            if let fetched = resource.value {
+                handleNewData(fetched, matricola: lastMatricola, update: false)
+            }
+        case .offline:
+            if schedule.isEmpty { state = .offline }
+        case .error(let message):
+            if schedule.isEmpty { state = .error(message) }
+        case .loading:
+            if schedule.isEmpty { state = .loading }
+        case .idle, .empty:
+            break
+        }
+    }
+    
+    private func observeNetworkStatus() {
+        withObservationTracking {
+            _ = NetworkStatusMonitor.shared.status
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                let offline = NetworkStatusMonitor.shared.status == .disconnected
+                if offline, self.schedule.isEmpty, self.resource.value == nil {
+                    self.state = .offline
+                } else if !offline, self.state == .offline, self.resource.value == nil, self.schedule.isEmpty, !self.resource.hasLastFetch {
+                    self.state = .empty
+                }
+                self.observeNetworkStatus()
+            }
+        }
+    }
+    
     public func loadLessons(corso: String, anno: String, selYear: String, matricola: String, updating: Bool) async {
+        lastMatricola = matricola
         guard corso != "0" else {
-            await clearAll()
+            await clearAll(state: NetworkStatusMonitor.shared.status == .disconnected ? .offline : .empty)
             return
         }
         
@@ -44,24 +91,26 @@ public class CalendarViewModel {
                 await loadFromCache(matricola: matricola)
             }
             checkingUpdates = !schedule.isEmpty
-        } else {
             if schedule.isEmpty {
-                await clearAll(state: .loading)
+                state = .loading
             }
+        } else {
+            await clearAll(state: .loading)
         }
         
         do {
-            let response = try await service.fetchOrario(corso: corso, anno: anno, selyear: selYear)
-            await handleNewData(response, matricola: matricola, update: updating)
+            let fetched = try await resource.refresh { try await self.service.fetchOrario(corso: corso, anno: anno, selyear: selYear) }
+            handleNewData(fetched, matricola: matricola, update: updating)
+        } catch is CancellationError {
         } catch {
-            self.handleError(error)
+            handleFetchFailure()
         }
         
         checkingUpdates = false
     }
     
     // MARK: - Data Handling
-    private func handleNewData(_ fetched: [DailySchedule], matricola: String, update: Bool) async {
+    private func handleNewData(_ fetched: [DailySchedule], matricola: String, update: Bool) {
         if fetched.isEmpty {
             if update || schedule.isEmpty {
                 state = .empty
@@ -71,7 +120,7 @@ public class CalendarViewModel {
         }
         
         if schedule.isEmpty || update {
-            await processAndSave(fetched, matricola: matricola)
+            processAndSave(fetched, matricola: matricola)
         } else {
             let fetchedFiltered = processRawLessons(fetched, matricola: matricola).processed
             
@@ -82,9 +131,20 @@ public class CalendarViewModel {
         }
     }
     
+    private func handleFetchFailure() {
+        switch resource.phase {
+        case .offline:
+            if schedule.isEmpty { state = .offline }
+        case .error(let message):
+            state = .error(message)
+        case .idle, .loading, .loaded, .empty:
+            break
+        }
+    }
+    
     public func confirmUpdate(matricola: String) async {
         guard let newLessons = pendingNewLessons else { return }
-        await processAndSave(newLessons, matricola: matricola)
+        processAndSave(newLessons, matricola: matricola)
         clearPendingUpdate()
     }
     
@@ -115,32 +175,26 @@ public class CalendarViewModel {
     }
     
     // MARK: - Data Processing
-    private func processAndSave(_ rawLessons: [DailySchedule], matricola: String) async {
+    private func processAndSave(_ rawLessons: [DailySchedule], matricola: String) {
         let result = processRawLessons(rawLessons, matricola: matricola)
         
         self.schedule = result.processed
         self.state = result.processed.isEmpty ? .empty : .loaded
         
-        await CacheManager.shared.save(rawLessons, fileName: cacheKey)
         DatePickerCache.shared.updateActivities(dates: result.activities)
     }
     
     // MARK: - Helpers & Cache
     public func loadFromCache(matricola: String) async {
-        if let cached = await CacheManager.shared.load(fileName: cacheKey, type: [DailySchedule].self) {
-            await processAndSave(cached, matricola: matricola)
+        await resource.loadFromDisk()
+        if let cached = resource.value {
+            processAndSave(cached, matricola: matricola)
         }
     }
     
-    public func loadNetworkFromCache() async {
-        if let cacheResponse = await CacheManager.shared.load(fileName: "network_cache.json", type: NetworkCacheData.self) {
-            NetworkCache.shared.update(from: cacheResponse)
-        }
-    }
-    
-    public func clearAll(state: CalendarViewState = .empty) async {
+    public func clearAll(state: ResourcePhase = .empty) async {
         self.state = state
-        await CacheManager.shared.clear(fileName: cacheKey)
+        await resource.clear()
         schedule.removeAll()
         clearPendingUpdate()
     }
@@ -149,15 +203,6 @@ public class CalendarViewModel {
         pendingNewLessons = nil
         checkingUpdates = false
         updateAvailable = false
-    }
-    
-    private func handleError(_ error: Error) {
-        if let netError = error as? NetworkError, case .offline = netError {
-            if schedule.isEmpty { state = .offline }
-        } else {
-            state = .error(error.localizedDescription)
-        }
-        print("Debug Error: \(error)")
     }
     
     public func generateAcademicYearDays(for year: String) {

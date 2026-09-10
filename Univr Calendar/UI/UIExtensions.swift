@@ -172,18 +172,6 @@ extension View {
         }
     }
     
-    @ViewBuilder
-    func toolbarTitleShadow(_ colorScheme: ColorScheme) -> some View {
-        if #available(iOS 26, *) {
-            self
-        } else {
-            self
-                .shadow(color: colorScheme == .light ? .white : .black, radius: 5)
-                .shadow(color: colorScheme == .light ? .white : .black, radius: 10)
-                .shadow(color: colorScheme == .light ? .white : .black, radius: 20)
-        }
-    }
-    
     // MARK: Fallback iOS 17
     @ViewBuilder
     func removeTopSafeArea() -> some View {

@@ -32,17 +32,3 @@ final class IOSNetworkMonitor: Sendable {
         }
     }
 }
-
-@MainActor
-@Observable
-final class NetworkStateObserver {
-    private(set) var status: NetworkStatus = .connected
-    
-    init(provider: NetworkProvider) {
-        Task {
-            for await newStatus in provider.statusStream() {
-                self.status = newStatus
-            }
-        }
-    }
-}

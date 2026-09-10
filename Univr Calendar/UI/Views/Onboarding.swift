@@ -14,7 +14,6 @@ struct Onboarding: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
-    @Environment(NetworkStateObserver.self) private var net
     
     @State private var viewModel = UniversityDataManager()
     
@@ -49,7 +48,7 @@ struct Onboarding: View {
                     bottomPadding: safeAreas.bottom,
                     buttonTitle: "Continua",
                     isLoading: nextIndexLoading > 0,
-                    isButtonDisabled: net.status != .connected,
+                    isButtonDisabled: viewModel.isOffline,
                     buttonAction: {
                         handlePageTransition(to: 1) {
                             try await viewModel.loadYears()
@@ -74,9 +73,9 @@ struct Onboarding: View {
                     bottomPadding: safeAreas.bottom,
                     buttonTitle: "Continua",
                     isLoading: nextIndexLoading > 1,
-                    isButtonDisabled: net.status != .connected,
+                    isButtonDisabled: viewModel.isOffline,
                     buttonAction: {
-                        viewModel.courses = []
+                        viewModel.resetCourses()
                         settings.selectedCourse = "0"
                         
                         handlePageTransition(to: 2) {
@@ -185,14 +184,14 @@ struct Onboarding: View {
                         RoundedRectangle(cornerRadius: 25)
                     }
                     .glassEffect(.regular.interactive().tint(.yellow.opacity(0.7)))
-                    .blur(radius: net.status != .connected ? 0 : 20)
-                    .offset(y: net.status != .connected ? safeAreas.top : safeAreas.top / 2)
-                    .scaleEffect(net.status != .connected ? 1 : 0)
-                    .animation(.bouncy(extraBounce: 0.1), value: net.status)
+                    .blur(radius: viewModel.isOffline ? 0 : 20)
+                    .offset(y: viewModel.isOffline ? safeAreas.top : safeAreas.top / 2)
+                    .scaleEffect(viewModel.isOffline ? 1 : 0)
+                    .animation(.bouncy(extraBounce: 0.1), value: viewModel.isOffline)
                     .ignoresSafeArea()
             } else {
                 Text("Al momento sei offline.")
-                    .blur(radius: net.status != .connected ? 0 : 20)
+                    .blur(radius: viewModel.isOffline ? 0 : 20)
                     .foregroundStyle(.black)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
@@ -201,10 +200,10 @@ struct Onboarding: View {
                             .fill(colorScheme == .light ? .yellow : Color(hex: "#CCAA00")!)
                             .strokeBorder(colorScheme == .light ? Color(hex: "#CCAA00")! : Color(hex: "#B39500")!, lineWidth: 2)
                     }
-                    .blur(radius: net.status != .connected ? 0 : 20)
-                    .offset(y: net.status != .connected ? safeAreas.top : safeAreas.top / 2)
-                    .scaleEffect(net.status != .connected ? 1 : 0)
-                    .animation(.bouncy(extraBounce: 0.1), value: net.status)
+                    .blur(radius: viewModel.isOffline ? 0 : 20)
+                    .offset(y: viewModel.isOffline ? safeAreas.top : safeAreas.top / 2)
+                    .scaleEffect(viewModel.isOffline ? 1 : 0)
+                    .animation(.bouncy(extraBounce: 0.1), value: viewModel.isOffline)
                     .ignoresSafeArea()
             }
         }
