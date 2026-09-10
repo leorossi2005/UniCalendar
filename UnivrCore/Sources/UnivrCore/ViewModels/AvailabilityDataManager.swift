@@ -1,5 +1,5 @@
 //
-//  AvailabilityManager.swift
+//  AvailabilityDataManager.swift
 //  UnivrCore
 //
 //  Created by Leonardo Rossi on 21/06/2026.
@@ -87,6 +87,12 @@ public final class AvailabilityDataManager {
     private var locationKey: String = ""
     private var loadedDate: String?
     
+    public var sortedLocations: [(key: String, value: String)] {
+        locations.sorted {
+            Int($0.key) ?? 0 < Int($1.key) ?? 0
+        }
+    }
+    
     public init() {
         observeResource()
         observeNetworkStatus()
@@ -155,7 +161,6 @@ public final class AvailabilityDataManager {
             return
         }
 
-        loadedDate = dateString
         state = .loading
         rooms = nil
         do {
@@ -163,11 +168,13 @@ public final class AvailabilityDataManager {
                 try await self.service.getAvailability(date: dateString)
             }
             try Task.checkCancellation()
+            loadedDate = dateString
             locations = availability.locations
             rooms = availability.rooms[locationKey]
             state = .loaded
         } catch is CancellationError {
         } catch {
+            loadedDate = nil
             applyResourceState()
         }
     }

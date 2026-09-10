@@ -46,10 +46,11 @@ struct ClassroomAvailabilityView: View {
     
     private var locationPicker: some View {
         Picker("", selection: Bindable(settings).locationKey) {
-            ForEach(Array(availabilityManager.locations.keys.sorted()), id: \.self) { key in
-                Text(availabilityManager.locations[key] ?? "").tag(key)
+            ForEach(availabilityManager.sortedLocations, id: \.key) { location in
+                Text(location.value).tag(location.key)
             }
         }
+        .tint(.primary)
         .frame(maxWidth: .infinity)
         .frame(height: 48)
         .background(Color(.secondarySystemBackground))
