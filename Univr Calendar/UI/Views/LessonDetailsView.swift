@@ -62,38 +62,38 @@ struct LessonDetailsView: View {
                 }
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
-                        HStack(spacing: 8) {
-                            let isScheduled = notificationManager.activeNotifications.contains { $0.id == lesson.id }
-                            
-                            Menu {
-                                if isScheduled {
-                                    Button(role: .destructive) {
-                                        Task { await notificationManager.removeNotification(id: lesson.id) }
-                                    } label: {
-                                        Label("Rimuovi notifica", systemImage: "bell.slash")
-                                    }
-                                } else {
-                                    Button("Al momento dell'inizio") { scheduleNotification(offset: 0) }
-                                    Button("5 minuti prima") { scheduleNotification(offset: 5) }
-                                    Button("15 minuti prima") { scheduleNotification(offset: 15) }
-                                    Button("30 minuti prima") { scheduleNotification(offset: 30) }
+                        let isScheduled = notificationManager.activeNotifications.contains { $0.id == lesson.id }
+                        
+                        Menu {
+                            if isScheduled {
+                                Button(role: .destructive) {
+                                    Task { await notificationManager.removeNotification(id: lesson.id) }
+                                } label: {
+                                    Label("Rimuovi notifica", systemImage: "bell.slash")
                                 }
-                            } label: {
-                                Image(systemName: isScheduled ? "bell.fill" : "bell")
-                                    .frame(width: 24, height: 24)
-                                    .contentTransition(.symbolEffect(.replace))
+                            } else {
+                                Button("Ad inizio lezione") { scheduleNotification(offset: 0) }
+                                Button("5 minuti prima") { scheduleNotification(offset: 5) }
+                                Button("15 minuti prima") { scheduleNotification(offset: 15) }
+                                Button("30 minuti prima") { scheduleNotification(offset: 30) }
                             }
-                            
-                            Button {
-                                if !eventSaved {
-                                    prepareAndShowEvent(for: lesson)
-                                }
-                            } label: {
-                                Image(systemName: eventSaved ? "checkmark" : "calendar.badge.plus")
-                                    .frame(width: 24, height: 24)
-                                    .symbolReplace()
-                                    .animation(.snappy, value: eventSaved)
+                        } label: {
+                            Image(systemName: isScheduled ? "bell.and.waves.left.and.right.fill" : "bell")
+                                .frame(width: 24, height: 24)
+                                .symbolReplace()
+                        }
+                    }
+                    
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            if !eventSaved {
+                                prepareAndShowEvent(for: lesson)
                             }
+                        } label: {
+                            Image(systemName: eventSaved ? "checkmark" : "calendar.badge.plus")
+                                .frame(width: 24, height: 24)
+                                .symbolReplace()
+                                .animation(.snappy, value: eventSaved)
                         }
                     }
                 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import UnivrCore
 
 struct NotificationsView: View {
@@ -23,9 +24,12 @@ struct NotificationsView: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                         
-                        Text(notification.offsetMinutes == 0 ? "Suona all'inizio della lezione" : "Suona \(notification.offsetMinutes) minuti prima")
-                            .font(.caption)
-                            .foregroundStyle(.blue)
+                        HStack(spacing: 6) {
+                            Image(systemName: "clock")
+                            Text(notification.offsetMinutes == 0 ? "Suona all'inizio della lezione" : "Suona \(notification.offsetMinutes) minuti prima")
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.blue)
                     }
                     .padding(.vertical, 4)
                     .swipeActions(edge: .trailing) {
@@ -46,7 +50,58 @@ struct NotificationsView: View {
 }
 
 #Preview {
+    @Previewable @State var container = try! ModelContainer(
+        for: NotificationRecord.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    
     NavigationStack {
         NotificationsView()
+            .modelContainer(container)
+            .onAppear {
+                Task {
+                    let saved = SavedNotification(
+                        id: "temp1",
+                        courseId: "CorsoProva",
+                        lessonName: "Lezione di Test",
+                        date: Date().addingTimeInterval(7200), // Tra un'ora
+                        offsetMinutes: 0
+                    )
+                    await NotificationManager.shared.toggleNotification(notification: saved)
+                }
+                Task {
+                    let saved = SavedNotification(
+                        id: "temp2",
+                        courseId: "CorsoProva",
+                        lessonName: "Lezione di Test",
+                        date: Date().addingTimeInterval(3600), // Tra un'ora
+                        offsetMinutes: 5
+                    )
+                    await NotificationManager.shared.toggleNotification(notification: saved)
+                }
+                Task {
+                    let saved = SavedNotification(
+                        id: "temp3",
+                        courseId: "CorsoProva",
+                        lessonName: "Lezione di Test",
+                        date: Date().addingTimeInterval(3600), // Tra un'ora
+                        offsetMinutes: 15
+                    )
+                    await NotificationManager.shared.toggleNotification(notification: saved)
+                }
+            }
+            .task {
+                // Il nostro finto Provider per le Previews! Bypassa i limiti di iOS
+                let mockNotificationProvider = NotificationProvider(
+                    requestPermission: { true }, // Permessi sempre accordati
+                    schedule: { _ in true },     // Programmazione fittizia sempre ok
+                    cancel: { _ in }
+                )
+                
+                NotificationManager.shared.configure(
+                    notificationProvider: mockNotificationProvider,
+                    storageProvider: IOSStorageService.createProvider(container: container)
+                )
+            }
     }
 }

@@ -101,3 +101,8 @@ struct ClassroomAvailabilityView: View {
         }
     }
 }
+
+#Preview {
+    ClassroomAvailabilityView(coordinator: .init(), sheetRouter: .init())
+        .environment(UserSettings.shared)
+}

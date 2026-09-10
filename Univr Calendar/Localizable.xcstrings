@@ -104,6 +104,9 @@
     "30 minuti prima" : {
 
     },
+    "Ad inizio lezione" : {
+
+    },
     "Aggiorna" : {
       "localizations" : {
         "en" : {
@@ -123,9 +126,6 @@
           }
         }
       }
-    },
-    "Al momento dell'inizio" : {
-
     },
     "Al momento sei offline." : {
       "localizations" : {
