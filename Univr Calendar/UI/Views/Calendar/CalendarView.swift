@@ -84,7 +84,6 @@ struct CalendarView: View {
                 router: sheetRouter,
                 selectedWeek: selectedWeekBinding
             )
-            .disabled((viewModel.state == .loading || viewModel.state == .empty || viewModel.schedule.isEmpty) && !sheetRouter.openSettings)
         }
         .environment(sheetRouter.manager)
     }
@@ -342,6 +341,7 @@ struct CalendarView: View {
                 let hasChanged = sheetRouter.tempSettings.hasChanged(from: settings)
                 
                 if hasChanged {
+                    page = .main
                     viewModel.state = .loading
                     sheetRouter.tempSettings.apply(to: settings)
                     
