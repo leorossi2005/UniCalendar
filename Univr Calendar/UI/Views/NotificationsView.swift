@@ -1,9 +1,39 @@
+//
+//  NotificationsView.swift
+//  Univr Calendar
+//
+//  Created by Leonardo Rossi on 10/09/2026.
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
+//
+
 import SwiftUI
 import SwiftData
 import UnivrCore
 
 struct NotificationsView: View {
     @State private var notificationManager = NotificationManager.shared
+    
+    var groupedNotifications: [String: [SavedNotification]] {
+        Dictionary(grouping: notificationManager.activeNotifications, by: \.courseId)
+    }
+    
+    var sortedCourseIds: [String] {
+        let selectedCourseId = UserSettings.shared.selectedCourse
+        
+        return groupedNotifications.keys.sorted { id1, id2 in
+            if id1 == selectedCourseId { return true }
+            if id2 == selectedCourseId { return false }
+            
+            let name1 = groupedNotifications[id1]?.first?.courseName ?? ""
+            let name2 = groupedNotifications[id2]?.first?.courseName ?? ""
+            
+            if name1 == name2 {
+                return id1 < id2
+            }
+            return name1.localizedStandardCompare(name2) == .orderedAscending
+        }
+    }
     
     var body: some View {
         List {
@@ -15,37 +45,50 @@ struct NotificationsView: View {
                 )
                 .listRowBackground(Color.clear)
             } else {
-                ForEach(notificationManager.activeNotifications.sorted(by: { $0.date < $1.date })) { notification in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(notification.lessonName)
-                            .font(.headline)
+                ForEach(sortedCourseIds, id: \.self) { courseId in
+                    Section {
+                        let courseNotifications = groupedNotifications[courseId]!.sorted(by: { $0.date < $1.date })
                         
-                        Text(notification.date.formatted(date: .abbreviated, time: .shortened))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        
-                        HStack(spacing: 6) {
-                            Image(systemName: "clock")
-                            Text(notification.offsetMinutes == 0 ? "Suona all'inizio della lezione" : "Suona \(notification.offsetMinutes) minuti prima")
+                        ForEach(courseNotifications) { notification in
+                            notificationRow(for: notification)
                         }
-                        .font(.caption)
-                        .foregroundStyle(.blue)
-                    }
-                    .padding(.vertical, 4)
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            Task {
-                                await notificationManager.removeNotification(id: notification.id)
-                            }
-                        } label: {
-                            Label("Elimina", systemImage: "trash")
-                        }
+                    } header: {
+                        let courseName = groupedNotifications[courseId]?.first?.courseName ?? "Corso Sconosciuto"
+                        Text(courseName)
                     }
                 }
             }
         }
         .navigationTitle("Notifiche")
         .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    private func notificationRow(for notification: SavedNotification) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(notification.lessonName)
+                .font(.headline)
+            
+            Text(notification.date.formatted(date: .abbreviated, time: .shortened))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            
+            HStack(spacing: 6) {
+                Image(systemName: "clock")
+                Text(notification.offsetMinutes == 0 ? "Suona all'inizio della lezione" : "Suona \(notification.offsetMinutes) minuti prima")
+            }
+            .font(.caption)
+            .foregroundStyle(.blue)
+        }
+        .padding(.vertical, 4)
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                Task {
+                    await notificationManager.removeNotification(id: notification.id)
+                }
+            } label: {
+                Label("Elimina", systemImage: "trash")
+            }
+        }
     }
 }
 
@@ -63,8 +106,9 @@ struct NotificationsView: View {
                     let saved = SavedNotification(
                         id: "temp1",
                         courseId: "CorsoProva",
+                        courseName: "temp",
                         lessonName: "Lezione di Test",
-                        date: Date().addingTimeInterval(7200), // Tra un'ora
+                        date: Date().addingTimeInterval(7200),
                         offsetMinutes: 0
                     )
                     await NotificationManager.shared.toggleNotification(notification: saved)
@@ -73,8 +117,9 @@ struct NotificationsView: View {
                     let saved = SavedNotification(
                         id: "temp2",
                         courseId: "CorsoProva",
+                        courseName: "temp2",
                         lessonName: "Lezione di Test",
-                        date: Date().addingTimeInterval(3600), // Tra un'ora
+                        date: Date().addingTimeInterval(3600),
                         offsetMinutes: 5
                     )
                     await NotificationManager.shared.toggleNotification(notification: saved)
@@ -83,18 +128,18 @@ struct NotificationsView: View {
                     let saved = SavedNotification(
                         id: "temp3",
                         courseId: "CorsoProva",
+                        courseName: "temp2",
                         lessonName: "Lezione di Test",
-                        date: Date().addingTimeInterval(3600), // Tra un'ora
+                        date: Date().addingTimeInterval(3600),
                         offsetMinutes: 15
                     )
                     await NotificationManager.shared.toggleNotification(notification: saved)
                 }
             }
             .task {
-                // Il nostro finto Provider per le Previews! Bypassa i limiti di iOS
                 let mockNotificationProvider = NotificationProvider(
-                    requestPermission: { true }, // Permessi sempre accordati
-                    schedule: { _ in true },     // Programmazione fittizia sempre ok
+                    requestPermission: { true },
+                    schedule: { _ in true },
                     cancel: { _ in }
                 )
                 

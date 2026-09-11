@@ -14,17 +14,14 @@ import Foundation
 public final class NotificationManager {
     public static let shared = NotificationManager()
     
-    // Dati pronti per la UI
     public private(set) var activeNotifications: [SavedNotification] = []
     public var hasPermission: Bool = false
     
-    // I nostri Bridge
     private var notificationProvider: NotificationProvider?
     private var storageProvider: StorageProvider?
     
     private init() {}
     
-    // Iniezione delle dipendenze dall'App iOS
     public func configure(notificationProvider: NotificationProvider, storageProvider: StorageProvider) {
         self.notificationProvider = notificationProvider
         self.storageProvider = storageProvider
@@ -49,14 +46,11 @@ public final class NotificationManager {
         self.hasPermission = granted
         guard granted else { return false }
         
-        // Cancella eventuali duplicati
         notifier.cancel(notification.id)
         
-        // Suona l'allarme nell'OS
         let success = await notifier.schedule(notification)
         guard success else { return false }
         
-        // Salva nel database e aggiorna la UI
         do {
             try await storage.saveNotification(notification)
             await fetchSavedNotifications()
@@ -70,10 +64,8 @@ public final class NotificationManager {
     public func removeNotification(id: String) async {
         guard let notifier = notificationProvider, let storage = storageProvider else { return }
         
-        // Rimuove dall'OS
         notifier.cancel(id)
         
-        // Rimuove dal Database
         do {
             try await storage.deleteNotification(id)
             await fetchSavedNotifications()

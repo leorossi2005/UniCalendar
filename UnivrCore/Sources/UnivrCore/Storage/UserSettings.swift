@@ -15,7 +15,7 @@ public class UserSettings {
     public static let shared = UserSettings()
     
     private enum Key: String {
-        case selectedYear, selectedCourse, selectedAcademicYear
+        case selectedYear, selectedCourse, selectedCourseName, selectedAcademicYear
         case foundMatricola, matricola, onboardingCompleted
         case settingsVersion, latestVersion, locationKey
     }
@@ -23,6 +23,7 @@ public class UserSettings {
     private enum Default {
         static let year = "2025"
         static let course = "0"
+        static let courseName = "Corso"
         static let academicYear = "0"
         static let matricola = "even"
         static let latestVersion: String = Bundle.main.clearAppVersion
@@ -37,6 +38,10 @@ public class UserSettings {
     
     public var selectedCourse: String {
         didSet { Self.save(selectedCourse, key: .selectedCourse) }
+    }
+    
+    public var selectedCourseName: String {
+        didSet { Self.save(selectedCourseName, key: .selectedCourseName) }
     }
     
     public var selectedAcademicYear: String {
@@ -69,6 +74,7 @@ public class UserSettings {
         
         self.selectedYear = Self.load(.selectedYear, fallback: Default.year)
         self.selectedCourse = Self.load(.selectedCourse, fallback: Default.course)
+        self.selectedCourseName = Self.load(.selectedCourseName, fallback: Default.courseName)
         self.selectedAcademicYear = Self.load(.selectedAcademicYear, fallback: Default.academicYear)
         self.foundMatricola = Self.load(.foundMatricola, fallback: Default.boolFalse)
         self.matricola = Self.load(.matricola, fallback: Default.matricola)
@@ -87,6 +93,7 @@ public class UserSettings {
     public func reset() {
         selectedYear = Default.year
         selectedCourse = Default.course
+        selectedCourseName = Default.courseName
         selectedAcademicYear = Default.academicYear
         foundMatricola = Default.boolFalse
         matricola = Default.matricola
@@ -108,6 +115,7 @@ public class UserSettings {
 public struct TempSettingsState {
     public var selectedYear: String = ""
     public var selectedCourse: String = ""
+    public var selectedCourseName: String = ""
     public var selectedAcademicYear: String = ""
     public var matricola: String = ""
     
@@ -116,12 +124,14 @@ public struct TempSettingsState {
     public mutating func sync(with settings: UserSettings) {
         self.selectedYear = settings.selectedYear
         self.selectedCourse = settings.selectedCourse
+        self.selectedCourseName = settings.selectedCourseName
         self.selectedAcademicYear = settings.selectedAcademicYear
         self.matricola = settings.matricola
     }
     
     public func hasChanged(from settings: UserSettings) -> Bool {
         selectedCourse != settings.selectedCourse ||
+        selectedCourseName != settings.selectedCourseName ||
         selectedYear != settings.selectedYear ||
         selectedAcademicYear != settings.selectedAcademicYear
     }
@@ -129,6 +139,7 @@ public struct TempSettingsState {
     public func apply(to settings: UserSettings) {
         settings.selectedYear = self.selectedYear
         settings.selectedCourse = self.selectedCourse
+        settings.selectedCourseName = self.selectedCourseName
         settings.selectedAcademicYear = self.selectedAcademicYear
         settings.matricola = self.matricola
     }

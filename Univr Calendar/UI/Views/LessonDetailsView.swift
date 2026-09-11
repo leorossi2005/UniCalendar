@@ -183,6 +183,7 @@ struct LessonDetailsView: View {
             let saved = SavedNotification(
                 id: lesson.id,
                 courseId: UserSettings.shared.selectedCourse,
+                courseName: UserSettings.shared.selectedCourseName,
                 lessonName: lesson.cleanName ?? lesson.name ?? "Lezione",
                 date: lesson.startTime,
                 offsetMinutes: offset

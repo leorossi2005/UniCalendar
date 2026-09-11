@@ -20,10 +20,7 @@ struct Settings: View {
     @State private var showDeleteAlert = false
     @State private var searchTextFieldFocus: Bool = false
     
-    @Binding var selectedYear: String
-    @Binding var selectedCourse: String
-    @Binding var selectedAcademicYear: String
-    @Binding var matricola: String
+    @Binding var tempSettings: TempSettingsState
     
     var body: some View {
         List {
@@ -32,26 +29,26 @@ struct Settings: View {
                     Label("Anno", systemImage: "calendar")
                         .foregroundStyle(.primary)
                         .padding(.trailing)
-                    Picker(selection: $selectedYear) {
+                    Picker(selection: $tempSettings.selectedYear) {
                         ForEach(viewModel.years) { year in
                             Text(year.label).tag(year.id)
                         }
                     } label: {}
                         .pickerStyle(.segmented)
-                        .onChange(of: selectedYear) {
+                        .onChange(of: tempSettings.selectedYear) {
                             handleYearChange()
                         }
                 }
                 CourseSelector(
                     isFocused: $searchTextFieldFocus,
-                    selectedCourse: $selectedCourse,
+                    selectedCourse: $tempSettings.selectedCourse,
                     courses: viewModel.courses
                 )
-                .onChange(of: selectedCourse) {
+                .onChange(of: tempSettings.selectedCourse) {
                     handleCourseChange()
                 }
-                if selectedCourse != "0" {
-                    Picker(selection: $selectedAcademicYear) {
+                if tempSettings.selectedCourse != "0" {
+                    Picker(selection: $tempSettings.selectedAcademicYear) {
                         ForEach(viewModel.academicYears) { year in
                             Text(year.label).tag(year.id)
                         }
@@ -59,9 +56,9 @@ struct Settings: View {
                         Label("Anno di Corso", systemImage: "calendar.badge.clock")
                             .foregroundStyle(.primary)
                     }
-                    .onChange(of: selectedAcademicYear) {
-                        if selectedAcademicYear != "0" {
-                            settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
+                    .onChange(of: tempSettings.selectedAcademicYear) {
+                        if tempSettings.selectedAcademicYear != "0" {
+                            settings.foundMatricola = viewModel.checkForMatricola(in: tempSettings.selectedAcademicYear)
                         }
                     }
                 }
@@ -70,7 +67,7 @@ struct Settings: View {
                         Label("Matricola", systemImage: "person.text.rectangle")
                             .foregroundStyle(.primary)
                             .padding(.trailing)
-                        Picker("", selection: $matricola) {
+                        Picker("", selection: $tempSettings.matricola) {
                             Text("Pari").tag("even")
                             Text("Dispari").tag("odd")
                         }
@@ -134,7 +131,7 @@ struct Settings: View {
         .onChange(of: searchTextFieldFocus) {
             if searchTextFieldFocus {
                 sheetManager.setLock(true)
-            } else if selectedCourse != "0" {
+            } else if tempSettings.selectedCourse != "0" {
                 sheetManager.setLock(false)
             }
         }
@@ -147,36 +144,40 @@ struct Settings: View {
     private func handleYearChange() {
         sheetManager.setLock(true)
         viewModel.resetCourses()
-        selectedCourse = "0"
+        tempSettings.selectedCourse = "0"
         viewModel.academicYears = []
-        selectedAcademicYear = "0"
+        tempSettings.selectedAcademicYear = "0"
         
         Task {
             do {
-                try await viewModel.loadCourses(year: selectedYear)
+                try await viewModel.loadCourses(year: tempSettings.selectedYear)
             } catch {}
         }
     }
     
     private func handleCourseChange() {
-        if selectedCourse != "0" {
+        if tempSettings.selectedCourse != "0" {
+            if let courseName = viewModel.courses.first(where: { $0.id == tempSettings.selectedCourse })?.label {
+                tempSettings.selectedCourseName = courseName
+            }
+            
             settings.foundMatricola = false
             sheetManager.setLock(false)
             viewModel.academicYears = []
-            selectedAcademicYear = "0"
+            tempSettings.selectedAcademicYear = "0"
             
-            viewModel.updateAcademicYears(for: selectedCourse)
+            viewModel.updateAcademicYears(for: tempSettings.selectedCourse)
             
             if let firstYear = viewModel.academicYears.first {
-                selectedAcademicYear = firstYear.id
-                if selectedAcademicYear != "0" {
-                    settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
+                tempSettings.selectedAcademicYear = firstYear.id
+                if tempSettings.selectedAcademicYear != "0" {
+                    settings.foundMatricola = viewModel.checkForMatricola(in: tempSettings.selectedAcademicYear)
                 }
             }
         } else {
             sheetManager.setLock(true)
             viewModel.academicYears = []
-            selectedAcademicYear = "0"
+            tempSettings.selectedAcademicYear = "0"
             settings.foundMatricola = false
         }
     }
@@ -203,29 +204,30 @@ struct Settings: View {
         if viewModel.courses.isEmpty {
             Task {
                 do {
-                    try await viewModel.loadCourses(year: selectedYear)
+                    try await viewModel.loadCourses(year: tempSettings.selectedYear)
                     
                     await MainActor.run {
-                        if !["even", "odd"].contains(matricola) {
-                            matricola = "even"
+                        if !["even", "odd"].contains(tempSettings.matricola) {
+                            tempSettings.matricola = "even"
                         }
                         
-                        if !viewModel.years.contains(where: { $0.id == selectedYear }) {
+                        if !viewModel.years.contains(where: { $0.id == tempSettings.selectedYear }) {
                             if let lastYear = viewModel.years.last {
-                                selectedYear = lastYear.id
+                                tempSettings.selectedYear = lastYear.id
                             }
                         }
                         
-                        if selectedCourse != "0" {
-                            if let course = viewModel.courses.first(where: { $0.id == selectedCourse }) {
+                        if tempSettings.selectedCourse != "0" {
+                            if let course = viewModel.courses.first(where: { $0.id == tempSettings.selectedCourse }) {
+                                tempSettings.selectedCourseName = course.label
                                 viewModel.academicYears = course.years
                                 
-                                if !viewModel.academicYears.contains(where: { $0.id == selectedAcademicYear }) {
+                                if !viewModel.academicYears.contains(where: { $0.id == tempSettings.selectedAcademicYear }) {
                                     if let firstAcademicYear = viewModel.academicYears.last {
-                                        selectedAcademicYear = firstAcademicYear.id
+                                        tempSettings.selectedAcademicYear = firstAcademicYear.id
                                     }
                                 }
-                                settings.foundMatricola = viewModel.checkForMatricola(in: selectedAcademicYear)
+                                settings.foundMatricola = viewModel.checkForMatricola(in: tempSettings.selectedAcademicYear)
                             }
                         } else {
                             sheetManager.setLock(true)
@@ -238,23 +240,17 @@ struct Settings: View {
 }
 
 #Preview {
-    @Previewable @State var openSettings: Bool = true
-    @Previewable @State var openCalendar: Bool = true
-    @Previewable @State var selectedYear: String = "2025"
-    @Previewable @State var selectedCourse: String = "0"
-    @Previewable @State var selectedAcademicYear: String = "0"
-    @Previewable @State var matricola: String = "even"
-    @Previewable @State var isFocused: Bool = false
+    @Previewable @State var temp = TempSettingsState()
     
     NavigationStack {
-        Settings(selectedYear: $selectedYear, selectedCourse: $selectedCourse, selectedAcademicYear: $selectedAcademicYear, matricola: $matricola)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("Impostazioni")
-                    .font(.headline)
+        Settings(tempSettings: $temp)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Impostazioni")
+                        .font(.headline)
+                }
             }
-        }
-        .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
     }
     .environment(UserSettings.shared)
 }

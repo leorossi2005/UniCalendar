@@ -207,9 +207,6 @@ struct Onboarding: View {
                     .ignoresSafeArea()
             }
         }
-        .onAppear {
-            //viewModel.loadFromCache()
-        }
         .scrollTargetBehavior(.paging)
         .scrollIndicators(.never, axes: .horizontal)
         .scrollPosition(id: $currentIndex, anchor: .center)
