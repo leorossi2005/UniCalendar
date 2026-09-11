@@ -73,15 +73,22 @@ struct LessonDetailsView: View {
                                 }
                             } else {
                                 Button("Ad inizio lezione") { scheduleNotification(offset: 0) }
+                                    .disabled(!canSchedule(offset: 0))
                                 Button("5 minuti prima") { scheduleNotification(offset: 5) }
+                                    .disabled(!canSchedule(offset: 5))
                                 Button("15 minuti prima") { scheduleNotification(offset: 15) }
+                                    .disabled(!canSchedule(offset: 15))
                                 Button("30 minuti prima") { scheduleNotification(offset: 30) }
+                                    .disabled(!canSchedule(offset: 30))
+                                Button("1 ora prima") { scheduleNotification(offset: 60) }
+                                    .disabled(!canSchedule(offset: 60))
                             }
                         } label: {
                             Image(systemName: isScheduled ? "bell.and.waves.left.and.right.fill" : "bell")
                                 .frame(width: 24, height: 24)
                                 .symbolReplace()
                         }
+                        .disabled(!isScheduled && !canSchedule(offset: 0))
                     }
                     
                     ToolbarItem(placement: .primaryAction) {
@@ -178,12 +185,17 @@ struct LessonDetailsView: View {
     }
     
     // MARK: - Logic
+    private func canSchedule(offset: Int) -> Bool {
+        lesson.startTime.addingTimeInterval(Double(-offset * 60)) > Date().addingTimeInterval(60)
+    }
+    
     private func scheduleNotification(offset: Int) {
         Task {
             let saved = SavedNotification(
                 id: lesson.id,
                 courseId: UserSettings.shared.selectedCourse,
                 courseName: UserSettings.shared.selectedCourseName,
+                courseYear: UserSettings.shared.selectedAcademicYearName,
                 lessonName: lesson.cleanName ?? lesson.name ?? "Lezione",
                 date: lesson.startTime,
                 offsetMinutes: offset

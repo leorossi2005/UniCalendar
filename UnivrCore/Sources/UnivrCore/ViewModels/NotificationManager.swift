@@ -39,6 +39,7 @@ public final class NotificationManager {
         }
     }
     
+    @discardableResult
     public func toggleNotification(notification: SavedNotification) async -> Bool {
         guard let notifier = notificationProvider, let storage = storageProvider else { return false }
         
@@ -58,6 +59,23 @@ public final class NotificationManager {
         } catch {
             print("Errore salvataggio database: \(error)")
             return false
+        }
+    }
+    
+    public func updateNotification(_ notification: SavedNotification) async {
+        guard let notifier = notificationProvider, let storage = storageProvider else { return }
+        
+        notifier.cancel(notification.id)
+        try? await storage.deleteNotification(notification.id)
+        
+        let success = await notifier.schedule(notification)
+        if success {
+            do {
+                try await storage.saveNotification(notification)
+                await fetchSavedNotifications()
+            } catch {
+                print("Errore salvataggio database update: \(error)")
+            }
         }
     }
     

@@ -15,7 +15,7 @@ public class UserSettings {
     public static let shared = UserSettings()
     
     private enum Key: String {
-        case selectedYear, selectedCourse, selectedCourseName, selectedAcademicYear
+        case selectedYear, selectedCourse, selectedCourseName, selectedAcademicYear, selectedAcademicYearName
         case foundMatricola, matricola, onboardingCompleted
         case settingsVersion, latestVersion, locationKey
     }
@@ -25,6 +25,7 @@ public class UserSettings {
         static let course = "0"
         static let courseName = "Corso"
         static let academicYear = "0"
+        static let academicYearName = "Year"
         static let matricola = "even"
         static let latestVersion: String = Bundle.main.clearAppVersion
         static let locationKey = "1"
@@ -46,6 +47,10 @@ public class UserSettings {
     
     public var selectedAcademicYear: String {
         didSet { Self.save(selectedAcademicYear, key: .selectedAcademicYear) }
+    }
+    
+    public var selectedAcademicYearName: String {
+        didSet { Self.save(selectedAcademicYearName, key: .selectedAcademicYearName) }
     }
     
     public var foundMatricola: Bool {
@@ -76,6 +81,7 @@ public class UserSettings {
         self.selectedCourse = Self.load(.selectedCourse, fallback: Default.course)
         self.selectedCourseName = Self.load(.selectedCourseName, fallback: Default.courseName)
         self.selectedAcademicYear = Self.load(.selectedAcademicYear, fallback: Default.academicYear)
+        self.selectedAcademicYearName = Self.load(.selectedAcademicYearName, fallback: Default.academicYearName)
         self.foundMatricola = Self.load(.foundMatricola, fallback: Default.boolFalse)
         self.matricola = Self.load(.matricola, fallback: Default.matricola)
         self.onboardingCompleted = Self.load(.onboardingCompleted, fallback: Default.boolFalse)
@@ -95,6 +101,7 @@ public class UserSettings {
         selectedCourse = Default.course
         selectedCourseName = Default.courseName
         selectedAcademicYear = Default.academicYear
+        selectedAcademicYearName = Default.academicYearName
         foundMatricola = Default.boolFalse
         matricola = Default.matricola
         onboardingCompleted =  Default.boolFalse

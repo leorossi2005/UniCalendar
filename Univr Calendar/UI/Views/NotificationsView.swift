@@ -47,7 +47,7 @@ struct NotificationsView: View {
             } else {
                 ForEach(sortedCourseIds, id: \.self) { courseId in
                     Section {
-                        let courseNotifications = groupedNotifications[courseId]!.sorted(by: { $0.date < $1.date })
+                        let courseNotifications = (groupedNotifications[courseId] ?? []).sorted(by: { $0.date < $1.date })
                         
                         ForEach(courseNotifications) { notification in
                             notificationRow(for: notification)
@@ -64,22 +64,34 @@ struct NotificationsView: View {
     }
     
     private func notificationRow(for notification: SavedNotification) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(notification.lessonName)
-                .font(.headline)
-            
-            Text(notification.date.formatted(date: .abbreviated, time: .shortened))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            
-            HStack(spacing: 6) {
-                Image(systemName: "clock")
-                Text(notification.offsetMinutes == 0 ? "Suona all'inizio della lezione" : "Suona \(notification.offsetMinutes) minuti prima")
+        NavigationLink(destination: EditNotificationView(notification: notification)) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(notification.lessonName)
+                        .font(.headline)
+                    
+                    Text(notification.date.formatted(date: .abbreviated, time: .shortened))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    
+                    HStack(spacing: 6) {
+                        Image(systemName: "clock")
+                        Text(notification.offsetMinutes == 0 ? "Suona all'inizio della lezione" : "Suona \(notification.offsetMinutes) minuti prima")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.blue)
+                }
+                Spacer()
+                
+                Text(notification.courseYear)
+                    .font(.caption2)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Color.secondary.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
             }
-            .font(.caption)
-            .foregroundStyle(.blue)
+            .padding(.vertical, 4)
         }
-        .padding(.vertical, 4)
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) {
                 Task {
@@ -107,6 +119,7 @@ struct NotificationsView: View {
                         id: "temp1",
                         courseId: "CorsoProva",
                         courseName: "temp",
+                        courseYear: "1 - Anno",
                         lessonName: "Lezione di Test",
                         date: Date().addingTimeInterval(7200),
                         offsetMinutes: 0
@@ -118,6 +131,7 @@ struct NotificationsView: View {
                         id: "temp2",
                         courseId: "CorsoProva",
                         courseName: "temp2",
+                        courseYear: "1 - Anno",
                         lessonName: "Lezione di Test",
                         date: Date().addingTimeInterval(3600),
                         offsetMinutes: 5
@@ -129,6 +143,7 @@ struct NotificationsView: View {
                         id: "temp3",
                         courseId: "CorsoProva",
                         courseName: "temp2",
+                        courseYear: "2 - Anno",
                         lessonName: "Lezione di Test",
                         date: Date().addingTimeInterval(3600),
                         offsetMinutes: 15
