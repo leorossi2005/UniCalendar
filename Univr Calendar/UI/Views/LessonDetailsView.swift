@@ -72,16 +72,21 @@ struct LessonDetailsView: View {
                                     Label("Rimuovi notifica", systemImage: "bell.slash")
                                 }
                             } else {
-                                Button("Ad inizio lezione") { scheduleNotification(offset: 0) }
-                                    .disabled(!canSchedule(offset: 0))
-                                Button("5 minuti prima") { scheduleNotification(offset: 5) }
-                                    .disabled(!canSchedule(offset: 5))
-                                Button("15 minuti prima") { scheduleNotification(offset: 15) }
-                                    .disabled(!canSchedule(offset: 15))
-                                Button("30 minuti prima") { scheduleNotification(offset: 30) }
-                                    .disabled(!canSchedule(offset: 30))
-                                Button("1 ora prima") { scheduleNotification(offset: 60) }
-                                    .disabled(!canSchedule(offset: 60))
+                                if canSchedule(offset: 0) {
+                                    Button("Ad inizio lezione") { scheduleNotification(offset: 0) }
+                                }
+                                if canSchedule(offset: 5) {
+                                    Button("5 minuti prima") { scheduleNotification(offset: 5) }
+                                }
+                                if canSchedule(offset: 15) {
+                                    Button("15 minuti prima") { scheduleNotification(offset: 15) }
+                                }
+                                if canSchedule(offset: 30) {
+                                    Button("30 minuti prima") { scheduleNotification(offset: 30) }
+                                }
+                                if canSchedule(offset: 60) {
+                                    Button("1 ora prima") { scheduleNotification(offset: 60) }
+                                }
                             }
                         } label: {
                             Image(systemName: isScheduled ? "bell.and.waves.left.and.right.fill" : "bell")

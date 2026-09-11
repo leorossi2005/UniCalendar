@@ -30,12 +30,54 @@ public final class NotificationManager {
         }
     }
     
+    private var cleanupTask: Task<Void, Never>?
+    
     public func fetchSavedNotifications() async {
         guard let storage = storageProvider else { return }
         do {
             activeNotifications = try await storage.fetchNotifications()
+            scheduleNextCleanup()
         } catch {
             print("Errore caricamento notifiche dal database: \(error)")
+        }
+    }
+    
+    private func scheduleNextCleanup() {
+        cleanupTask?.cancel()
+        
+        let now = Date()
+        let futureTriggers = activeNotifications.compactMap { notification -> Date? in
+            let trigger = notification.date.addingTimeInterval(Double(-notification.offsetMinutes * 60))
+            return trigger > now ? trigger : nil
+        }
+        
+        guard let nextTrigger = futureTriggers.min() else { return }
+        
+        let delay = nextTrigger.timeIntervalSince(now)
+        
+        cleanupTask = Task {
+            // Aggiungiamo 0.5 secondi di sicurezza per assicurarci che sia effettivamente scaduta
+            try? await Task.sleep(nanoseconds: UInt64((delay + 0.5) * 1_000_000_000))
+            guard !Task.isCancelled else { return }
+            await cleanupExpiredNotifications()
+        }
+    }
+    
+    public func cleanupExpiredNotifications() async {
+        guard let storage = storageProvider else { return }
+        var didRemove = false
+        let now = Date()
+        
+        for notification in activeNotifications {
+            let triggerDate = notification.date.addingTimeInterval(Double(-notification.offsetMinutes * 60))
+            if triggerDate <= now {
+                try? await storage.deleteNotification(notification.id)
+                didRemove = true
+            }
+        }
+        
+        if didRemove {
+            await fetchSavedNotifications()
         }
     }
     

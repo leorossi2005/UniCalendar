@@ -11,6 +11,8 @@ import SwiftUI
 import UnivrCore
 
 struct EditNotificationView: View {
+    @Environment(\.dismiss) private var dismiss
+    
     let notification: SavedNotification
     @State private var offsetMinutes: Int
     @State private var enableLiveActivity: Bool = false
@@ -26,16 +28,21 @@ struct EditNotificationView: View {
         Form {
             Section {
                 Picker("Avviso", selection: $offsetMinutes) {
-                    Text("Ad inizio lezione").tag(0)
-                        .disabled(!canSchedule(offset: 0))
-                    Text("5 minuti prima").tag(5)
-                        .disabled(!canSchedule(offset: 5))
-                    Text("15 minuti prima").tag(15)
-                        .disabled(!canSchedule(offset: 15))
-                    Text("30 minuti prima").tag(30)
-                        .disabled(!canSchedule(offset: 30))
-                    Text("1 ora prima").tag(60)
-                        .disabled(!canSchedule(offset: 60))
+                    if canSchedule(offset: 0) || offsetMinutes == 0 {
+                        Text("Ad inizio lezione").tag(0)
+                    }
+                    if canSchedule(offset: 5) || offsetMinutes == 5 {
+                        Text("5 minuti prima").tag(5)
+                    }
+                    if canSchedule(offset: 15) || offsetMinutes == 15 {
+                        Text("15 minuti prima").tag(15)
+                    }
+                    if canSchedule(offset: 30) || offsetMinutes == 30 {
+                        Text("30 minuti prima").tag(30)
+                    }
+                    if canSchedule(offset: 60) || offsetMinutes == 60 {
+                        Text("1 ora prima").tag(60)
+                    }
                 }
                 .onChange(of: offsetMinutes) {
                     saveChanges()
@@ -51,6 +58,11 @@ struct EditNotificationView: View {
         }
         .navigationTitle("Modifica Notifica")
         .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: notificationManager.activeNotifications) {
+            if !notificationManager.activeNotifications.contains(where: { $0.id == notification.id }) {
+                dismiss()
+            }
+        }
     }
     
     private func saveChanges() {

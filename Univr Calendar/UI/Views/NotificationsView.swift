@@ -61,6 +61,11 @@ struct NotificationsView: View {
         }
         .navigationTitle("Notifiche")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            Task {
+                await notificationManager.cleanupExpiredNotifications()
+            }
+        }
     }
     
     private func notificationRow(for notification: SavedNotification) -> some View {

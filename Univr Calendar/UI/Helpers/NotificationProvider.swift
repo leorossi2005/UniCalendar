@@ -26,7 +26,11 @@ final class IOSNotificationService: Sendable {
             schedule: { notification in
                 let content = UNMutableNotificationContent()
                 content.title = notification.lessonName
-                content.body = "La lezione inizia tra \(notification.offsetMinutes) minuti"
+                if notification.offsetMinutes == 0 {
+                    content.body = "La lezione sta iniziando ora"
+                } else {
+                    content.body = "La lezione inizia tra \(notification.offsetMinutes) minuti"
+                }
                 content.sound = .default
                 
                 let triggerDate = notification.date.addingTimeInterval(TimeInterval(-notification.offsetMinutes * 60))
