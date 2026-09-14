@@ -39,13 +39,14 @@ struct CalendarView: View {
     
     var body: some View {
         NavigationStack {
-            Group {
-                switch page {
-                case .main:
-                    mainView
-                case .classrooms:
-                    ClassroomAvailabilityView(coordinator: coordinator, sheetRouter: sheetRouter)
-                }
+            ZStack {
+                mainView
+                    .opacity(page == .main ? 1 : 0)
+                    .allowsHitTesting(page == .main)
+                
+                ClassroomAvailabilityView(coordinator: coordinator, sheetRouter: sheetRouter)
+                    .opacity(page == .classrooms ? 1 : 0)
+                    .allowsHitTesting(page == .classrooms)
             }
             .toolbar {
                 buildToolbar()
@@ -74,7 +75,6 @@ struct CalendarView: View {
                     GlobalHaptics.shared.state = ""
                 }
             }
-            .removeTopSafeArea()
             .animation(.default, value: viewModel.checkingUpdates)
             .animation(.default, value: viewModel.updateAvailable)
             .animation(.default, value: viewModel.state)
@@ -187,7 +187,8 @@ struct CalendarView: View {
                     }
                 }
             }
-            .scrollViewTopPadding()
+            .contentMargins(.top, 15, for: .scrollContent)
+            .contentMargins(.top, 15, for: .scrollIndicators)
             .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
             .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
         } else {
@@ -342,11 +343,17 @@ struct CalendarView: View {
                 
                 if hasChanged {
                     page = .main
+                    firstLoading = true
                     viewModel.state = .loading
                     sheetRouter.tempSettings.apply(to: settings)
                     
                     if settings.selectedCourse != "0" {
-                        updateDate()
+                        var transaction = Transaction()
+                        transaction.disablesAnimations = true
+                        withTransaction(transaction) {
+                            updateDate()
+                        }
+                        
                         viewModel.clearPendingUpdate()
                         Task {
                             await viewModel.loadLessons(
@@ -430,7 +437,8 @@ struct CalendarViewDay: View {
                 }
             }
         }
-        .scrollViewTopPadding()
+        .contentMargins(.top, 15, for: .scrollContent)
+        .contentMargins(.top, 15, for: .scrollIndicators)
         .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
         .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
     }
