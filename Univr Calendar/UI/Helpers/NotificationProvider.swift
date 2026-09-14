@@ -47,6 +47,7 @@ final class IOSNotificationService: Sendable {
             },
             cancel: { id in
                 UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id])
+                UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [id])
             }
         )
     }

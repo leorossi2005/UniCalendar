@@ -190,8 +190,10 @@ struct Settings: View {
         Haptics.play(.impact(weight: .heavy))
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.1))
+            await NotificationManager.shared.removeAllNotifications()
             await CacheManager.shared.clear(file: .calendarSchedule)
             settings.reset()
+            tempSettings.sync(with: settings)
             sheetManager.dismiss()
         }
     }

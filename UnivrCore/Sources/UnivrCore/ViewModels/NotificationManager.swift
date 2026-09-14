@@ -56,7 +56,6 @@ public final class NotificationManager {
         let delay = nextTrigger.timeIntervalSince(now)
         
         cleanupTask = Task {
-            // Aggiungiamo 0.5 secondi di sicurezza per assicurarci che sia effettivamente scaduta
             try? await Task.sleep(nanoseconds: UInt64((delay + 0.5) * 1_000_000_000))
             guard !Task.isCancelled else { return }
             await cleanupExpiredNotifications()
@@ -132,5 +131,14 @@ public final class NotificationManager {
         } catch {
             print("Errore eliminazione dal database: \(error)")
         }
+    }
+    
+    public func removeAllNotifications() async {
+        guard let notifier = notificationProvider, let storage = storageProvider else { return }
+        for notification in activeNotifications {
+            notifier.cancel(notification.id)
+            try? await storage.deleteNotification(notification.id)
+        }
+        await fetchSavedNotifications()
     }
 }

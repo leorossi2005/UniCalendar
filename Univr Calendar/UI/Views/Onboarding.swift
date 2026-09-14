@@ -52,6 +52,14 @@ struct Onboarding: View {
                     buttonAction: {
                         handlePageTransition(to: 1) {
                             try await viewModel.loadYears()
+                            
+                            if settings.selectedYear == "0" || !viewModel.years.contains(where: { $0.id == settings.selectedYear }) {
+                                if let lastYear = viewModel.years.last {
+                                    await MainActor.run {
+                                        settings.selectedYear = lastYear.id
+                                    }
+                                }
+                            }
                         }
                     }
                 )

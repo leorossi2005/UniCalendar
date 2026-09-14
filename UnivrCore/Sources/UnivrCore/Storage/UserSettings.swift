@@ -21,7 +21,7 @@ public class UserSettings {
     }
     
     private enum Default {
-        static let year = "2025"
+        static let year = "0"
         static let course = "0"
         static let courseName = "Corso"
         static let academicYear = "0"
