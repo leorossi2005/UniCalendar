@@ -11,10 +11,6 @@ import Foundation
 import SwiftData
 import UnivrCore
 
-import Foundation
-import SwiftData
-import UnivrCore
-
 @Model
 final class NotificationRecord {
     @Attribute(.unique) var id: String
