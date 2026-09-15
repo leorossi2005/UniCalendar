@@ -114,7 +114,6 @@ struct DatePickerContainer: View {
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .frame(height: CustomSheetDetent.medium.value)
-        // Matematica pura al posto dell'array: Ottobre(10) -> 0, Gennaio(1) -> 3, ecc.
         .onAppear { internalIndex = (selectedWeek.month + 2) % 12 }
         .onChange(of: selectedWeek) { _, new in internalIndex = (new.month + 2) % 12 }
         .onChange(of: internalIndex) {

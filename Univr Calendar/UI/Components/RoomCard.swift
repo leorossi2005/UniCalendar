@@ -149,11 +149,3 @@ private struct Timeline: View {
         }
     }
 }
-
-#Preview {
-    ScrollView {
-        VStack {
-            //RoomCard(events: nil)
-        }
-    }
-}

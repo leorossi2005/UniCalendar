@@ -15,15 +15,17 @@ public class UserSettings {
     public static let shared = UserSettings()
     
     private enum Key: String {
-        case selectedYear, selectedCourse, selectedAcademicYear
+        case selectedYear, selectedCourse, selectedCourseName, selectedAcademicYear, selectedAcademicYearName
         case foundMatricola, matricola, onboardingCompleted
         case settingsVersion, latestVersion, locationKey
     }
     
     private enum Default {
-        static let year = "2025"
+        static let year = "0"
         static let course = "0"
+        static let courseName = "Corso"
         static let academicYear = "0"
+        static let academicYearName = "Year"
         static let matricola = "even"
         static let latestVersion: String = Bundle.main.clearAppVersion
         static let locationKey = "1"
@@ -39,8 +41,16 @@ public class UserSettings {
         didSet { Self.save(selectedCourse, key: .selectedCourse) }
     }
     
+    public var selectedCourseName: String {
+        didSet { Self.save(selectedCourseName, key: .selectedCourseName) }
+    }
+    
     public var selectedAcademicYear: String {
         didSet { Self.save(selectedAcademicYear, key: .selectedAcademicYear) }
+    }
+    
+    public var selectedAcademicYearName: String {
+        didSet { Self.save(selectedAcademicYearName, key: .selectedAcademicYearName) }
     }
     
     public var foundMatricola: Bool {
@@ -69,7 +79,9 @@ public class UserSettings {
         
         self.selectedYear = Self.load(.selectedYear, fallback: Default.year)
         self.selectedCourse = Self.load(.selectedCourse, fallback: Default.course)
+        self.selectedCourseName = Self.load(.selectedCourseName, fallback: Default.courseName)
         self.selectedAcademicYear = Self.load(.selectedAcademicYear, fallback: Default.academicYear)
+        self.selectedAcademicYearName = Self.load(.selectedAcademicYearName, fallback: Default.academicYearName)
         self.foundMatricola = Self.load(.foundMatricola, fallback: Default.boolFalse)
         self.matricola = Self.load(.matricola, fallback: Default.matricola)
         self.onboardingCompleted = Self.load(.onboardingCompleted, fallback: Default.boolFalse)
@@ -87,7 +99,9 @@ public class UserSettings {
     public func reset() {
         selectedYear = Default.year
         selectedCourse = Default.course
+        selectedCourseName = Default.courseName
         selectedAcademicYear = Default.academicYear
+        selectedAcademicYearName = Default.academicYearName
         foundMatricola = Default.boolFalse
         matricola = Default.matricola
         onboardingCompleted =  Default.boolFalse
@@ -108,6 +122,7 @@ public class UserSettings {
 public struct TempSettingsState {
     public var selectedYear: String = ""
     public var selectedCourse: String = ""
+    public var selectedCourseName: String = ""
     public var selectedAcademicYear: String = ""
     public var matricola: String = ""
     
@@ -116,12 +131,14 @@ public struct TempSettingsState {
     public mutating func sync(with settings: UserSettings) {
         self.selectedYear = settings.selectedYear
         self.selectedCourse = settings.selectedCourse
+        self.selectedCourseName = settings.selectedCourseName
         self.selectedAcademicYear = settings.selectedAcademicYear
         self.matricola = settings.matricola
     }
     
     public func hasChanged(from settings: UserSettings) -> Bool {
         selectedCourse != settings.selectedCourse ||
+        selectedCourseName != settings.selectedCourseName ||
         selectedYear != settings.selectedYear ||
         selectedAcademicYear != settings.selectedAcademicYear
     }
@@ -129,6 +146,7 @@ public struct TempSettingsState {
     public func apply(to settings: UserSettings) {
         settings.selectedYear = self.selectedYear
         settings.selectedCourse = self.selectedCourse
+        settings.selectedCourseName = self.selectedCourseName
         settings.selectedAcademicYear = self.selectedAcademicYear
         settings.matricola = self.matricola
     }

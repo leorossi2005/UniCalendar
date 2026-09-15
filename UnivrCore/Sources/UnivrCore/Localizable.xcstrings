@@ -18,6 +18,23 @@
         }
       }
     },
+    "day_ended" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Day ended"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Giornata conclusa"
+          }
+        }
+      }
+    },
     "development_help" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -52,36 +69,124 @@
         }
       }
     },
-    "Errore generico: %@" : {
+    "first_commitment_at" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "First commitment at %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Primo impegno alle %@"
+          }
+        }
+      }
+    },
+    "free_all_day" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free all day"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Libera tutto il giorno"
+          }
+        }
+      }
+    },
+    "free_now_on" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free for the rest of the day"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Libera per il resto della giornata"
+          }
+        }
+      }
+    },
+    "free_until" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Available until %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Libera fino alle %@"
+          }
+        }
+      }
+    },
+    "generic_error" : {
+      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Generic error: %@"
           }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Errore generico: %@"
+          }
         }
       }
     },
-    "Errore sconosciuto" : {
-
+    "occupied_until" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Occupied until %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Occupata fino alle %@"
+          }
+        }
+      }
     },
-    "Giornata conclusa" : {
-
-    },
-    "Libera fino alle %@" : {
-
-    },
-    "Libera per il resto della giornata" : {
-
-    },
-    "Libera tutto il giorno" : {
-
-    },
-    "Occupata fino alle %@" : {
-
-    },
-    "Primo impegno alle %@" : {
-
+    "unknown_error" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unknown error"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Errore sconosciuto"
+          }
+        }
+      }
     },
     "v0_1-00-long" : {
       "extractionState" : "manual",

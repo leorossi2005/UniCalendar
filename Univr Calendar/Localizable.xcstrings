@@ -95,6 +95,56 @@
         }
       }
     },
+    "1 ora prima" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 hour before"
+          }
+        }
+      }
+    },
+    "5 minuti prima" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 minutes before"
+          }
+        }
+      }
+    },
+    "15 minuti prima" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "15 minutes before"
+          }
+        }
+      }
+    },
+    "30 minuti prima" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "30 minutes before"
+          }
+        }
+      }
+    },
+    "Ad inizio lezione" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At the beginning of the class"
+          }
+        }
+      }
+    },
     "Aggiorna" : {
       "localizations" : {
         "en" : {
@@ -151,6 +201,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "Avviso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alert"
           }
         }
       }
@@ -375,6 +435,16 @@
         }
       }
     },
+    "Elimina" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
     "Espandi tutto" : {
       "localizations" : {
         "en" : {
@@ -455,6 +525,16 @@
         }
       }
     },
+    "Impostazioni Notifica" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notification settings"
+          }
+        }
+      }
+    },
     "In modalità offline non puoi modificare queste opzioni." : {
       "localizations" : {
         "en" : {
@@ -485,6 +565,9 @@
         }
       }
     },
+    "Le Live Activity ti permetteranno di avere un timer a schermo sulla schermata di blocco o nella Dynamic Island." : {
+
+    },
     "Lo Sviluppatore" : {
       "localizations" : {
         "en" : {
@@ -511,6 +594,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Freshman"
+          }
+        }
+      }
+    },
+    "Modifica Notifica" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit Notification"
           }
         }
       }
@@ -555,6 +648,16 @@
         }
       }
     },
+    "Nessuna notifica" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No notifications"
+          }
+        }
+      }
+    },
     "Non capisci mai che lezioni hai? Non hai voglia di aprire il sito ogni volta o usare app obsolete? Ora puoi fare tutto qui!" : {
       "localizations" : {
         "en" : {
@@ -595,12 +698,42 @@
         }
       }
     },
+    "Non hai ancora programmato alcuna notifica per le tue lezioni." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You haven’t scheduled any notifications for your classes yet."
+          }
+        }
+      }
+    },
     "Non specificato" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Not specified"
+          }
+        }
+      }
+    },
+    "Notifiche" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications"
+          }
+        }
+      }
+    },
+    "Notifiche Programmate" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scheduled Notifications"
           }
         }
       }
@@ -691,6 +824,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reset the app"
+          }
+        }
+      }
+    },
+    "Rimuovi notifica" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove notifications"
           }
         }
       }
@@ -825,6 +968,26 @@
         }
       }
     },
+    "Suona %lld minuti prima" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifies you %lld minutes before"
+          }
+        }
+      }
+    },
+    "Suona all'inizio della lezione" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifies you at the start of the class"
+          }
+        }
+      }
+    },
     "SVILUPPATORE" : {
       "localizations" : {
         "en" : {
@@ -834,6 +997,9 @@
           }
         }
       }
+    },
+    "Usa Live Activity (Prossimamente)" : {
+
     },
     "Usa questa sezione per modificare le impostazioni dell'app, cambia pure l'anno, il corso, l'anno di corso o la matricola se presente." : {
       "localizations" : {

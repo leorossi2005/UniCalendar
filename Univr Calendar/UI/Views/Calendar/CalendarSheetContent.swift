@@ -48,13 +48,8 @@ struct CalendarSheetContent: View {
                     if router.openWhatsNew {
                         WhatsNewView()
                     } else if router.openSettings {
-                        Settings(
-                            selectedYear: $router.tempSettings.selectedYear,
-                            selectedCourse: $router.tempSettings.selectedCourse,
-                            selectedAcademicYear: $router.tempSettings.selectedAcademicYear,
-                            matricola: $router.tempSettings.matricola
-                        )
-                        .ignoresSafeArea(.keyboard)
+                        Settings(tempSettings: $router.tempSettings)
+                            .ignoresSafeArea(.keyboard)
                     } else if let lesson = router.selectedLesson {
                         LessonDetailsView(lesson: lesson, openAddToCalendar: router.openAddToCalendar) {
                             sheetManager.setDetent(.small)

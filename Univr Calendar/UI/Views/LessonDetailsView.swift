@@ -23,6 +23,7 @@ struct LessonDetailsView: View {
     @State private var calendarEvent: EKEvent?
     @State private var eventStore = EKEventStore()
     @State private var eventSaved: Bool = false
+    @State private var notificationManager = NotificationManager.shared
     
     let openAddToCalendar: Bool
     var onDismiss: (() -> Void)?
@@ -60,6 +61,41 @@ struct LessonDetailsView: View {
                     showOriginalName = false
                 }
                 .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        let isScheduled = notificationManager.activeNotifications.contains { $0.id == lesson.id }
+                        
+                        Menu {
+                            if isScheduled {
+                                Button(role: .destructive) {
+                                    Task { await notificationManager.removeNotification(id: lesson.id) }
+                                } label: {
+                                    Label("Rimuovi notifica", systemImage: "bell.slash")
+                                }
+                            } else {
+                                if canSchedule(offset: 0) {
+                                    Button("Ad inizio lezione") { scheduleNotification(offset: 0) }
+                                }
+                                if canSchedule(offset: 5) {
+                                    Button("5 minuti prima") { scheduleNotification(offset: 5) }
+                                }
+                                if canSchedule(offset: 15) {
+                                    Button("15 minuti prima") { scheduleNotification(offset: 15) }
+                                }
+                                if canSchedule(offset: 30) {
+                                    Button("30 minuti prima") { scheduleNotification(offset: 30) }
+                                }
+                                if canSchedule(offset: 60) {
+                                    Button("1 ora prima") { scheduleNotification(offset: 60) }
+                                }
+                            }
+                        } label: {
+                            Image(systemName: isScheduled ? "bell.and.waves.left.and.right.fill" : "bell")
+                                .frame(width: 24, height: 24)
+                                .symbolReplace()
+                        }
+                        .disabled(!isScheduled && !canSchedule(offset: 0))
+                    }
+                    
                     ToolbarItem(placement: .primaryAction) {
                         Button {
                             if !eventSaved {
@@ -154,6 +190,25 @@ struct LessonDetailsView: View {
     }
     
     // MARK: - Logic
+    private func canSchedule(offset: Int) -> Bool {
+        lesson.startTime.addingTimeInterval(Double(-offset * 60)) > Date().addingTimeInterval(60)
+    }
+    
+    private func scheduleNotification(offset: Int) {
+        Task {
+            let saved = SavedNotification(
+                id: lesson.id,
+                courseId: UserSettings.shared.selectedCourse,
+                courseName: UserSettings.shared.selectedCourseName,
+                courseYear: UserSettings.shared.selectedAcademicYearName,
+                lessonName: lesson.cleanName ?? lesson.name ?? "Lezione",
+                date: lesson.startTime,
+                offsetMinutes: offset
+            )
+            await notificationManager.toggleNotification(notification: saved)
+        }
+    }
+    
     private func prepareAndShowEvent(for lesson: Lesson) {
         let newEvent = EKEvent(eventStore: eventStore)
         

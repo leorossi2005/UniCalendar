@@ -96,9 +96,9 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
             if isOfflineFailure(error) {
                 phase = .offline
             } else if let networkError = error as? NetworkError {
-                phase = .error(networkError.errorDescription ?? String(localized: "Errore sconosciuto", bundle: .module))
+                phase = .error(networkError.errorDescription ?? String(localized: .unknownError))
             } else {
-                phase = .error(String(localized: "Errore generico: \(error.localizedDescription)", bundle: .module))
+                phase = .error(String(localized: .genericError(error.localizedDescription)))
             }
             throw error
         }

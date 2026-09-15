@@ -26,7 +26,7 @@ struct HorizontalLine: View {
                 gapLength: dash.count > 1 ? dash[1] : dash[0],
                 isHorizontal: true
             )
-            .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)) // Niente parametro 'dash' qui!
+            .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
             .frame(height: lineWidth)
         }
     }

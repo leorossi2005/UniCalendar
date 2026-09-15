@@ -155,33 +155,7 @@ extension View {
         }
     }
     
-    @ViewBuilder
-    func scrollViewTopPadding() -> some View {
-        if #available(iOS 26, *) {
-            self
-                .contentMargins(.top, 5, for: .scrollContent)
-                .contentMargins(.top, 5, for: .scrollIndicators)
-        } else if #available(iOS 18, *) {
-            self
-                .contentMargins(.top, 15, for: .scrollContent)
-                .contentMargins(.top, 15, for: .scrollIndicators)
-        } else {
-            self
-                .contentMargins(.top, UIApplication.shared.safeAreas.top * 1.9, for: .scrollContent)
-                .contentMargins(.top, UIApplication.shared.safeAreas.top * 1.9, for: .scrollIndicators)
-        }
-    }
-    
     // MARK: Fallback iOS 17
-    @ViewBuilder
-    func removeTopSafeArea() -> some View {
-        if #available(iOS 18, *) {
-            self
-        } else {
-            self.ignoresSafeArea(edges: .top)
-        }
-    }
-    
     @ViewBuilder
     func symbolReplace() -> some View {
         if #available(iOS 18, *) {

@@ -27,6 +27,7 @@ struct ClassroomAvailabilityView: View {
     var body: some View {
         VStack {
             locationPicker
+                .padding(.top, 15)
             
             content
                 .onChange(of: coordinator.selectedWeek) { oldValue, newValue in
@@ -100,4 +101,9 @@ struct ClassroomAvailabilityView: View {
             )
         }
     }
+}
+
+#Preview {
+    ClassroomAvailabilityView(coordinator: .init(), sheetRouter: .init())
+        .environment(UserSettings.shared)
 }

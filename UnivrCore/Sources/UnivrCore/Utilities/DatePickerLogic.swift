@@ -41,9 +41,7 @@ public class DatePickerCache {
     private var activeDatesCache: [Date: Double] = [:]
     
     public func updateActivities(dates: [Date: Double]) {
-        self.activeDatesCache = dates
-        print("🔄 Updating Activities in Cache: \(dates.count) items") // DEBUG
-        
+        self.activeDatesCache = dates        
         let calendar = Calendar.current
         
         for monthKey in monthGrids.keys {
