@@ -21,17 +21,17 @@ public enum RoomDailyStatus: Equatable {
     public var statusText: String {
         switch self {
         case .pastDay:
-            return String(localized: "Giornata conclusa")
+            return String(localized: .dayEnded)
         case .futureDay(let event, _):
-            return String(localized: "Primo impegno alle \(event.startTime.formatted(.dateTime.hour().minute()))")
+            return String(localized: .firstCommitmentAt(event.startTime.formatted(.dateTime.hour().minute())))
         case .futureDayFree:
-            return String(localized: "Libera tutto il giorno")
+            return String(localized: .freeAllDay)
         case .freeAllDay, .dayEnded:
-            return String(localized: "Libera per il resto della giornata")
+            return String(localized: .freeNowOn)
         case .freeUntil(let event, _):
-            return String(localized: "Libera fino alle \(event.startTime.formatted(.dateTime.hour().minute()))")
+            return String(localized: .freeUntil(event.startTime.formatted(.dateTime.hour().minute())))
         case .occupiedUntil(_, _, let freeAt):
-            return String(localized: "Occupata fino alle \(freeAt.formatted(.dateTime.hour().minute()))")
+            return String(localized: .occupiedUntil(freeAt.formatted(.dateTime.hour().minute())))
         }
     }
     

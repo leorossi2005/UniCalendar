@@ -12,7 +12,7 @@ import SwiftData
 import UnivrCore
 
 struct NotificationsView: View {
-    @State private var notificationManager = NotificationManager.shared
+    private var notificationManager = NotificationManager.shared
     
     var groupedNotifications: [String: [SavedNotification]] {
         Dictionary(grouping: notificationManager.activeNotifications, by: \.courseId)

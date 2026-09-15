@@ -17,7 +17,7 @@ struct EditNotificationView: View {
     @State private var offsetMinutes: Int
     @State private var enableLiveActivity: Bool = false
     
-    @State private var notificationManager = NotificationManager.shared
+    private var notificationManager = NotificationManager.shared
     
     init(notification: SavedNotification) {
         self.notification = notification
