@@ -15,11 +15,6 @@ struct PersonalEventCard: View {
     
     let event: PersonalEvent
     
-    private var durationMinutes: Int {
-        let diff = event.endTime.timeIntervalSince(event.startTime)
-        return Int(max(0, diff) / 60)
-    }
-    
     var body: some View {
         HStack(spacing: 20) {
             timeInfo
@@ -36,7 +31,19 @@ struct PersonalEventCard: View {
     // MARK: - Components
     private var backgroundLayer: some View {
         RoundedRectangle(cornerRadius: 35, style: .continuous)
-            .fill(Color.blue.opacity(0.8)) // Un colore distintivo per gli eventi personali
+            .overlay {
+                CustomMeshGradient(
+                    width: BaseGradient.width,
+                    height: BaseGradient.height,
+                    points: BaseGradient.points,
+                    colors: BaseGradient.colors,
+                    background: BaseGradient.background,
+                    smoothsColors: BaseGradient.smoothsColors
+                )
+                .opacity(0.7)
+                .background(.white)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 35, style: .continuous))
     }
     
     private var timeInfo: some View {
@@ -45,7 +52,7 @@ struct PersonalEventCard: View {
                 .font(.largeTitle.monospacedDigit())
                 .fontWeight(.medium)
             
-            Label(Duration.seconds(durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)), systemImage: "clock")
+            Label(Duration.seconds(event.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)), systemImage: "clock")
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
                 .background(Color.white.opacity(0.2))
@@ -53,25 +60,42 @@ struct PersonalEventCard: View {
             
             Spacer()
         }
-        .foregroundStyle(Color.white)
+        .foregroundStyle(Color.black)
     }
     
     private var eventInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(event.title)
-                .foregroundStyle(Color.white)
+                .foregroundStyle(Color.black)
                 .font(.headline)
                 .multilineTextAlignment(.leading)
             
             if let location = event.location, !location.isEmpty {
                 Text(location)
-                    .foregroundStyle(Color.white.opacity(0.8))
+                    .foregroundStyle(Color(white: 0.3))
                     .font(.subheadline)
                     .multilineTextAlignment(.leading)
             }
             
+            if !event.tags.isEmpty {
+                tagsList
+            }
             Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+    
+    private var tagsList: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(event.tags, id: \.self) { tag in
+                Text(tag)
+                    .foregroundStyle(.black)
+                    .font(.caption2)
+                    .padding(.horizontal, 7)
+                    .padding(.vertical, 3)
+                    .background(Color.black.opacity(0.3))
+                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+            }
+        }
     }
 }
