@@ -18,7 +18,7 @@ struct Univr_CalendarApp: App {
     
     init() {
         do {
-            container = try ModelContainer(for: NotificationRecord.self)
+            container = try ModelContainer(for: NotificationRecord.self, PersonalEventRecord.self)
         } catch {
             fatalError("Impossibile creare il database: \(error)")
         }
@@ -33,10 +33,12 @@ struct Univr_CalendarApp: App {
                 .enableGlobalHaptics()
                 .task {
                     NetworkStatusMonitor.shared.start(provider: IOSNetworkMonitor.createProvider())
+                    let storage = IOSStorageService.createProvider(container: container)
                     NotificationManager.shared.configure(
                         notificationProvider: IOSNotificationService.createProvider(),
-                        storageProvider: IOSStorageService.createProvider(container: container)
+                        storageProvider: storage
                     )
+                    CommitmentsManager.shared.configure(storageProvider: storage)
                 }
         }
     }

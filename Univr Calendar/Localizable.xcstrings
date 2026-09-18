@@ -11,6 +11,16 @@
         }
       }
     },
+    "%@ - %@" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ - %2$@"
+          }
+        }
+      }
+    },
     "%@ - %@ (%@)" : {
       "localizations" : {
         "en" : {
@@ -395,6 +405,12 @@
         }
       }
     },
+    "Dettagli" : {
+
+    },
+    "Dettagli Impegno" : {
+
+    },
     "Dispari" : {
       "localizations" : {
         "en" : {
@@ -445,6 +461,12 @@
         }
       }
     },
+    "Elimina Impegno" : {
+
+    },
+    "Eliminare questo impegno?" : {
+
+    },
     "Espandi tutto" : {
       "localizations" : {
         "en" : {
@@ -464,6 +486,9 @@
           }
         }
       }
+    },
+    "Fine" : {
+
     },
     "Giornata Libera" : {
       "localizations" : {
@@ -555,6 +580,9 @@
         }
       }
     },
+    "Inizio" : {
+
+    },
     "Instagram" : {
       "localizations" : {
         "en" : {
@@ -578,6 +606,9 @@
         }
       }
     },
+    "Luogo (opzionale)" : {
+
+    },
     "Mandami una mail" : {
       "localizations" : {
         "en" : {
@@ -597,6 +628,9 @@
           }
         }
       }
+    },
+    "Modifica" : {
+
     },
     "Modifica Notifica" : {
       "localizations" : {
@@ -679,6 +713,7 @@
       }
     },
     "Non ci sono lezioni in programma per oggi." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -687,6 +722,9 @@
           }
         }
       }
+    },
+    "Non ci sono lezioni o impegni in programma per oggi." : {
+
     },
     "Non è stata trovata nessuna lezione per questo corso." : {
       "localizations" : {
@@ -718,6 +756,12 @@
         }
       }
     },
+    "Note" : {
+
+    },
+    "Note (opzionale)" : {
+
+    },
     "Notifiche" : {
       "localizations" : {
         "en" : {
@@ -748,6 +792,9 @@
         }
       }
     },
+    "Nuovo Impegno" : {
+
+    },
     "O il tuo amico, ovvio" : {
       "localizations" : {
         "en" : {
@@ -767,6 +814,9 @@
           }
         }
       }
+    },
+    "Orario" : {
+
     },
     "Pari" : {
       "localizations" : {
@@ -807,6 +857,9 @@
           }
         }
       }
+    },
+    "Questa azione non può essere annullata." : {
+
     },
     "Questo sono io ↓" : {
       "localizations" : {
@@ -997,6 +1050,9 @@
           }
         }
       }
+    },
+    "Titolo" : {
+
     },
     "Usa Live Activity (Prossimamente)" : {
 

@@ -50,6 +50,16 @@ struct CalendarSheetContent: View {
                     } else if router.openSettings {
                         Settings(tempSettings: $router.tempSettings)
                             .ignoresSafeArea(.keyboard)
+                    } else if router.openAddPersonalEvent {
+                        AddPersonalEventView(selectedDate: selectedWeek) {
+                            sheetManager.setDetent(.small)
+                            router.openAddPersonalEvent = false
+                        }
+                    } else if let event = router.selectedPersonalEvent {
+                        PersonalEventDetailsView(event: event) {
+                            sheetManager.setDetent(.small)
+                            router.selectedPersonalEvent = nil
+                        }
                     } else if let lesson = router.selectedLesson {
                         LessonDetailsView(lesson: lesson, openAddToCalendar: router.openAddToCalendar) {
                             sheetManager.setDetent(.small)

@@ -8,7 +8,6 @@
 //
 
 import Foundation
-import Observation
 
 @MainActor
 @Observable
@@ -221,8 +220,29 @@ public class CalendarViewModel {
         self.academicYearDays = dates
     }
     
-    public func events(for date: Date) -> [Lesson]? {
+    public func events(for date: Date) -> [CalendarItem]? {
         let normalizedDate = Calendar.current.startOfDay(for: date)
-        return schedule.first(where: { $0.date == normalizedDate })?.events
+        let lessons = schedule.first(where: { $0.date == normalizedDate })?.events ?? []
+        
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        let endOfDay = Calendar.current.date(byAdding: DateComponents(day: 1, second: -1), to: startOfDay) ?? startOfDay
+        
+        let dailyPersonalEvents = CommitmentsManager.shared.personalEvents.filter { 
+            $0.startTime >= startOfDay && $0.startTime <= endOfDay 
+        }
+        
+        if lessons.isEmpty && dailyPersonalEvents.isEmpty {
+            return nil
+        }
+        
+        var combinedItems: [CalendarItem] = []
+        for lesson in lessons {
+            combinedItems.append(.lesson(lesson))
+        }
+        for event in dailyPersonalEvents {
+            combinedItems.append(.personal(event))
+        }
+        
+        return combinedItems.sorted(by: { $0.startTime < $1.startTime })
     }
 }

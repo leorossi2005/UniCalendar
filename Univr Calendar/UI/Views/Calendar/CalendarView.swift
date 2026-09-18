@@ -106,22 +106,10 @@ struct CalendarView: View {
         ScrollView(.horizontal) {
             LazyHStack(spacing: 0) {
                 ForEach(viewModel.academicYearDays, id: \.self) { date in
-                    let dailyLessons = viewModel.events(for: date) ?? []
-                    
-                    Group {
-                        if !dailyLessons.isEmpty {
-                            CalendarViewDay(
-                                filteredLessons: dailyLessons,
-                                sheetRouter: sheetRouter
-                            )
-                        } else {
-                            ContentUnavailableView(
-                                "Giornata Libera",
-                                systemImage: "moon.zzz",
-                                description: Text("Non ci sono lezioni in programma per oggi.")
-                            )
-                        }
-                    }
+                    CalendarViewDay(
+                        combinedItems: viewModel.events(for: date) ?? [],
+                        sheetRouter: sheetRouter
+                    )
                     .containerRelativeFrame(.horizontal)
                     .id(date)
                 }
@@ -240,6 +228,17 @@ struct CalendarView: View {
                     }
                 }
                 .font(.caption)
+            }
+        }
+        
+        if page == .main {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: {
+                    Haptics.play(.impact(weight: .light))
+                    sheetRouter.routeToAddPersonalEvent()
+                }) {
+                    Image(systemName: "plus")
+                }
             }
         }
         
@@ -390,57 +389,94 @@ struct CalendarView: View {
 struct CalendarViewDay: View {
     @Environment(\.colorScheme) var colorScheme
     
-    let filteredLessons: [Lesson]
+    let combinedItems: [CalendarItem]
     var sheetRouter: CalendarSheetRouter
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 10) {
-                ForEach(filteredLessons) { lesson in
-                    if lesson.type != .pause && lesson.type != .closure {
-                        LessonCard(lesson: lesson)
-                            .onTapGesture {
-                                Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                sheetRouter.routeToLesson(lesson)
-                            }
-                            .contextMenu(
-                                menuItems: {
-                                    Button(action: {
-                                        Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                        sheetRouter.routeToLesson(lesson, addToCalendar: true)
-
-                                    }) {
-                                        Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
+        Group {
+            if combinedItems.isEmpty {
+                ContentUnavailableView(
+                    "Giornata Libera",
+                    systemImage: "moon.zzz",
+                    description: Text("Non ci sono lezioni o impegni in programma per oggi.")
+                )
+            } else {
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(combinedItems) { item in
+                            switch item {
+                            case .lesson(let lesson):
+                                if lesson.type != .pause && lesson.type != .closure {
+                                    LessonCard(lesson: lesson)
+                                        .onTapGesture {
+                                            Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                            sheetRouter.routeToLesson(lesson)
+                                        }
+                                        .contextMenu(
+                                            menuItems: {
+                                                Button(action: {
+                                                    Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                                    sheetRouter.routeToLesson(lesson, addToCalendar: true)
+                                                }) {
+                                                    Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
+                                                }
+                                                Button(action: {
+                                                    Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                                    sheetRouter.routeToLesson(lesson)
+                                                }) {
+                                                    Label("Vedi più dettagli", systemImage: "ellipsis")
+                                                }
+                                            },
+                                            preview: {
+                                                LessonCardPreview(lesson: lesson)
+                                            }
+                                        )
+                                } else {
+                                    HStack(alignment: .bottom) {
+                                        Image(systemName: .cupDynamic)
+                                            .font(.system(size: 40))
+                                        Text(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)))
+                                            .font(.system(size: 30))
+                                            .italic()
+                                            .bold()
                                     }
-                                    Button(action: {
-                                        Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                        sheetRouter.routeToLesson(lesson)
-                                    }) {
-                                        Label("Vedi più dettagli", systemImage: "ellipsis")
-                                    }
-                                },
-                                preview: {
-                                    LessonCardPreview(lesson: lesson)
+                                    .foregroundStyle(.secondary)
                                 }
-                            )
-                    } else {
-                        HStack(alignment: .bottom) {
-                            Image(systemName: .cupDynamic)
-                                .font(.system(size: 40))
-                            Text(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)))
-                                .font(.system(size: 30))
-                                .italic()
-                                .bold()
+                            case .personal(let event):
+                                PersonalEventCard(event: event)
+                                    .onTapGesture {
+                                        Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                        sheetRouter.routeToPersonalEvent(event)
+                                    }
+                                    //.contextMenu(
+                                    //    menuItems: {
+                                    //        Button(action: {
+                                    //            Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                    //            sheetRouter.routeToLesson(lesson, addToCalendar: true)
+                                    //        }) {
+                                    //            Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
+                                    //        }
+                                    //        Button(action: {
+                                    //            Haptics.play(.impact(weight: .light, intensity: 0.5))
+                                    //            sheetRouter.routeToLesson(lesson)
+                                    //        }) {
+                                    //            Label("Vedi più dettagli", systemImage: "ellipsis")
+                                    //        }
+                                    //    },
+                                    //    preview: {
+                                    //        LessonCardPreview(lesson: lesson)
+                                    //    }
+                                    //)
+                            }
                         }
-                        .foregroundStyle(.secondary)
                     }
                 }
+                .contentMargins(.top, 15, for: .scrollContent)
+                .contentMargins(.top, 15, for: .scrollIndicators)
+                .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
+                .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
             }
         }
-        .contentMargins(.top, 15, for: .scrollContent)
-        .contentMargins(.top, 15, for: .scrollIndicators)
-        .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
-        .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
     }
 }
 
