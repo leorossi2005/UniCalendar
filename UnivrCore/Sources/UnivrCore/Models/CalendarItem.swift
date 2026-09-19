@@ -15,19 +15,22 @@ public enum CalendarItem: Identifiable, Equatable {
     
     public var id: String {
         switch self {
-        case .lesson(let lesson):
-            return "lesson_\(lesson.id)"
-        case .personal(let event):
-            return "personal_\(event.id)"
+        case .lesson(let lesson): return "lesson_\(lesson.id)"
+        case .personal(let event): return "personal_\(event.id)"
         }
     }
     
     public var startTime: Date {
         switch self {
-        case .lesson(let lesson):
-            return lesson.startTime
-        case .personal(let event):
-            return event.startTime
+        case .lesson(let lesson): return lesson.startTime
+        case .personal(let event): return event.startTime
+        }
+    }
+    
+    public var displayable: any CalendarDisplayable {
+        switch self {
+        case .lesson(let lesson): return lesson
+        case .personal(let event): return event
         }
     }
 }

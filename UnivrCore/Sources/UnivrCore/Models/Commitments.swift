@@ -32,3 +32,24 @@ public struct PersonalEvent: Sendable, Codable, Identifiable, Equatable {
         self.notes = notes
     }
 }
+
+public protocol CalendarDisplayable: Identifiable where ID == String {
+    var displayTitle: String { get }
+    var startTime: Date { get }
+    var endTime: Date { get }
+    var durationMinutes: Int { get }
+    var tags: [String] { get }
+    var displayLocation: String? { get }
+    var isCanceled: Bool { get }
+}
+
+extension Lesson: CalendarDisplayable {
+    public var displayTitle: String { cleanName ?? "" }
+    public var displayLocation: String? { location?.classroom }
+}
+
+extension PersonalEvent: CalendarDisplayable {
+    public var displayTitle: String { title }
+    public var displayLocation: String? { location }
+    public var isCanceled: Bool { false }
+}

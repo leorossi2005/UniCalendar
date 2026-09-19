@@ -170,7 +170,7 @@ struct CalendarView: View {
             ScrollView {
                 VStack(spacing: 10) {
                     ForEach(0..<10, id: \.self) { _ in
-                        LessonCard(lesson: .sample)
+                        CardItemContainer(item: .lesson(.sample), sheetRouter: sheetRouter)
                             .shimmeringPlaceholder(opacity: colorScheme == .light ? 0.5 : 0.7)
                     }
                 }
@@ -387,8 +387,6 @@ struct CalendarView: View {
 
 // MARK: - Subviews
 struct CalendarViewDay: View {
-    @Environment(\.colorScheme) var colorScheme
-    
     let combinedItems: [CalendarItem]
     var sheetRouter: CalendarSheetRouter
     
@@ -404,70 +402,7 @@ struct CalendarViewDay: View {
                 ScrollView {
                     VStack(spacing: 10) {
                         ForEach(combinedItems) { item in
-                            switch item {
-                            case .lesson(let lesson):
-                                if lesson.type != .pause && lesson.type != .closure {
-                                    LessonCard(lesson: lesson)
-                                        .onTapGesture {
-                                            Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                            sheetRouter.routeToLesson(lesson)
-                                        }
-                                        .contextMenu(
-                                            menuItems: {
-                                                Button(action: {
-                                                    Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                                    sheetRouter.routeToLesson(lesson, addToCalendar: true)
-                                                }) {
-                                                    Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
-                                                }
-                                                Button(action: {
-                                                    Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                                    sheetRouter.routeToLesson(lesson)
-                                                }) {
-                                                    Label("Vedi più dettagli", systemImage: "ellipsis")
-                                                }
-                                            },
-                                            preview: {
-                                                LessonCardPreview(lesson: lesson)
-                                            }
-                                        )
-                                } else {
-                                    HStack(alignment: .bottom) {
-                                        Image(systemName: .cupDynamic)
-                                            .font(.system(size: 40))
-                                        Text(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)))
-                                            .font(.system(size: 30))
-                                            .italic()
-                                            .bold()
-                                    }
-                                    .foregroundStyle(.secondary)
-                                }
-                            case .personal(let event):
-                                PersonalEventCard(event: event)
-                                    .onTapGesture {
-                                        Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                        sheetRouter.routeToPersonalEvent(event)
-                                    }
-                                    //.contextMenu(
-                                    //    menuItems: {
-                                    //        Button(action: {
-                                    //            Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                    //            sheetRouter.routeToLesson(lesson, addToCalendar: true)
-                                    //        }) {
-                                    //            Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
-                                    //        }
-                                    //        Button(action: {
-                                    //            Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                    //            sheetRouter.routeToLesson(lesson)
-                                    //        }) {
-                                    //            Label("Vedi più dettagli", systemImage: "ellipsis")
-                                    //        }
-                                    //    },
-                                    //    preview: {
-                                    //        LessonCardPreview(lesson: lesson)
-                                    //    }
-                                    //)
-                            }
+                            CardItemContainer(item: item, sheetRouter: sheetRouter)
                         }
                     }
                 }
