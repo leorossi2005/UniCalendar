@@ -12,6 +12,8 @@ import UnivrCore
 import CustomSheet
 
 struct CalendarItemPreview: View {
+    @Environment(\.colorScheme) var colorScheme
+    
     let item: CalendarItem
     let internalItem: any CalendarDisplayable
     
@@ -85,6 +87,21 @@ struct CalendarItemPreview: View {
         }
         .padding(24)
         .frame(width: UIDevice.isIpad ? 320 : UIScreen.main.bounds.width - 32, alignment: .leading)
+        .background {
+            switch item {
+            case .lesson: EmptyView()
+            case .personal:
+                CustomMeshGradient(
+                    width: BaseGradient.width,
+                    height: BaseGradient.height,
+                    points: BaseGradient.points,
+                    colors: BaseGradient.colors,
+                    background: BaseGradient.background,
+                    smoothsColors: BaseGradient.smoothsColors
+                )
+                .opacity(colorScheme == .dark ? 0.15 : 0.4)
+            }
+        }
     }
     
     private func rowLabel(text: LocalizedStringKey, icon: String) -> some View {

@@ -61,16 +61,21 @@ struct AddPersonalEventView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(action: onDismiss) {
-                        Image(systemName: "xmark")
+                    if #available(iOS 26, *) {
+                        Button("Annulla", systemImage: "xmark", role: .cancel, action: onDismiss)
+                    } else {
+                        Button("Annulla", role: .cancel, action: onDismiss)
                     }
                 }
+                
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(action: saveEvent) {
-                        Image(systemName: "checkmark")
-                            .foregroundStyle(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .secondary : Color.white)
+                    Group {
+                        if #available(iOS 26, *) {
+                            Button("Aggiungi", systemImage: "checkmark", role: .confirm, action: saveEvent)
+                        } else {
+                            Button("Aggiungi", action: saveEvent)
+                        }
                     }
-                    .buttonStyle(.borderedProminent)
                     .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
@@ -78,7 +83,6 @@ struct AddPersonalEventView: View {
     }
     
     private func saveEvent() {
-        // Correggi le date per usare il giorno selezionato
         let calendar = Calendar.current
         let startComponents = calendar.dateComponents([.hour, .minute], from: startTime)
         let endComponents = calendar.dateComponents([.hour, .minute], from: endTime)
