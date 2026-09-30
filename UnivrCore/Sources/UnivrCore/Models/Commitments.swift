@@ -19,6 +19,16 @@ public struct EventLocation: Codable, Equatable, Sendable {
     }
 }
 
+public struct TagItem: Sendable, Codable, Identifiable, Equatable {
+    public let id: UUID
+    public var name: String
+    
+    public init(id: UUID = UUID(), title: String = "") {
+        self.id = id
+        self.name = title
+    }
+}
+
 public struct PersonalEvent: Sendable, Codable, Identifiable, Equatable {
     public let id: String
     public var title: String
@@ -28,11 +38,11 @@ public struct PersonalEvent: Sendable, Codable, Identifiable, Equatable {
         let diff = endTime.timeIntervalSince(startTime)
         return Int(max(0, diff) / 60)
     }
-    public let tags: [String]
+    public let tags: [TagItem]
     public var location: EventLocation?
     public var notes: String?
     
-    public init(id: String, title: String, startTime: Date, endTime: Date, tags: [String] = [], location: EventLocation? = nil, notes: String? = nil) {
+    public init(id: String, title: String, startTime: Date, endTime: Date, tags: [TagItem] = [], location: EventLocation? = nil, notes: String? = nil) {
         self.id = id
         self.title = title
         self.startTime = startTime
@@ -48,7 +58,7 @@ public protocol CalendarDisplayable: Identifiable where ID == String {
     var startTime: Date { get }
     var endTime: Date { get }
     var durationMinutes: Int { get }
-    var tags: [String] { get }
+    var tagsItems: [TagItem] { get }
     var displayLocation: String? { get }
     var displayAddress: String? { get }
     var displayCoordinates: Coordinates? { get }
@@ -57,6 +67,7 @@ public protocol CalendarDisplayable: Identifiable where ID == String {
 
 extension Lesson: CalendarDisplayable {
     public var displayTitle: String { cleanName ?? "" }
+    public var tagsItems: [TagItem] { tags.map { TagItem(title: $0) } }
     public var displayLocation: String? { location?.classroom }
     public var displayAddress: String? { location?.address ?? location?.classroom }
     public var displayCoordinates: Coordinates? { location?.coordinates }
@@ -64,6 +75,7 @@ extension Lesson: CalendarDisplayable {
 
 extension PersonalEvent: CalendarDisplayable {
     public var displayTitle: String { title }
+    public var tagsItems: [TagItem] { tags }
     public var displayLocation: String? { location?.name }
     public var displayAddress: String? { location?.name }
     public var displayCoordinates: Coordinates? { location?.coordinates }

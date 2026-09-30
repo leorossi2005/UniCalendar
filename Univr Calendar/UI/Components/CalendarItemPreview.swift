@@ -31,10 +31,10 @@ struct CalendarItemPreview: View {
                     Text(notes)
                 }
                 
-                if !internalItem.tags.isEmpty {
+                if !internalItem.tagsItems.isEmpty {
                     HStack {
-                        ForEach(internalItem.tags.prefix(2), id: \.self) { tag in
-                            Text(tag)
+                        ForEach(internalItem.tagsItems.prefix(2)) { tag in
+                            Text(tag.name)
                                 .font(.caption2)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
@@ -47,8 +47,8 @@ struct CalendarItemPreview: View {
                                     }
                                 }
                         }
-                        if internalItem.tags.count > 2 {
-                            Text("+\(internalItem.tags.count - 2)")
+                        if internalItem.tagsItems.count > 2 {
+                            Text("+\(internalItem.tagsItems.count - 2)")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -114,7 +114,7 @@ struct CalendarItemPreview: View {
     private var badgeColor: Color {
         switch item {
         case .lesson(let lesson): return lesson.uiColor
-        case .personal: return .purple
+        case .personal: return Color(white: colorScheme == .dark ? 0.5 : 1)
         }
     }
 }

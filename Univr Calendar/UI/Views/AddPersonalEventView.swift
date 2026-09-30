@@ -15,34 +15,51 @@ struct AddPersonalEventView: View {
     @Environment(\.modelContext) private var modelContext
     
     let selectedDate: Date
+    let editingEvent: PersonalEvent?
     let onDismiss: () -> Void
     
-    @State private var title: String = ""
+    @State private var title: String
     @State private var startTime: Date
     @State private var endTime: Date
-    @State private var location: String = ""
-    @State private var notes: String = ""
+    @State private var location: String
+    @State private var tags: [TagItem]
+    @State private var notes: String
     
-    init(selectedDate: Date, onDismiss: @escaping () -> Void) {
+    init(selectedDate: Date, editingEvent: PersonalEvent? = nil, onDismiss: @escaping () -> Void) {
         self.selectedDate = selectedDate
+        self.editingEvent = editingEvent
         self.onDismiss = onDismiss
         
-        let defaultStart = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: selectedDate) ?? selectedDate
-        let defaultEnd = Calendar.current.date(byAdding: .hour, value: 1, to: defaultStart) ?? defaultStart
-        
-        _startTime = State(initialValue: defaultStart)
-        _endTime = State(initialValue: defaultEnd)
+        if let event = editingEvent {
+            _title = State(initialValue: event.title)
+            _startTime = State(initialValue: event.startTime)
+            _endTime = State(initialValue: event.endTime)
+            _location = State(initialValue: event.location?.name ?? "")
+            _tags = State(initialValue: event.tags)
+            _notes = State(initialValue: event.notes ?? "")
+        } else {
+            _title = State(initialValue: "")
+            
+            let defaultStart = Calendar.current.date(bySettingHour: 9, minute: 0, second: 0, of: selectedDate) ?? selectedDate
+            let defaultEnd = Calendar.current.date(byAdding: .hour, value: 1, to: defaultStart) ?? defaultStart
+            
+            _startTime = State(initialValue: defaultStart)
+            _endTime = State(initialValue: defaultEnd)
+            _location = State(initialValue: "")
+            _tags = State(initialValue: [])
+            _notes = State(initialValue: "")
+        }
     }
     
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Dettagli")) {
+                Section("Dettagli") {
                     TextField("Titolo", text: $title)
-                    TextField("Luogo (opzionale)", text: $location)
+                    TextField("Luogo", text: $location)
                 }
                 
-                Section(header: Text("Orario")) {
+                Section("Orario") {
                     SwiftUI.DatePicker("Inizio", selection: $startTime, displayedComponents: [.hourAndMinute])
                         .onChange(of: startTime) { oldValue, newValue in
                             if endTime < newValue {
@@ -52,12 +69,25 @@ struct AddPersonalEventView: View {
                     SwiftUI.DatePicker("Fine", selection: $endTime, displayedComponents: [.hourAndMinute])
                 }
                 
-                Section(header: Text("Note (opzionale)")) {
+                Section("Tag") {
+                    ForEach($tags) { tag in
+                        TextField("Nome", text: tag.name)
+                    }
+                    .onDelete { indexSet in
+                        tags.remove(atOffsets: indexSet)
+                    }
+                    Button("Aggiugni un nuovo tag") {
+                        tags.append(TagItem())
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                
+                Section("Note") {
                     TextEditor(text: $notes)
                         .frame(minHeight: 100)
                 }
             }
-            .navigationTitle("Nuovo Impegno")
+            .navigationTitle(editingEvent != nil ? "Modifica Impegno" : "Nuovo Impegno")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -71,9 +101,9 @@ struct AddPersonalEventView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Group {
                         if #available(iOS 26, *) {
-                            Button("Aggiungi", systemImage: "checkmark", role: .confirm, action: saveEvent)
+                            Button(editingEvent != nil ? "Salva" : "Aggiungi", systemImage: "checkmark", role: .confirm, action: saveEvent)
                         } else {
-                            Button("Aggiungi", action: saveEvent)
+                            Button(editingEvent != nil ? "Salva" : "Aggiungi", action: saveEvent)
                         }
                     }
                     .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -94,12 +124,14 @@ struct AddPersonalEventView: View {
         
         let locString = location.trimmingCharacters(in: .whitespacesAndNewlines)
         let eventLocation = locString.isEmpty ? nil : EventLocation(name: locString)
+        let finalTags = tags.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         
         let newEvent = PersonalEvent(
-            id: UUID().uuidString,
+            id: editingEvent?.id ?? UUID().uuidString,
             title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             startTime: finalStartTime,
-            endTime: max(finalStartTime, finalEndTime), // Fallback di sicurezza
+            endTime: max(finalStartTime, finalEndTime),
+            tags: finalTags,
             location: eventLocation,
             notes: notes.trimmingCharacters(in: .whitespacesAndNewlines)
         )

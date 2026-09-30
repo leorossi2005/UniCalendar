@@ -29,7 +29,7 @@ struct EditNotificationView: View {
             Section {
                 Picker("Avviso", selection: $offsetMinutes) {
                     if canSchedule(offset: 0) || offsetMinutes == 0 {
-                        Text("Ad inizio lezione").tag(0)
+                        Text("Ad inizio impegno").tag(0)
                     }
                     if canSchedule(offset: 5) || offsetMinutes == 5 {
                         Text("5 minuti prima").tag(5)

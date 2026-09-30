@@ -11,16 +11,6 @@
         }
       }
     },
-    "%@ - %@" : {
-      "localizations" : {
-        "it" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ - %2$@"
-          }
-        }
-      }
-    },
     "%@ - %@ (%@)" : {
       "localizations" : {
         "en" : {
@@ -145,12 +135,12 @@
         }
       }
     },
-    "Ad inizio lezione" : {
+    "Ad inizio impegno" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "At the beginning of the class"
+            "value" : "At the beginning of the commitment"
           }
         }
       }
@@ -165,8 +155,25 @@
         }
       }
     },
+    "Aggiugni un nuovo tag" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add new tag"
+          }
+        }
+      }
+    },
     "Aggiungi" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add"
+          }
+        }
+      }
     },
     "Aggiungi al calendario" : {
       "localizations" : {
@@ -254,6 +261,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Good study!"
+          }
+        }
+      }
+    },
+    "Cancella" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
           }
         }
       }
@@ -409,10 +426,14 @@
       }
     },
     "Dettagli" : {
-
-    },
-    "Dettagli Impegno" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details"
+          }
+        }
+      }
     },
     "Dispari" : {
       "localizations" : {
@@ -464,11 +485,15 @@
         }
       }
     },
-    "Elimina Impegno" : {
-
-    },
     "Eliminare questo impegno?" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this commitment?"
+          }
+        }
+      }
     },
     "Espandi tutto" : {
       "localizations" : {
@@ -491,7 +516,14 @@
       }
     },
     "Fine" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "End"
+          }
+        }
+      }
     },
     "Giornata Libera" : {
       "localizations" : {
@@ -584,7 +616,14 @@
       }
     },
     "Inizio" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start"
+          }
+        }
+      }
     },
     "Instagram" : {
       "localizations" : {
@@ -597,7 +636,14 @@
       }
     },
     "Le Live Activity ti permetteranno di avere un timer a schermo sulla schermata di blocco o nella Dynamic Island." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Live Activities will allow you to have a screen timer on the lock screen or in the Dynamic Island."
+          }
+        }
+      }
     },
     "Lo Sviluppatore" : {
       "localizations" : {
@@ -609,8 +655,15 @@
         }
       }
     },
-    "Luogo (opzionale)" : {
-
+    "Luogo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location"
+          }
+        }
+      }
     },
     "Mandami una mail" : {
       "localizations" : {
@@ -633,7 +686,24 @@
       }
     },
     "Modifica" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        }
+      }
+    },
+    "Modifica Impegno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit commitment"
+          }
+        }
+      }
     },
     "Modifica Notifica" : {
       "localizations" : {
@@ -695,6 +765,16 @@
         }
       }
     },
+    "Nome" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        }
+      }
+    },
     "Non capisci mai che lezioni hai? Non hai voglia di aprire il sito ogni volta o usare app obsolete? Ora puoi fare tutto qui!" : {
       "localizations" : {
         "en" : {
@@ -715,19 +795,15 @@
         }
       }
     },
-    "Non ci sono lezioni in programma per oggi." : {
-      "extractionState" : "stale",
+    "Non ci sono lezioni o impegni in programma per oggi." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "There are no classes scheduled for today."
+            "value" : "There are no classes or commitments scheduled for today."
           }
         }
       }
-    },
-    "Non ci sono lezioni o impegni in programma per oggi." : {
-
     },
     "Non è stata trovata nessuna lezione per questo corso." : {
       "localizations" : {
@@ -760,10 +836,14 @@
       }
     },
     "Note" : {
-
-    },
-    "Note (opzionale)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notes"
+          }
+        }
+      }
     },
     "Notifiche" : {
       "localizations" : {
@@ -796,7 +876,14 @@
       }
     },
     "Nuovo Impegno" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New commitment"
+          }
+        }
+      }
     },
     "O il tuo amico, ovvio" : {
       "localizations" : {
@@ -819,7 +906,14 @@
       }
     },
     "Orario" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Time"
+          }
+        }
+      }
     },
     "Pari" : {
       "localizations" : {
@@ -862,7 +956,14 @@
       }
     },
     "Questa azione non può essere annullata." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This action cannot be canceled."
+          }
+        }
+      }
     },
     "Questo sono io ↓" : {
       "localizations" : {
@@ -890,6 +991,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remove notifications"
+          }
+        }
+      }
+    },
+    "Salva" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
           }
         }
       }
@@ -1054,11 +1165,35 @@
         }
       }
     },
+    "Tag" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag"
+          }
+        }
+      }
+    },
     "Titolo" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Title"
+          }
+        }
+      }
     },
     "Usa Live Activity (Prossimamente)" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use Live Activity (Soon)"
+          }
+        }
+      }
     },
     "Usa questa sezione per modificare le impostazioni dell'app, cambia pure l'anno, il corso, l'anno di corso o la matricola se presente." : {
       "localizations" : {

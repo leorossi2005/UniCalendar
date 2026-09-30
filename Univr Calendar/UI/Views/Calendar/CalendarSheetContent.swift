@@ -51,21 +51,21 @@ struct CalendarSheetContent: View {
                         Settings(tempSettings: $router.tempSettings)
                             .ignoresSafeArea(.keyboard)
                     } else if router.openAddPersonalEvent {
-                        AddPersonalEventView(selectedDate: selectedWeek) {
+                        AddPersonalEventView(selectedDate: selectedWeek, editingEvent: router.editingPersonalEvent) {
                             sheetManager.setDetent(.small)
                             router.openAddPersonalEvent = false
-                        }
-                    } else if let event = router.selectedPersonalEvent {
-                        PersonalEventDetailsView(event: event) {
-                            sheetManager.setDetent(.small)
-                            router.selectedPersonalEvent = nil
+                            router.editingPersonalEvent = nil
                         }
                     } else if let item = router.selectedItem {
-                        LessonDetailsView(item: item, internalItem: item.displayable, openAddToCalendar: router.openAddToCalendar) {
+                        CalendarItemDetailsView(item: item, internalItem: item.displayable, openAddToCalendar: router.openAddToCalendar, onDismiss: {
                             sheetManager.setDetent(.small)
                             router.selectedItem = nil
                             router.openAddToCalendar = false
-                        }
+                        }, onEdit: {
+                            if case .personal(let event) = item {
+                                router.routeToAddPersonalEvent(editing: event)
+                            }
+                        })
                     } else if let room = router.selectedRoom {
                         RoomDetailsView(room: room, selectedDate: selectedWeek)
                     }

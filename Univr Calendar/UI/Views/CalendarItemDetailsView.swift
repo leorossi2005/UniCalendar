@@ -1,5 +1,5 @@
 //
-//  LessonDetailsView.swift
+//  CalendarItemDetailsView.swift
 //  Univr Calendar
 //
 //  Created by Leonardo Rossi on 24/11/25.
@@ -14,8 +14,9 @@ import EventKit
 import UnivrCore
 import CustomSheet
 
-struct LessonDetailsView: View {
+struct CalendarItemDetailsView: View {
     @Environment(GlobalSheetManager.self) private var sheetManager
+    @Environment(\.colorScheme) var colorScheme
     
     let item: CalendarItem
     let internalItem: any CalendarDisplayable
@@ -27,6 +28,9 @@ struct LessonDetailsView: View {
     
     let openAddToCalendar: Bool
     var onDismiss: (() -> Void)?
+    var onEdit: (() -> Void)? = nil
+    
+    @State private var showDeletePopover: Bool = false
     
     var body: some View {
         ZStack {
@@ -49,6 +53,23 @@ struct LessonDetailsView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     headerInfo
                     detailRows
+                    
+                    if case .personal(let event) = item, let notes = event.notes, !notes.isEmpty {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("Note")
+                                .font(.headline.bold())
+                                .foregroundStyle(.secondary)
+                                .padding(.leading)
+                            Text(notes)
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding()
+                                .background(Color(colorScheme == .dark ? .secondarySystemGroupedBackground : .tertiarySystemGroupedBackground))
+                                .cornerRadius(.deviceCornerRadius)
+                        }
+                    }
+                    
                     StableMapView(
                         item: item,
                         internalItem: internalItem,
@@ -71,7 +92,7 @@ struct LessonDetailsView: View {
                                 }
                             } else {
                                 if canSchedule(offset: 0) {
-                                    Button("Ad inizio lezione") { scheduleNotification(offset: 0) }
+                                    Button("Ad inizio impegno") { scheduleNotification(offset: 0) }
                                 }
                                 if canSchedule(offset: 5) {
                                     Button("5 minuti prima") { scheduleNotification(offset: 5) }
@@ -109,7 +130,15 @@ struct LessonDetailsView: View {
                             }
                         }
                     case .personal:
-                        ToolbarItem(placement: .primaryAction) {}
+                        ToolbarItem(placement: .primaryAction) {
+                            Button("Modifica", systemImage: "pencil", action: onEdit ?? {} )
+                        }
+                        ToolbarItem(placement: .primaryAction) {
+                            Button("Elimina", systemImage: "trash", role: .destructive) {
+                                showDeletePopover = true
+                            }
+                            .tint(.red)
+                        }
                     }
                 }
             }
@@ -126,9 +155,26 @@ struct LessonDetailsView: View {
                 eventSaved = false
             }
         }
+        .alert("Eliminare questo impegno?", isPresented: $showDeletePopover) {
+            Button("Conferma", role: .destructive, action: deleteEvent)
+            Button("Annulla", role: .cancel) {}
+        } message: {
+            Text("Questa azione non può essere annullata.")
+        }
         .onAppear {
             if openAddToCalendar, case .lesson(let lesson) = item {
                 prepareAndShowEvent(for: lesson)
+            }
+        }
+    }
+    
+    private func deleteEvent() {
+        if case .personal(let event) = item {
+            Task {
+                await CommitmentsManager.shared.deleteEvent(id: event.id)
+                if let onDismiss = onDismiss {
+                    onDismiss()
+                }
             }
         }
     }
@@ -140,11 +186,11 @@ struct LessonDetailsView: View {
                 .font(.title2)
                 .bold()
                 .contentShape(.rect)
-            if !internalItem.tags.isEmpty {
+            if !internalItem.tagsItems.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
-                        ForEach(internalItem.tags, id: \.self) { tag in
-                            Text(tag)
+                        ForEach(internalItem.tagsItems) { tag in
+                            Text(tag.name)
                                 .font(.caption)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
@@ -245,11 +291,21 @@ struct LessonDetailsView: View {
     }
     
     private var tagsBackground: some View {
-        switch item {
-        case .lesson(let lesson):
-            internalItem.isCanceled ? Color(.systemBackground) : lesson.uiColor.opacity(0.2)
-        case .personal:
-            Color(.systemBackground)
+        Group {
+            switch item {
+            case .lesson(let lesson):
+                internalItem.isCanceled ? Color(.systemBackground) : lesson.uiColor.opacity(0.2)
+            case .personal:
+                CustomMeshGradient(
+                    width: BaseGradient.width,
+                    height: BaseGradient.height,
+                    points: BaseGradient.points,
+                    colors: BaseGradient.colors,
+                    background: BaseGradient.background,
+                    smoothsColors: BaseGradient.smoothsColors
+                )
+                .opacity(colorScheme == .dark ? 0.15 : 0.25)
+            }
         }
     }
 }
@@ -293,7 +349,7 @@ struct StableMapView: View {
         case .lesson(let lesson):
             lesson.uiColor
         case .personal:
-            Color(.systemBackground)
+            Color(white: 0.8)
         }
     }
     

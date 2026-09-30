@@ -93,7 +93,7 @@ struct CalendarItemCard: View {
                     .multilineTextAlignment(.leading)
             }
             
-            if !internalItem.tags.isEmpty {
+            if !internalItem.tagsItems.isEmpty {
                 tagsList
             }
         }
@@ -102,14 +102,22 @@ struct CalendarItemCard: View {
     
     private var tagsList: some View {
         VStack(alignment: .leading, spacing: 4) {
-            ForEach(internalItem.tags, id: \.self) { tag in
-                Text(tag)
-                    .foregroundStyle(.black)
-                    .font(.caption2)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3)
-                    .background(.black.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+            ForEach(internalItem.tagsItems.prefix(3)) { tag in
+                HStack {
+                    Text(tag.name)
+                        .foregroundStyle(.black)
+                        .font(.caption2)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(.black.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                    
+                    if internalItem.tagsItems.count > 3 && internalItem.tagsItems[2] == tag {
+                        Text("+\(internalItem.tagsItems.count - 2)")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
         }
     }
@@ -142,6 +150,8 @@ struct CardItemContainer: View {
         internalItem = item.displayable
     }
     
+    @State private var showDeletePopover: Bool = false
+    
     var body: some View {
         if case .lesson(let lesson) = item, lesson.type == .pause || lesson.type == .closure {
             PauseCard(item: internalItem)
@@ -169,20 +179,40 @@ struct CardItemContainer: View {
                     case .personal(let event):
                         Button(action: {
                             Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            sheetRouter.routeToPersonalEvent(event)
+                            sheetRouter.routeToAddPersonalEvent(editing: event)
                         }) {
                             Label("Modifica", systemImage: "pencil")
                         }
                         Button(action: {
                             Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            sheetRouter.routeToPersonalEvent(event)
+                            sheetRouter.routeToItem(item)
                         }) {
                             Label("Vedi più dettagli", systemImage: "ellipsis")
+                        }
+                        Button(role: .destructive, action: {
+                            Haptics.play(.impact(weight: .light, intensity: 0.5))
+                            showDeletePopover = true
+                        }) {
+                            Label("Cancella", systemImage: "trash")
                         }
                     }
                 } preview: {
                     CalendarItemPreview(item: item, internalItem: internalItem)
                 }
+                .alert("Eliminare questo impegno?", isPresented: $showDeletePopover) {
+                    Button("Conferma", role: .destructive, action: deleteEvent)
+                    Button("Annulla", role: .cancel) {}
+                } message: {
+                    Text("Questa azione non può essere annullata.")
+                }
+        }
+    }
+    
+    private func deleteEvent() {
+        if case .personal(let event) = item {
+            Task {
+                await CommitmentsManager.shared.deleteEvent(id: event.id)
+            }
         }
     }
 }
