@@ -60,10 +60,10 @@ struct CalendarSheetContent: View {
                             sheetManager.setDetent(.small)
                             router.selectedPersonalEvent = nil
                         }
-                    } else if let lesson = router.selectedLesson {
-                        LessonDetailsView(lesson: lesson, openAddToCalendar: router.openAddToCalendar) {
+                    } else if let item = router.selectedItem {
+                        LessonDetailsView(item: item, internalItem: item.displayable, openAddToCalendar: router.openAddToCalendar) {
                             sheetManager.setDetent(.small)
-                            router.selectedLesson = nil
+                            router.selectedItem = nil
                             router.openAddToCalendar = false
                         }
                     } else if let room = router.selectedRoom {

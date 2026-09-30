@@ -92,12 +92,15 @@ struct AddPersonalEventView: View {
             return
         }
         
+        let locString = location.trimmingCharacters(in: .whitespacesAndNewlines)
+        let eventLocation = locString.isEmpty ? nil : EventLocation(name: locString)
+        
         let newEvent = PersonalEvent(
             id: UUID().uuidString,
             title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             startTime: finalStartTime,
             endTime: max(finalStartTime, finalEndTime), // Fallback di sicurezza
-            location: location.trimmingCharacters(in: .whitespacesAndNewlines),
+            location: eventLocation,
             notes: notes.trimmingCharacters(in: .whitespacesAndNewlines)
         )
         

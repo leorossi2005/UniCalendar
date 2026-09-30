@@ -15,17 +15,18 @@ struct CalendarItemCard: View {
     let internalItem: any CalendarDisplayable
     
     var body: some View {
-        HStack(spacing: 20) {
+        HStack(alignment: .top, spacing: 20) {
             timeInfo
             itemInfo
         }
         .padding()
+        .padding(.bottom, 12)
         .opacity(internalItem.isCanceled ? 0.5 : 1.0)
         .background(backgroundLayer)
         .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
         .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 35, style: .continuous))
         .hoverEffect(.lift)
-        .padding(.horizontal, 15)
+        .padding(.horizontal)
     }
     
     // MARK: - Components
@@ -73,7 +74,6 @@ struct CalendarItemCard: View {
                 .background(.black.opacity(0.1))
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
-            Spacer()
         }
         .foregroundStyle(internalItem.isCanceled ? Color.primary : Color.black)
     }
@@ -96,7 +96,6 @@ struct CalendarItemCard: View {
             if !internalItem.tags.isEmpty {
                 tagsList
             }
-            Spacer()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -150,25 +149,20 @@ struct CardItemContainer: View {
             CalendarItemCard(item: item, internalItem: internalItem)
                 .onTapGesture {
                     Haptics.play(.impact(weight: .light, intensity: 0.5))
-                    switch item {
-                    case .lesson(let lesson):
-                        sheetRouter.routeToLesson(lesson)
-                    case .personal(let event):
-                        sheetRouter.routeToPersonalEvent(event)
-                    }
+                    sheetRouter.routeToItem(item)
                 }
                 .contextMenu {
                     switch item {
-                    case .lesson(let lesson):
+                    case .lesson:
                         Button(action: {
                             Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            sheetRouter.routeToLesson(lesson, addToCalendar: true)
+                            sheetRouter.routeToItem(item, addToCalendar: true)
                         }) {
                             Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
                         }
                         Button(action: {
                             Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            sheetRouter.routeToLesson(lesson)
+                            sheetRouter.routeToItem(item)
                         }) {
                             Label("Vedi più dettagli", systemImage: "ellipsis")
                         }

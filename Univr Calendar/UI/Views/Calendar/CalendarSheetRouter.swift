@@ -16,7 +16,7 @@ import CustomSheet
 class CalendarSheetRouter {
     let manager: GlobalSheetManager
     
-    var selectedLesson: Lesson? = nil
+    var selectedItem: CalendarItem? = nil
     var selectedPersonalEvent: PersonalEvent? = nil
     var selectedRoom: Room? = nil
     var openSettings: Bool = false
@@ -48,8 +48,8 @@ class CalendarSheetRouter {
         manager.setDetent(.large)
     }
     
-    func routeToLesson(_ lesson: Lesson, addToCalendar: Bool = false) {
-        selectedLesson = lesson
+    func routeToItem(_ item: CalendarItem, addToCalendar: Bool = false) {
+        selectedItem = item
         openAddToCalendar = addToCalendar
         detents = [.small, .medium, .large]
         manager.setDetent(.large)
@@ -75,7 +75,7 @@ class CalendarSheetRouter {
     
     // MARK: - Reset automatico
     func resetToCalendar() {
-        selectedLesson = nil
+        selectedItem = nil
         selectedPersonalEvent = nil
         selectedRoom = nil
         openSettings = false

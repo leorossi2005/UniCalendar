@@ -17,9 +17,9 @@ import CustomSheet
 struct LessonDetailsView: View {
     @Environment(GlobalSheetManager.self) private var sheetManager
     
-    var lesson: Lesson
+    let item: CalendarItem
+    let internalItem: any CalendarDisplayable
     
-    @State private var showOriginalName: Bool = false
     @State private var calendarEvent: EKEvent?
     @State private var eventStore = EKEventStore()
     @State private var eventSaved: Bool = false
@@ -50,24 +50,22 @@ struct LessonDetailsView: View {
                     headerInfo
                     detailRows
                     StableMapView(
-                        lesson: lesson,
+                        item: item,
+                        internalItem: internalItem,
                         corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
                     )
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
                 .ignoresSafeArea(edges: .bottom)
-                .onChange(of: lesson) {
-                    showOriginalName = false
-                }
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
-                        let isScheduled = notificationManager.activeNotifications.contains { $0.id == lesson.id }
+                        let isScheduled = notificationManager.activeNotifications.contains { $0.id == internalItem.id }
                         
                         Menu {
                             if isScheduled {
                                 Button(role: .destructive) {
-                                    Task { await notificationManager.removeNotification(id: lesson.id) }
+                                    Task { await notificationManager.removeNotification(id: internalItem.id) }
                                 } label: {
                                     Label("Rimuovi notifica", systemImage: "bell.slash")
                                 }
@@ -96,17 +94,22 @@ struct LessonDetailsView: View {
                         .disabled(!isScheduled && !canSchedule(offset: 0))
                     }
                     
-                    ToolbarItem(placement: .primaryAction) {
-                        Button {
-                            if !eventSaved {
-                                prepareAndShowEvent(for: lesson)
+                    switch item {
+                    case .lesson(let lesson):
+                        ToolbarItem(placement: .primaryAction) {
+                            Button {
+                                if !eventSaved {
+                                    prepareAndShowEvent(for: lesson)
+                                }
+                            } label: {
+                                Image(systemName: eventSaved ? "checkmark" : "calendar.badge.plus")
+                                    .frame(width: 24, height: 24)
+                                    .symbolReplace()
+                                    .animation(.snappy, value: eventSaved)
                             }
-                        } label: {
-                            Image(systemName: eventSaved ? "checkmark" : "calendar.badge.plus")
-                                .frame(width: 24, height: 24)
-                                .symbolReplace()
-                                .animation(.snappy, value: eventSaved)
                         }
+                    case .personal:
+                        ToolbarItem(placement: .primaryAction) {}
                     }
                 }
             }
@@ -124,7 +127,7 @@ struct LessonDetailsView: View {
             }
         }
         .onAppear {
-            if openAddToCalendar {
+            if openAddToCalendar, case .lesson(let lesson) = item {
                 prepareAndShowEvent(for: lesson)
             }
         }
@@ -133,25 +136,22 @@ struct LessonDetailsView: View {
     // MARK: - Subviews
     private var headerInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text((showOriginalName ? lesson.name : lesson.cleanName) ?? "")
+            Text(internalItem.displayTitle)
                 .font(.title2)
                 .bold()
                 .contentShape(.rect)
-                .onTapGesture {
-                    showOriginalName.toggle()
-                }
-            if !lesson.tags.isEmpty {
+            if !internalItem.tags.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
-                        ForEach(lesson.tags, id: \.self) { tag in
+                        ForEach(internalItem.tags, id: \.self) { tag in
                             Text(tag)
                                 .font(.caption)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
-                                .background(lesson.isCanceled ? Color(.systemBackground) : lesson.uiColor.opacity(0.2))
+                                .background(tagsBackground)
                                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                                 .overlay {
-                                    if lesson.isCanceled {
+                                    if internalItem.isCanceled {
                                         RoundedRectangle(cornerRadius: 7, style: .continuous)
                                             .strokeBorder(Color(white: 0.35), lineWidth: 0.5)
                                     }
@@ -166,21 +166,31 @@ struct LessonDetailsView: View {
     private var detailRows: some View {
         VStack(alignment: .leading, spacing: 15) {
             rowLabel(
-                text: "\(lesson.startTime.getCurrentWeekdaySymbol(length: .wide)), \(lesson.startTime.day) \(lesson.startTime.getCurrentMonthSymbol(length: .wide)) \(lesson.startTime.yearSymbol)",
+                text: "\(internalItem.startTime.getCurrentWeekdaySymbol(length: .wide)), \(internalItem.startTime.day) \(internalItem.startTime.getCurrentMonthSymbol(length: .wide)) \(internalItem.startTime.yearSymbol)",
                 icon: "calendar"
             )
             rowLabel(
-                text: "\(lesson.startTime.formatted(.dateTime.hour().minute())) - \(lesson.endTime.formatted(.dateTime.hour().minute())) (\(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow))))",
+                text: "\(internalItem.startTime.formatted(.dateTime.hour().minute())) - \(internalItem.endTime.formatted(.dateTime.hour().minute())) (\(Duration.seconds(internalItem.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow))))",
                 icon: "clock.fill"
             )
-            rowLabel(
-                text: lesson.teachers.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.teachers.joined(separator: ", ")),
-                icon: !lesson.teachers.isEmpty && lesson.teachers.count > 1 ? "person.2.fill" : "person.fill"
-            )
-            rowLabel(
-                text: "\(lesson.location?.classroom ?? "") \(lesson.location?.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
-                icon: "mappin"
-            )
+            switch item {
+            case .lesson(let lesson):
+                rowLabel(
+                    text: lesson.teachers.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.teachers.joined(separator: ", ")),
+                    icon: !lesson.teachers.isEmpty && lesson.teachers.count > 1 ? "person.2.fill" : "person.fill"
+                )
+                rowLabel(
+                    text: "\(lesson.location?.classroom ?? "") \(lesson.location?.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
+                    icon: "mappin"
+                )
+            case .personal:
+                if let loc = internalItem.displayLocation, !loc.isEmpty {
+                    rowLabel(
+                        text: LocalizedStringKey(loc),
+                        icon: "mappin"
+                    )
+                }
+            }
         }
     }
     
@@ -191,18 +201,18 @@ struct LessonDetailsView: View {
     
     // MARK: - Logic
     private func canSchedule(offset: Int) -> Bool {
-        lesson.startTime.addingTimeInterval(Double(-offset * 60)) > Date().addingTimeInterval(60)
+        internalItem.startTime.addingTimeInterval(Double(-offset * 60)) > Date().addingTimeInterval(60)
     }
     
     private func scheduleNotification(offset: Int) {
         Task {
             let saved = SavedNotification(
-                id: lesson.id,
+                id: internalItem.id,
                 courseId: UserSettings.shared.selectedCourse,
                 courseName: UserSettings.shared.selectedCourseName,
                 courseYear: UserSettings.shared.selectedAcademicYearName,
-                lessonName: lesson.cleanName ?? lesson.name ?? "Lezione",
-                date: lesson.startTime,
+                lessonName: internalItem.displayTitle,
+                date: internalItem.startTime,
                 offsetMinutes: offset
             )
             await notificationManager.toggleNotification(notification: saved)
@@ -233,11 +243,21 @@ struct LessonDetailsView: View {
         
         calendarEvent = newEvent
     }
+    
+    private var tagsBackground: some View {
+        switch item {
+        case .lesson(let lesson):
+            internalItem.isCanceled ? Color(.systemBackground) : lesson.uiColor.opacity(0.2)
+        case .personal:
+            Color(.systemBackground)
+        }
+    }
 }
 
 // MARK: - Subviews
 struct StableMapView: View {
-    let lesson: Lesson
+    let item: CalendarItem
+    let internalItem: any CalendarDisplayable
     @State var externalCoordinate: CLLocationCoordinate2D?
     @State var corderRadius: CGFloat
     @State private var isLoadingMap: Bool = false
@@ -246,33 +266,42 @@ struct StableMapView: View {
         ZStack {
             if let coordinate = externalCoordinate {
                 UIKitStaticMap(coordinate: coordinate, padding: corderRadius / 2, altitude: 600)
-                mapAnnotationView(lesson: lesson)
+                mapAnnotationView
                 VStack {
                     HStack {
                         Spacer()
-                        openInMapsButton(coordinate: coordinate, name: lesson.location?.classroom ?? "", color: lesson.uiColor)
+                        openInMapsButton(coordinate: coordinate, name: internalItem.displayLocation ?? "", color: uiColor)
                     }
                     Spacer()
                 }
             } else if isLoadingMap {
                 ProgressView()
             } else {
-                ContentUnavailableView("Posizione non trovata\n\n\(lesson.location?.address ?? "")", systemImage: "mappin.slash")
+                ContentUnavailableView("Posizione non trovata\n\n\(internalItem.displayAddress ?? "")", systemImage: "mappin.slash")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.gray.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: corderRadius))
-        .task(id: lesson.id) {
-            await findLocation(for: lesson)
+        .task(id: item.id) {
+            await findLocation()
         }
     }
     
-    private func mapAnnotationView(lesson: Lesson) -> some View {
+    private var uiColor: Color {
+        switch item {
+        case .lesson(let lesson):
+            lesson.uiColor
+        case .personal:
+            Color(.systemBackground)
+        }
+    }
+    
+    private var mapAnnotationView: some View {
         VStack(spacing: 4) {
             ZStack {
                 Circle()
-                    .fill(lesson.uiColor)
+                    .fill(uiColor)
                     .frame(width: 30, height: 30)
                     .shadow(radius: 2)
                 Image(systemName: "graduationcap.fill")
@@ -280,7 +309,7 @@ struct StableMapView: View {
                     .foregroundStyle(.black)
             }
             
-            Text(lesson.location?.address ?? "")
+            Text(internalItem.displayAddress ?? "")
                 .frame(height: 10)
                 .font(.caption)
                 .bold()
@@ -329,8 +358,8 @@ struct StableMapView: View {
         .hoverEffect(.highlight)
     }
     
-    private func findLocation(for lesson: Lesson) async {
-        if let latitude = lesson.location?.coordinates?.latitude, let longitude = lesson.location?.coordinates?.longitude {
+    private func findLocation() async {
+        if let latitude = internalItem.displayCoordinates?.latitude, let longitude = internalItem.displayCoordinates?.longitude {
             await MainActor.run {
                 self.externalCoordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
                 self.isLoadingMap = false
@@ -338,7 +367,7 @@ struct StableMapView: View {
             return
         }
         
-        guard let address = lesson.location?.address, !address.isEmpty else { return }
+        guard let address = internalItem.displayAddress, !address.isEmpty else { return }
         
         if let cachedCoord = await CoordinateCache.shared.coordinate(for: address) {
             let clCoord = CLLocationCoordinate2D(latitude: cachedCoord.latitude, longitude: cachedCoord.longitude)
@@ -378,18 +407,4 @@ struct StableMapView: View {
         mapItem.name = name
         mapItem.openInMaps()
     }
-}
-
-#Preview {
-    @Previewable @Namespace var transition
-    @Previewable @State var lesson: Lesson? = Lesson.sample
-    
-    Text("")
-        .sheet(isPresented: .constant(true)) {
-            if let lesson = lesson {
-                LessonDetailsView(lesson: lesson, openAddToCalendar: false)
-                    .interactiveDismissDisabled(true)
-                    .presentationBackgroundInteraction(.enabled(upThrough: .medium))
-            }
-        }
 }
