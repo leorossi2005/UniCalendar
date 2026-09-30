@@ -27,10 +27,6 @@ struct CalendarItemPreview: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .layoutPriority(10)
                 
-                if case .personal(let personalEvent) = item, let notes = personalEvent.notes, !notes.isEmpty {
-                    Text(notes)
-                }
-                
                 if !internalItem.tagsItems.isEmpty {
                     HStack {
                         ForEach(internalItem.tagsItems.prefix(2)) { tag in
@@ -82,6 +78,26 @@ struct CalendarItemPreview: View {
                             icon: "mappin"
                         )
                     }
+                }
+            }
+            
+            if case .personal(let personalEvent) = item, let notes = personalEvent.notes, !notes.isEmpty {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Note")
+                        .font(.headline.bold())
+                        .foregroundStyle(.secondary)
+                        .padding(.leading)
+                    Text(notes)
+                        .font(.body)
+                        .lineLimit(4)
+                        .truncationMode(.tail)
+                        .foregroundColor(.secondary)
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            badgeColor.opacity(0.2),
+                            in: RoundedRectangle(cornerRadius: .deviceCornerRadius - 16)
+                        )
                 }
             }
         }

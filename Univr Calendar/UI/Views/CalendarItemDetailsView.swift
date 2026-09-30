@@ -63,10 +63,12 @@ struct CalendarItemDetailsView: View {
                             Text(notes)
                                 .font(.body)
                                 .foregroundColor(.secondary)
+                                .padding(16)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
-                                .background(Color(colorScheme == .dark ? .secondarySystemGroupedBackground : .tertiarySystemGroupedBackground))
-                                .cornerRadius(.deviceCornerRadius)
+                                .background(
+                                    Color(colorScheme == .dark ? .secondarySystemGroupedBackground : .tertiarySystemGroupedBackground),
+                                    in: RoundedRectangle(cornerRadius: .deviceCornerRadius - 16)
+                                )
                         }
                     }
                     
