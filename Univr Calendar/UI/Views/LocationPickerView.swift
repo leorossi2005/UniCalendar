@@ -98,7 +98,7 @@ struct LocationPickerView: View {
         }
         .navigationTitle("Seleziona Luogo")
         .navigationBarTitleDisplayMode(.inline)
-        .task {
+        .onAppear {
             isSearchFocused = true
         }
     }

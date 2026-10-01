@@ -575,6 +575,9 @@
         }
       }
     },
+    "Hello, World!" : {
+
+    },
     "I miei progetti" : {
       "localizations" : {
         "en" : {
@@ -584,6 +587,9 @@
           }
         }
       }
+    },
+    "Impegni Personali" : {
+
     },
     "Impostazioni" : {
       "localizations" : {

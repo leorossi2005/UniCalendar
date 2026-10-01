@@ -62,17 +62,24 @@ struct CalendarItemCard: View {
     }
     
     private var timeInfo: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 2) {
             Text(item.startTime.formatted(.dateTime.hour().minute()))
                 .font(.largeTitle.monospacedDigit())
                 .fontWeight(.medium)
             
             if !internalItem.isCanceled {
-                Label(Duration.seconds(internalItem.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)), systemImage: "clock")
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(.black.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                HStack {
+                    VerticalLine(color: Color(white: 0.3), lineWidth: 2)
+                        .frame(height: 16)
+                    Text(Duration.seconds(internalItem.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)))
+                        .font(.subheadline)
+                        .foregroundStyle(Color(white: 0.3))
+                }
+                .padding(.leading, 8)
+                Text(item.displayable.endTime.formatted(.dateTime.hour().minute()))
+                    .font(.title3.monospacedDigit())
+                    .fontWeight(.regular)
+                    .foregroundStyle(Color(white: 0.3))
             }
         }
         .foregroundStyle(internalItem.isCanceled ? Color.primary : Color.black)
@@ -94,7 +101,7 @@ struct CalendarItemCard: View {
                     .lineLimit(2)
             }
             
-            if !internalItem.tagsItems.isEmpty {
+            if !internalItem.tagsItems.isEmpty && !internalItem.isCanceled {
                 tagsList
             }
         }

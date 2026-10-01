@@ -93,6 +93,10 @@ struct Settings: View {
                     Label("Notifiche Programmate", systemImage: "bell.badge")
                         .foregroundStyle(.primary)
                 }
+                NavigationLink(destination: PersonalCommitmentsList()) {
+                    Label("Impegni Personali", systemImage: "calendar.and.person")
+                        .foregroundStyle(.primary)
+                }
                 NavigationLink(destination: AboutView()) {
                     Label("Informazioni", systemImage: .infoPageDynamic)
                         .foregroundStyle(.primary)

@@ -25,6 +25,8 @@ struct AddPersonalEventView: View {
     @State private var tags: [TagItem]
     @State private var notes: String
     
+    @FocusState private var focusedTag: UUID?
+    
     init(selectedDate: Date, editingEvent: PersonalEvent? = nil, onDismiss: @escaping (PersonalEvent?) -> Void) {
         self.selectedDate = selectedDate
         self.editingEvent = editingEvent
@@ -84,12 +86,15 @@ struct AddPersonalEventView: View {
                 Section("Tag") {
                     ForEach($tags) { tag in
                         TextField("Nome", text: tag.name)
+                            .focused($focusedTag, equals: tag.id)
                     }
                     .onDelete { indexSet in
                         tags.remove(atOffsets: indexSet)
                     }
                     Button("Aggiugni un nuovo tag") {
-                        tags.append(TagItem())
+                        let newTag = TagItem()
+                        tags.append(newTag)
+                        focusedTag = newTag.id
                     }
                     .frame(maxWidth: .infinity)
                 }
