@@ -16,7 +16,7 @@ struct AddPersonalEventView: View {
     
     let selectedDate: Date
     let editingEvent: PersonalEvent?
-    let onDismiss: () -> Void
+    let onDismiss: (PersonalEvent?) -> Void
     
     @State private var title: String
     @State private var startTime: Date
@@ -25,7 +25,7 @@ struct AddPersonalEventView: View {
     @State private var tags: [TagItem]
     @State private var notes: String
     
-    init(selectedDate: Date, editingEvent: PersonalEvent? = nil, onDismiss: @escaping () -> Void) {
+    init(selectedDate: Date, editingEvent: PersonalEvent? = nil, onDismiss: @escaping (PersonalEvent?) -> Void) {
         self.selectedDate = selectedDate
         self.editingEvent = editingEvent
         self.onDismiss = onDismiss
@@ -62,11 +62,14 @@ struct AddPersonalEventView: View {
                 Section("Orario") {
                     SwiftUI.DatePicker("Inizio", selection: $startTime, displayedComponents: [.hourAndMinute])
                         .onChange(of: startTime) { oldValue, newValue in
-                            if endTime < newValue {
-                                endTime = Calendar.current.date(byAdding: .hour, value: 1, to: newValue) ?? newValue
+                            let minEnd = Calendar.current.date(byAdding: .minute, value: 1, to: newValue) ?? newValue
+                            if endTime < minEnd {
+                                endTime = Calendar.current.date(byAdding: .hour, value: 1, to: newValue) ?? minEnd
                             }
                         }
-                    SwiftUI.DatePicker("Fine", selection: $endTime, displayedComponents: [.hourAndMinute])
+                    
+                    let minEndTime = Calendar.current.date(byAdding: .minute, value: 1, to: startTime) ?? startTime
+                    SwiftUI.DatePicker("Fine", selection: $endTime, in: minEndTime..., displayedComponents: [.hourAndMinute])
                 }
                 
                 Section("Tag") {
@@ -92,9 +95,9 @@ struct AddPersonalEventView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     if #available(iOS 26, *) {
-                        Button("Annulla", systemImage: "xmark", role: .cancel, action: onDismiss)
+                        Button("Annulla", systemImage: "xmark", role: .cancel, action: { onDismiss(nil) })
                     } else {
-                        Button("Annulla", role: .cancel, action: onDismiss)
+                        Button("Annulla", role: .cancel, action: { onDismiss(nil) })
                     }
                 }
                 
@@ -106,7 +109,7 @@ struct AddPersonalEventView: View {
                             Button(editingEvent != nil ? "Salva" : "Aggiungi", action: saveEvent)
                         }
                     }
-                    .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(!hasChanges)
                 }
             }
         }
@@ -126,11 +129,13 @@ struct AddPersonalEventView: View {
         let eventLocation = locString.isEmpty ? nil : EventLocation(name: locString)
         let finalTags = tags.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         
+        let minSafeEndTime = calendar.date(byAdding: .minute, value: 1, to: finalStartTime) ?? finalStartTime
+        
         let newEvent = PersonalEvent(
             id: editingEvent?.id ?? UUID().uuidString,
             title: title.trimmingCharacters(in: .whitespacesAndNewlines),
             startTime: finalStartTime,
-            endTime: max(finalStartTime, finalEndTime),
+            endTime: max(minSafeEndTime, finalEndTime),
             tags: finalTags,
             location: eventLocation,
             notes: notes.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -138,7 +143,40 @@ struct AddPersonalEventView: View {
         
         Task {
             await CommitmentsManager.shared.addEvent(newEvent)
-            onDismiss()
+            onDismiss(newEvent)
         }
+    }
+    
+    private var hasChanges: Bool {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedTitle.isEmpty { return false }
+        
+        guard let event = editingEvent else {
+            return true
+        }
+        
+        let locString = location.trimmingCharacters(in: .whitespacesAndNewlines)
+        let eventLocationName = event.location?.name ?? ""
+        let finalTags = tags.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        
+        if trimmedTitle != event.title { return true }
+        if locString != eventLocationName { return true }
+        if notes.trimmingCharacters(in: .whitespacesAndNewlines) != (event.notes ?? "") { return true }
+        if finalTags != event.tags { return true }
+        
+        let calendar = Calendar.current
+        let startComponents = calendar.dateComponents([.hour, .minute], from: startTime)
+        let endComponents = calendar.dateComponents([.hour, .minute], from: endTime)
+        
+        if let finalStartTime = calendar.date(bySettingHour: startComponents.hour ?? 0, minute: startComponents.minute ?? 0, second: 0, of: selectedDate),
+           let finalEndTime = calendar.date(bySettingHour: endComponents.hour ?? 0, minute: endComponents.minute ?? 0, second: 0, of: selectedDate) {
+            
+            let minSafeEndTime = calendar.date(byAdding: .minute, value: 1, to: finalStartTime) ?? finalStartTime
+            
+            if finalStartTime != event.startTime { return true }
+            if max(minSafeEndTime, finalEndTime) != event.endTime { return true }
+        }
+        
+        return false
     }
 }

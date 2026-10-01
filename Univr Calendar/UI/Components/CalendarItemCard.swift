@@ -87,7 +87,7 @@ struct CalendarItemCard: View {
                 .strikethrough(internalItem.isCanceled)
             
             if !internalItem.isCanceled, let loc = internalItem.displayLocation, !loc.isEmpty {
-                Text(loc)
+                Label(loc, systemImage: "mappin")
                     .foregroundStyle(Color(white: 0.3))
                     .font(.subheadline)
                     .multilineTextAlignment(.leading)
@@ -115,7 +115,7 @@ struct CalendarItemCard: View {
                     if internalItem.tagsItems.count > 3 && internalItem.tagsItems[2] == tag {
                         Text("+\(internalItem.tagsItems.count - 2)")
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color(white: 0.3))
                     }
                 }
             }

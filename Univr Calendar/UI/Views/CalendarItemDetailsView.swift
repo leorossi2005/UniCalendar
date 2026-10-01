@@ -81,6 +81,8 @@ struct CalendarItemDetailsView: View {
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
                 .ignoresSafeArea(edges: .bottom)
+                .navigationTitle("")
+                .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
                         let isScheduled = notificationManager.activeNotifications.contains { $0.id == internalItem.id }

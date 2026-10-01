@@ -51,8 +51,14 @@ struct CalendarSheetContent: View {
                         Settings(tempSettings: $router.tempSettings)
                             .ignoresSafeArea(.keyboard)
                     } else if router.openAddPersonalEvent {
-                        AddPersonalEventView(selectedDate: selectedWeek, editingEvent: router.editingPersonalEvent) {
-                            sheetManager.setDetent(.small)
+                        AddPersonalEventView(selectedDate: selectedWeek, editingEvent: router.editingPersonalEvent) { newEvent in
+                            if let newEvent = newEvent, router.selectedItem != nil {
+                                router.selectedItem = .personal(newEvent)
+                            }
+                            
+                            if router.selectedItem == nil {
+                                sheetManager.setDetent(.small)
+                            }
                             router.openAddPersonalEvent = false
                             router.editingPersonalEvent = nil
                         }
