@@ -9,7 +9,7 @@
 
 import Foundation
 
-public struct EventLocation: Codable, Equatable, Sendable {
+public struct EventLocation: Codable, Equatable, Sendable, Hashable {
     public var name: String
     public var coordinates: Coordinates?
     
@@ -19,7 +19,7 @@ public struct EventLocation: Codable, Equatable, Sendable {
     }
 }
 
-public struct TagItem: Sendable, Codable, Identifiable, Equatable {
+public struct TagItem: Sendable, Codable, Identifiable, Equatable, Hashable {
     public let id: UUID
     public var name: String
     
@@ -29,7 +29,7 @@ public struct TagItem: Sendable, Codable, Identifiable, Equatable {
     }
 }
 
-public struct PersonalEvent: Sendable, Codable, Identifiable, Equatable {
+public struct PersonalEvent: Sendable, Codable, Identifiable, Equatable, Hashable {
     public let id: String
     public var title: String
     public var startTime: Date

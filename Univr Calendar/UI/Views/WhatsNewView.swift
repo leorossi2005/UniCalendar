@@ -234,13 +234,10 @@ struct WhatsNewView: View {
     }
     
     private func navigatorArrow(direction: ArrowDirection) -> some View {
-        Button {
+        Button("", systemImage: direction == .left ? "chevron.left" : "chevron.right") {
             selectedVersionIndex -= direction == .left ? 1 : -1
-        } label: {
-            Image(systemName: direction == .left ? "chevron.left" : "chevron.right")
-                .fontWeight(.semibold)
-                .frame(width: 36, height: 36)
         }
+        .fontWeight(.semibold)
         .opacity(direction == .left ? canGoNewer ? 1 : 0.3 : canGoOlder ? 1 : 0.3)
         .disabled(direction == .left ? !canGoNewer : !canGoOlder)
         .sensoryFeedback(.selection, trigger: selectedVersionIndex)

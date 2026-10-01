@@ -233,30 +233,22 @@ struct CalendarView: View {
         
         if page == .main {
             ToolbarItem(placement: .topBarTrailing) {
-                Button(action: {
+                Button("Aggiungi", systemImage: "plus") {
                     Haptics.play(.impact(weight: .light))
                     sheetRouter.routeToAddPersonalEvent()
-                }) {
-                    Image(systemName: "plus")
                 }
             }
         }
         
         ToolbarItem(placement: .topBarTrailing) {
-            Button {
+            Button("Cambia pagina", systemImage: page == .main ? "calendar" : "clock") {
                 page = page == .main ? .classrooms : .main
-            } label: {
-                HStack {
-                    Image(systemName: page == .main ? "calendar" : "clock")
-                        .symbolReplace()
-                }
             }
+            .symbolReplace()
         }
         
         ToolbarItem(placement: .topBarTrailing) {
-            Button(action: openSettingsAction) {
-                Label("", systemImage: "gearshape.fill")
-            }
+            Button("Impostazioni", systemImage: "gearshape.fill", action: openSettingsAction)
         }
     }
     

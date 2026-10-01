@@ -112,10 +112,8 @@ struct CalendarItemDetailsView: View {
                         
                         Menu {
                             if isScheduled {
-                                Button(role: .destructive) {
+                                Button("Rimuovi notifica", systemImage: "bell.slash", role: .destructive) {
                                     Task { await notificationManager.removeNotification(id: internalItem.id) }
-                                } label: {
-                                    Label("Rimuovi notifica", systemImage: "bell.slash")
                                 }
                             } else {
                                 if canSchedule(offset: 0) {
@@ -150,7 +148,7 @@ struct CalendarItemDetailsView: View {
                                     prepareAndShowEvent(for: lesson)
                                 }
                             } label: {
-                                Image(systemName: eventSaved ? "checkmark" : "calendar.badge.plus")
+                                Label("Aggiungi al calendario", systemImage: eventSaved ? "checkmark" : "calendar.badge.plus")
                                     .frame(width: 24, height: 24)
                                     .symbolReplace()
                                     .animation(.snappy, value: eventSaved)

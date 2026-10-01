@@ -265,6 +265,16 @@
         }
       }
     },
+    "Cambia pagina" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch page"
+          }
+        }
+      }
+    },
     "Cancella" : {
       "localizations" : {
         "en" : {
@@ -575,9 +585,6 @@
         }
       }
     },
-    "Hello, World!" : {
-
-    },
     "I miei progetti" : {
       "localizations" : {
         "en" : {
@@ -589,7 +596,14 @@
       }
     },
     "Impegni Personali" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personal Commitments"
+          }
+        }
+      }
     },
     "Impostazioni" : {
       "localizations" : {
@@ -751,6 +765,16 @@
         }
       }
     },
+    "Nessun impegno personale" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No personal commitment"
+          }
+        }
+      }
+    },
     "Nessuna aula disponibile" : {
       "localizations" : {
         "en" : {
@@ -827,6 +851,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No lesson was found for this course."
+          }
+        }
+      }
+    },
+    "Non hai ancora aggiunto nessun impegno personale." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have not yet added any personal commitments."
           }
         }
       }
