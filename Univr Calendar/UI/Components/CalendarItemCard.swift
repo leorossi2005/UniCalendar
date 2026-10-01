@@ -91,6 +91,7 @@ struct CalendarItemCard: View {
                     .foregroundStyle(Color(white: 0.3))
                     .font(.subheadline)
                     .multilineTextAlignment(.leading)
+                    .lineLimit(2)
             }
             
             if !internalItem.tagsItems.isEmpty {
@@ -113,7 +114,7 @@ struct CalendarItemCard: View {
                         .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                     
                     if internalItem.tagsItems.count > 3 && internalItem.tagsItems[2] == tag {
-                        Text("+\(internalItem.tagsItems.count - 2)")
+                        Text("+\(internalItem.tagsItems.count - 3)")
                             .font(.caption2)
                             .foregroundStyle(Color(white: 0.3))
                     }

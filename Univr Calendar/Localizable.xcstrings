@@ -295,6 +295,16 @@
         }
       }
     },
+    "Cerca un indirizzo o luogo..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search for an address or place..."
+          }
+        }
+      }
+    },
     "Che anno frequenti?" : {
       "localizations" : {
         "en" : {
@@ -995,6 +1005,16 @@
         }
       }
     },
+    "Risultati" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Results"
+          }
+        }
+      }
+    },
     "Salva" : {
       "localizations" : {
         "en" : {
@@ -1105,6 +1125,16 @@
         }
       }
     },
+    "Seleziona Luogo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select Location"
+          }
+        }
+      }
+    },
     "Seleziona un anno precedente per vedere l'archivio, sennò procedi pure con l'ultimo ;)" : {
       "localizations" : {
         "en" : {
@@ -1181,6 +1211,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Title"
+          }
+        }
+      }
+    },
+    "Usa \"%@\" come luogo personalizzato" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use “%@” as a personalized location"
           }
         }
       }

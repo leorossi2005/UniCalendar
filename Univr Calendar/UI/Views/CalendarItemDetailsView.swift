@@ -62,21 +62,44 @@ struct CalendarItemDetailsView: View {
                                 .padding(.leading)
                             Text(notes)
                                 .font(.body)
-                                .foregroundColor(.secondary)
+                                .lineLimit(5)
                                 .padding(16)
                                 .frame(maxWidth: .infinity, alignment: .leading)
+                                .opacity(0)
+                                .accessibilityHidden(true)
                                 .background(
                                     Color(colorScheme == .dark ? .secondarySystemGroupedBackground : .tertiarySystemGroupedBackground),
                                     in: RoundedRectangle(cornerRadius: .deviceCornerRadius - 16)
                                 )
+                                .overlay {
+                                    ScrollView {
+                                        Text(notes)
+                                            .font(.body)
+                                            .foregroundColor(.secondary)
+                                            .padding(16)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                    .scrollBounceBehavior(.basedOnSize)
+                                }
+                                .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 16))
                         }
                     }
                     
-                    StableMapView(
-                        item: item,
-                        internalItem: internalItem,
-                        corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
-                    )
+                    if case .lesson = item {
+                        StableMapView(
+                            item: item,
+                            internalItem: internalItem,
+                            corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
+                        )
+                    } else if case .personal = item, internalItem.displayCoordinates != nil {
+                        StableMapView(
+                            item: item,
+                            internalItem: internalItem,
+                            corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
+                        )
+                    } else {
+                        Spacer()
+                    }
                 }
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)

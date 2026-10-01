@@ -21,7 +21,7 @@ struct AddPersonalEventView: View {
     @State private var title: String
     @State private var startTime: Date
     @State private var endTime: Date
-    @State private var location: String
+    @State private var location: EventLocation?
     @State private var tags: [TagItem]
     @State private var notes: String
     
@@ -34,7 +34,7 @@ struct AddPersonalEventView: View {
             _title = State(initialValue: event.title)
             _startTime = State(initialValue: event.startTime)
             _endTime = State(initialValue: event.endTime)
-            _location = State(initialValue: event.location?.name ?? "")
+            _location = State(initialValue: event.location)
             _tags = State(initialValue: event.tags)
             _notes = State(initialValue: event.notes ?? "")
         } else {
@@ -45,7 +45,7 @@ struct AddPersonalEventView: View {
             
             _startTime = State(initialValue: defaultStart)
             _endTime = State(initialValue: defaultEnd)
-            _location = State(initialValue: "")
+            _location = State(initialValue: nil)
             _tags = State(initialValue: [])
             _notes = State(initialValue: "")
         }
@@ -56,7 +56,16 @@ struct AddPersonalEventView: View {
             Form {
                 Section("Dettagli") {
                     TextField("Titolo", text: $title)
-                    TextField("Luogo", text: $location)
+                    NavigationLink {
+                        LocationPickerView(selectedLocation: $location)
+                    } label: {
+                        HStack {
+                            Text("Luogo")
+                            Spacer()
+                            Text(location?.name ?? "Nessuno")
+                                .foregroundColor(.secondary)
+                        }
+                    }
                 }
                 
                 Section("Orario") {
@@ -125,8 +134,6 @@ struct AddPersonalEventView: View {
             return
         }
         
-        let locString = location.trimmingCharacters(in: .whitespacesAndNewlines)
-        let eventLocation = locString.isEmpty ? nil : EventLocation(name: locString)
         let finalTags = tags.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         
         let minSafeEndTime = calendar.date(byAdding: .minute, value: 1, to: finalStartTime) ?? finalStartTime
@@ -137,7 +144,7 @@ struct AddPersonalEventView: View {
             startTime: finalStartTime,
             endTime: max(minSafeEndTime, finalEndTime),
             tags: finalTags,
-            location: eventLocation,
+            location: location,
             notes: notes.trimmingCharacters(in: .whitespacesAndNewlines)
         )
         
@@ -155,12 +162,10 @@ struct AddPersonalEventView: View {
             return true
         }
         
-        let locString = location.trimmingCharacters(in: .whitespacesAndNewlines)
-        let eventLocationName = event.location?.name ?? ""
         let finalTags = tags.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
         
         if trimmedTitle != event.title { return true }
-        if locString != eventLocationName { return true }
+        if location != event.location { return true }
         if notes.trimmingCharacters(in: .whitespacesAndNewlines) != (event.notes ?? "") { return true }
         if finalTags != event.tags { return true }
         

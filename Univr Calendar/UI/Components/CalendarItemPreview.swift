@@ -29,7 +29,7 @@ struct CalendarItemPreview: View {
                 
                 if !internalItem.tagsItems.isEmpty {
                     HStack {
-                        ForEach(internalItem.tagsItems.prefix(2)) { tag in
+                        ForEach(internalItem.tagsItems.prefix(3)) { tag in
                             Text(tag.name)
                                 .font(.caption2)
                                 .padding(.horizontal, 6)
@@ -43,8 +43,8 @@ struct CalendarItemPreview: View {
                                     }
                                 }
                         }
-                        if internalItem.tagsItems.count > 2 {
-                            Text("+\(internalItem.tagsItems.count - 2)")
+                        if internalItem.tagsItems.count > 3 {
+                            Text("+\(internalItem.tagsItems.count - 3)")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
