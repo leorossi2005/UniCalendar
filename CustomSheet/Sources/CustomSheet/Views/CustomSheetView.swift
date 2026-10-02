@@ -152,6 +152,12 @@ struct CustomSheet<Content: View>: View {
             .environment(manager)
             .animation(.smooth(duration: 0.3), value: isPresented)
             .animation(.smooth(duration: 0.3), value: hasMounted)
+            .onChange(of: enableBackground) { _, newValue in
+                manager.onBackgroundToggle?(newValue)
+            }
+            .onAppear {
+                manager.onBackgroundToggle?(enableBackground)
+            }
         }
         .background {
             GeometryReader { proxy in

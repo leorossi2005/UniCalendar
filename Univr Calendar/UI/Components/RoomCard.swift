@@ -30,6 +30,7 @@ struct RoomCard: View {
             .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
             .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 35, style: .continuous))
             .hoverEffect(.lift)
+            .padding(.horizontal)
         }
     }
     

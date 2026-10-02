@@ -43,10 +43,12 @@ struct CalendarView: View {
                 mainView
                     .opacity(page == .main ? 1 : 0)
                     .allowsHitTesting(page == .main)
+                    .animation(nil, value: page)
                 
                 ClassroomAvailabilityView(coordinator: coordinator, sheetRouter: sheetRouter)
                     .opacity(page == .classrooms ? 1 : 0)
                     .allowsHitTesting(page == .classrooms)
+                    .animation(nil, value: page)
             }
             .toolbar {
                 buildToolbar()
@@ -193,11 +195,24 @@ struct CalendarView: View {
     private func buildToolbar() -> some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             HStack {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(coordinator.selectedWeek.getCurrentWeekdaySymbol(length: .wide))
-                        .font(.headline)
-                    Text("\(coordinator.selectedWeek.day) \(coordinator.selectedWeek.getCurrentMonthSymbol(length: .wide))")
-                        .font(.subheadline)
+                ZStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("Mercoledì")
+                            .font(.headline)
+                        Text("00 Settembre")
+                            .font(.subheadline)
+                    }
+                    .opacity(0)
+                    .accessibilityHidden(true)
+                    
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(coordinator.selectedWeek.getCurrentWeekdaySymbol(length: .wide))
+                            .font(.headline)
+                        Text("\(coordinator.selectedWeek.day) \(coordinator.selectedWeek.getCurrentMonthSymbol(length: .wide))")
+                            .font(.subheadline)
+                    }
+                    .contentTransition(.numericText())
+                    .animation(.default, value: coordinator.selectedWeek)
                 }
                 
                 Image(systemName: "wifi.slash")
@@ -242,7 +257,9 @@ struct CalendarView: View {
         
         ToolbarItem(placement: .topBarTrailing) {
             Button("Cambia pagina", systemImage: page == .main ? "calendar" : "clock") {
-                page = page == .main ? .classrooms : .main
+                withAnimation {
+                    page = page == .main ? .classrooms : .main
+                }
             }
             .symbolReplace()
         }

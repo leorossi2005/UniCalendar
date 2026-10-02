@@ -11,6 +11,7 @@ import SwiftUI
 
 class PassthroughContainerView: UIView {
     weak var hostingView: UIView?
+    var shouldPassThrough: Bool = true
     
     private var lastDeepHitTime: TimeInterval = 0
     private var lastDeepHitPoint: CGPoint = .zero
@@ -22,6 +23,10 @@ class PassthroughContainerView: UIView {
 
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let hitView = super.hitTest(point, with: event)
+        
+        if !shouldPassThrough {
+            return hitView
+        }
         
         if hitView == self {
             return nil
@@ -191,6 +196,10 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
         }
         
         context.coordinator.lastPhase = currentPhase
+        
+        manager?.onBackgroundToggle = { [weak uiView] isEnabled in
+            uiView?.containerView?.shouldPassThrough = !isEnabled
+        }
         
         let isLarge = manager?.selectedDetent == .large
         uiView.updateNavigationSafeArea(isLarge: isLarge)

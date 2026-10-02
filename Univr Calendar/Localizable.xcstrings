@@ -95,6 +95,9 @@
         }
       }
     },
+    "00 Settembre" : {
+
+    },
     "1 ora prima" : {
       "localizations" : {
         "en" : {
@@ -714,6 +717,9 @@
           }
         }
       }
+    },
+    "Mercoledì" : {
+
     },
     "Modifica" : {
       "localizations" : {
