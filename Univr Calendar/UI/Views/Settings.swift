@@ -218,14 +218,12 @@ struct Settings: View {
                     try await viewModel.loadCourses(year: tempSettings.selectedYear)
                     
                     await MainActor.run {
-                        if !["even", "odd"].contains(tempSettings.matricola) {
+                        if tempSettings.matricola.isEmpty || !["even", "odd"].contains(tempSettings.matricola) {
                             tempSettings.matricola = "even"
                         }
                         
-                        if !viewModel.years.contains(where: { $0.id == tempSettings.selectedYear }) {
-                            if let lastYear = viewModel.years.last {
-                                tempSettings.selectedYear = lastYear.id
-                            }
+                        if tempSettings.selectedYear == "0", let lastYear = viewModel.years.last {
+                            tempSettings.selectedYear = lastYear.id
                         }
                         
                         if tempSettings.selectedCourse != "0" {
@@ -233,10 +231,8 @@ struct Settings: View {
                                 tempSettings.selectedCourseName = course.label
                                 viewModel.academicYears = course.years
                                 
-                                if !viewModel.academicYears.contains(where: { $0.id == tempSettings.selectedAcademicYear }) {
-                                    if let firstAcademicYear = viewModel.academicYears.last {
-                                        tempSettings.selectedAcademicYear = firstAcademicYear.id
-                                    }
+                                if tempSettings.selectedAcademicYear == "0", let firstAcademicYear = viewModel.academicYears.last {
+                                    tempSettings.selectedAcademicYear = firstAcademicYear.id
                                 }
                                 settings.foundMatricola = viewModel.checkForMatricola(in: tempSettings.selectedAcademicYear)
                             }

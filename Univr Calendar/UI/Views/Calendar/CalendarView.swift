@@ -255,6 +255,7 @@ struct CalendarView: View {
     // MARK: - Logic Methods
     private func openSettingsAction() {
         Haptics.play(.impact(weight: .light))
+        sheetRouter.tempSettings.sync(with: settings)
         sheetRouter.routeToSettings()
     }
     
