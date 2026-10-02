@@ -96,7 +96,14 @@
       }
     },
     "00 Settembre" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "00 September"
+          }
+        }
+      }
     },
     "1 ora prima" : {
       "localizations" : {
@@ -719,7 +726,14 @@
       }
     },
     "Mercoledì" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wednesday"
+          }
+        }
+      }
     },
     "Modifica" : {
       "localizations" : {

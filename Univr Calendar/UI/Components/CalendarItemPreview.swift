@@ -25,7 +25,6 @@ struct CalendarItemPreview: View {
                     .multilineTextAlignment(.leading)
                     .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
-                    .layoutPriority(10)
                 
                 if !internalItem.tagsItems.isEmpty {
                     HStack {
@@ -103,6 +102,7 @@ struct CalendarItemPreview: View {
         }
         .padding(24)
         .frame(width: UIDevice.isIpad ? 320 : UIScreen.main.bounds.width - 32, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: true)
         .background {
             switch item {
             case .lesson: EmptyView()

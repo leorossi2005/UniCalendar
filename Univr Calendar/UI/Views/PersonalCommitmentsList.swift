@@ -62,6 +62,8 @@ struct PersonalCommitmentsList: View {
                                     } label: {
                                         Label("Cancella", systemImage: "trash")
                                     }
+                                } preview: {
+                                    CalendarItemPreview(item: .personal(event), internalItem: event)
                                 }
                                 .listRowInsets(EdgeInsets())
                                 .listRowBackground(Color.clear)
