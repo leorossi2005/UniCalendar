@@ -195,6 +195,7 @@ struct Settings: View {
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.1))
             await NotificationManager.shared.removeAllNotifications()
+            await CommitmentsManager.shared.deleteAllEvents()
             await CacheManager.shared.clear(file: .calendarSchedule)
             settings.reset()
             tempSettings.sync(with: settings)
