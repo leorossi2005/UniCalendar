@@ -13,6 +13,8 @@ import UnivrCore
 struct PersonalCommitmentsList: View {
     @State private var commitmentsManager = CommitmentsManager.shared
     @State private var editingEvent: PersonalEvent? = nil
+    @State private var eventToDelete: PersonalEvent? = nil
+    @State private var showDeleteAlert = false
     
     private var groupedEvents: [(Date, [PersonalEvent])] {
         let grouped = Dictionary(grouping: commitmentsManager.personalEvents) { event in
@@ -22,66 +24,81 @@ struct PersonalCommitmentsList: View {
     }
     
     var body: some View {
-        List {
+        Group {
             if groupedEvents.isEmpty {
                 ContentUnavailableView(
                     "Nessun impegno personale",
-                    systemImage: "calendar.badge.exclamationmark",
+                    systemImage: "calendar.and.person",
                     description: Text("Non hai ancora aggiunto nessun impegno personale.")
                 )
-                .listRowBackground(Color.clear)
             } else {
-                ForEach(groupedEvents, id: \.0) { date, events in
-                    Section {
-                        ForEach(events) { event in
-                            ZStack {
-                                NavigationLink(destination: CalendarItemDetailsView(
-                                    item: .personal(event),
-                                    internalItem: event,
-                                    openAddToCalendar: false,
-                                    onDismiss: nil,
-                                    onEdit: {
-                                        editingEvent = event
+                List {
+                    ForEach(groupedEvents, id: \.0) { date, events in
+                        Section {
+                            ForEach(events) { event in
+                                ZStack {
+                                    NavigationLink(destination: CalendarItemDetailsView(
+                                        item: .personal(event),
+                                        internalItem: event,
+                                        openAddToCalendar: false,
+                                        onDismiss: nil,
+                                        onEdit: nil
+                                    )) {
+                                        EmptyView()
                                     }
-                                )) {
-                                    EmptyView()
+                                    .opacity(0)
+                                    
+                                    CalendarItemCard(item: .personal(event), internalItem: event)
                                 }
-                                .opacity(0)
-                                
-                                CalendarItemCard(item: .personal(event), internalItem: event)
+                                .contextMenu {
+                                    Button {
+                                        editingEvent = event
+                                    } label: {
+                                        Label("Modifica", systemImage: "pencil")
+                                    }
+                                    Button(role: .destructive) {
+                                        eventToDelete = event
+                                        showDeleteAlert = true
+                                    } label: {
+                                        Label("Cancella", systemImage: "trash")
+                                    }
+                                }
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                                .padding(.vertical, 4)
                             }
-                            .contextMenu {
-                                Button {
-                                    editingEvent = event
-                                } label: {
-                                    Label("Modifica", systemImage: "pencil")
-                                }
-                                Button(role: .destructive) {
-                                    Task { await CommitmentsManager.shared.deleteEvent(id: event.id) }
-                                } label: {
-                                    Label("Cancella", systemImage: "trash")
-                                }
-                            }
-                            .listRowInsets(EdgeInsets())
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                            .padding(.vertical, 4)
+                        } header: {
+                            Text(date.formatted(date: .complete, time: .omitted).capitalized)
+                                .font(.headline)
+                                .padding(.horizontal)
                         }
-                    } header: {
-                        Text(date.formatted(date: .complete, time: .omitted).capitalized)
-                            .font(.headline)
-                            .padding(.horizontal)
                     }
                 }
+                .listStyle(.plain)
             }
         }
-        .listStyle(.plain)
         .navigationTitle("Impegni Personali")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $editingEvent) { eventToEdit in
             AddPersonalEventView(selectedDate: eventToEdit.startTime, editingEvent: eventToEdit) { _ in
                 editingEvent = nil
             }
+        }
+        .alert("Eliminare questo impegno?", isPresented: $showDeleteAlert) {
+            Button("Conferma", role: .destructive) {
+                if let event = eventToDelete {
+                    Task {
+                        await CommitmentsManager.shared.deleteEvent(id: event.id)
+                        eventToDelete = nil
+                    }
+                }
+            }
+            Button("Annulla", role: .cancel) {
+                eventToDelete = nil
+            }
+        } message: {
+            Text("Questa azione non può essere annullata.")
         }
     }
 }

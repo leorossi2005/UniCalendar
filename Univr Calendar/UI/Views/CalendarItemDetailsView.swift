@@ -17,6 +17,7 @@ import CustomSheet
 struct CalendarItemDetailsView: View {
     @Environment(GlobalSheetManager.self) private var sheetManager
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.dismiss) var dismiss
     
     let item: CalendarItem
     let internalItem: any CalendarDisplayable
@@ -31,6 +32,7 @@ struct CalendarItemDetailsView: View {
     var onEdit: (() -> Void)? = nil
     
     @State private var showDeletePopover: Bool = false
+    @State private var editingEvent: PersonalEvent? = nil
     
     var body: some View {
         ZStack {
@@ -156,7 +158,13 @@ struct CalendarItemDetailsView: View {
                         }
                     case .personal:
                         ToolbarItem(placement: .primaryAction) {
-                            Button("Modifica", systemImage: "pencil", action: onEdit ?? {} )
+                            Button("Modifica", systemImage: "pencil") {
+                                if let onEdit = onEdit {
+                                    onEdit()
+                                } else if case .personal(let event) = item {
+                                    editingEvent = event
+                                }
+                            }
                         }
                         ToolbarItem(placement: .primaryAction) {
                             Button("Elimina", systemImage: "trash", role: .destructive) {
@@ -191,6 +199,11 @@ struct CalendarItemDetailsView: View {
                 prepareAndShowEvent(for: lesson)
             }
         }
+        .navigationDestination(item: $editingEvent) { eventToEdit in
+            AddPersonalEventView(selectedDate: eventToEdit.startTime, editingEvent: eventToEdit) { _ in
+                editingEvent = nil
+            }
+        }
     }
     
     private func deleteEvent() {
@@ -199,6 +212,8 @@ struct CalendarItemDetailsView: View {
                 await CommitmentsManager.shared.deleteEvent(id: event.id)
                 if let onDismiss = onDismiss {
                     onDismiss()
+                } else {
+                    dismiss()
                 }
             }
         }
@@ -232,6 +247,7 @@ struct CalendarItemDetailsView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private var detailRows: some View {
@@ -277,11 +293,18 @@ struct CalendarItemDetailsView: View {
     
     private func scheduleNotification(offset: Int) {
         Task {
+            let isPersonal: Bool
+            if case .personal = item {
+                isPersonal = true
+            } else {
+                isPersonal = false
+            }
+            
             let saved = SavedNotification(
                 id: internalItem.id,
-                courseId: UserSettings.shared.selectedCourse,
-                courseName: UserSettings.shared.selectedCourseName,
-                courseYear: UserSettings.shared.selectedAcademicYearName,
+                courseId: isPersonal ? "personal" : UserSettings.shared.selectedCourse,
+                courseName: isPersonal ? "Impegni Personali" : UserSettings.shared.selectedCourseName,
+                courseYear: isPersonal ? "" : UserSettings.shared.selectedAcademicYearName,
                 lessonName: internalItem.displayTitle,
                 date: internalItem.startTime,
                 offsetMinutes: offset

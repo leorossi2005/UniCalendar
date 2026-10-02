@@ -54,10 +54,9 @@ struct AddPersonalEventView: View {
     }
     
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Dettagli") {
-                    TextField("Titolo", text: $title)
+        Form {
+            Section("Dettagli") {
+                TextField("Titolo", text: $title)
                     NavigationLink {
                         LocationPickerView(selectedLocation: $location)
                     } label: {
@@ -106,6 +105,7 @@ struct AddPersonalEventView: View {
             }
             .navigationTitle(editingEvent != nil ? "Modifica Impegno" : "Nuovo Impegno")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     if #available(iOS 26, *) {
@@ -126,7 +126,6 @@ struct AddPersonalEventView: View {
                     .disabled(!hasChanges)
                 }
             }
-        }
     }
     
     private func saveEvent() {
