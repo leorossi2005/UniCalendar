@@ -40,6 +40,27 @@ public final class CommitmentsManager {
         guard let storage = storageProvider else { return }
         do {
             try await storage.savePersonalEvent(event)
+            
+            let activeNotifications = NotificationManager.shared.activeNotifications
+            if let existingNotif = activeNotifications.first(where: { $0.id == event.id }) {
+                let triggerDate = event.startTime.addingTimeInterval(Double(-existingNotif.offsetMinutes * 60))
+                if triggerDate > Date().addingTimeInterval(60) {
+                    let updatedNotif = SavedNotification(
+                        id: existingNotif.id,
+                        courseId: existingNotif.courseId,
+                        courseName: existingNotif.courseName,
+                        courseYear: existingNotif.courseYear,
+                        lessonName: event.title,
+                        date: event.startTime,
+                        offsetMinutes: existingNotif.offsetMinutes,
+                        itemPayload: try? JSONEncoder().encode(CalendarItem.personal(event))
+                    )
+                    await NotificationManager.shared.updateNotification(updatedNotif)
+                } else {
+                    await NotificationManager.shared.removeNotification(id: existingNotif.id)
+                }
+            }
+            
             await fetchPersonalEvents()
         } catch {
             print("Errore salvataggio impegno: \(error)")

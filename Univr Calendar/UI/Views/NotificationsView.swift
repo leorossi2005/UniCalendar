@@ -165,8 +165,10 @@ struct NotificationsView: View {
             .task {
                 let mockNotificationProvider = NotificationProvider(
                     requestPermission: { true },
+                    isAuthorized: { true },
                     schedule: { _ in true },
-                    cancel: { _ in }
+                    cancel: { _ in },
+                    getPendingIdentifiers: { ["temp1", "temp2", "temp3"] }
                 )
                 
                 NotificationManager.shared.configure(

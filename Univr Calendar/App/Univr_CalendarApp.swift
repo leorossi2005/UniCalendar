@@ -14,6 +14,7 @@ import SwiftData
 
 @main
 struct Univr_CalendarApp: App {
+    @Environment(\.scenePhase) private var scenePhase
     let container: ModelContainer
     
     init() {
@@ -40,6 +41,13 @@ struct Univr_CalendarApp: App {
                     )
                     CommitmentsManager.shared.configure(storageProvider: storage)
                 }
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            if newPhase == .active {
+                Task {
+                    await NotificationManager.shared.cleanupExpiredNotifications()
+                }
+            }
         }
     }
 }

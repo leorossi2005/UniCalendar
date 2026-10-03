@@ -9,7 +9,7 @@
 
 import Foundation
 
-public enum CalendarItem: Identifiable, Equatable {
+public enum CalendarItem: Identifiable, Equatable, Codable {
     case lesson(Lesson)
     case personal(PersonalEvent)
     

@@ -307,7 +307,8 @@ struct CalendarItemDetailsView: View {
                 courseYear: isPersonal ? "" : UserSettings.shared.selectedAcademicYearName,
                 lessonName: internalItem.displayTitle,
                 date: internalItem.startTime,
-                offsetMinutes: offset
+                offsetMinutes: offset,
+                itemPayload: try? JSONEncoder().encode(item)
             )
             await notificationManager.toggleNotification(notification: saved)
         }

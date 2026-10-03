@@ -23,15 +23,29 @@ final class IOSNotificationService: Sendable {
                     return false
                 }
             },
+            isAuthorized: {
+                let settings = await UNUserNotificationCenter.current().notificationSettings()
+                return settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
+            },
             schedule: { notification in
                 let content = UNMutableNotificationContent()
                 content.title = notification.lessonName
-                if notification.offsetMinutes == 0 {
-                    content.body = "La lezione sta iniziando ora"
-                } else {
-                    content.body = "La lezione inizia tra \(notification.offsetMinutes) minuti"
+                content.categoryIdentifier = "unicalendar.event.reminder"
+                let isPersonal = notification.courseId == "personal"
+                let offset = notification.offsetMinutes
+                let body: String
+                switch (isPersonal, offset == 0) {
+                case (true, true):   body = String(localized: "L'impegno sta iniziando ora")
+                case (true, false):  body = String(localized: "L'impegno inizia tra \(offset) minuti")
+                case (false, true):  body = String(localized: "La lezione sta iniziando ora")
+                case (false, false): body = String(localized: "La lezione inizia tra \(offset) minuti")
                 }
+                content.body = body
                 content.sound = .default
+                
+                if let payload = notification.itemPayload {
+                    content.userInfo = ["itemPayload": payload]
+                }
                 
                 let triggerDate = notification.date.addingTimeInterval(TimeInterval(-notification.offsetMinutes * 60))
                 let dateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: triggerDate)
@@ -48,6 +62,10 @@ final class IOSNotificationService: Sendable {
             cancel: { id in
                 UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id])
                 UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [id])
+            },
+            getPendingIdentifiers: {
+                let requests = await UNUserNotificationCenter.current().pendingNotificationRequests()
+                return requests.map { $0.identifier }
             }
         )
     }

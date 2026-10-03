@@ -16,6 +16,7 @@ struct CalendarItemPreview: View {
     
     let item: CalendarItem
     let internalItem: any CalendarDisplayable
+    var isNotificationContext: Bool = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -88,7 +89,7 @@ struct CalendarItemPreview: View {
                         .padding(.leading)
                     Text(notes)
                         .font(.body)
-                        .lineLimit(4)
+                        .lineLimit(3)
                         .truncationMode(.tail)
                         .foregroundColor(.secondary)
                         .padding(16)
@@ -99,9 +100,20 @@ struct CalendarItemPreview: View {
                         )
                 }
             }
+            
+            if isNotificationContext {
+                Text("Tocca per aprire i dettagli")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 10)
+            }
         }
         .padding(24)
-        .frame(width: UIDevice.isIpad ? 320 : UIScreen.main.bounds.width - 32, alignment: .leading)
+        .frame(
+            width: isNotificationContext ? nil : (UIDevice.isIpad ? 320 : UIScreen.main.bounds.width - 32),
+            alignment: .leading
+        )
         .fixedSize(horizontal: false, vertical: true)
         .background {
             switch item {

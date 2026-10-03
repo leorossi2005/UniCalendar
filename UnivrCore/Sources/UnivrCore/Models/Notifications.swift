@@ -17,8 +17,9 @@ public struct SavedNotification: Sendable, Codable, Identifiable, Equatable {
     public let lessonName: String
     public let date: Date
     public let offsetMinutes: Int
+    public var itemPayload: Data?
     
-    public init(id: String, courseId: String, courseName: String, courseYear: String, lessonName: String, date: Date, offsetMinutes: Int) {
+    public init(id: String, courseId: String, courseName: String, courseYear: String, lessonName: String, date: Date, offsetMinutes: Int, itemPayload: Data? = nil) {
         self.id = id
         self.courseId = courseId
         self.courseName = courseName
@@ -26,5 +27,6 @@ public struct SavedNotification: Sendable, Codable, Identifiable, Equatable {
         self.lessonName = lessonName
         self.date = date
         self.offsetMinutes = offsetMinutes
+        self.itemPayload = itemPayload
     }
 }

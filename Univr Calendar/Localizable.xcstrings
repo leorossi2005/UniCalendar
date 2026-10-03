@@ -675,6 +675,46 @@
         }
       }
     },
+    "L'impegno inizia tra %lld minuti" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The commitment starts in %lld minutes"
+          }
+        }
+      }
+    },
+    "L'impegno sta iniziando ora" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The commitment is starting now"
+          }
+        }
+      }
+    },
+    "La lezione inizia tra %lld minuti" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The lesson starts in %lld minutes"
+          }
+        }
+      }
+    },
+    "La lezione sta iniziando ora" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The lesson is starting now"
+          }
+        }
+      }
+    },
     "Le Live Activity ti permetteranno di avere un timer a schermo sulla schermata di blocco o nella Dynamic Island." : {
       "localizations" : {
         "en" : {
@@ -1271,6 +1311,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Title"
+          }
+        }
+      }
+    },
+    "Tocca per aprire i dettagli" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to open the details"
           }
         }
       }

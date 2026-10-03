@@ -74,7 +74,8 @@ struct EditNotificationView: View {
                 courseYear: notification.courseYear,
                 lessonName: notification.lessonName,
                 date: notification.date,
-                offsetMinutes: offsetMinutes
+                offsetMinutes: offsetMinutes,
+                itemPayload: notification.itemPayload
             )
             
             await notificationManager.updateNotification(updatedNotification)
