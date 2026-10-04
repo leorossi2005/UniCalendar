@@ -45,12 +45,18 @@ class NotificationViewController: UIViewController, UNNotificationContentExtensi
         view.addSubview(newHostingController.view)
         
         newHostingController.view.translatesAutoresizingMaskIntoConstraints = false
+        newHostingController.view.backgroundColor = .clear
+        
         NSLayoutConstraint.activate([
             newHostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
             newHostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             newHostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             newHostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
+        
+        let targetSize = CGSize(width: view.bounds.width, height: UIView.layoutFittingExpandedSize.height)
+        let fittingSize = newHostingController.sizeThatFits(in: targetSize)
+        self.preferredContentSize = CGSize(width: view.bounds.width, height: fittingSize.height)
         
         newHostingController.didMove(toParent: self)
     }
