@@ -39,6 +39,7 @@ public class GlobalSheetManager {
     public private(set) var selectedDetent: CustomSheetDetent
     public internal(set) var previousDetent: CustomSheetDetent?
     
+    var onBackgroundToggle: ((Bool) -> Void)?
     var actionDismiss: (() -> Void)?
     
     public func dismiss() {

@@ -22,6 +22,9 @@ struct NotificationsView: View {
         let selectedCourseId = UserSettings.shared.selectedCourse
         
         return groupedNotifications.keys.sorted { id1, id2 in
+            if id1 == "personal" { return true }
+            if id2 == "personal" { return false }
+            
             if id1 == selectedCourseId { return true }
             if id2 == selectedCourseId { return false }
             
@@ -36,25 +39,26 @@ struct NotificationsView: View {
     }
     
     var body: some View {
-        List {
+        Group {
             if notificationManager.activeNotifications.isEmpty {
                 ContentUnavailableView(
                     "Nessuna notifica",
                     systemImage: "bell.slash",
                     description: Text("Non hai ancora programmato alcuna notifica per le tue lezioni.")
                 )
-                .listRowBackground(Color.clear)
             } else {
-                ForEach(sortedCourseIds, id: \.self) { courseId in
-                    Section {
-                        let courseNotifications = (groupedNotifications[courseId] ?? []).sorted(by: { $0.date < $1.date })
-                        
-                        ForEach(courseNotifications) { notification in
-                            notificationRow(for: notification)
+                List {
+                    ForEach(sortedCourseIds, id: \.self) { courseId in
+                        Section {
+                            let courseNotifications = (groupedNotifications[courseId] ?? []).sorted(by: { $0.date < $1.date })
+                            
+                            ForEach(courseNotifications) { notification in
+                                notificationRow(for: notification)
+                            }
+                        } header: {
+                            let courseName = groupedNotifications[courseId]?.first?.courseName ?? "Corso Sconosciuto"
+                            Text(courseName)
                         }
-                    } header: {
-                        let courseName = groupedNotifications[courseId]?.first?.courseName ?? "Corso Sconosciuto"
-                        Text(courseName)
                     }
                 }
             }
@@ -88,12 +92,14 @@ struct NotificationsView: View {
                 }
                 Spacer()
                 
-                Text(notification.courseYear)
-                    .font(.caption2)
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 3)
-                    .background(Color.secondary.opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                if !notification.courseYear.isEmpty && notification.courseYear != "Year" {
+                    Text(notification.courseYear)
+                        .font(.caption2)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Color.secondary.opacity(0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+                }
             }
             .padding(.vertical, 4)
         }
@@ -159,8 +165,10 @@ struct NotificationsView: View {
             .task {
                 let mockNotificationProvider = NotificationProvider(
                     requestPermission: { true },
+                    isAuthorized: { true },
                     schedule: { _ in true },
-                    cancel: { _ in }
+                    cancel: { _ in },
+                    getPendingIdentifiers: { ["temp1", "temp2", "temp3"] }
                 )
                 
                 NotificationManager.shared.configure(

@@ -16,11 +16,13 @@ import CustomSheet
 class CalendarSheetRouter {
     let manager: GlobalSheetManager
     
-    var selectedLesson: Lesson? = nil
+    var selectedItem: CalendarItem? = nil
     var selectedRoom: Room? = nil
     var openSettings: Bool = false
     var openWhatsNew: Bool = false
     var openAddToCalendar: Bool = false
+    var openAddPersonalEvent: Bool = false
+    var editingPersonalEvent: PersonalEvent? = nil
     var tempSettings: TempSettingsState = .init()
     
     var detents: [CustomSheetDetent] = [.small, .medium]
@@ -46,8 +48,8 @@ class CalendarSheetRouter {
         manager.setDetent(.large)
     }
     
-    func routeToLesson(_ lesson: Lesson, addToCalendar: Bool = false) {
-        selectedLesson = lesson
+    func routeToItem(_ item: CalendarItem, addToCalendar: Bool = false) {
+        selectedItem = item
         openAddToCalendar = addToCalendar
         detents = [.small, .medium, .large]
         manager.setDetent(.large)
@@ -59,13 +61,22 @@ class CalendarSheetRouter {
         manager.setDetent(.large)
     }
     
+    func routeToAddPersonalEvent(editing event: PersonalEvent? = nil) {
+        editingPersonalEvent = event
+        openAddPersonalEvent = true
+        detents = [.small, .medium, .large]
+        manager.setDetent(.large)
+    }
+    
     // MARK: - Reset automatico
     func resetToCalendar() {
-        selectedLesson = nil
+        selectedItem = nil
         selectedRoom = nil
         openSettings = false
         openWhatsNew = false
         openAddToCalendar = false
+        openAddPersonalEvent = false
+        editingPersonalEvent = nil
         detents = [.small, .medium]
     }
 }

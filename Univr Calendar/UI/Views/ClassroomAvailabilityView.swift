@@ -56,7 +56,7 @@ struct ClassroomAvailabilityView: View {
         .frame(height: 48)
         .background(Color(.secondarySystemBackground))
         .cornerRadius(35)
-        .padding(.horizontal, 15)
+        .padding(.horizontal)
     }
     
     @ViewBuilder
@@ -80,7 +80,6 @@ struct ClassroomAvailabilityView: View {
                 }
             }
             .cornerRadius(35)
-            .padding(.horizontal, 15)
         case .empty:
             ContentUnavailableView(
                 "Nessuna aula disponibile",

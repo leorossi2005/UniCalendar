@@ -12,13 +12,27 @@ import UnivrCore
 import CustomSheet
 import SwiftData
 
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        UNUserNotificationCenter.current().delegate = self
+        return true
+    }
+    
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        NotificationManager.shared.handleTappedNotification(userInfo: response.notification.request.content.userInfo)
+        completionHandler()
+    }
+}
+
 @main
 struct Univr_CalendarApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
     let container: ModelContainer
     
     init() {
         do {
-            container = try ModelContainer(for: NotificationRecord.self)
+            container = try ModelContainer(for: NotificationRecord.self, PersonalEventRecord.self)
         } catch {
             fatalError("Impossibile creare il database: \(error)")
         }
@@ -33,11 +47,20 @@ struct Univr_CalendarApp: App {
                 .enableGlobalHaptics()
                 .task {
                     NetworkStatusMonitor.shared.start(provider: IOSNetworkMonitor.createProvider())
+                    let storage = IOSStorageService.createProvider(container: container)
                     NotificationManager.shared.configure(
                         notificationProvider: IOSNotificationService.createProvider(),
-                        storageProvider: IOSStorageService.createProvider(container: container)
+                        storageProvider: storage
                     )
+                    CommitmentsManager.shared.configure(storageProvider: storage)
                 }
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            if newPhase == .active {
+                Task {
+                    await NotificationManager.shared.cleanupExpiredNotifications()
+                }
+            }
         }
     }
 }

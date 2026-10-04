@@ -120,6 +120,7 @@ struct Onboarding: View {
                             if let firstYear = viewModel.academicYears.first {
                                 await MainActor.run {
                                     settings.selectedAcademicYear = firstYear.id
+                                    settings.selectedAcademicYearName = firstYear.label
                                     settings.foundMatricola = viewModel.checkForMatricola(in: settings.selectedAcademicYear)
                                 }
                             }
@@ -142,6 +143,9 @@ struct Onboarding: View {
                         .padding()
                         .disabled(viewModel.courses.isEmpty)
                         .onChange(of: settings.selectedAcademicYear) { oldValue, newValue in
+                            if let yearLabel = viewModel.academicYears.first(where: { $0.id == newValue })?.label {
+                                settings.selectedAcademicYearName = yearLabel
+                            }
                             settings.foundMatricola = viewModel.checkForMatricola(in: settings.selectedAcademicYear)
                         }
                     },

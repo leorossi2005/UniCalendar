@@ -9,16 +9,79 @@
 /* Begin PBXBuildFile section */
 		A70C43732FDED6ED002D17EC /* CustomSheet in Frameworks */ = {isa = PBXBuildFile; productRef = A70C43722FDED6ED002D17EC /* CustomSheet */; };
 		A72DAEED2EE0B35300F86639 /* UnivrCore in Frameworks */ = {isa = PBXBuildFile; productRef = A72DAEEC2EE0B35300F86639 /* UnivrCore */; };
+		A75AF196307053B8005D826B /* UserNotifications.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A75AF195307053B8005D826B /* UserNotifications.framework */; };
+		A75AF198307053B8005D826B /* UserNotificationsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A75AF197307053B8005D826B /* UserNotificationsUI.framework */; };
+		A75AF1A2307053B8005D826B /* NotificationContent.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A75AF193307053B8005D826B /* NotificationContent.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A75AF2BE307095F5005D826B /* UnivrCore in Frameworks */ = {isa = PBXBuildFile; productRef = A75AF2BD307095F5005D826B /* UnivrCore */; };
+		A75AF2C23070962A005D826B /* CustomSheet in Frameworks */ = {isa = PBXBuildFile; productRef = A75AF2C13070962A005D826B /* CustomSheet */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A75AF1A0307053B8005D826B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A74C00852E960653001AB35D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A75AF192307053B8005D826B;
+			remoteInfo = NotificationContent;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A75AF1A3307053B8005D826B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A75AF1A2307053B8005D826B /* NotificationContent.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		A74C008D2E960653001AB35D /* Univr Calendar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Univr Calendar.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A75AF193307053B8005D826B /* NotificationContent.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationContent.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A75AF195307053B8005D826B /* UserNotifications.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotifications.framework; path = System/Library/Frameworks/UserNotifications.framework; sourceTree = SDKROOT; };
+		A75AF197307053B8005D826B /* UserNotificationsUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UserNotificationsUI.framework; path = System/Library/Frameworks/UserNotificationsUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A75AF1A6307053B8005D826B /* Exceptions for "NotificationContent" folder in "NotificationContent" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A75AF192307053B8005D826B /* NotificationContent */;
+		};
+		A75AF2BA307094A5005D826B /* Exceptions for "Univr Calendar" folder in "NotificationContent" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Localizable.xcstrings,
+				UI/Components/CalendarItemPreview.swift,
+				UI/Components/CustomMeshGradient.swift,
+				UI/UIExtensions.swift,
+			);
+			target = A75AF192307053B8005D826B /* NotificationContent */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A74C008F2E960653001AB35D /* Univr Calendar */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A75AF2BA307094A5005D826B /* Exceptions for "Univr Calendar" folder in "NotificationContent" target */,
+			);
 			path = "Univr Calendar";
+			sourceTree = "<group>";
+		};
+		A75AF199307053B8005D826B /* NotificationContent */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A75AF1A6307053B8005D826B /* Exceptions for "NotificationContent" folder in "NotificationContent" target */,
+			);
+			path = NotificationContent;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -33,6 +96,17 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A75AF190307053B8005D826B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A75AF198307053B8005D826B /* UserNotificationsUI.framework in Frameworks */,
+				A75AF2BE307095F5005D826B /* UnivrCore in Frameworks */,
+				A75AF196307053B8005D826B /* UserNotifications.framework in Frameworks */,
+				A75AF2C23070962A005D826B /* CustomSheet in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -40,6 +114,8 @@
 			isa = PBXGroup;
 			children = (
 				A74C008F2E960653001AB35D /* Univr Calendar */,
+				A75AF199307053B8005D826B /* NotificationContent */,
+				A75AF194307053B8005D826B /* Frameworks */,
 				A74C008E2E960653001AB35D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -48,8 +124,18 @@
 			isa = PBXGroup;
 			children = (
 				A74C008D2E960653001AB35D /* Univr Calendar.app */,
+				A75AF193307053B8005D826B /* NotificationContent.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A75AF194307053B8005D826B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A75AF195307053B8005D826B /* UserNotifications.framework */,
+				A75AF197307053B8005D826B /* UserNotificationsUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -62,10 +148,12 @@
 				A74C00892E960653001AB35D /* Sources */,
 				A74C008A2E960653001AB35D /* Frameworks */,
 				A74C008B2E960653001AB35D /* Resources */,
+				A75AF1A3307053B8005D826B /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				A75AF1A1307053B8005D826B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A74C008F2E960653001AB35D /* Univr Calendar */,
@@ -79,6 +167,30 @@
 			productReference = A74C008D2E960653001AB35D /* Univr Calendar.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A75AF192307053B8005D826B /* NotificationContent */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A75AF1A7307053B8005D826B /* Build configuration list for PBXNativeTarget "NotificationContent" */;
+			buildPhases = (
+				A75AF18F307053B8005D826B /* Sources */,
+				A75AF190307053B8005D826B /* Frameworks */,
+				A75AF191307053B8005D826B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A75AF199307053B8005D826B /* NotificationContent */,
+			);
+			name = NotificationContent;
+			packageProductDependencies = (
+				A75AF2BD307095F5005D826B /* UnivrCore */,
+				A75AF2C13070962A005D826B /* CustomSheet */,
+			);
+			productName = NotificationContent;
+			productReference = A75AF193307053B8005D826B /* NotificationContent.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -86,11 +198,14 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2610;
+				LastSwiftUpdateCheck = 2720;
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					A74C008C2E960653001AB35D = {
 						CreatedOnToolsVersion = 26.1;
+					};
+					A75AF192307053B8005D826B = {
+						CreatedOnToolsVersion = 27.2;
 					};
 				};
 			};
@@ -114,12 +229,20 @@
 			projectRoot = "";
 			targets = (
 				A74C008C2E960653001AB35D /* Univr Calendar */,
+				A75AF192307053B8005D826B /* NotificationContent */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A74C008B2E960653001AB35D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A75AF191307053B8005D826B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -136,7 +259,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A75AF18F307053B8005D826B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A75AF1A1307053B8005D826B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A75AF192307053B8005D826B /* NotificationContent */;
+			targetProxy = A75AF1A0307053B8005D826B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A74C00982E960654001AB35D /* Debug */ = {
@@ -174,6 +312,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 2741;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = KP9752B26L;
@@ -196,6 +335,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -203,6 +343,7 @@
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
 		};
@@ -241,6 +382,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 2741;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = KP9752B26L;
@@ -257,11 +399,13 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
 		};
@@ -272,7 +416,6 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2406;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = KP9752B26L;
 				ENABLE_APP_SANDBOX = YES;
@@ -300,7 +443,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.leonardorossi.unicalendar;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -313,7 +455,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				XROS_DEPLOYMENT_TARGET = "$(RECOMMENDED_XROS_DEPLOYMENT_TARGET)";
@@ -327,7 +469,6 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2406;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = KP9752B26L;
 				ENABLE_APP_SANDBOX = YES;
@@ -355,7 +496,6 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = dev.leonardorossi.unicalendar;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
@@ -368,10 +508,81 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				XROS_DEPLOYMENT_TARGET = "$(RECOMMENDED_XROS_DEPLOYMENT_TARGET)";
+			};
+			name = Release;
+		};
+		A75AF1A4307053B8005D826B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = KP9752B26L;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationContent/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotificationContent;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.leonardorossi.unicalendar.NotificationContent;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A75AF1A5307053B8005D826B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = KP9752B26L;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationContent/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotificationContent;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = dev.leonardorossi.unicalendar.NotificationContent;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -392,6 +603,15 @@
 			buildConfigurations = (
 				A74C009B2E960654001AB35D /* Debug */,
 				A74C009C2E960654001AB35D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A75AF1A7307053B8005D826B /* Build configuration list for PBXNativeTarget "NotificationContent" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A75AF1A4307053B8005D826B /* Debug */,
+				A75AF1A5307053B8005D826B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -417,6 +637,16 @@
 		A72DAEEC2EE0B35300F86639 /* UnivrCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = UnivrCore;
+		};
+		A75AF2BD307095F5005D826B /* UnivrCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A72DAEEB2EE0B35300F86639 /* XCLocalSwiftPackageReference "UnivrCore" */;
+			productName = UnivrCore;
+		};
+		A75AF2C13070962A005D826B /* CustomSheet */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A70C43712FDED6ED002D17EC /* XCLocalSwiftPackageReference "CustomSheet" */;
+			productName = CustomSheet;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

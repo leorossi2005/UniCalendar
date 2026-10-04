@@ -50,12 +50,28 @@ struct CalendarSheetContent: View {
                     } else if router.openSettings {
                         Settings(tempSettings: $router.tempSettings)
                             .ignoresSafeArea(.keyboard)
-                    } else if let lesson = router.selectedLesson {
-                        LessonDetailsView(lesson: lesson, openAddToCalendar: router.openAddToCalendar) {
-                            sheetManager.setDetent(.small)
-                            router.selectedLesson = nil
-                            router.openAddToCalendar = false
+                    } else if router.openAddPersonalEvent {
+                        ManagePersonalEventView(selectedDate: selectedWeek, editingEvent: router.editingPersonalEvent) { newEvent in
+                            if let newEvent = newEvent, router.selectedItem != nil {
+                                router.selectedItem = .personal(newEvent)
+                            }
+                            
+                            if router.selectedItem == nil {
+                                sheetManager.setDetent(.small)
+                            }
+                            router.openAddPersonalEvent = false
+                            router.editingPersonalEvent = nil
                         }
+                    } else if let item = router.selectedItem {
+                        CalendarItemDetailsView(item: item, internalItem: item.displayable, openAddToCalendar: router.openAddToCalendar, onDismiss: {
+                            sheetManager.setDetent(.small)
+                            router.selectedItem = nil
+                            router.openAddToCalendar = false
+                        }, onEdit: {
+                            if case .personal(let event) = item {
+                                router.routeToAddPersonalEvent(editing: event)
+                            }
+                        })
                     } else if let room = router.selectedRoom {
                         RoomDetailsView(room: room, selectedDate: selectedWeek)
                     }

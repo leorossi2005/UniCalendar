@@ -8,7 +8,6 @@
 //
 
 import Foundation
-import Observation
 
 @MainActor
 @Observable
@@ -221,8 +220,126 @@ public class CalendarViewModel {
         self.academicYearDays = dates
     }
     
-    public func events(for date: Date) -> [Lesson]? {
+    public func events(for date: Date) -> [CalendarItem]? {
         let normalizedDate = Calendar.current.startOfDay(for: date)
-        return schedule.first(where: { $0.date == normalizedDate })?.events
+        let lessons = schedule.first(where: { $0.date == normalizedDate })?.events ?? []
+        
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        let endOfDay = Calendar.current.date(byAdding: DateComponents(day: 1, second: -1), to: startOfDay) ?? startOfDay
+        
+        let dailyPersonalEvents = CommitmentsManager.shared.personalEvents.filter { 
+            $0.startTime >= startOfDay && $0.startTime <= endOfDay 
+        }
+        
+        if lessons.isEmpty && dailyPersonalEvents.isEmpty {
+            return nil
+        }
+        
+        var combinedItems: [CalendarItem] = []
+        for lesson in lessons {
+            combinedItems.append(.lesson(lesson))
+        }
+        for event in dailyPersonalEvents {
+            combinedItems.append(.personal(event))
+        }
+        
+        let sortedItems = combinedItems.sorted(by: { $0.startTime < $1.startTime })
+        // If BFF takes over remove the function and change to "return sortedItems"
+        return processPausesWithPersonalEvents(items: sortedItems)
+    }
+    
+    private func processPausesWithPersonalEvents(items: [CalendarItem]) -> [CalendarItem] {
+        var pauses: [Lesson] = []
+        var realLessons: [Lesson] = []
+        var personalEvents: [PersonalEvent] = []
+        
+        for item in items {
+            switch item {
+            case .lesson(let l):
+                if l.type == .pause { pauses.append(l) } else { realLessons.append(l) }
+            case .personal(let p):
+                personalEvents.append(p)
+            }
+        }
+        
+        var adjustedPauses: [Lesson] = []
+        
+        for pause in pauses {
+            var currentPieces = [pause]
+            for pe in personalEvents {
+                var nextPieces: [Lesson] = []
+                for p in currentPieces {
+                    if pe.startTime < p.endTime && pe.endTime > p.startTime {
+                        if p.startTime < pe.startTime {
+                            let dur = Calendar.current.dateComponents([.minute], from: p.startTime, to: pe.startTime).minute ?? 0
+                            if dur > 0 {
+                                nextPieces.append(Lesson(id: p.id + "_pre", code: p.code, type: p.type, name: p.name, cleanName: p.cleanName, tags: p.tags, group: p.group, startTime: p.startTime, endTime: pe.startTime, durationMinutes: dur, isCanceled: p.isCanceled, color: p.color, teachers: p.teachers, location: p.location))
+                            }
+                        }
+                        if p.endTime > pe.endTime {
+                            let dur = Calendar.current.dateComponents([.minute], from: pe.endTime, to: p.endTime).minute ?? 0
+                            if dur > 0 {
+                                nextPieces.append(Lesson(id: p.id + "_post", code: p.code, type: p.type, name: p.name, cleanName: p.cleanName, tags: p.tags, group: p.group, startTime: pe.endTime, endTime: p.endTime, durationMinutes: dur, isCanceled: p.isCanceled, color: p.color, teachers: p.teachers, location: p.location))
+                            }
+                        }
+                    } else {
+                        nextPieces.append(p)
+                    }
+                }
+                currentPieces = nextPieces
+            }
+            adjustedPauses.append(contentsOf: currentPieces)
+        }
+        
+        var allEvents: [CalendarItem] = []
+        allEvents.append(contentsOf: realLessons.map { .lesson($0) })
+        allEvents.append(contentsOf: personalEvents.map { .personal($0) })
+        allEvents.append(contentsOf: adjustedPauses.map { .lesson($0) })
+        
+        allEvents.sort { $0.startTime < $1.startTime }
+        
+        var finalItems: [CalendarItem] = []
+        if allEvents.isEmpty { return [] }
+        
+        var currentEndTime = allEvents.first!.startTime
+        
+        for item in allEvents {
+            if currentEndTime < item.startTime {
+                let dur = Calendar.current.dateComponents([.minute], from: currentEndTime, to: item.startTime).minute ?? 0
+                if dur > 0 {
+                    let newPause = Lesson(
+                        id: UUID().uuidString,
+                        code: nil,
+                        type: .pause,
+                        name: "Pausa",
+                        cleanName: "Pausa",
+                        tags: [],
+                        group: .all,
+                        startTime: currentEndTime,
+                        endTime: item.startTime,
+                        durationMinutes: dur,
+                        isCanceled: false,
+                        color: "#FFFFFF",
+                        teachers: [],
+                        location: nil
+                    )
+                    finalItems.append(.lesson(newPause))
+                }
+            }
+            
+            finalItems.append(item)
+            
+            let itemEndTime: Date
+            switch item {
+            case .lesson(let l): itemEndTime = l.endTime
+            case .personal(let p): itemEndTime = p.endTime
+            }
+            
+            if itemEndTime > currentEndTime {
+                currentEndTime = itemEndTime
+            }
+        }
+        
+        return finalItems
     }
 }

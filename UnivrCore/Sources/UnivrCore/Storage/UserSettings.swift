@@ -138,7 +138,6 @@ public struct TempSettingsState {
     
     public func hasChanged(from settings: UserSettings) -> Bool {
         selectedCourse != settings.selectedCourse ||
-        selectedCourseName != settings.selectedCourseName ||
         selectedYear != settings.selectedYear ||
         selectedAcademicYear != settings.selectedAcademicYear
     }

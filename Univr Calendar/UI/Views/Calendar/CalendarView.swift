@@ -43,10 +43,12 @@ struct CalendarView: View {
                 mainView
                     .opacity(page == .main ? 1 : 0)
                     .allowsHitTesting(page == .main)
+                    .animation(nil, value: page)
                 
                 ClassroomAvailabilityView(coordinator: coordinator, sheetRouter: sheetRouter)
                     .opacity(page == .classrooms ? 1 : 0)
                     .allowsHitTesting(page == .classrooms)
+                    .animation(nil, value: page)
             }
             .toolbar {
                 buildToolbar()
@@ -62,6 +64,10 @@ struct CalendarView: View {
             }
             .onAppear {
                 inizializeData()
+                checkPendingNotificationTap()
+            }
+            .onChange(of: NotificationManager.shared.itemToOpen) { _, _ in
+                checkPendingNotificationTap()
             }
             .onChange(of: viewModel.state == .loading) { _, isLoading in
                 handleLoadingChange(isLoading)
@@ -106,22 +112,10 @@ struct CalendarView: View {
         ScrollView(.horizontal) {
             LazyHStack(spacing: 0) {
                 ForEach(viewModel.academicYearDays, id: \.self) { date in
-                    let dailyLessons = viewModel.events(for: date) ?? []
-                    
-                    Group {
-                        if !dailyLessons.isEmpty {
-                            CalendarViewDay(
-                                filteredLessons: dailyLessons,
-                                sheetRouter: sheetRouter
-                            )
-                        } else {
-                            ContentUnavailableView(
-                                "Giornata Libera",
-                                systemImage: "moon.zzz",
-                                description: Text("Non ci sono lezioni in programma per oggi.")
-                            )
-                        }
-                    }
+                    CalendarViewDay(
+                        combinedItems: viewModel.events(for: date) ?? [],
+                        sheetRouter: sheetRouter
+                    )
                     .containerRelativeFrame(.horizontal)
                     .id(date)
                 }
@@ -182,7 +176,7 @@ struct CalendarView: View {
             ScrollView {
                 VStack(spacing: 10) {
                     ForEach(0..<10, id: \.self) { _ in
-                        LessonCard(lesson: .sample)
+                        CardItemContainer(item: .lesson(.sample), sheetRouter: sheetRouter)
                             .shimmeringPlaceholder(opacity: colorScheme == .light ? 0.5 : 0.7)
                     }
                 }
@@ -205,11 +199,24 @@ struct CalendarView: View {
     private func buildToolbar() -> some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             HStack {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(coordinator.selectedWeek.getCurrentWeekdaySymbol(length: .wide))
-                        .font(.headline)
-                    Text("\(coordinator.selectedWeek.day) \(coordinator.selectedWeek.getCurrentMonthSymbol(length: .wide))")
-                        .font(.subheadline)
+                ZStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("Mercoledì")
+                            .font(.headline)
+                        Text("00 Settembre")
+                            .font(.subheadline)
+                    }
+                    .opacity(0)
+                    .accessibilityHidden(true)
+                    
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(coordinator.selectedWeek.getCurrentWeekdaySymbol(length: .wide))
+                            .font(.headline)
+                        Text("\(coordinator.selectedWeek.day) \(coordinator.selectedWeek.getCurrentMonthSymbol(length: .wide))")
+                            .font(.subheadline)
+                    }
+                    .contentTransition(.numericText())
+                    .animation(.default, value: coordinator.selectedWeek)
                 }
                 
                 Image(systemName: "wifi.slash")
@@ -243,27 +250,33 @@ struct CalendarView: View {
             }
         }
         
-        ToolbarItem(placement: .topBarTrailing) {
-            Button {
-                page = page == .main ? .classrooms : .main
-            } label: {
-                HStack {
-                    Image(systemName: page == .main ? "calendar" : "clock")
-                        .symbolReplace()
+        if page == .main {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Aggiungi", systemImage: "plus") {
+                    Haptics.play(.impact(weight: .light))
+                    sheetRouter.routeToAddPersonalEvent()
                 }
             }
         }
         
         ToolbarItem(placement: .topBarTrailing) {
-            Button(action: openSettingsAction) {
-                Label("", systemImage: "gearshape.fill")
+            Button("Cambia pagina", systemImage: page == .main ? "calendar" : "clock") {
+                withAnimation {
+                    page = page == .main ? .classrooms : .main
+                }
             }
+            .symbolReplace()
+        }
+        
+        ToolbarItem(placement: .topBarTrailing) {
+            Button("Impostazioni", systemImage: "gearshape.fill", action: openSettingsAction)
         }
     }
     
     // MARK: - Logic Methods
     private func openSettingsAction() {
         Haptics.play(.impact(weight: .light))
+        sheetRouter.tempSettings.sync(with: settings)
         sheetRouter.routeToSettings()
     }
     
@@ -313,6 +326,15 @@ struct CalendarView: View {
         let year = comps.year ?? 0
         let month = comps.month ?? 1
         return month >= 10 ? year : year - 1
+    }
+    
+    private func checkPendingNotificationTap() {
+        guard let item = NotificationManager.shared.itemToOpen else { return }
+        NotificationManager.shared.itemToOpen = nil          // lo consumo sempre, anche se lo ignoro
+        guard !sheetRouter.openSettings,
+              !sheetRouter.openWhatsNew,
+              !sheetRouter.openAddPersonalEvent else { return }
+        sheetRouter.routeToItem(item)
     }
     
     private func handleLoadingChange(_ isLoading: Bool) {
@@ -388,59 +410,31 @@ struct CalendarView: View {
 
 // MARK: - Subviews
 struct CalendarViewDay: View {
-    @Environment(\.colorScheme) var colorScheme
-    
-    let filteredLessons: [Lesson]
+    let combinedItems: [CalendarItem]
     var sheetRouter: CalendarSheetRouter
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 10) {
-                ForEach(filteredLessons) { lesson in
-                    if lesson.type != .pause && lesson.type != .closure {
-                        LessonCard(lesson: lesson)
-                            .onTapGesture {
-                                Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                sheetRouter.routeToLesson(lesson)
-                            }
-                            .contextMenu(
-                                menuItems: {
-                                    Button(action: {
-                                        Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                        sheetRouter.routeToLesson(lesson, addToCalendar: true)
-
-                                    }) {
-                                        Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
-                                    }
-                                    Button(action: {
-                                        Haptics.play(.impact(weight: .light, intensity: 0.5))
-                                        sheetRouter.routeToLesson(lesson)
-                                    }) {
-                                        Label("Vedi più dettagli", systemImage: "ellipsis")
-                                    }
-                                },
-                                preview: {
-                                    LessonCardPreview(lesson: lesson)
-                                }
-                            )
-                    } else {
-                        HStack(alignment: .bottom) {
-                            Image(systemName: .cupDynamic)
-                                .font(.system(size: 40))
-                            Text(Duration.seconds(lesson.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)))
-                                .font(.system(size: 30))
-                                .italic()
-                                .bold()
+        Group {
+            if combinedItems.isEmpty {
+                ContentUnavailableView(
+                    "Giornata Libera",
+                    systemImage: "moon.zzz",
+                    description: Text("Non ci sono lezioni o impegni in programma per oggi.")
+                )
+            } else {
+                ScrollView {
+                    VStack(spacing: 10) {
+                        ForEach(combinedItems) { item in
+                            CardItemContainer(item: item, sheetRouter: sheetRouter)
                         }
-                        .foregroundStyle(.secondary)
                     }
                 }
+                .contentMargins(.top, 15, for: .scrollContent)
+                .contentMargins(.top, 15, for: .scrollIndicators)
+                .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
+                .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
             }
         }
-        .contentMargins(.top, 15, for: .scrollContent)
-        .contentMargins(.top, 15, for: .scrollIndicators)
-        .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
-        .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
     }
 }
 
