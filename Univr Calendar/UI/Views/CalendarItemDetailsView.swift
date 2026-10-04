@@ -111,28 +111,30 @@ struct CalendarItemDetailsView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
-                        let isScheduled = notificationManager.activeNotifications.contains { $0.id == internalItem.id }
+                        let activeNotification = notificationManager.activeNotifications.first(where: { $0.id == internalItem.id })
+                        let isScheduled = activeNotification != nil
                         
                         Menu {
+                            if canSchedule(offset: 0) {
+                                notificationButton(for: 0, activeNotification: activeNotification)
+                            }
+                            if canSchedule(offset: 5) {
+                                notificationButton(for: 5, activeNotification: activeNotification)
+                            }
+                            if canSchedule(offset: 15) {
+                                notificationButton(for: 15, activeNotification: activeNotification)
+                            }
+                            if canSchedule(offset: 30) {
+                                notificationButton(for: 30, activeNotification: activeNotification)
+                            }
+                            if canSchedule(offset: 60) {
+                                notificationButton(for: 60, activeNotification: activeNotification)
+                            }
+                            
                             if isScheduled {
+                                Divider()
                                 Button("Rimuovi notifica", systemImage: "bell.slash", role: .destructive) {
                                     Task { await notificationManager.removeNotification(id: internalItem.id) }
-                                }
-                            } else {
-                                if canSchedule(offset: 0) {
-                                    Button("Ad inizio impegno") { scheduleNotification(offset: 0) }
-                                }
-                                if canSchedule(offset: 5) {
-                                    Button("5 minuti prima") { scheduleNotification(offset: 5) }
-                                }
-                                if canSchedule(offset: 15) {
-                                    Button("15 minuti prima") { scheduleNotification(offset: 15) }
-                                }
-                                if canSchedule(offset: 30) {
-                                    Button("30 minuti prima") { scheduleNotification(offset: 30) }
-                                }
-                                if canSchedule(offset: 60) {
-                                    Button("1 ora prima") { scheduleNotification(offset: 60) }
                                 }
                             }
                         } label: {
@@ -328,6 +330,22 @@ struct CalendarItemDetailsView: View {
         }
     }
     
+    @ViewBuilder
+    private func notificationButton(for offset: Int, activeNotification: SavedNotification?) -> some View {
+        let isSelected = activeNotification?.offsetMinutes == offset
+        let label = offset == 0 ? String(localized: "Ad inizio impegno") : (offset == 60 ? String(localized: "1 ora prima") : String(localized: "\(offset) minuti prima"))
+        
+        Button {
+            scheduleNotification(offset: offset)
+        } label: {
+            if isSelected {
+                Label(label, systemImage: "checkmark")
+            } else {
+                Text(label)
+            }
+        }
+    }
+    
     private func prepareAndShowEvent(for lesson: Lesson) {
         let newEvent = EKEvent(eventStore: eventStore)
         
@@ -423,9 +441,16 @@ struct StableMapView: View {
                     .fill(uiColor)
                     .frame(width: 30, height: 30)
                     .shadow(radius: 2)
-                Image(systemName: "graduationcap.fill")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.black)
+                
+                Group {
+                    if case .personal = item {
+                        Image(systemName: "person.fill")
+                    } else {
+                        Image(systemName: "graduationcap.fill")
+                    }
+                }
+                .font(.system(size: 10))
+                .foregroundStyle(.black)
             }
             
             Text(internalItem.displayAddress ?? "")

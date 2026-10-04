@@ -75,6 +75,16 @@
         }
       }
     },
+    "%lld minuti prima" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld minutes before"
+          }
+        }
+      }
+    },
     "•" : {
       "localizations" : {
         "en" : {
@@ -111,36 +121,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "1 hour before"
-          }
-        }
-      }
-    },
-    "5 minuti prima" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "5 minutes before"
-          }
-        }
-      }
-    },
-    "15 minuti prima" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "15 minutes before"
-          }
-        }
-      }
-    },
-    "30 minuti prima" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "30 minutes before"
           }
         }
       }

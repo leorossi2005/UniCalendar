@@ -29,19 +29,19 @@ struct EditNotificationView: View {
             Section {
                 Picker("Avviso", selection: $offsetMinutes) {
                     if canSchedule(offset: 0) || offsetMinutes == 0 {
-                        Text("Ad inizio impegno").tag(0)
+                        notificationText(for: 0)
                     }
                     if canSchedule(offset: 5) || offsetMinutes == 5 {
-                        Text("5 minuti prima").tag(5)
+                        notificationText(for: 5)
                     }
                     if canSchedule(offset: 15) || offsetMinutes == 15 {
-                        Text("15 minuti prima").tag(15)
+                        notificationText(for: 15)
                     }
                     if canSchedule(offset: 30) || offsetMinutes == 30 {
-                        Text("30 minuti prima").tag(30)
+                        notificationText(for: 30)
                     }
                     if canSchedule(offset: 60) || offsetMinutes == 60 {
-                        Text("1 ora prima").tag(60)
+                        notificationText(for: 60)
                     }
                 }
                 .onChange(of: offsetMinutes) {
@@ -63,6 +63,15 @@ struct EditNotificationView: View {
                 dismiss()
             }
         }
+    }
+    
+    
+    
+    @ViewBuilder
+    private func notificationText(for offset: Int) -> some View {
+        let label = offset == 0 ? String(localized: "Ad inizio impegno") : (offset == 60 ? String(localized: "1 ora prima") : String(localized: "\(offset) minuti prima"))
+        
+        Text(label).tag(offset)
     }
     
     private func saveChanges() {
