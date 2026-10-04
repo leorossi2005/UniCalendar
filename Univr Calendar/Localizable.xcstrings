@@ -1035,6 +1035,26 @@
         }
       }
     },
+    "Per impostare un promemoria devi abilitare le notifiche nelle Impostazioni." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To set up a reminder, you need to enable notifications in Settings."
+          }
+        }
+      }
+    },
+    "Permessi mancanti" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Missing permissions"
+          }
+        }
+      }
+    },
     "Portfolio" : {
       "localizations" : {
         "en" : {

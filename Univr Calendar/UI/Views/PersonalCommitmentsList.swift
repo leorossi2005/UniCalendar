@@ -83,7 +83,7 @@ struct PersonalCommitmentsList: View {
         .navigationTitle("Impegni Personali")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $editingEvent) { eventToEdit in
-            AddPersonalEventView(selectedDate: eventToEdit.startTime, editingEvent: eventToEdit) { _ in
+            ManagePersonalEventView(selectedDate: eventToEdit.startTime, editingEvent: eventToEdit) { _ in
                 editingEvent = nil
             }
         }

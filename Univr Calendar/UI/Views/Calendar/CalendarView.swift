@@ -64,6 +64,10 @@ struct CalendarView: View {
             }
             .onAppear {
                 inizializeData()
+                checkPendingNotificationTap()
+            }
+            .onChange(of: NotificationManager.shared.itemToOpen) { _, _ in
+                checkPendingNotificationTap()
             }
             .onChange(of: viewModel.state == .loading) { _, isLoading in
                 handleLoadingChange(isLoading)
@@ -322,6 +326,15 @@ struct CalendarView: View {
         let year = comps.year ?? 0
         let month = comps.month ?? 1
         return month >= 10 ? year : year - 1
+    }
+    
+    private func checkPendingNotificationTap() {
+        guard let item = NotificationManager.shared.itemToOpen else { return }
+        NotificationManager.shared.itemToOpen = nil          // lo consumo sempre, anche se lo ignoro
+        guard !sheetRouter.openSettings,
+              !sheetRouter.openWhatsNew,
+              !sheetRouter.openAddPersonalEvent else { return }
+        sheetRouter.routeToItem(item)
     }
     
     private func handleLoadingChange(_ isLoading: Bool) {

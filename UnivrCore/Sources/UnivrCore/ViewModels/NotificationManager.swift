@@ -24,7 +24,17 @@ public final class NotificationManager {
     private var modificationGeneration = 0
     private var isModifying: Bool { modifyingCount > 0 }
     
+    public var itemToOpen: CalendarItem?
+    
     private init() {}
+    
+    public func handleTappedNotification(userInfo: [AnyHashable: Any]) {
+        if let payload = userInfo["itemPayload"] as? Data {
+            if let decodedItem = try? JSONDecoder().decode(CalendarItem.self, from: payload) {
+                self.itemToOpen = decodedItem
+            }
+        }
+    }
     
     public func configure(notificationProvider: NotificationProvider, storageProvider: StorageProvider) {
         self.notificationProvider = notificationProvider

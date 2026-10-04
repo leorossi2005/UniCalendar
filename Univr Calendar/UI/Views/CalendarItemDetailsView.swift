@@ -26,6 +26,7 @@ struct CalendarItemDetailsView: View {
     @State private var eventStore = EKEventStore()
     @State private var eventSaved: Bool = false
     @State private var notificationManager = NotificationManager.shared
+    @State private var showPermissionAlert: Bool = false
     
     let openAddToCalendar: Bool
     var onDismiss: (() -> Void)?
@@ -200,9 +201,19 @@ struct CalendarItemDetailsView: View {
             }
         }
         .navigationDestination(item: $editingEvent) { eventToEdit in
-            AddPersonalEventView(selectedDate: eventToEdit.startTime, editingEvent: eventToEdit) { _ in
+            ManagePersonalEventView(selectedDate: eventToEdit.startTime, editingEvent: eventToEdit) { _ in
                 editingEvent = nil
             }
+        }
+        .alert("Permessi mancanti", isPresented: $showPermissionAlert) {
+            Button("Annulla", role: .cancel) { }
+            Button("Impostazioni") {
+                if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+        } message: {
+            Text("Per impostare un promemoria devi abilitare le notifiche nelle Impostazioni.")
         }
     }
     
@@ -310,7 +321,10 @@ struct CalendarItemDetailsView: View {
                 offsetMinutes: offset,
                 itemPayload: try? JSONEncoder().encode(item)
             )
-            await notificationManager.toggleNotification(notification: saved)
+            let success = await notificationManager.toggleNotification(notification: saved)
+            if !success && !notificationManager.hasPermission {
+                showPermissionAlert = true
+            }
         }
     }
     

@@ -1,5 +1,5 @@
 //
-//  AddPersonalEventView.swift
+//  ManagePersonalEventView.swift
 //  Univr Calendar
 //
 //  Created by Leonardo Rossi on 15/09/2026.
@@ -10,9 +10,11 @@
 import SwiftUI
 import SwiftData
 import UnivrCore
+import CustomSheet
 
-struct AddPersonalEventView: View {
+struct ManagePersonalEventView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(GlobalSheetManager.self) private var sheetManager
     
     let selectedDate: Date
     let editingEvent: PersonalEvent?
@@ -109,9 +111,9 @@ struct AddPersonalEventView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     if #available(iOS 26, *) {
-                        Button("Annulla", systemImage: "xmark", role: .cancel, action: { onDismiss(nil) })
+                        Button("Annulla", systemImage: "xmark", role: .cancel, action: { dismiss(nil) })
                     } else {
-                        Button("Annulla", role: .cancel, action: { onDismiss(nil) })
+                        Button("Annulla", role: .cancel, action: { dismiss(nil) })
                     }
                 }
                 
@@ -126,6 +128,12 @@ struct AddPersonalEventView: View {
                     .disabled(!hasChanges)
                 }
             }
+            .onAppear { sheetManager.setLock(true) }
+    }
+    
+    private func dismiss(_ event: PersonalEvent?) {
+        sheetManager.setLock(false)
+        onDismiss(event)
     }
     
     private func saveEvent() {
@@ -154,7 +162,7 @@ struct AddPersonalEventView: View {
         
         Task {
             await CommitmentsManager.shared.addEvent(newEvent)
-            onDismiss(newEvent)
+            dismiss(newEvent)
         }
     }
     
