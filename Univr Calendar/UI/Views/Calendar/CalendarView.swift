@@ -20,6 +20,7 @@ struct CalendarView: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
+    @Environment(AppStatusManager.self) var statusManager
   
     @State private var sheetRouter: CalendarSheetRouter = .init()
     @State private var coordinator = CalendarCoordinator()
@@ -27,6 +28,8 @@ struct CalendarView: View {
     @State private var viewModel = CalendarViewModel()
     @State private var firstLoading: Bool = true
     @State private var showSheet: Bool = true
+    
+    @State private var shownNoticeIDsThisSession: Set<String> = []
     
     @State private var page: Pages = .main
     
@@ -61,6 +64,9 @@ struct CalendarView: View {
             }
             .onChange(of: sheetRouter.manager.selectedDetent) { oldValue, newValue in
                 handleDetentChange(oldValue: oldValue, newValue: newValue)
+            }
+            .onChange(of: statusManager.activeNoticeAction) { _, _ in
+                checkPendingNotices()
             }
             .onAppear {
                 inizializeData()
@@ -274,6 +280,32 @@ struct CalendarView: View {
     }
     
     // MARK: - Logic Methods
+    private func checkPendingNotices() {
+        guard !sheetRouter.openSettings,
+              !sheetRouter.openWhatsNew,
+              !sheetRouter.openAddPersonalEvent,
+              sheetRouter.openAppNotice == nil,
+              sheetRouter.selectedItem == nil,
+              sheetRouter.selectedRoom == nil,
+              sheetRouter.manager.selectedDetent != .large else { return }
+              
+        let action = statusManager.activeNoticeAction
+        switch action {
+        case .warning(let notice), .info(let notice):
+            #if DEBUG
+            // Scommenta per ignorare il blocco "1 apparizione per sessione" e farlo apparire sempre (es. tornando in CalendarView)
+            // shownNoticeIDsThisSession.remove(notice.id)
+            #endif
+            
+            if !shownNoticeIDsThisSession.contains(notice.id) {
+                shownNoticeIDsThisSession.insert(notice.id)
+                sheetRouter.routeToAppNotice(notice)
+            }
+        default:
+            break
+        }
+    }
+    
     private func openSettingsAction() {
         Haptics.play(.impact(weight: .light))
         sheetRouter.tempSettings.sync(with: settings)
@@ -290,6 +322,8 @@ struct CalendarView: View {
             if !settings.latestVersion.isEmpty && settings.latestVersion != Bundle.main.clearAppVersion {
                 try? await Task.sleep(for: .seconds(0.2))
                 sheetRouter.routeToWhatsNew()
+            } else {
+                checkPendingNotices()
             }
         }
         
@@ -400,10 +434,19 @@ struct CalendarView: View {
             } else if oldValue == .large {
                 if sheetRouter.openWhatsNew {
                     settings.latestVersion = Bundle.main.clearAppVersion
+                } else if let notice = sheetRouter.openAppNotice {
+                    statusManager.dismissNotice(id: notice.id)
                 }
             }
             
             sheetRouter.resetToCalendar()
+            
+            if oldValue == .large {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(0.3))
+                    checkPendingNotices()
+                }
+            }
         }
     }
 }
@@ -441,4 +484,5 @@ struct CalendarViewDay: View {
 #Preview {
     CalendarView()
         .environment(UserSettings.shared)
+        .environment(AppStatusManager())
 }

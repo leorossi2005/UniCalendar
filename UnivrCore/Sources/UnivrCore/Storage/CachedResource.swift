@@ -22,12 +22,14 @@ public enum CacheFile: Equatable, Sendable {
     case years
     case courses(year: String)
     case calendarSchedule
+    case appStatus
     
     var fileName: String {
         switch self {
         case .years: return "years_cache.json"
         case .courses(let year): return "courses_\(year)_cache.json"
         case .calendarSchedule: return "calendar_cache.json"
+        case .appStatus: return "appStatus_cache.json"
         }
     }
 }

@@ -11,7 +11,8 @@ import Foundation
 
 struct NetworkService {
     private let session: URLSession
-    let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
+    //let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
+    let baseURL = "http://192.168.1.109:3001/api/v1"
     
     init() {
         let configuration = URLSessionConfiguration.default
@@ -97,5 +98,11 @@ struct NetworkService {
         struct RootWrapper: Decodable { let availability: Availability }
         let wrapper: RootWrapper = try await fetch(from: "/roomsavailability?date=\(date)")
         return wrapper.availability
+    }
+    
+    func getAppStatus() async throws -> [AppNotice] {
+        struct RootWrapper: Decodable { let notices: [AppNotice] }
+        let wrapper: RootWrapper = try await fetch(from: "/status")
+        return wrapper.notices
     }
 }

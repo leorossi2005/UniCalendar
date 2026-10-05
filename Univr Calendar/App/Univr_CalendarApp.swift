@@ -28,6 +28,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 struct Univr_CalendarApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @Environment(\.scenePhase) private var scenePhase
+    @State private var appStatusManager = AppStatusManager()
     let container: ModelContainer
     
     init() {
@@ -42,6 +43,7 @@ struct Univr_CalendarApp: App {
         WindowGroup {
             RootView()
                 .environment(UserSettings.shared)
+                .environment(appStatusManager)
                 .environment(\.safeAreaInsets, UIApplication.shared.safeAreas)
                 .modelContainer(container)
                 .enableGlobalHaptics()
@@ -59,7 +61,9 @@ struct Univr_CalendarApp: App {
             if newPhase == .active {
                 Task {
                     await NotificationManager.shared.cleanupExpiredNotifications()
+                    await appStatusManager.refreshIfNeeded()
                 }
+                appStatusManager.evaluateCurrentState()
             }
         }
     }

@@ -22,6 +22,7 @@ class CalendarSheetRouter {
     var openWhatsNew: Bool = false
     var openAddToCalendar: Bool = false
     var openAddPersonalEvent: Bool = false
+    var openAppNotice: EvaluatedNotice? = nil
     var editingPersonalEvent: PersonalEvent? = nil
     var tempSettings: TempSettingsState = .init()
     
@@ -48,7 +49,14 @@ class CalendarSheetRouter {
         manager.setDetent(.large)
     }
     
+    func routeToAppNotice(_ notice: EvaluatedNotice) {
+        openAppNotice = notice
+        detents = [.small, .medium, .large]
+        manager.setDetent(.large)
+    }
+    
     func routeToItem(_ item: CalendarItem, addToCalendar: Bool = false) {
+        openAppNotice = nil
         selectedItem = item
         openAddToCalendar = addToCalendar
         detents = [.small, .medium, .large]
@@ -74,6 +82,7 @@ class CalendarSheetRouter {
         selectedRoom = nil
         openSettings = false
         openWhatsNew = false
+        openAppNotice = nil
         openAddToCalendar = false
         openAddPersonalEvent = false
         editingPersonalEvent = nil
