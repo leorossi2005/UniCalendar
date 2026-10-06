@@ -199,6 +199,35 @@ extension EnvironmentValues {
     @Entry var safeAreaInsets: UIEdgeInsets = .zero
 }
 
+private struct SafeAreaInsetsReader: ViewModifier {
+    @State private var insets: UIEdgeInsets = .zero
+    
+    func body(content: Content) -> some View {
+        content
+            .environment(\.safeAreaInsets, insets)
+            .background {
+                Color.clear
+                    .ignoresSafeArea(.keyboard)
+                    .onGeometryChange(for: EdgeInsets.self) { proxy in
+                        proxy.safeAreaInsets
+                    } action: { new in
+                        insets = UIEdgeInsets(
+                            top: new.top,
+                            left: new.leading,
+                            bottom: new.bottom,
+                            right: new.trailing
+                        )
+                    }
+            }
+    }
+}
+
+extension View {
+    func readSafeAreaInsets() -> some View {
+        modifier(SafeAreaInsetsReader())
+    }
+}
+
 extension Array where Element == Corso {
     public func filtered(by searchText: String) -> [Corso] {
         guard !searchText.isEmpty else { return self }

@@ -44,8 +44,8 @@ struct Univr_CalendarApp: App {
             RootView()
                 .environment(UserSettings.shared)
                 .environment(appStatusManager)
-                .environment(\.safeAreaInsets, UIApplication.shared.safeAreas)
                 .modelContainer(container)
+                .readSafeAreaInsets()
                 .enableGlobalHaptics()
                 .task {
                     NetworkStatusMonitor.shared.start(provider: IOSNetworkMonitor.createProvider())

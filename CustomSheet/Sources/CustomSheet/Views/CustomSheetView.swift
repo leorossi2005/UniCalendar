@@ -57,7 +57,10 @@ struct CustomSheet<Content: View>: View {
     
     @State private var offset: CGFloat = .zero
     
-    private var liveHeight: CGFloat { baseHeight - dragY }
+    private var liveHeight: CGFloat {
+        let h = baseHeight - dragY
+        return h.isFinite ? max(0, h) : 0
+    }
     
     let content: Content
     
@@ -256,6 +259,8 @@ struct CustomSheet<Content: View>: View {
     
     // MARK: - Drag Logic
     func rubberBandDistance(offset: CGFloat, dimension: CGFloat) -> CGFloat {
+        guard dimension > 0 else { return 0 }
+        
         let coefficient: CGFloat = 0.55
         return (1.0 - (1.0 / ((offset * coefficient / dimension) + 1.0))) * dimension
     }
@@ -321,6 +326,7 @@ struct CustomSheet<Content: View>: View {
     private func handleDragEnded(_ value: CGFloat, _ predictedEndTranslation: CGFloat) {
         if manager.selectedDetent == .large {
             if value < 0 {
+                manager.isDragging = false
                 return
             }
         }
@@ -362,7 +368,9 @@ struct CustomSheet<Content: View>: View {
         if !isGoingDown && currentH >= minDetent.value && currentH <= maxDetent.value {
             let distanceToMove = abs(target.value - currentH)
             let maxDistance = maxDetent.value - minDetent.value
-            boostFactor = 1.0 + 2.0 * (distanceToMove / maxDistance)
+            if maxDistance > 0 {
+                boostFactor = 1.0 + 2.0 * (distanceToMove / maxDistance)
+            }
         }
         
         let boostedVelocityPerSecond = baseVelocityPerSecond * boostFactor
