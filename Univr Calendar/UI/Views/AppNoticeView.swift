@@ -36,12 +36,16 @@ struct AppNoticeView: View {
             Spacer()
             
             VStack(spacing: 12) {
-                if let url = notice.actionURL {
+                if notice.actionURL != nil || onDismiss != nil {
                     Button {
                         Haptics.play(.impact(weight: .medium))
-                        UIApplication.shared.open(url)
+                        if let url = notice.actionURL {
+                            UIApplication.shared.open(url)
+                        } else {
+                            onDismiss?()
+                        }
                     } label: {
-                        Text("Aggiorna")
+                        Text(notice.buttonText ?? (notice.actionURL != nil ? String(localized: "Aggiorna") : String(localized: "Chiudi")))
                             .fontWeight(.semibold)
                             .frame(maxWidth: .infinity)
                     }

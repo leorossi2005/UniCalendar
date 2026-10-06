@@ -31,6 +31,7 @@ public struct AppNotice: Codable, Sendable, Equatable, Identifiable {
     public let title: [String: String]
     public let message: [String: String]
     public let messageUnsupportedOS: [String: String]?
+    public let buttonText: [String: String]?
     public let url: String?
     public let minVersion: String?
     public let maxVersion: String?
@@ -59,6 +60,7 @@ public struct EvaluatedNotice: Equatable, Sendable, Identifiable {
     public let level: NoticeLevel
     public let title: String
     public let message: String
+    public let buttonText: String?
     public let actionURL: URL?
 }
 

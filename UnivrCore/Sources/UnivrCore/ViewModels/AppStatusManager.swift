@@ -25,7 +25,7 @@ public final class AppStatusManager {
     private var lastAttemptFailed = false
     
     private static let closedKey = "appStatus_closedIDs"
-    private static let fallbackStoreURL = URL(string: "https://apps.apple.com/app/idXXXXXXXXX")
+    private static let fallbackStoreURL = URL(string: "https://apps.apple.com/app/id6756148883")
     
     public init() {
         #if DEBUG
@@ -114,6 +114,7 @@ public final class AppStatusManager {
             level: level,
             title: notice.title.localized(for: language),
             message: message.localized(for: language),
+            buttonText: notice.buttonText?.localized(for: language),
             actionURL: url
         )
     }
@@ -131,7 +132,7 @@ public final class AppStatusManager {
     
     private static func storeURL(from string: String?) -> URL? {
         guard let string, let url = URL(string: string) else { return nil }
-        let isWebStore = url.scheme == "https" && url.host() == "apps.apple.com"
-        return (isWebStore || url.scheme == "itms-apps") ? url : nil
+        let allowedSchemes = ["https", "itms-apps"]
+        return allowedSchemes.contains(url.scheme?.lowercased() ?? "") ? url : nil
     }
 }
