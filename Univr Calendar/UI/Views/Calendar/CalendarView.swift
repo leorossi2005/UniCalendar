@@ -65,7 +65,7 @@ struct CalendarView: View {
             .onChange(of: sheetRouter.manager.selectedDetent) { oldValue, newValue in
                 handleDetentChange(oldValue: oldValue, newValue: newValue)
             }
-            .onChange(of: statusManager.activeNoticeAction) { _, _ in
+            .onChange(of: statusManager.activeNotice) { _, _ in
                 checkPendingNotices()
             }
             .onAppear {
@@ -289,21 +289,12 @@ struct CalendarView: View {
               sheetRouter.selectedRoom == nil,
               sheetRouter.manager.selectedDetent != .large else { return }
               
-        let action = statusManager.activeNoticeAction
-        switch action {
-        case .warning(let notice), .info(let notice):
-            #if DEBUG
-            // Scommenta per ignorare il blocco "1 apparizione per sessione" e farlo apparire sempre (es. tornando in CalendarView)
-            // shownNoticeIDsThisSession.remove(notice.id)
-            #endif
-            
-            if !shownNoticeIDsThisSession.contains(notice.id) {
-                shownNoticeIDsThisSession.insert(notice.id)
-                sheetRouter.routeToAppNotice(notice)
-            }
-        default:
-            break
-        }
+        guard let notice = statusManager.activeNotice,
+              notice.level != .blocking,
+              !shownNoticeIDsThisSession.contains(notice.id) else { return }
+
+        shownNoticeIDsThisSession.insert(notice.id)
+        sheetRouter.routeToAppNotice(notice)
     }
     
     private func openSettingsAction() {

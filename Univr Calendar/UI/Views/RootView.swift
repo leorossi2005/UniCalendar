@@ -21,7 +21,7 @@ struct RootView: View {
     
     var body: some View {
         Group {
-            if case .blocking(let notice) = statusManager.activeNoticeAction {
+            if let notice = statusManager.activeNotice, notice.level == .blocking {
                 AppNoticeView(notice: notice)
                     .transition(.opacity)
             } else {
@@ -39,7 +39,7 @@ struct RootView: View {
             }
         }
         .animation(.default, value: settings.onboardingCompleted)
-        .animation(.default, value: statusManager.activeNoticeAction)
+        .animation(.default, value: statusManager.activeNotice)
         .task {
             Task { await statusManager.refresh() }
             let delay = settings.onboardingCompleted ? 500 : 1500
