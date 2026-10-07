@@ -7,7 +7,7 @@
 //  SPDX-License-Identifier: GPL-3.0-or-later
 //
 
-import SwiftUI
+import Foundation
 import UnivrCore
 import CustomSheet
 

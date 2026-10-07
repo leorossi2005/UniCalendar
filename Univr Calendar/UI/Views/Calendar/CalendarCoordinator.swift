@@ -8,12 +8,19 @@
 //
 
 import Foundation
-import Observation
+
+enum CalendarPage {
+    case main
+    case classrooms
+}
 
 @MainActor
 @Observable
 final class CalendarCoordinator {
     private(set) var selectedWeek: Date
+    var page: CalendarPage = .main
+    var isScrollReady: Bool = false
+    var scrollTarget: Date? = nil
     
     init(initialDate: Date = Calendar.current.startOfDay(for: Date())) {
         self.selectedWeek = initialDate

@@ -11,13 +11,8 @@ import SwiftUI
 import UnivrCore
 import CustomSheet
 
-private enum Pages {
-    case main
-    case classrooms
-}
 
 struct CalendarView: View {
-    @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
     @Environment(AppStatusManager.self) var statusManager
@@ -27,11 +22,6 @@ struct CalendarView: View {
     
     @State private var viewModel = CalendarViewModel()
     @State private var firstLoading: Bool = true
-    @State private var showSheet: Bool = true
-    
-    @State private var shownNoticeIDsThisSession: Set<String> = []
-    
-    @State private var page: Pages = .main
     
     private var selectedWeekBinding: Binding<Date> {
         Binding(
@@ -44,14 +34,14 @@ struct CalendarView: View {
         NavigationStack {
             ZStack {
                 mainView
-                    .opacity(page == .main ? 1 : 0)
-                    .allowsHitTesting(page == .main)
-                    .animation(nil, value: page)
+                    .opacity(coordinator.page == .main ? 1 : 0)
+                    .allowsHitTesting(coordinator.page == .main)
+                    .animation(nil, value: coordinator.page)
                 
                 ClassroomAvailabilityView(coordinator: coordinator, sheetRouter: sheetRouter)
-                    .opacity(page == .classrooms ? 1 : 0)
-                    .allowsHitTesting(page == .classrooms)
-                    .animation(nil, value: page)
+                    .opacity(coordinator.page == .classrooms ? 1 : 0)
+                    .allowsHitTesting(coordinator.page == .classrooms)
+                    .animation(nil, value: coordinator.page)
             }
             .toolbar {
                 buildToolbar()
@@ -91,7 +81,7 @@ struct CalendarView: View {
             .animation(.default, value: viewModel.updateAvailable)
             .animation(.default, value: viewModel.state)
         }
-        .customSheet(isPresented: $showSheet, manager: sheetRouter.manager, detents: sheetRouter.detents) {
+        .customSheet(isPresented: .constant(true), manager: sheetRouter.manager, detents: sheetRouter.detents) {
             CalendarSheetContent(
                 router: sheetRouter,
                 selectedWeek: selectedWeekBinding
@@ -256,7 +246,7 @@ struct CalendarView: View {
             }
         }
         
-        if page == .main {
+        if coordinator.page == .main {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Aggiungi", systemImage: "plus") {
                     Haptics.play(.impact(weight: .light))
@@ -266,9 +256,9 @@ struct CalendarView: View {
         }
         
         ToolbarItem(placement: .topBarTrailing) {
-            Button("Cambia pagina", systemImage: page == .main ? "calendar" : "clock") {
+            Button("Cambia pagina", systemImage: coordinator.page == .main ? "calendar" : "clock") {
                 withAnimation {
-                    page = page == .main ? .classrooms : .main
+                    coordinator.page = coordinator.page == .main ? .classrooms : .main
                 }
             }
             .symbolReplace()
@@ -291,9 +281,9 @@ struct CalendarView: View {
               
         guard let notice = statusManager.activeNotice,
               notice.level != .blocking,
-              !shownNoticeIDsThisSession.contains(notice.id) else { return }
+              !statusManager.shownThisSessionIDs.contains(notice.id) else { return }
 
-        shownNoticeIDsThisSession.insert(notice.id)
+        statusManager.markAsShownThisSession(id: notice.id)
         sheetRouter.routeToAppNotice(notice)
     }
     
@@ -355,7 +345,7 @@ struct CalendarView: View {
     
     private func checkPendingNotificationTap() {
         guard let item = NotificationManager.shared.itemToOpen else { return }
-        NotificationManager.shared.itemToOpen = nil          // lo consumo sempre, anche se lo ignoro
+        NotificationManager.shared.itemToOpen = nil
         guard !sheetRouter.openSettings,
               !sheetRouter.openWhatsNew,
               !sheetRouter.openAddPersonalEvent else { return }
@@ -389,8 +379,7 @@ struct CalendarView: View {
                 let hasChanged = sheetRouter.tempSettings.hasChanged(from: settings)
                 
                 if hasChanged {
-                    page = .main
-                    firstLoading = true
+                    coordinator.page = .main
                     viewModel.state = .loading
                     sheetRouter.tempSettings.apply(to: settings)
                     

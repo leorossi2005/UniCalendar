@@ -14,6 +14,7 @@ import Foundation
 public final class AppStatusManager {
     public private(set) var activeNotice: EvaluatedNotice?
     public private(set) var isResolved = false
+    public private(set) var shownThisSessionIDs: Set<String> = []
     
     private let service = NetworkService()
     private let resource = CachedResource<[AppNotice]>(cacheFileName: .appStatus, cacheManager: .shared)
@@ -40,6 +41,10 @@ public final class AppStatusManager {
     }
     
     // MARK: - Public
+    public func markAsShownThisSession(id: String) {
+        shownThisSessionIDs.insert(id)
+    }
+    
     public func dismissNotice(id: String) {
         closedIDs.insert(id)
         saveClosedIDs()
@@ -134,5 +139,54 @@ public final class AppStatusManager {
         guard let string, let url = URL(string: string) else { return nil }
         let allowedSchemes = ["https", "itms-apps"]
         return allowedSchemes.contains(url.scheme?.lowercased() ?? "") ? url : nil
+    }
+}
+
+// MARK: - Regole di validità
+extension AppNotice {
+    func effectiveLevel(appVersion: AppVersion, osVersion: AppVersion, now: Date) -> NoticeLevel? {
+        if let startsAt, now < startsAt { return nil }
+        if let endsAt, now > endsAt { return nil }
+        if let minVersion, appVersion < AppVersion(minVersion) { return nil }
+        if let maxVersion, appVersion > AppVersion(maxVersion) { return nil }
+        
+        guard level == .blocking else { return level }
+        
+        guard maxVersion != nil else { return nil }
+        
+        if let updateRequiresOS, osVersion < AppVersion(updateRequiresOS) { return .warning }
+        
+        return .blocking
+    }
+}
+
+struct AppVersion: Comparable {
+    let major: Int
+    let minor: Int
+    let patch: Int
+    
+    init(_ major: Int, _ minor: Int, _ patch: Int) {
+        self.major = major
+        self.minor = minor
+        self.patch = patch
+    }
+    
+    init(_ string: String) {
+        let n = string.split(separator: ".").map { Int($0) ?? 0 } + [0, 0, 0]
+        self.init(n[0], n[1], n[2])
+    }
+    
+    init(_ os: OperatingSystemVersion) {
+        self.init(os.majorVersion, os.minorVersion, os.patchVersion)
+    }
+    
+    static func < (lhs: Self, rhs: Self) -> Bool {
+        (lhs.major, lhs.minor, lhs.patch) < (rhs.major, rhs.minor, rhs.patch)
+    }
+}
+
+extension Dictionary where Key == String, Value == String {
+    func localized(for language: String) -> String {
+        self[language] ?? self["en"] ?? values.first ?? ""
     }
 }

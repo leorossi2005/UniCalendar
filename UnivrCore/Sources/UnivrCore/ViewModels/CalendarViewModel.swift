@@ -135,7 +135,7 @@ public class CalendarViewModel {
         case .offline:
             if schedule.isEmpty { state = .offline }
         case .error(let message):
-            state = .error(message)
+            if schedule.isEmpty { state = .error(message) }
         case .idle, .loading, .loaded, .empty:
             break
         }
