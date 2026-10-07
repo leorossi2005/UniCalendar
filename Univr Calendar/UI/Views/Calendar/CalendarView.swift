@@ -19,9 +19,7 @@ struct CalendarView: View {
   
     @State private var sheetRouter: CalendarSheetRouter = .init()
     @State private var coordinator = CalendarCoordinator()
-    
     @State private var viewModel = CalendarViewModel()
-    @State private var firstLoading: Bool = true
     
     private var selectedWeekBinding: Binding<Date> {
         Binding(
@@ -66,7 +64,7 @@ struct CalendarView: View {
                 checkPendingNotificationTap()
             }
             .onChange(of: viewModel.state == .loading) { _, isLoading in
-                handleLoadingChange(isLoading)
+                Haptics.play(isLoading ? .start : .success)
             }
             .onChange(of: coordinator.selectedWeek) { oldValue, newValue in
                 guard !Calendar.current.isDate(oldValue, inSameDayAs: newValue) else { return }
@@ -79,7 +77,6 @@ struct CalendarView: View {
             }
             .animation(.default, value: viewModel.checkingUpdates)
             .animation(.default, value: viewModel.updateAvailable)
-            .animation(.default, value: viewModel.state)
         }
         .customSheet(isPresented: .constant(true), manager: sheetRouter.manager, detents: sheetRouter.detents) {
             CalendarSheetContent(
@@ -91,77 +88,67 @@ struct CalendarView: View {
     }
     
     // MARK: - MainView
-    private var mainView: some View {
-        ZStack {
-            calendarScrollView
-            
-            if viewModel.state != .loaded || firstLoading {
-                Color(UIColor.systemBackground)
-                    .ignoresSafeArea()
-                
-                stateOverlays
-            }
-        }
-    }
-    
-    private var calendarScrollView: some View {
-        ScrollView(.horizontal) {
-            LazyHStack(spacing: 0) {
-                ForEach(viewModel.academicYearDays, id: \.self) { date in
-                    CalendarViewDay(
-                        combinedItems: viewModel.events(for: date) ?? [],
-                        sheetRouter: sheetRouter
-                    )
-                    .containerRelativeFrame(.horizontal)
-                    .id(date)
-                }
-            }
-            .scrollTargetLayout()
-        }
-        .scrollTargetBehavior(.paging)
-        .scrollIndicators(.never, axes: .horizontal)
-        .scrollPosition(id: Binding<Date?>(
-                get: { self.firstLoading ? nil : coordinator.selectedWeek },
-                set: { newValue in
-                    if let validDate = newValue {
-                        coordinator.selectDate(validDate)
-                    }
-                }
-            ), anchor: .center)
-    }
-    
     @ViewBuilder
-    private var stateOverlays: some View {
+    private var mainView: some View {
         let hasCourse = settings.selectedCourse != "0"
-        
         switch viewModel.state {
         case .idle, .loading:
             loadingStateOverlay(hasCourse: hasCourse)
-            
+        case .loaded:
+            calendarScrollView
         case .empty:
             ContentUnavailableView(
                 "Nessuna Lezione",
                 systemImage: "graduationcap",
                 description: Text(hasCourse ? "Non è stata trovata nessuna lezione per questo corso." : "Scegli un corso dalle impostazioni per iniziare.")
             )
-            
         case .offline:
             ContentUnavailableView(
                 "Sei Offline",
                 systemImage: "wifi.slash",
                 description: Text(hasCourse ? "Connettiti a internet per scaricare le tue lezioni." : "Connettiti a internet per configurare il tuo corso.")
             )
-            
         case .error(let msg):
             ContentUnavailableView(
                 "Si è verificato un errore",
                 systemImage: "exclamationmark.triangle",
                 description: Text(msg)
             )
-            
-        case .loaded:
-            if firstLoading {
-                loadingStateOverlay(hasCourse: hasCourse)
+        }
+    }
+    
+    private var calendarScrollView: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: 0) {
+                    ForEach(viewModel.academicYearDays, id: \.self) { date in
+                        CalendarViewDay(
+                            combinedItems: viewModel.events(for: date) ?? [],
+                            sheetRouter: sheetRouter
+                        )
+                        .containerRelativeFrame(.horizontal)
+                        .id(date)
+                    }
+                }
+                .scrollTargetLayout()
+            }
+            .scrollTargetBehavior(.paging)
+            .scrollIndicators(.never, axes: .horizontal)
+            .scrollPosition(id: Binding<Date?>(
+                get: { coordinator.selectedWeek },
+                set: { if let d = $0 { coordinator.selectDate(d) } }
+            ), anchor: .center)
+            .modify { view in
+                if #available(iOS 18, *) { view } else {
+                    view.onAppear {
+                        let target = coordinator.selectedWeek
+                        var t = Transaction()
+                        t.disablesAnimations = true
+                        withTransaction(t) {
+                            proxy.scrollTo(target, anchor: .center)
+                        }
+                    }
+                }
             }
         }
     }
@@ -350,27 +337,6 @@ struct CalendarView: View {
               !sheetRouter.openWhatsNew,
               !sheetRouter.openAddPersonalEvent else { return }
         sheetRouter.routeToItem(item)
-    }
-    
-    private func handleLoadingChange(_ isLoading: Bool) {
-        if isLoading {
-            Haptics.play(.start)
-            firstLoading = true
-        } else {
-            Task { @MainActor in
-                var transaction = Transaction()
-                transaction.disablesAnimations = true
-                withTransaction(transaction) {
-                    if let exactMatch = viewModel.academicYearDays.first(where: { Calendar.current.isDate($0, inSameDayAs: coordinator.selectedWeek) }) {
-                        coordinator.selectDate(exactMatch)
-                    } else {
-                        coordinator.selectDate(viewModel.academicYearDays.first ?? Calendar.current.startOfDay(for: Date()))
-                    }
-                    firstLoading = false
-                    Haptics.play(.success)
-                }
-            }
-        }
     }
     
     private func handleDetentChange(oldValue: CustomSheetDetent, newValue: CustomSheetDetent) {

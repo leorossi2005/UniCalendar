@@ -19,8 +19,6 @@ enum CalendarPage {
 final class CalendarCoordinator {
     private(set) var selectedWeek: Date
     var page: CalendarPage = .main
-    var isScrollReady: Bool = false
-    var scrollTarget: Date? = nil
     
     init(initialDate: Date = Calendar.current.startOfDay(for: Date())) {
         self.selectedWeek = initialDate
@@ -28,8 +26,9 @@ final class CalendarCoordinator {
     
     @discardableResult
     func selectDate(_ newDate: Date) -> Bool {
-        let changed = !Calendar.current.isDate(selectedWeek, inSameDayAs: newDate)
-        selectedWeek = newDate
+        let normalized = Calendar.current.startOfDay(for: newDate)
+        let changed = selectedWeek != normalized
+        selectedWeek = normalized
         return changed
     }
 }
