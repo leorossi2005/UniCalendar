@@ -75,6 +75,22 @@
         }
       }
     },
+    "%lld di %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$lld"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld di %2$lld"
+          }
+        }
+      }
+    },
     "%lld minuti prima" : {
       "localizations" : {
         "en" : {

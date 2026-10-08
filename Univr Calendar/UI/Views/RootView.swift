@@ -21,8 +21,8 @@ struct RootView: View {
     
     var body: some View {
         Group {
-            if let notice = statusManager.activeNotice, notice.level == .blocking {
-                AppNoticeView(notice: notice)
+            if let blockingNotice = statusManager.activeNotices.first(where: { $0.level == .blocking }) {
+                AppNoticeView(notices: [blockingNotice])
                     .transition(.opacity)
             } else {
                 ZStack {
@@ -39,7 +39,7 @@ struct RootView: View {
             }
         }
         .animation(.default, value: settings.onboardingCompleted)
-        .animation(.default, value: statusManager.activeNotice)
+        .animation(.default, value: statusManager.activeNotices)
         .task {
             Task { await statusManager.refresh() }
             let delay = settings.onboardingCompleted ? 500 : 1500

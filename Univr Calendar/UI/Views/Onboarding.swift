@@ -283,7 +283,7 @@ private struct OnboardingButton: View {
             }
         }
         .controlSize(.large)
-        .glassProminentIfAvailable()
+        .glassIfAvailable(prominent: true)
         .disabled(isDisabled || isLoading)
         .keyboardPadding(10)
     }

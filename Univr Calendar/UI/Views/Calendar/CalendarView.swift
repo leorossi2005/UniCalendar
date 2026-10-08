@@ -51,7 +51,7 @@ struct CalendarView: View {
             .onChange(of: sheetRouter.manager.selectedDetent) { oldValue, newValue in
                 handleDetentChange(oldValue: oldValue, newValue: newValue)
             }
-            .onChange(of: statusManager.activeNotice) { _, _ in
+            .onChange(of: statusManager.activeNotices) { _, _ in
                 checkPendingNotices()
             }
             .onAppear {
@@ -242,17 +242,21 @@ struct CalendarView: View {
         guard !sheetRouter.openSettings,
               !sheetRouter.openWhatsNew,
               !sheetRouter.openAddPersonalEvent,
-              sheetRouter.openAppNotice == nil,
+              sheetRouter.openAppNotices == nil,
               sheetRouter.selectedItem == nil,
               sheetRouter.selectedRoom == nil,
               sheetRouter.manager.selectedDetent != .large else { return }
               
-        guard let notice = statusManager.activeNotice,
-              notice.level != .blocking,
-              !statusManager.shownThisSessionIDs.contains(notice.id) else { return }
+        let validNotices = statusManager.activeNotices.filter { notice in
+            notice.level != .blocking && !statusManager.shownThisSessionIDs.contains(notice.id)
+        }
+        
+        guard !validNotices.isEmpty else { return }
 
-        statusManager.markAsShownThisSession(id: notice.id)
-        sheetRouter.routeToAppNotice(notice)
+        for notice in validNotices {
+            statusManager.markAsShownThisSession(id: notice.id)
+        }
+        sheetRouter.routeToAppNotices(validNotices)
     }
     
     private func openSettingsAction() {
@@ -361,8 +365,10 @@ struct CalendarView: View {
             } else if oldValue == .large {
                 if sheetRouter.openWhatsNew {
                     settings.latestVersion = Bundle.main.clearAppVersion
-                } else if let notice = sheetRouter.openAppNotice {
-                    statusManager.dismissNotice(id: notice.id)
+                } else if let notices = sheetRouter.openAppNotices {
+                    for notice in notices {
+                        statusManager.dismissNotice(id: notice.id)
+                    }
                 }
             }
             

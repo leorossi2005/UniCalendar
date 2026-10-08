@@ -36,7 +36,7 @@ public struct AppNotice: Codable, Sendable, Equatable, Identifiable {
     public let minVersion: String?
     public let maxVersion: String?
     public let updateRequiresOS: String?
-    public let startsAt: Date?
+    public let startsAt: Date
     public let endsAt: Date?
 }
 
@@ -47,4 +47,5 @@ public struct EvaluatedNotice: Equatable, Sendable, Identifiable {
     public let message: String
     public let buttonText: String?
     public let actionURL: URL?
+    public let date: Date
 }

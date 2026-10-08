@@ -45,8 +45,8 @@ struct CalendarSheetContent: View {
                     .allowsHitTesting(sheetManager.selectedDetent == .medium)
                 
                 NavigationStack {
-                    if let notice = router.openAppNotice {
-                       AppNoticeView(notice: notice) {
+                    if let notices = router.openAppNotices {
+                       AppNoticeView(notices: notices) {
                            sheetManager.setDetent(.small)
                        }
                     } else if router.openWhatsNew {

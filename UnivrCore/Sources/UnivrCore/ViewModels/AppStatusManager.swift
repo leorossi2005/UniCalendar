@@ -12,7 +12,7 @@ import Foundation
 @MainActor
 @Observable
 public final class AppStatusManager {
-    public private(set) var activeNotice: EvaluatedNotice?
+    public private(set) var activeNotices: [EvaluatedNotice] = []
     public private(set) var isResolved = false
     public private(set) var shownThisSessionIDs: Set<String> = []
     
@@ -46,13 +46,16 @@ public final class AppStatusManager {
     }
     
     public func dismissNotice(id: String) {
-        closedIDs.insert(id)
-        saveClosedIDs()
-        evaluateCurrentState()
+        if let notice = activeNotices.first(where: { $0.id == id }), notice.level != .blocking {
+            closedIDs.insert(id)
+            saveClosedIDs()
+            evaluateCurrentState()
+        }
     }
     
     public func refreshIfNeeded() async {
-        let interval: TimeInterval = if activeNotice?.level == .blocking {
+        let hasBlocking = activeNotices.contains(where: { $0.level == .blocking })
+        let interval: TimeInterval = if hasBlocking {
             30
         } else if lastAttemptFailed {
             300
@@ -103,25 +106,25 @@ public final class AppStatusManager {
             return (notice, level)
         }
         
-        guard let (notice, level) = candidates.max(by: {
-            ($0.level, $0.notice.startsAt ?? Date.distantPast) < ($1.level, $1.notice.startsAt ?? Date.distantPast)
-        }) else {
-            activeNotice = nil
-            return
+        let sortedCandidates = candidates.sorted {
+            ($0.level, $0.notice.startsAt) > ($1.level, $1.notice.startsAt)
         }
         
-        let downgraded = level != notice.level
-        let message = downgraded ? (notice.messageUnsupportedOS ?? notice.message) : notice.message
-        let url: URL? = downgraded ? nil : Self.getURL(from: notice.url) ?? (level == .blocking ? Self.storeURL : nil)
-        
-        activeNotice = EvaluatedNotice(
-            id: notice.id,
-            level: level,
-            title: notice.title.localized(for: language),
-            message: message.localized(for: language),
-            buttonText: notice.buttonText?.localized(for: language),
-            actionURL: url
-        )
+        activeNotices = sortedCandidates.map { (notice, level) in
+            let downgraded = level != notice.level
+            let message = downgraded ? (notice.messageUnsupportedOS ?? notice.message) : notice.message
+            let url: URL? = downgraded ? nil : Self.getURL(from: notice.url) ?? (level == .blocking ? Self.storeURL : nil)
+            
+            return EvaluatedNotice(
+                id: notice.id,
+                level: level,
+                title: notice.title.localized(for: language),
+                message: message.localized(for: language),
+                buttonText: notice.buttonText?.localized(for: language),
+                actionURL: url,
+                date: notice.startsAt
+            )
+        }
     }
     
     // MARK: - Private
@@ -147,7 +150,7 @@ public final class AppStatusManager {
 // MARK: - Regole di validità
 extension AppNotice {
     func effectiveLevel(appVersion: AppVersion, osVersion: AppVersion, now: Date) -> NoticeLevel? {
-        if let startsAt, now < startsAt { return nil }
+        if now < startsAt { return nil }
         if let endsAt, now > endsAt { return nil }
         if let minVersion, appVersion < AppVersion(minVersion) { return nil }
         if let maxVersion, appVersion > AppVersion(maxVersion) { return nil }

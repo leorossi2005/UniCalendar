@@ -130,40 +130,23 @@ extension View {
     
     // MARK: Fallback iOS 18
     @ViewBuilder
-    func glassProminentIfAvailable() -> some View {
+    func glassIfAvailable(prominent: Bool) -> some View {
         if #available(iOS 26, *) {
-            self
-                .buttonStyle(.glassProminent)
+            if prominent {
+                self
+                    .buttonStyle(.glassProminent)
+            } else {
+                self
+                    .buttonStyle(.glass)
+            }
         } else {
-            self
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-            
-        }
-    }
-    
-    @ViewBuilder
-    func glassIfAvailable() -> some View {
-        if #available(iOS 26, *) {
-            self
-                .buttonStyle(.glass)
-        } else {
-            self
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
-            
-        }
-    }
-    
-    // MARK: Fallback iOS 17
-    @ViewBuilder
-    func symbolReplace() -> some View {
-        if #available(iOS 18, *) {
-            self
-                .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
-        } else {
-            self
-                .contentTransition(.symbolEffect(.replace))
+            if prominent {
+                self
+                    .buttonStyle(.borderedProminent)
+            } else {
+                self
+                    .buttonStyle(.bordered)
+            }
             
         }
     }
@@ -180,6 +163,19 @@ extension View {
             }
         } else {
             self
+        }
+    }
+    
+    // MARK: Fallback iOS 17
+    @ViewBuilder
+    func symbolReplace() -> some View {
+        if #available(iOS 18, *) {
+            self
+                .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
+        } else {
+            self
+                .contentTransition(.symbolEffect(.replace))
+            
         }
     }
 }
