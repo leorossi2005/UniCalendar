@@ -26,7 +26,7 @@ public final class AppStatusManager {
     private var lastAttemptFailed = false
     
     private static let closedKey = "appStatus_closedIDs"
-    private static let fallbackStoreURL = URL(string: "https://apps.apple.com/app/id6756148883")
+    private static let storeURL = URL(string: "https://apps.apple.com/app/id6756148883")
     
     public init() {
         #if DEBUG
@@ -112,7 +112,7 @@ public final class AppStatusManager {
         
         let downgraded = level != notice.level
         let message = downgraded ? (notice.messageUnsupportedOS ?? notice.message) : notice.message
-        let url: URL? = downgraded ? nil : Self.storeURL(from: notice.url) ?? (level == .blocking ? Self.fallbackStoreURL : nil)
+        let url: URL? = downgraded ? nil : Self.getURL(from: notice.url) ?? (level == .blocking ? Self.storeURL : nil)
         
         activeNotice = EvaluatedNotice(
             id: notice.id,
@@ -135,8 +135,10 @@ public final class AppStatusManager {
         UserDefaults.standard.set(Array(closedIDs), forKey: Self.closedKey)
     }
     
-    private static func storeURL(from string: String?) -> URL? {
-        guard let string, let url = URL(string: string) else { return nil }
+    private static func getURL(from string: String?) -> URL? {
+        guard let string else { return nil }
+        if string.lowercased() == "apple" { return Self.storeURL }
+        guard let url = URL(string: string) else { return nil }
         let allowedSchemes = ["https", "itms-apps"]
         return allowedSchemes.contains(url.scheme?.lowercased() ?? "") ? url : nil
     }

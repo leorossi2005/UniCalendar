@@ -185,6 +185,7 @@ struct Onboarding: View {
                 )
                 .id(4)
             }
+            .scrollTargetLayout()
         }
         .overlay(alignment: .top) {
             if #available(iOS 26, *) {

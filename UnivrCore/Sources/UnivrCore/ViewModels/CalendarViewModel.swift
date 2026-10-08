@@ -178,7 +178,10 @@ public class CalendarViewModel {
         let result = processRawLessons(rawLessons, matricola: matricola)
         
         self.schedule = result.processed
-        self.state = result.processed.isEmpty ? .empty : .loaded
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(1))
+            self.state = result.processed.isEmpty ? .empty : .loaded
+        }
         
         DatePickerCache.shared.updateActivities(dates: result.activities)
     }
@@ -308,7 +311,7 @@ public class CalendarViewModel {
                 let dur = Calendar.current.dateComponents([.minute], from: currentEndTime, to: item.startTime).minute ?? 0
                 if dur > 0 {
                     let newPause = Lesson(
-                        id: UUID().uuidString,
+                        id: "pause-\(Int(currentEndTime.timeIntervalSince1970))",
                         code: nil,
                         type: .pause,
                         name: "Pausa",
