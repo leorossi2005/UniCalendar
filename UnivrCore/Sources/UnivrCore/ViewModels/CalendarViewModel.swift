@@ -178,10 +178,7 @@ public class CalendarViewModel {
         let result = processRawLessons(rawLessons, matricola: matricola)
         
         self.schedule = result.processed
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(1))
-            self.state = result.processed.isEmpty ? .empty : .loaded
-        }
+        self.state = result.processed.isEmpty ? .empty : .loaded
         
         DatePickerCache.shared.updateActivities(dates: result.activities)
     }

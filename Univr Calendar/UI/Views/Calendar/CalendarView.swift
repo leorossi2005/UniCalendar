@@ -119,6 +119,7 @@ struct CalendarView: View {
                 }
                 .scrollTargetLayout()
             }
+            .transaction { $0.animation = nil }
             .scrollTargetBehavior(.paging)
             .scrollIndicators(.never, axes: .horizontal)
             .scrollPosition(id: Binding<Date?>(
@@ -214,19 +215,7 @@ struct CalendarView: View {
         ToolbarItem(placement: .topBarTrailing) {
             Button("Cambia pagina", systemImage: coordinator.page == .main ? "calendar" : "clock") {
                 withAnimation {
-                    if coordinator.page == .classrooms {
-                        let realState = viewModel.state
-                        viewModel.state = .idle
-                        
-                        coordinator.page = .main
-                        
-                        Task { @MainActor in
-                            try? await Task.sleep(for: .milliseconds(1))
-                            viewModel.state = realState
-                        }
-                    } else {
-                        coordinator.page = .classrooms
-                    }
+                    coordinator.page = coordinator.page == .main ? .classrooms : .main
                 }
             }
             .symbolReplace()

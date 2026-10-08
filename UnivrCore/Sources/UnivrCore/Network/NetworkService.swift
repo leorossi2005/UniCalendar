@@ -11,8 +11,7 @@ import Foundation
 
 struct NetworkService {
     private let session: URLSession
-    //let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
-    let baseURL = "http://172.20.10.3:3001/api/v1"
+    let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
     
     init() {
         let configuration = URLSessionConfiguration.default

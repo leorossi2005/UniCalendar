@@ -140,7 +140,7 @@ struct AppNoticeView: View {
                     .glassIfAvailable(prominent: false)
                 }
             }
-            .padding(.horizontal, safeAreas.bottom > 0 ? safeAreas.bottom : 24)
         }
+        .padding(.horizontal, safeAreas.bottom > 0 ? safeAreas.bottom : 24)
     }
 }
