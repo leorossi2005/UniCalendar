@@ -25,19 +25,16 @@ struct Settings: View {
     var body: some View {
         List {
             Section {
-                HStack {
+                Picker(selection: $tempSettings.selectedYear) {
+                    ForEach(viewModel.years) { year in
+                        Text(year.label).tag(year.id)
+                    }
+                } label: {
                     Label("Anno", systemImage: "calendar")
                         .foregroundStyle(.primary)
-                        .padding(.trailing)
-                    Picker(selection: $tempSettings.selectedYear) {
-                        ForEach(viewModel.years) { year in
-                            Text(year.label).tag(year.id)
-                        }
-                    } label: {}
-                        .pickerStyle(.segmented)
-                        .onChange(of: tempSettings.selectedYear) {
-                            handleYearChange()
-                        }
+                }
+                .onChange(of: tempSettings.selectedYear) {
+                    handleYearChange()
                 }
                 CourseSelector(
                     isFocused: $searchTextFieldFocus,

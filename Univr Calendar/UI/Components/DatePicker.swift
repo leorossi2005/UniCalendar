@@ -90,6 +90,7 @@ struct DatePicker: View, Equatable {
                     }
                 }
                 .glassIfAvailable(prominent: false)
+                .buttonBorderShape(.capsule)
                 .hoverEffect()
             }
         }
