@@ -28,7 +28,7 @@ struct PersonalCommitmentsList: View {
             if groupedEvents.isEmpty {
                 ContentUnavailableView(
                     "Nessun impegno personale",
-                    systemImage: "calendar.and.person",
+                    systemImage: .personalCommitmentsDynamic,
                     description: Text("Non hai ancora aggiunto nessun impegno personale.")
                 )
             } else {

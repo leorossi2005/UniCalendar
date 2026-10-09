@@ -247,4 +247,12 @@ extension String {
             return "info.circle"
         }
     }
+    
+    static var personalCommitmentsDynamic: String {
+        if #available(iOS 18, *) {
+            return "calendar.and.person"
+        } else {
+            return "person.badge.clock"
+        }
+    }
 }

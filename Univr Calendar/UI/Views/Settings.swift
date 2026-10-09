@@ -94,7 +94,7 @@ struct Settings: View {
                         .foregroundStyle(.primary)
                 }
                 NavigationLink(destination: PersonalCommitmentsList()) {
-                    Label("Impegni Personali", systemImage: "calendar.and.person")
+                    Label("Impegni Personali", systemImage: .personalCommitmentsDynamic)
                         .foregroundStyle(.primary)
                 }
             } header: {
@@ -104,7 +104,7 @@ struct Settings: View {
             }
             Section("Informazioni Generali") {
                 NavigationLink(destination: AppNoticesListView()) {
-                    Label("Avvisi di Sistema", systemImage: "bell.badge")
+                    Label("Avvisi di Sistema", systemImage: "megaphone")
                         .foregroundStyle(.primary)
                 }
                 NavigationLink(destination: WhatsNewView()) {

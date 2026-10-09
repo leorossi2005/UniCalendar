@@ -163,15 +163,20 @@ final class GlassContainerView: UIView {
         
         glassView.layer.cornerRadius = maxRadius
         glassView.layer.maskedCorners = maskedCorners
-        
-        shadowView.layer.cornerRadius = maxRadius
-        shadowView.layer.maskedCorners = maskedCorners
     }
     
     private func updateShadowPath() {
+        var rectCorners: UIRectCorner = []
+        let masked = glassView.layer.maskedCorners
+        if masked.contains(.layerMinXMinYCorner) { rectCorners.insert(.topLeft) }
+        if masked.contains(.layerMaxXMinYCorner) { rectCorners.insert(.topRight) }
+        if masked.contains(.layerMinXMaxYCorner) { rectCorners.insert(.bottomLeft) }
+        if masked.contains(.layerMaxXMaxYCorner) { rectCorners.insert(.bottomRight) }
+        
         shadowView.layer.shadowPath = UIBezierPath(
             roundedRect: bounds,
-            cornerRadius: shadowView.layer.cornerRadius
+            byRoundingCorners: rectCorners,
+            cornerRadii: CGSize(width: glassView.layer.cornerRadius, height: glassView.layer.cornerRadius)
         ).cgPath
     }
 }

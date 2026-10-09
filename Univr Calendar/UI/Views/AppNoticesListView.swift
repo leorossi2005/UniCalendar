@@ -42,6 +42,7 @@ struct AppNoticesListView: View {
                     Haptics.play(.impact(weight: .light))
                     Task {
                         await statusManager.refresh()
+                        statusManager.dismissAllNonBlocking()
                         isRefreshing = false
                         Haptics.play(.success)
                     }
@@ -51,6 +52,7 @@ struct AppNoticesListView: View {
                             .symbolEffect(.rotate, options: .speed(6), isActive: isRefreshing)
                     } else {
                         Image(systemName: "arrow.triangle.2.circlepath")
+                            .symbolEffect(.pulse, isActive: isRefreshing)
                     }
                 }
             }

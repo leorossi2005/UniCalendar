@@ -54,6 +54,16 @@ public final class AppStatusManager {
         }
     }
     
+    public func dismissAllNonBlocking() {
+        let nonBlocking = activeNotices.filter { $0.level != .blocking }
+        guard !nonBlocking.isEmpty else { return }
+        for notice in nonBlocking {
+            closedIDs.insert(notice.id)
+        }
+        saveClosedIDs()
+        evaluateCurrentState()
+    }
+    
     public func refreshIfNeeded() async {
         let hasBlocking = activeNotices.contains(where: { $0.level == .blocking })
         let interval: TimeInterval = if hasBlocking {
