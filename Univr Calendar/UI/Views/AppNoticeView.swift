@@ -39,9 +39,6 @@ struct AppNoticeView: View {
         .onChange(of: (currentIndex ?? 0), initial: true) { _, newIndex in
             updateLockState(for: newIndex)
         }
-        .onDisappear {
-            sheetManager?.setLock(false)
-        }
         .toolbar {
             if notices.count > 1 {
                 ToolbarItem(placement: .topBarLeading) {
@@ -56,33 +53,13 @@ struct AppNoticeView: View {
             
             ToolbarItem(placement: .topBarTrailing) {
                 let safeIndex = min(max(currentIndex ?? 0, 0), max(0, notices.count - 1))
-                if !notices.isEmpty {
-                    if let endDate = notices[safeIndex].endsAt {
-                        Text("\(formatDate(notices[safeIndex].date)) - \(formatDate(endDate))")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .padding()
-                            .fixedSize()
-                            .contentTransition(.numericText())
-                    } else {
-                        Text(formatDate(notices[safeIndex].date))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .padding()
-                            .fixedSize()
-                            .contentTransition(.numericText())
-                    }
-                }
+                ShareLink(item: "\(notices[safeIndex].title)\n\n\(notices[safeIndex].message)")
             }
         }
     }
     
     private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        formatter.locale = Locale.current
-        return formatter.string(from: date)
+        date.formatted(date: .abbreviated, time: .omitted)
     }
     
     private func updateLockState(for index: Int) {
@@ -104,10 +81,23 @@ struct AppNoticeView: View {
             Image(systemName: notice.level == .warning ? "exclamationmark.triangle.fill" : notice.level == .blocking ? "xmark.octagon.fill" : "info.circle.fill")
                 .font(.system(size: 64))
                 .foregroundColor(notice.level == .warning ? .orange : notice.level == .blocking ? .red : .blue)
-                .padding(.bottom, 16)
             
-            Text(notice.title)
-                .font(.title.bold())
+            VStack(spacing: 8) {
+                Text(notice.title)
+                    .font(.title.bold())
+                
+                if !notices.isEmpty {
+                    if let endDate = notice.endsAt {
+                        Text("\(formatDate(notice.date)) - \(formatDate(endDate))")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text(formatDate(notice.date))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
             
             Text(notice.message)
                 .font(.body)

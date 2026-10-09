@@ -124,13 +124,14 @@ public final class AppStatusManager {
             let downgraded = level != notice.level
             let message = downgraded ? (notice.messageUnsupportedOS ?? notice.message) : notice.message
             let url: URL? = downgraded ? nil : Self.getURL(from: notice.url) ?? (level == .blocking ? Self.storeURL : nil)
+            let btnText = downgraded ? nil : notice.buttonText?.localized(for: language)
             
             return EvaluatedNotice(
                 id: notice.id,
                 level: level,
                 title: notice.title.localized(for: language),
                 message: message.localized(for: language),
-                buttonText: notice.buttonText?.localized(for: language),
+                buttonText: btnText,
                 actionURL: url,
                 date: notice.startsAt,
                 endsAt: notice.endsAt
