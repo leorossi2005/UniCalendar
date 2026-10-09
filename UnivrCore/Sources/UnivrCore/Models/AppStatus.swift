@@ -2,7 +2,7 @@
 //  AppStatus.swift
 //  UnivrCore
 //
-//  Created by Leonardo Rossi on 15/10/2026.
+//  Created by Leonardo Rossi on 05/10/2026.
 //  Copyright (C) 2026 Leonardo Rossi
 //  SPDX-License-Identifier: GPL-3.0-or-later
 //
@@ -48,4 +48,5 @@ public struct EvaluatedNotice: Equatable, Sendable, Identifiable {
     public let buttonText: String?
     public let actionURL: URL?
     public let date: Date
+    public let endsAt: Date?
 }

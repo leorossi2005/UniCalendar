@@ -2,7 +2,7 @@
 //  AppNoticeView.swift
 //  Univr Calendar
 //
-//  Created by Leonardo Rossi on 15/10/2026.
+//  Created by Leonardo Rossi on 05/10/2026.
 //  Copyright (C) 2026 Leonardo Rossi
 //  SPDX-License-Identifier: GPL-3.0-or-later
 //
@@ -50,15 +50,29 @@ struct AppNoticeView: View {
                         .foregroundStyle(.secondary)
                         .padding()
                         .fixedSize()
+                        .contentTransition(.numericText())
                 }
             }
             
             ToolbarItem(placement: .topBarTrailing) {
-                Text(formatDate(notices[(currentIndex ?? 0)].date))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding()
-                    .fixedSize()
+                let safeIndex = min(max(currentIndex ?? 0, 0), max(0, notices.count - 1))
+                if !notices.isEmpty {
+                    if let endDate = notices[safeIndex].endsAt {
+                        Text("\(formatDate(notices[safeIndex].date)) - \(formatDate(endDate))")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding()
+                            .fixedSize()
+                            .contentTransition(.numericText())
+                    } else {
+                        Text(formatDate(notices[safeIndex].date))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding()
+                            .fixedSize()
+                            .contentTransition(.numericText())
+                    }
+                }
             }
         }
     }
@@ -119,7 +133,11 @@ struct AppNoticeView: View {
                 if !isLast {
                     Button {
                         Haptics.play(.impact(weight: .light))
-                        currentIndex = (currentIndex ?? 0) + 1
+                        let nextIndex = (currentIndex ?? 0) + 1
+                        
+                        withAnimation {
+                            currentIndex = min(nextIndex, notices.count - 1)
+                        }
                     } label: {
                         Text("Continua")
                             .fontWeight(.semibold)

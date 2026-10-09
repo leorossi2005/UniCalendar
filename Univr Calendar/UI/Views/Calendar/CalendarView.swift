@@ -437,7 +437,12 @@ private struct SelectionFeedback: ViewModifier {
         content.onChange(of: coordinator.selectedWeek) { oldValue, newValue in
             guard !Calendar.current.isDate(oldValue, inSameDayAs: newValue) else { return }
             Haptics.play(.selection, state: "selection")
-            if !sheetRouter.openSettings { sheetRouter.manager.setDetent(.small) }
+            
+            let isSystemSheetOpen = sheetRouter.openSettings || sheetRouter.openAppNotices != nil || sheetRouter.openWhatsNew
+            if !isSystemSheetOpen { 
+                sheetRouter.manager.setDetent(.small) 
+            }
+            
             Task {
                 try? await Task.sleep(for: .seconds(0.2))
                 GlobalHaptics.shared.state = ""

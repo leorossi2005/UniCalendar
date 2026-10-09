@@ -97,16 +97,26 @@ struct Settings: View {
                     Label("Impegni Personali", systemImage: "calendar.and.person")
                         .foregroundStyle(.primary)
                 }
-                NavigationLink(destination: AboutView()) {
-                    Label("Informazioni", systemImage: .infoPageDynamic)
+            } header: {
+                Text("Area Personale")
+            } footer: {
+                Text("Questa sezione include tutto ciò che ti rigurda, accessibile in un unico posto senza dover cercare in giro per l'app.")
+            }
+            Section("Informazioni Generali") {
+                NavigationLink(destination: AppNoticesListView()) {
+                    Label("Avvisi di Sistema", systemImage: "bell.badge")
+                        .foregroundStyle(.primary)
+                }
+                NavigationLink(destination: WhatsNewView()) {
+                    Label("Novità", systemImage: "sparkles")
                         .foregroundStyle(.primary)
                 }
                 NavigationLink(destination: DeveloperProfileView()) {
                     Label("Lo Sviluppatore", systemImage: "chevron.left.forwardslash.chevron.right")
                         .foregroundStyle(.primary)
                 }
-                NavigationLink(destination: WhatsNewView()) {
-                    Label("Novità", systemImage: "sparkles")
+                NavigationLink(destination: AboutView()) {
+                    Label("Informazioni", systemImage: .infoPageDynamic)
                         .foregroundStyle(.primary)
                 }
             }

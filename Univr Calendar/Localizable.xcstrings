@@ -11,6 +11,22 @@
         }
       }
     },
+    "%@ - %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ - %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ - %2$@"
+          }
+        }
+      }
+    },
     "%@ - %@ (%@)" : {
       "localizations" : {
         "en" : {
@@ -191,6 +207,16 @@
         }
       }
     },
+    "Al momento non ci sono avvisi attivi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At the moment there are no active notices."
+          }
+        }
+      }
+    },
     "Al momento sei offline." : {
       "localizations" : {
         "en" : {
@@ -227,6 +253,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "Area Personale" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personal Area"
+          }
+        }
+      }
+    },
+    "Avvisi di Sistema" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System Notices"
           }
         }
       }
@@ -451,6 +497,16 @@
         }
       }
     },
+    "Dal %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From %@"
+          }
+        }
+      }
+    },
     "DANGER ZONE" : {
       "localizations" : {
         "en" : {
@@ -561,6 +617,16 @@
         }
       }
     },
+    "Fino al %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To %@"
+          }
+        }
+      }
+    },
     "Giornata Libera" : {
       "localizations" : {
         "en" : {
@@ -636,7 +702,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Notification settings"
+            "value" : "Notification Settings"
           }
         }
       }
@@ -657,6 +723,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "About"
+          }
+        }
+      }
+    },
+    "Informazioni Generali" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "General Information"
           }
         }
       }
@@ -807,6 +883,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edit Notification"
+          }
+        }
+      }
+    },
+    "Nessun Avviso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Notices"
           }
         }
       }
@@ -1101,6 +1187,16 @@
         }
       }
     },
+    "Questa sezione include tutto ciò che ti rigurda, accessibile in un unico posto senza dover cercare in giro per l'app." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This section includes everything that concerns you, accessible in one place without having to search around the app."
+          }
+        }
+      }
+    },
     "Questo sono io ↓" : {
       "localizations" : {
         "en" : {
@@ -1287,6 +1383,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The courses for the year %@ are shown"
+          }
+        }
+      }
+    },
+    "Storico Avvisi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Historical Notices"
           }
         }
       }

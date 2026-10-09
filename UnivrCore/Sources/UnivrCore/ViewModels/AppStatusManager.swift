@@ -2,7 +2,7 @@
 //  AppStatusManager.swift
 //  UnivrCore
 //
-//  Created by Leonardo Rossi on 15/10/2026.
+//  Created by Leonardo Rossi on 05/10/2026.
 //  Copyright (C) 2026 Leonardo Rossi
 //  SPDX-License-Identifier: GPL-3.0-or-later
 //
@@ -13,6 +13,7 @@ import Foundation
 @Observable
 public final class AppStatusManager {
     public private(set) var activeNotices: [EvaluatedNotice] = []
+    public private(set) var allEvaluatedNotices: [EvaluatedNotice] = []
     public private(set) var isResolved = false
     public private(set) var shownThisSessionIDs: Set<String> = []
     
@@ -102,7 +103,6 @@ public final class AppStatusManager {
         
         let candidates = notices.compactMap { notice -> (notice: AppNotice, level: NoticeLevel)? in
             guard let level = notice.effectiveLevel(appVersion: app, osVersion: os, now: now) else { return nil }
-            if level != .blocking && closedIDs.contains(notice.id) { return nil }
             return (notice, level)
         }
         
@@ -110,7 +110,7 @@ public final class AppStatusManager {
             ($0.level, $0.notice.startsAt) > ($1.level, $1.notice.startsAt)
         }
         
-        activeNotices = sortedCandidates.map { (notice, level) in
+        allEvaluatedNotices = sortedCandidates.map { (notice, level) in
             let downgraded = level != notice.level
             let message = downgraded ? (notice.messageUnsupportedOS ?? notice.message) : notice.message
             let url: URL? = downgraded ? nil : Self.getURL(from: notice.url) ?? (level == .blocking ? Self.storeURL : nil)
@@ -122,8 +122,13 @@ public final class AppStatusManager {
                 message: message.localized(for: language),
                 buttonText: notice.buttonText?.localized(for: language),
                 actionURL: url,
-                date: notice.startsAt
+                date: notice.startsAt,
+                endsAt: notice.endsAt
             )
+        }
+        
+        activeNotices = allEvaluatedNotices.filter { notice in
+            notice.level == .blocking || !closedIDs.contains(notice.id)
         }
     }
     
