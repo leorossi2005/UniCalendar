@@ -11,24 +11,15 @@ import SwiftUI
 import UnivrCore
 import CustomSheet
 
-private enum Pages {
-    case main
-    case classrooms
-}
 
 struct CalendarView: View {
-    @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
+    @Environment(AppStatusManager.self) var statusManager
   
     @State private var sheetRouter: CalendarSheetRouter = .init()
     @State private var coordinator = CalendarCoordinator()
-    
     @State private var viewModel = CalendarViewModel()
-    @State private var firstLoading: Bool = true
-    @State private var showSheet: Bool = true
-    
-    @State private var page: Pages = .main
     
     private var selectedWeekBinding: Binding<Date> {
         Binding(
@@ -40,15 +31,13 @@ struct CalendarView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                mainView
-                    .opacity(page == .main ? 1 : 0)
-                    .allowsHitTesting(page == .main)
-                    .animation(nil, value: page)
-                
-                ClassroomAvailabilityView(coordinator: coordinator, sheetRouter: sheetRouter)
-                    .opacity(page == .classrooms ? 1 : 0)
-                    .allowsHitTesting(page == .classrooms)
-                    .animation(nil, value: page)
+                if coordinator.page == .classrooms {
+                    ClassroomAvailabilityView(coordinator: coordinator, sheetRouter: sheetRouter)
+                        .transition(.identity)
+                } else {
+                    mainView
+                        .transition(.identity)
+                }
             }
             .toolbar {
                 buildToolbar()
@@ -62,6 +51,9 @@ struct CalendarView: View {
             .onChange(of: sheetRouter.manager.selectedDetent) { oldValue, newValue in
                 handleDetentChange(oldValue: oldValue, newValue: newValue)
             }
+            .onChange(of: statusManager.activeNotices) { _, _ in
+                checkPendingNotices()
+            }
             .onAppear {
                 inizializeData()
                 checkPendingNotificationTap()
@@ -70,22 +62,13 @@ struct CalendarView: View {
                 checkPendingNotificationTap()
             }
             .onChange(of: viewModel.state == .loading) { _, isLoading in
-                handleLoadingChange(isLoading)
+                Haptics.play(isLoading ? .start : .success)
             }
-            .onChange(of: coordinator.selectedWeek) { oldValue, newValue in
-                guard !Calendar.current.isDate(oldValue, inSameDayAs: newValue) else { return }
-                Haptics.play(.selection, state: "selection")
-                if !sheetRouter.openSettings { sheetRouter.manager.setDetent(.small) }
-                Task {
-                    try? await Task.sleep(for: .seconds(0.2))
-                    GlobalHaptics.shared.state = ""
-                }
-            }
+            .modifier(SelectionFeedback(coordinator: coordinator, sheetRouter: sheetRouter))
             .animation(.default, value: viewModel.checkingUpdates)
             .animation(.default, value: viewModel.updateAvailable)
-            .animation(.default, value: viewModel.state)
         }
-        .customSheet(isPresented: $showSheet, manager: sheetRouter.manager, detents: sheetRouter.detents) {
+        .customSheet(isPresented: .constant(true), manager: sheetRouter.manager, detents: sheetRouter.detents) {
             CalendarSheetContent(
                 router: sheetRouter,
                 selectedWeek: selectedWeekBinding
@@ -95,77 +78,65 @@ struct CalendarView: View {
     }
     
     // MARK: - MainView
-    private var mainView: some View {
-        ZStack {
-            calendarScrollView
-            
-            if viewModel.state != .loaded || firstLoading {
-                Color(UIColor.systemBackground)
-                    .ignoresSafeArea()
-                
-                stateOverlays
-            }
-        }
-    }
-    
-    private var calendarScrollView: some View {
-        ScrollView(.horizontal) {
-            LazyHStack(spacing: 0) {
-                ForEach(viewModel.academicYearDays, id: \.self) { date in
-                    CalendarViewDay(
-                        combinedItems: viewModel.events(for: date) ?? [],
-                        sheetRouter: sheetRouter
-                    )
-                    .containerRelativeFrame(.horizontal)
-                    .id(date)
-                }
-            }
-            .scrollTargetLayout()
-        }
-        .scrollTargetBehavior(.paging)
-        .scrollIndicators(.never, axes: .horizontal)
-        .scrollPosition(id: Binding<Date?>(
-                get: { self.firstLoading ? nil : coordinator.selectedWeek },
-                set: { newValue in
-                    if let validDate = newValue {
-                        coordinator.selectDate(validDate)
-                    }
-                }
-            ), anchor: .center)
-    }
-    
     @ViewBuilder
-    private var stateOverlays: some View {
+    private var mainView: some View {
         let hasCourse = settings.selectedCourse != "0"
-        
         switch viewModel.state {
         case .idle, .loading:
             loadingStateOverlay(hasCourse: hasCourse)
-            
+        case .loaded:
+            calendarScrollView
         case .empty:
             ContentUnavailableView(
                 "Nessuna Lezione",
                 systemImage: "graduationcap",
                 description: Text(hasCourse ? "Non è stata trovata nessuna lezione per questo corso." : "Scegli un corso dalle impostazioni per iniziare.")
             )
-            
         case .offline:
             ContentUnavailableView(
                 "Sei Offline",
                 systemImage: "wifi.slash",
                 description: Text(hasCourse ? "Connettiti a internet per scaricare le tue lezioni." : "Connettiti a internet per configurare il tuo corso.")
             )
-            
         case .error(let msg):
             ContentUnavailableView(
                 "Si è verificato un errore",
                 systemImage: "exclamationmark.triangle",
                 description: Text(msg)
             )
-            
-        case .loaded:
-            if firstLoading {
-                loadingStateOverlay(hasCourse: hasCourse)
+        }
+    }
+    
+    private var calendarScrollView: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: 0) {
+                    ForEach(viewModel.academicYearDays, id: \.self) { date in
+                        CalendarViewDay(date: date, viewModel: viewModel, sheetRouter: sheetRouter)
+                            .containerRelativeFrame(.horizontal)
+                            .id(date)
+                    }
+                }
+                .scrollTargetLayout()
+            }
+            .transaction { $0.animation = nil }
+            .scrollTargetBehavior(.paging)
+            .scrollIndicators(.never, axes: .horizontal)
+            .scrollPosition(id: Binding<Date?>(
+                get: { coordinator.selectedWeek },
+                set: { if let d = $0 { coordinator.selectDate(d) } }
+            ), anchor: .center)
+            .modify { view in
+                if #available(iOS 18, *) { view } else {
+                    view.onAppear {
+                        let target = coordinator.selectedWeek
+                        var t = Transaction()
+                        t.disablesAnimations = true
+                        withTransaction(t) {
+                            proxy.scrollTo(target, anchor: .center)
+                        }
+                    }
+                }
             }
         }
     }
@@ -199,25 +170,7 @@ struct CalendarView: View {
     private func buildToolbar() -> some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             HStack {
-                ZStack(alignment: .leading) {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text("Mercoledì")
-                            .font(.headline)
-                        Text("00 Settembre")
-                            .font(.subheadline)
-                    }
-                    .opacity(0)
-                    .accessibilityHidden(true)
-                    
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(coordinator.selectedWeek.getCurrentWeekdaySymbol(length: .wide))
-                            .font(.headline)
-                        Text("\(coordinator.selectedWeek.day) \(coordinator.selectedWeek.getCurrentMonthSymbol(length: .wide))")
-                            .font(.subheadline)
-                    }
-                    .contentTransition(.numericText())
-                    .animation(.default, value: coordinator.selectedWeek)
-                }
+                SelectedDayLabel(coordinator: coordinator)
                 
                 Image(systemName: "wifi.slash")
                     .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isOffline)
@@ -250,7 +203,7 @@ struct CalendarView: View {
             }
         }
         
-        if page == .main {
+        if coordinator.page == .main {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Aggiungi", systemImage: "plus") {
                     Haptics.play(.impact(weight: .light))
@@ -260,9 +213,9 @@ struct CalendarView: View {
         }
         
         ToolbarItem(placement: .topBarTrailing) {
-            Button("Cambia pagina", systemImage: page == .main ? "calendar" : "clock") {
+            Button("Cambia pagina", systemImage: coordinator.page == .main ? "calendar" : "clock") {
                 withAnimation {
-                    page = page == .main ? .classrooms : .main
+                    coordinator.page = coordinator.page == .main ? .classrooms : .main
                 }
             }
             .symbolReplace()
@@ -274,6 +227,27 @@ struct CalendarView: View {
     }
     
     // MARK: - Logic Methods
+    private func checkPendingNotices() {
+        guard !sheetRouter.openSettings,
+              !sheetRouter.openWhatsNew,
+              !sheetRouter.openAddPersonalEvent,
+              sheetRouter.openAppNotices == nil,
+              sheetRouter.selectedItem == nil,
+              sheetRouter.selectedRoom == nil,
+              sheetRouter.manager.selectedDetent != .large else { return }
+              
+        let validNotices = statusManager.activeNotices.filter { notice in
+            notice.level != .blocking && !statusManager.shownThisSessionIDs.contains(notice.id)
+        }
+        
+        guard !validNotices.isEmpty else { return }
+
+        for notice in validNotices {
+            statusManager.markAsShownThisSession(id: notice.id)
+        }
+        sheetRouter.routeToAppNotices(validNotices)
+    }
+    
     private func openSettingsAction() {
         Haptics.play(.impact(weight: .light))
         sheetRouter.tempSettings.sync(with: settings)
@@ -290,6 +264,8 @@ struct CalendarView: View {
             if !settings.latestVersion.isEmpty && settings.latestVersion != Bundle.main.clearAppVersion {
                 try? await Task.sleep(for: .seconds(0.2))
                 sheetRouter.routeToWhatsNew()
+            } else {
+                checkPendingNotices()
             }
         }
         
@@ -330,32 +306,11 @@ struct CalendarView: View {
     
     private func checkPendingNotificationTap() {
         guard let item = NotificationManager.shared.itemToOpen else { return }
-        NotificationManager.shared.itemToOpen = nil          // lo consumo sempre, anche se lo ignoro
+        NotificationManager.shared.itemToOpen = nil
         guard !sheetRouter.openSettings,
               !sheetRouter.openWhatsNew,
               !sheetRouter.openAddPersonalEvent else { return }
         sheetRouter.routeToItem(item)
-    }
-    
-    private func handleLoadingChange(_ isLoading: Bool) {
-        if isLoading {
-            Haptics.play(.start)
-            firstLoading = true
-        } else {
-            Task { @MainActor in
-                var transaction = Transaction()
-                transaction.disablesAnimations = true
-                withTransaction(transaction) {
-                    if let exactMatch = viewModel.academicYearDays.first(where: { Calendar.current.isDate($0, inSameDayAs: coordinator.selectedWeek) }) {
-                        coordinator.selectDate(exactMatch)
-                    } else {
-                        coordinator.selectDate(viewModel.academicYearDays.first ?? Calendar.current.startOfDay(for: Date()))
-                    }
-                    firstLoading = false
-                    Haptics.play(.success)
-                }
-            }
-        }
     }
     
     private func handleDetentChange(oldValue: CustomSheetDetent, newValue: CustomSheetDetent) {
@@ -364,8 +319,7 @@ struct CalendarView: View {
                 let hasChanged = sheetRouter.tempSettings.hasChanged(from: settings)
                 
                 if hasChanged {
-                    page = .main
-                    firstLoading = true
+                    coordinator.page = .main
                     viewModel.state = .loading
                     sheetRouter.tempSettings.apply(to: settings)
                     
@@ -400,22 +354,35 @@ struct CalendarView: View {
             } else if oldValue == .large {
                 if sheetRouter.openWhatsNew {
                     settings.latestVersion = Bundle.main.clearAppVersion
+                } else if let notices = sheetRouter.openAppNotices {
+                    for notice in notices {
+                        statusManager.dismissNotice(id: notice.id)
+                    }
                 }
             }
             
             sheetRouter.resetToCalendar()
+            
+            if oldValue == .large {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(0.3))
+                    checkPendingNotices()
+                }
+            }
         }
     }
 }
 
 // MARK: - Subviews
 struct CalendarViewDay: View {
-    let combinedItems: [CalendarItem]
+    let date: Date
+    let viewModel: CalendarViewModel
     var sheetRouter: CalendarSheetRouter
     
     var body: some View {
+        let items = viewModel.events(for: date) ?? []
         Group {
-            if combinedItems.isEmpty {
+            if items.isEmpty {
                 ContentUnavailableView(
                     "Giornata Libera",
                     systemImage: "moon.zzz",
@@ -424,7 +391,7 @@ struct CalendarViewDay: View {
             } else {
                 ScrollView {
                     VStack(spacing: 10) {
-                        ForEach(combinedItems) { item in
+                        ForEach(items) { item in
                             CardItemContainer(item: item, sheetRouter: sheetRouter)
                         }
                     }
@@ -438,7 +405,54 @@ struct CalendarViewDay: View {
     }
 }
 
+private struct SelectedDayLabel: View {
+    let coordinator: CalendarCoordinator
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Mercoledì").font(.headline)
+                Text("00 Settembre").font(.subheadline)
+            }
+            .opacity(0)
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text(coordinator.selectedWeek.getCurrentWeekdaySymbol(length: .wide))
+                    .font(.headline)
+                Text("\(coordinator.selectedWeek.day) \(coordinator.selectedWeek.getCurrentMonthSymbol(length: .wide))")
+                    .font(.subheadline)
+            }
+            .contentTransition(.numericText())
+            .animation(.default, value: coordinator.selectedWeek)
+        }
+    }
+}
+
+private struct SelectionFeedback: ViewModifier {
+    let coordinator: CalendarCoordinator
+    let sheetRouter: CalendarSheetRouter
+
+    func body(content: Content) -> some View {
+        content.onChange(of: coordinator.selectedWeek) { oldValue, newValue in
+            guard !Calendar.current.isDate(oldValue, inSameDayAs: newValue) else { return }
+            Haptics.play(.selection, state: "selection")
+            
+            let isSystemSheetOpen = sheetRouter.openSettings || sheetRouter.openAppNotices != nil || sheetRouter.openWhatsNew
+            if !isSystemSheetOpen { 
+                sheetRouter.manager.setDetent(.small) 
+            }
+            
+            Task {
+                try? await Task.sleep(for: .seconds(0.2))
+                GlobalHaptics.shared.state = ""
+            }
+        }
+    }
+}
+
 #Preview {
     CalendarView()
         .environment(UserSettings.shared)
+        .environment(AppStatusManager())
 }

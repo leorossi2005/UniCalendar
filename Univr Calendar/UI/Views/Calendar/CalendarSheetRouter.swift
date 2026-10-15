@@ -7,7 +7,7 @@
 //  SPDX-License-Identifier: GPL-3.0-or-later
 //
 
-import SwiftUI
+import Foundation
 import UnivrCore
 import CustomSheet
 
@@ -22,6 +22,7 @@ class CalendarSheetRouter {
     var openWhatsNew: Bool = false
     var openAddToCalendar: Bool = false
     var openAddPersonalEvent: Bool = false
+    var openAppNotices: [AppNotice]? = nil
     var editingPersonalEvent: PersonalEvent? = nil
     var tempSettings: TempSettingsState = .init()
     
@@ -48,7 +49,14 @@ class CalendarSheetRouter {
         manager.setDetent(.large)
     }
     
+    func routeToAppNotices(_ notices: [AppNotice]) {
+        openAppNotices = notices
+        detents = [.small, .medium, .large]
+        manager.setDetent(.large)
+    }
+    
     func routeToItem(_ item: CalendarItem, addToCalendar: Bool = false) {
+        openAppNotices = nil
         selectedItem = item
         openAddToCalendar = addToCalendar
         detents = [.small, .medium, .large]
@@ -74,6 +82,7 @@ class CalendarSheetRouter {
         selectedRoom = nil
         openSettings = false
         openWhatsNew = false
+        openAppNotices = nil
         openAddToCalendar = false
         openAddPersonalEvent = false
         editingPersonalEvent = nil

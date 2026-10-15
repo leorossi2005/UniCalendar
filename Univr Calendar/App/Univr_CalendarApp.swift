@@ -28,38 +28,41 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 struct Univr_CalendarApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @Environment(\.scenePhase) private var scenePhase
+    @State private var appStatusManager = AppStatusManager()
     let container: ModelContainer
     
     init() {
+        Device.configure(with: IOSDeviceService.info())
         do {
-            container = try ModelContainer(for: NotificationRecord.self, PersonalEventRecord.self)
+            self.container = try ModelContainer(for: NotificationRecord.self, PersonalEventRecord.self)
         } catch {
             fatalError("Impossibile creare il database: \(error)")
         }
+        let storage = IOSStorageService.createProvider(container: container)
+        NetworkStatusMonitor.shared.start(provider: IOSNetworkMonitor.createProvider())
+        NotificationManager.shared.configure(
+            notificationProvider: IOSNotificationService.createProvider(),
+            storageProvider: storage
+        )
+        CommitmentsManager.shared.configure(storageProvider: storage)
     }
     
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environment(UserSettings.shared)
-                .environment(\.safeAreaInsets, UIApplication.shared.safeAreas)
+                .environment(appStatusManager)
                 .modelContainer(container)
+                .readSafeAreaInsets()
                 .enableGlobalHaptics()
-                .task {
-                    NetworkStatusMonitor.shared.start(provider: IOSNetworkMonitor.createProvider())
-                    let storage = IOSStorageService.createProvider(container: container)
-                    NotificationManager.shared.configure(
-                        notificationProvider: IOSNotificationService.createProvider(),
-                        storageProvider: storage
-                    )
-                    CommitmentsManager.shared.configure(storageProvider: storage)
-                }
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .active {
                 Task {
                     await NotificationManager.shared.cleanupExpiredNotifications()
+                    await appStatusManager.refreshIfNeeded()
                 }
+                appStatusManager.evaluateCurrentState()
             }
         }
     }

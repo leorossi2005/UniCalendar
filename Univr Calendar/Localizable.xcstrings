@@ -11,6 +11,22 @@
         }
       }
     },
+    "%@ - %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ - %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ - %2$@"
+          }
+        }
+      }
+    },
     "%@ - %@ (%@)" : {
       "localizations" : {
         "en" : {
@@ -71,6 +87,22 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$lld %2$@"
+          }
+        }
+      }
+    },
+    "%lld di %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$lld"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld di %2$lld"
           }
         }
       }
@@ -175,6 +207,16 @@
         }
       }
     },
+    "Al momento non ci sono avvisi attivi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At the moment there are no active notices."
+          }
+        }
+      }
+    },
     "Al momento sei offline." : {
       "localizations" : {
         "en" : {
@@ -211,6 +253,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "Area Personale" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personal Area"
+          }
+        }
+      }
+    },
+    "Avvisi di Sistema" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System Notices"
           }
         }
       }
@@ -311,6 +373,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "What year do you attend? "
+          }
+        }
+      }
+    },
+    "Chiudi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
           }
         }
       }
@@ -425,6 +497,16 @@
         }
       }
     },
+    "Dal %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From %@"
+          }
+        }
+      }
+    },
     "DANGER ZONE" : {
       "localizations" : {
         "en" : {
@@ -535,6 +617,16 @@
         }
       }
     },
+    "Fino al %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To %@"
+          }
+        }
+      }
+    },
     "Giornata Libera" : {
       "localizations" : {
         "en" : {
@@ -610,7 +702,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Notification settings"
+            "value" : "Notification Settings"
           }
         }
       }
@@ -631,6 +723,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "About"
+          }
+        }
+      }
+    },
+    "Informazioni Generali" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "General Information"
           }
         }
       }
@@ -781,6 +883,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Edit Notification"
+          }
+        }
+      }
+    },
+    "Nessun Avviso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Notices"
           }
         }
       }
@@ -1071,6 +1183,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This action cannot be canceled."
+          }
+        }
+      }
+    },
+    "Questa sezione include tutto ciò che ti rigurda, accessibile in un unico posto senza dover cercare in giro per l'app." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This section includes everything that concerns you, accessible in one place without having to search around the app."
           }
         }
       }

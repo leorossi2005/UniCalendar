@@ -19,7 +19,7 @@ extension Lesson {
         tags: ["Informatica", "Base"],
         group: .all,
         startTime: Date(),
-        endTime: Date().addingTimeInterval(7200), // +2 ore
+        endTime: Date().addingTimeInterval(7200),
         durationMinutes: 120,
         isCanceled: false,
         color: "#A0A0A0",

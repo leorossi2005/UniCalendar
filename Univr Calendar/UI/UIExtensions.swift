@@ -31,6 +31,16 @@ extension AppColor {
     }
 }
 
+extension NoticeLevel {
+    var tintColor: Color {
+        switch self {
+        case .info: .blue
+        case .warning: .orange
+        case .blocking: .red
+        }
+    }
+}
+
 extension Color {
     init?(hex: String) {
         guard let components = HexColorParser.parse(hex) else { return nil }
@@ -130,40 +140,23 @@ extension View {
     
     // MARK: Fallback iOS 18
     @ViewBuilder
-    func glassProminentIfAvailable() -> some View {
+    func glassIfAvailable(prominent: Bool) -> some View {
         if #available(iOS 26, *) {
-            self
-                .buttonStyle(.glassProminent)
+            if prominent {
+                self
+                    .buttonStyle(.glassProminent)
+            } else {
+                self
+                    .buttonStyle(.glass)
+            }
         } else {
-            self
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-            
-        }
-    }
-    
-    @ViewBuilder
-    func glassIfAvailable() -> some View {
-        if #available(iOS 26, *) {
-            self
-                .buttonStyle(.glass)
-        } else {
-            self
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
-            
-        }
-    }
-    
-    // MARK: Fallback iOS 17
-    @ViewBuilder
-    func symbolReplace() -> some View {
-        if #available(iOS 18, *) {
-            self
-                .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
-        } else {
-            self
-                .contentTransition(.symbolEffect(.replace))
+            if prominent {
+                self
+                    .buttonStyle(.borderedProminent)
+            } else {
+                self
+                    .buttonStyle(.bordered)
+            }
             
         }
     }
@@ -182,6 +175,19 @@ extension View {
             self
         }
     }
+    
+    // MARK: Fallback iOS 17
+    @ViewBuilder
+    func symbolReplace() -> some View {
+        if #available(iOS 18, *) {
+            self
+                .contentTransition(.symbolEffect(.replace.magic(fallback: .replace)))
+        } else {
+            self
+                .contentTransition(.symbolEffect(.replace))
+            
+        }
+    }
 }
 
 extension ToolbarItem {
@@ -197,6 +203,35 @@ extension ToolbarItem {
 
 extension EnvironmentValues {
     @Entry var safeAreaInsets: UIEdgeInsets = .zero
+}
+
+private struct SafeAreaInsetsReader: ViewModifier {
+    @State private var insets: UIEdgeInsets = .zero
+    
+    func body(content: Content) -> some View {
+        content
+            .environment(\.safeAreaInsets, insets)
+            .background {
+                Color.clear
+                    .ignoresSafeArea(.keyboard)
+                    .onGeometryChange(for: EdgeInsets.self) { proxy in
+                        proxy.safeAreaInsets
+                    } action: { new in
+                        insets = UIEdgeInsets(
+                            top: new.top,
+                            left: new.leading,
+                            bottom: new.bottom,
+                            right: new.trailing
+                        )
+                    }
+            }
+    }
+}
+
+extension View {
+    func readSafeAreaInsets() -> some View {
+        modifier(SafeAreaInsetsReader())
+    }
 }
 
 extension Array where Element == Corso {
@@ -220,6 +255,14 @@ extension String {
             return "info.circle.text.page"
         } else {
             return "info.circle"
+        }
+    }
+    
+    static var personalCommitmentsDynamic: String {
+        if #available(iOS 18, *) {
+            return "calendar.and.person"
+        } else {
+            return "person.badge.clock"
         }
     }
 }

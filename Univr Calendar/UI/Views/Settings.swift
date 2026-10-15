@@ -25,19 +25,16 @@ struct Settings: View {
     var body: some View {
         List {
             Section {
-                HStack {
+                Picker(selection: $tempSettings.selectedYear) {
+                    ForEach(viewModel.years) { year in
+                        Text(year.label).tag(year.id)
+                    }
+                } label: {
                     Label("Anno", systemImage: "calendar")
                         .foregroundStyle(.primary)
-                        .padding(.trailing)
-                    Picker(selection: $tempSettings.selectedYear) {
-                        ForEach(viewModel.years) { year in
-                            Text(year.label).tag(year.id)
-                        }
-                    } label: {}
-                        .pickerStyle(.segmented)
-                        .onChange(of: tempSettings.selectedYear) {
-                            handleYearChange()
-                        }
+                }
+                .onChange(of: tempSettings.selectedYear) {
+                    handleYearChange()
                 }
                 CourseSelector(
                     isFocused: $searchTextFieldFocus,
@@ -94,19 +91,29 @@ struct Settings: View {
                         .foregroundStyle(.primary)
                 }
                 NavigationLink(destination: PersonalCommitmentsList()) {
-                    Label("Impegni Personali", systemImage: "calendar.and.person")
+                    Label("Impegni Personali", systemImage: .personalCommitmentsDynamic)
                         .foregroundStyle(.primary)
                 }
-                NavigationLink(destination: AboutView()) {
-                    Label("Informazioni", systemImage: .infoPageDynamic)
+            } header: {
+                Text("Area Personale")
+            } footer: {
+                Text("Questa sezione include tutto ciò che ti rigurda, accessibile in un unico posto senza dover cercare in giro per l'app.")
+            }
+            Section("Informazioni Generali") {
+                NavigationLink(destination: AppNoticesListView()) {
+                    Label("Avvisi di Sistema", systemImage: "megaphone")
+                        .foregroundStyle(.primary)
+                }
+                NavigationLink(destination: WhatsNewView()) {
+                    Label("Novità", systemImage: "sparkles")
                         .foregroundStyle(.primary)
                 }
                 NavigationLink(destination: DeveloperProfileView()) {
                     Label("Lo Sviluppatore", systemImage: "chevron.left.forwardslash.chevron.right")
                         .foregroundStyle(.primary)
                 }
-                NavigationLink(destination: WhatsNewView()) {
-                    Label("Novità", systemImage: "sparkles")
+                NavigationLink(destination: AboutView()) {
+                    Label("Informazioni", systemImage: .infoPageDynamic)
                         .foregroundStyle(.primary)
                 }
             }

@@ -13,15 +13,18 @@ struct NetworkService {
     private let session: URLSession
     let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
     
+    private static var userAgent: String {
+        "UniCalendar/\(Bundle.main.clearAppVersion) (\(Device.model); \(Device.os.name) \(Device.os.version))"
+    }
+    
     init() {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 30
         configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         configuration.urlCache = nil
         
-        // Da rendere per dispositivo
         configuration.httpAdditionalHeaders = [
-            "User-Agent": "CalendarForUniVR/\(Bundle.main.clearAppVersion) (Device, OS)",
+            "User-Agent": Self.userAgent,
             "Accept": "application/json",
             "Content-Type": "application/json"
         ]
@@ -97,5 +100,20 @@ struct NetworkService {
         struct RootWrapper: Decodable { let availability: Availability }
         let wrapper: RootWrapper = try await fetch(from: "/roomsavailability?date=\(date)")
         return wrapper.availability
+    }
+    
+    func getAppStatus(appVersion: String, osVersion: String) async throws -> [AppNotice] {
+        struct RootWrapper: Decodable { let notices: [Lossy<AppNotice>] }
+        let safeApp = appVersion.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? appVersion
+        let safeOS = osVersion.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? osVersion
+        let wrapper: RootWrapper = try await fetch(from: "/status?appVersion=\(safeApp)&osVersion=\(safeOS)")
+        return wrapper.notices.compactMap(\.value)
+    }
+}
+
+private struct Lossy<T: Decodable>: Decodable {
+    let value: T?
+    init(from decoder: Decoder) throws {
+        self.value = try? T(from: decoder)
     }
 }

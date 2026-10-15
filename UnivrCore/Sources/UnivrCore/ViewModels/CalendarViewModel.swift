@@ -135,7 +135,7 @@ public class CalendarViewModel {
         case .offline:
             if schedule.isEmpty { state = .offline }
         case .error(let message):
-            state = .error(message)
+            if schedule.isEmpty { state = .error(message) }
         case .idle, .loading, .loaded, .empty:
             break
         }
@@ -308,7 +308,7 @@ public class CalendarViewModel {
                 let dur = Calendar.current.dateComponents([.minute], from: currentEndTime, to: item.startTime).minute ?? 0
                 if dur > 0 {
                     let newPause = Lesson(
-                        id: UUID().uuidString,
+                        id: "pause-\(Int(currentEndTime.timeIntervalSince1970))",
                         code: nil,
                         type: .pause,
                         name: "Pausa",

@@ -185,6 +185,7 @@ struct Onboarding: View {
                 )
                 .id(4)
             }
+            .scrollTargetLayout()
         }
         .overlay(alignment: .top) {
             if #available(iOS 26, *) {
@@ -282,7 +283,7 @@ private struct OnboardingButton: View {
             }
         }
         .controlSize(.large)
-        .glassProminentIfAvailable()
+        .glassIfAvailable(prominent: true)
         .disabled(isDisabled || isLoading)
         .keyboardPadding(10)
     }

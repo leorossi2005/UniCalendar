@@ -23,7 +23,7 @@ struct CalendarItemDetailsView: View {
     let internalItem: any CalendarDisplayable
     
     @State private var calendarEvent: EKEvent?
-    @State private var eventStore = EKEventStore()
+    @State private var eventStore: EKEventStore?
     @State private var eventSaved: Bool = false
     @State private var notificationManager = NotificationManager.shared
     @State private var showPermissionAlert: Bool = false
@@ -37,7 +37,7 @@ struct CalendarItemDetailsView: View {
     
     var body: some View {
         ZStack {
-            if let event = calendarEvent {
+            if let event = calendarEvent, let eventStore {
                 EventEditViewController(
                     event: event,
                     eventStore: eventStore,
@@ -347,7 +347,9 @@ struct CalendarItemDetailsView: View {
     }
     
     private func prepareAndShowEvent(for lesson: Lesson) {
-        let newEvent = EKEvent(eventStore: eventStore)
+        let store = eventStore ?? EKEventStore()
+        eventStore = store
+        let newEvent = EKEvent(eventStore: store)
         
         newEvent.title = lesson.cleanName
         if !lesson.teachers.isEmpty {

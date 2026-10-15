@@ -89,7 +89,8 @@ struct DatePicker: View, Equatable {
                         selection = today
                     }
                 }
-                .glassIfAvailable()
+                .glassIfAvailable(prominent: false)
+                .buttonBorderShape(.capsule)
                 .hoverEffect()
             }
         }
