@@ -102,8 +102,6 @@ public final class NotificationManager {
             }
         }
         
-        // Ricarichiamo sempre alla fine per essere certi di schedulare il prossimo timer, 
-        // anche se non abbiamo rimosso nulla (es. notifica pendente ma non ancora consegnata da iOS al ms esatto)
         await fetchSavedNotifications()
     }
     

@@ -13,15 +13,18 @@ struct NetworkService {
     private let session: URLSession
     let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
     
+    private static var userAgent: String {
+        "UniCalendar/\(Bundle.main.clearAppVersion) (\(Device.model); \(Device.os.name) \(Device.os.version))"
+    }
+    
     init() {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 30
         configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         configuration.urlCache = nil
         
-        // Da rendere per dispositivo
         configuration.httpAdditionalHeaders = [
-            "User-Agent": "CalendarForUniVR/\(Bundle.main.clearAppVersion) (Device, OS)",
+            "User-Agent": Self.userAgent,
             "Accept": "application/json",
             "Content-Type": "application/json"
         ]

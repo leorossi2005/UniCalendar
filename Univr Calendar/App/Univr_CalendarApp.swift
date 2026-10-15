@@ -32,11 +32,19 @@ struct Univr_CalendarApp: App {
     let container: ModelContainer
     
     init() {
+        Device.configure(with: IOSDeviceService.info())
         do {
-            container = try ModelContainer(for: NotificationRecord.self, PersonalEventRecord.self)
+            self.container = try ModelContainer(for: NotificationRecord.self, PersonalEventRecord.self)
         } catch {
             fatalError("Impossibile creare il database: \(error)")
         }
+        let storage = IOSStorageService.createProvider(container: container)
+        NetworkStatusMonitor.shared.start(provider: IOSNetworkMonitor.createProvider())
+        NotificationManager.shared.configure(
+            notificationProvider: IOSNotificationService.createProvider(),
+            storageProvider: storage
+        )
+        CommitmentsManager.shared.configure(storageProvider: storage)
     }
     
     var body: some Scene {
@@ -47,15 +55,6 @@ struct Univr_CalendarApp: App {
                 .modelContainer(container)
                 .readSafeAreaInsets()
                 .enableGlobalHaptics()
-                .task {
-                    NetworkStatusMonitor.shared.start(provider: IOSNetworkMonitor.createProvider())
-                    let storage = IOSStorageService.createProvider(container: container)
-                    NotificationManager.shared.configure(
-                        notificationProvider: IOSNotificationService.createProvider(),
-                        storageProvider: storage
-                    )
-                    CommitmentsManager.shared.configure(storageProvider: storage)
-                }
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .active {

@@ -29,9 +29,6 @@ public final class AppStatusManager {
     private static let closedKey = "appStatus_closedIDs"
     
     public init() {
-        #if DEBUG
-        UserDefaults.standard.removeObject(forKey: Self.closedKey)
-        #endif
         closedIDs = Set(UserDefaults.standard.stringArray(forKey: Self.closedKey) ?? [])
         
         Task {
@@ -90,8 +87,7 @@ public final class AppStatusManager {
         await loadCache()
         
         let appVer = Bundle.main.clearAppVersion
-        let os = ProcessInfo.processInfo.operatingSystemVersion
-        let osVer = "\(os.majorVersion).\(os.minorVersion).\(os.patchVersion)"
+        let osVer = Device.os.version
         
         do {
             notices = try await resource.refresh {
