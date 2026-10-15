@@ -89,7 +89,7 @@ extension Bundle {
     }
     
     public var clearAppVersion: String {
-        let version = object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "N/A"
+        let version = object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
         return version
     }
 }

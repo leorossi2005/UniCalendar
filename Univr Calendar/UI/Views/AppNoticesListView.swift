@@ -42,7 +42,6 @@ struct AppNoticesListView: View {
                     Haptics.play(.impact(weight: .light))
                     Task {
                         await statusManager.refresh()
-                        // Segna gli avvisi come chiusi per evitare che il foglio modale ricompaia alla chiusura delle impostazioni
                         statusManager.dismissAllNonBlocking()
                         isRefreshing = false
                         if statusManager.lastAttemptFailed {

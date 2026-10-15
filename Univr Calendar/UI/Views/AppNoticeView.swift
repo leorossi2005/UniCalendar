@@ -42,11 +42,6 @@ struct AppNoticeView: View {
         .scrollIndicators(.never, axes: .horizontal)
         .scrollPosition(id: $currentIndex, anchor: .center)
         .scrollDisabled(true)
-        .animation(.snappy, value: currentIndex)
-        .onChange(of: (currentIndex ?? 0), initial: true) { _, newIndex in
-            updateLockState(for: newIndex)
-        }
-        .onDisappear { sheetManager?.setLock(false) }
         .toolbar {
             if notices.count > 1 {
                 ToolbarItem(placement: .topBarLeading) {
@@ -65,6 +60,11 @@ struct AppNoticeView: View {
                 }
             }
         }
+        .animation(.snappy, value: currentIndex)
+        .onChange(of: (currentIndex ?? 0), initial: true) { _, newIndex in
+            updateLockState(for: newIndex)
+        }
+        .onDisappear { sheetManager?.setLock(false) }
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -130,7 +130,7 @@ struct AppNoticeView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .controlSize(.large)
-                    .glassIfAvailable(prominent: true)
+                    .glassIfAvailable(prominent: isLast && (onDismiss == nil || notice.level == .blocking))
                 }
                 
                 if !isLast {
@@ -144,7 +144,7 @@ struct AppNoticeView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .controlSize(.large)
-                    .glassIfAvailable(prominent: false)
+                    .glassIfAvailable(prominent: true)
                 } else if onDismiss != nil && notice.level != .blocking {
                     Button {
                         Haptics.play(.impact(weight: .medium))
@@ -156,7 +156,7 @@ struct AppNoticeView: View {
                             .frame(maxWidth: .infinity)
                     }
                     .controlSize(.large)
-                    .glassIfAvailable(prominent: false)
+                    .glassIfAvailable(prominent: true)
                 }
             }
         }

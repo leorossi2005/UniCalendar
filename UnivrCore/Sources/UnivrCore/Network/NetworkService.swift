@@ -101,7 +101,9 @@ struct NetworkService {
     
     func getAppStatus(appVersion: String, osVersion: String) async throws -> [AppNotice] {
         struct RootWrapper: Decodable { let notices: [Lossy<AppNotice>] }
-        let wrapper: RootWrapper = try await fetch(from: "/status?appVersion=\(appVersion)&osVersion=\(osVersion)")
+        let safeApp = appVersion.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? appVersion
+        let safeOS = osVersion.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? osVersion
+        let wrapper: RootWrapper = try await fetch(from: "/status?appVersion=\(safeApp)&osVersion=\(safeOS)")
         return wrapper.notices.compactMap(\.value)
     }
 }

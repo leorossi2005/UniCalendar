@@ -51,7 +51,8 @@ public struct AppNotice: Codable, Sendable, Equatable, Identifiable {
     }
     
     public var localizedButtonText: String? {
-        buttonText?.localized
+        guard let text = buttonText?.localized, !text.isEmpty else { return nil }
+        return text
     }
     
     public var actionURL: URL? {
@@ -96,6 +97,20 @@ public struct AppNotice: Codable, Sendable, Equatable, Identifiable {
 extension Dictionary where Key == String, Value == String {
     public var localized: String {
         let lang = Bundle.main.preferredLocalizations.first ?? "en"
-        return self[lang] ?? self["en"] ?? values.first ?? ""
+        let shortLang = String(lang.prefix(2)).lowercased()
+        
+        let candidates = [self[lang], self[shortLang], self["en"]]
+        for candidate in candidates {
+            if let text = candidate?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty {
+                return text
+            }
+        }
+        for value in values {
+            let text = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !text.isEmpty {
+                return text
+            }
+        }
+        return ""
     }
 }
