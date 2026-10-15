@@ -16,7 +16,7 @@ struct AppNoticesListView: View {
     
     var body: some View {
         Group {
-            if statusManager.allEvaluatedNotices.isEmpty {
+            if statusManager.allNotices.isEmpty {
                 ContentUnavailableView(
                     "Nessun Avviso",
                     systemImage: "bell.slash",
@@ -24,7 +24,7 @@ struct AppNoticesListView: View {
                 )
             } else {
                 List {
-                    ForEach(statusManager.allEvaluatedNotices, id: \.id) { notice in
+                    ForEach(statusManager.allNotices) { notice in
                         NavigationLink(destination: AppNoticeView(notices: [notice])) {
                             NoticeRow(notice: notice)
                         }
@@ -32,7 +32,7 @@ struct AppNoticesListView: View {
                 }
             }
         }
-        .navigationTitle("Storico Avvisi")
+        .navigationTitle("Avvisi di Sistema")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -42,9 +42,14 @@ struct AppNoticesListView: View {
                     Haptics.play(.impact(weight: .light))
                     Task {
                         await statusManager.refresh()
+                        // Segna gli avvisi come chiusi per evitare che il foglio modale ricompaia alla chiusura delle impostazioni
                         statusManager.dismissAllNonBlocking()
                         isRefreshing = false
-                        Haptics.play(.success)
+                        if statusManager.lastAttemptFailed {
+                            Haptics.play(.error)
+                        } else {
+                            Haptics.play(.success)
+                        }
                     }
                 } label: {
                     if #available(iOS 18, *) {
@@ -61,35 +66,35 @@ struct AppNoticesListView: View {
 }
 
 private struct NoticeRow: View {
-    let notice: EvaluatedNotice
+    let notice: AppNotice
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Image(systemName: notice.level == .warning ? "exclamationmark.triangle.fill" : notice.level == .blocking ? "xmark.octagon.fill" : "info.circle.fill")
-                    .foregroundColor(notice.level == .warning ? .orange : notice.level == .blocking ? .red : .blue)
+                Image(systemName: notice.level.systemImage)
+                    .foregroundStyle(notice.level.tintColor)
                     .font(.title2)
-                Text(notice.title)
+                Text(notice.localizedTitle)
                     .font(.headline)
                     .lineLimit(2)
                 Spacer()
                 VStack(alignment: .trailing) {
                     if let endsAt = notice.endsAt {
-                        Text("Dal \(notice.date.formatted(date: .numeric, time: .omitted))")
+                        Text("Dal \(notice.startsAt.formatted(date: .numeric, time: .omitted))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         Text("Fino al \(endsAt.formatted(date: .numeric, time: .omitted))")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     } else {
-                        Text(notice.date.formatted(date: .numeric, time: .omitted))
+                        Text(notice.startsAt.formatted(date: .numeric, time: .omitted))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
             }
             
-            Text(notice.message)
+            Text(notice.localizedMessage)
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .lineLimit(4)

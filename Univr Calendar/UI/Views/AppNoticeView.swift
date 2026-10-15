@@ -15,10 +15,17 @@ struct AppNoticeView: View {
     @Environment(\.safeAreaInsets) private var safeAreas
     @Environment(GlobalSheetManager.self) private var sheetManager: GlobalSheetManager?
     
-    let notices: [EvaluatedNotice]
+    let notices: [AppNotice]
     var onDismiss: (() -> Void)?
     
     @State private var currentIndex: Int? = 0
+    
+    private var currentNotice: AppNotice? {
+        guard let currentIndex, notices.indices.contains(currentIndex) else {
+            return notices.first
+        }
+        return notices[currentIndex]
+    }
     
     var body: some View {
         ScrollView(.horizontal) {
@@ -39,6 +46,7 @@ struct AppNoticeView: View {
         .onChange(of: (currentIndex ?? 0), initial: true) { _, newIndex in
             updateLockState(for: newIndex)
         }
+        .onDisappear { sheetManager?.setLock(false) }
         .toolbar {
             if notices.count > 1 {
                 ToolbarItem(placement: .topBarLeading) {
@@ -52,8 +60,9 @@ struct AppNoticeView: View {
             }
             
             ToolbarItem(placement: .topBarTrailing) {
-                let safeIndex = min(max(currentIndex ?? 0, 0), max(0, notices.count - 1))
-                ShareLink(item: "\(notices[safeIndex].title)\n\n\(notices[safeIndex].message)")
+                if let currentNotice {
+                    ShareLink(item: currentNotice.shareText)
+                }
             }
         }
     }
@@ -63,6 +72,10 @@ struct AppNoticeView: View {
     }
     
     private func updateLockState(for index: Int) {
+        guard !notices.isEmpty else {
+            sheetManager?.setLock(false)
+            return
+        }
         let safeIndex = min(max(index, 0), notices.count - 1)
         if safeIndex < notices.count - 1 {
             sheetManager?.setLock(true)
@@ -72,34 +85,34 @@ struct AppNoticeView: View {
         }
     }
     
-    private func noticePage(notice: EvaluatedNotice, index: Int) -> some View {
+    private func noticePage(notice: AppNotice, index: Int) -> some View {
         let isLast = index == notices.count - 1
         
         return VStack(spacing: 24) {
             Spacer()
             
-            Image(systemName: notice.level == .warning ? "exclamationmark.triangle.fill" : notice.level == .blocking ? "xmark.octagon.fill" : "info.circle.fill")
+            Image(systemName: notice.level.systemImage)
                 .font(.system(size: 64))
-                .foregroundColor(notice.level == .warning ? .orange : notice.level == .blocking ? .red : .blue)
+                .foregroundStyle(notice.level.tintColor)
             
             VStack(spacing: 8) {
-                Text(notice.title)
+                Text(notice.localizedTitle)
                     .font(.title.bold())
                 
                 if !notices.isEmpty {
                     if let endDate = notice.endsAt {
-                        Text("\(formatDate(notice.date)) - \(formatDate(endDate))")
+                        Text("\(formatDate(notice.startsAt)) - \(formatDate(endDate))")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     } else {
-                        Text(formatDate(notice.date))
+                        Text(formatDate(notice.startsAt))
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                 }
             }
             
-            Text(notice.message)
+            Text(notice.localizedMessage)
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -112,7 +125,7 @@ struct AppNoticeView: View {
                         Haptics.play(.impact(weight: .medium))
                         UIApplication.shared.open(url)
                     } label: {
-                        Text(notice.buttonText ?? String(localized: "Aggiorna"))
+                        Text(notice.localizedButtonText ?? String(localized: "Aggiorna"))
                             .fontWeight(.semibold)
                             .frame(maxWidth: .infinity)
                     }
@@ -124,10 +137,7 @@ struct AppNoticeView: View {
                     Button {
                         Haptics.play(.impact(weight: .light))
                         let nextIndex = (currentIndex ?? 0) + 1
-                        
-                        withAnimation {
-                            currentIndex = min(nextIndex, notices.count - 1)
-                        }
+                        currentIndex = min(nextIndex, notices.count - 1)
                     } label: {
                         Text("Continua")
                             .fontWeight(.semibold)
@@ -140,7 +150,8 @@ struct AppNoticeView: View {
                         Haptics.play(.impact(weight: .medium))
                         onDismiss?()
                     } label: {
-                        Text(notice.buttonText != nil && notice.actionURL == nil ? notice.buttonText! : String(localized: "Chiudi"))
+                        let buttonLabel = (notice.actionURL == nil ? notice.localizedButtonText : nil) ?? String(localized: "Chiudi")
+                        Text(buttonLabel)
                             .fontWeight(.semibold)
                             .frame(maxWidth: .infinity)
                     }

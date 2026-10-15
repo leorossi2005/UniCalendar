@@ -1387,16 +1387,6 @@
         }
       }
     },
-    "Storico Avvisi" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Historical Notices"
-          }
-        }
-      }
-    },
     "Suona %lld minuti prima" : {
       "localizations" : {
         "en" : {

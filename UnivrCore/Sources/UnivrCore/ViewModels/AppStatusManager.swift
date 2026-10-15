@@ -12,8 +12,8 @@ import Foundation
 @MainActor
 @Observable
 public final class AppStatusManager {
-    public private(set) var activeNotices: [EvaluatedNotice] = []
-    public private(set) var allEvaluatedNotices: [EvaluatedNotice] = []
+    public private(set) var activeNotices: [AppNotice] = []
+    public private(set) var allNotices: [AppNotice] = []
     public private(set) var isResolved = false
     public private(set) var shownThisSessionIDs: Set<String> = []
     
@@ -24,10 +24,9 @@ public final class AppStatusManager {
     private var closedIDs: Set<String>
     private var isFetching = false
     private var lastCheck = Date.distantPast
-    private var lastAttemptFailed = false
+    public private(set) var lastAttemptFailed = false
     
     private static let closedKey = "appStatus_closedIDs"
-    private static let storeURL = URL(string: "https://apps.apple.com/app/id6756148883")
     
     public init() {
         #if DEBUG
@@ -90,9 +89,13 @@ public final class AppStatusManager {
         
         await loadCache()
         
+        let appVer = Bundle.main.clearAppVersion
+        let os = ProcessInfo.processInfo.operatingSystemVersion
+        let osVer = "\(os.majorVersion).\(os.minorVersion).\(os.patchVersion)"
+        
         do {
             notices = try await resource.refresh {
-                try await self.service.getAppStatus()
+                try await self.service.getAppStatus(appVersion: appVer, osVersion: osVer)
             }
             closedIDs.formIntersection(notices.map(\.id))
             saveClosedIDs()
@@ -106,39 +109,9 @@ public final class AppStatusManager {
     }
     
     public func evaluateCurrentState() {
-        let app = AppVersion(Bundle.main.clearAppVersion)
-        let os = AppVersion(ProcessInfo.processInfo.operatingSystemVersion)
-        let now = Date.now
-        let language = Bundle.main.preferredLocalizations.first ?? "en"
-        
-        let candidates = notices.compactMap { notice -> (notice: AppNotice, level: NoticeLevel)? in
-            guard let level = notice.effectiveLevel(appVersion: app, osVersion: os, now: now) else { return nil }
-            return (notice, level)
-        }
-        
-        let sortedCandidates = candidates.sorted {
-            ($0.level, $0.notice.startsAt) > ($1.level, $1.notice.startsAt)
-        }
-        
-        allEvaluatedNotices = sortedCandidates.map { (notice, level) in
-            let downgraded = level != notice.level
-            let message = downgraded ? (notice.messageUnsupportedOS ?? notice.message) : notice.message
-            let url: URL? = downgraded ? nil : Self.getURL(from: notice.url) ?? (level == .blocking ? Self.storeURL : nil)
-            let btnText = downgraded ? nil : notice.buttonText?.localized(for: language)
-            
-            return EvaluatedNotice(
-                id: notice.id,
-                level: level,
-                title: notice.title.localized(for: language),
-                message: message.localized(for: language),
-                buttonText: btnText,
-                actionURL: url,
-                date: notice.startsAt,
-                endsAt: notice.endsAt
-            )
-        }
-        
-        activeNotices = allEvaluatedNotices.filter { notice in
+        let active = notices.filter { !$0.isExpired }
+        allNotices = active
+        activeNotices = active.filter { notice in
             notice.level == .blocking || !closedIDs.contains(notice.id)
         }
     }
@@ -152,62 +125,5 @@ public final class AppStatusManager {
     
     private func saveClosedIDs() {
         UserDefaults.standard.set(Array(closedIDs), forKey: Self.closedKey)
-    }
-    
-    private static func getURL(from string: String?) -> URL? {
-        guard let string else { return nil }
-        if string.lowercased() == "apple" { return Self.storeURL }
-        guard let url = URL(string: string) else { return nil }
-        let allowedSchemes = ["https", "itms-apps"]
-        return allowedSchemes.contains(url.scheme?.lowercased() ?? "") ? url : nil
-    }
-}
-
-// MARK: - Regole di validità
-extension AppNotice {
-    func effectiveLevel(appVersion: AppVersion, osVersion: AppVersion, now: Date) -> NoticeLevel? {
-        if now < startsAt { return nil }
-        if let endsAt, now > endsAt { return nil }
-        if let minVersion, appVersion < AppVersion(minVersion) { return nil }
-        if let maxVersion, appVersion > AppVersion(maxVersion) { return nil }
-        
-        guard level == .blocking else { return level }
-        
-        guard maxVersion != nil else { return nil }
-        
-        if let updateRequiresOS, osVersion < AppVersion(updateRequiresOS) { return .warning }
-        
-        return .blocking
-    }
-}
-
-struct AppVersion: Comparable {
-    let major: Int
-    let minor: Int
-    let patch: Int
-    
-    init(_ major: Int, _ minor: Int, _ patch: Int) {
-        self.major = major
-        self.minor = minor
-        self.patch = patch
-    }
-    
-    init(_ string: String) {
-        let n = string.split(separator: ".").map { Int($0) ?? 0 } + [0, 0, 0]
-        self.init(n[0], n[1], n[2])
-    }
-    
-    init(_ os: OperatingSystemVersion) {
-        self.init(os.majorVersion, os.minorVersion, os.patchVersion)
-    }
-    
-    static func < (lhs: Self, rhs: Self) -> Bool {
-        (lhs.major, lhs.minor, lhs.patch) < (rhs.major, rhs.minor, rhs.patch)
-    }
-}
-
-extension Dictionary where Key == String, Value == String {
-    func localized(for language: String) -> String {
-        self[language] ?? self["en"] ?? values.first ?? ""
     }
 }

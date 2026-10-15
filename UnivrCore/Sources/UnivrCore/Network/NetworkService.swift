@@ -99,9 +99,16 @@ struct NetworkService {
         return wrapper.availability
     }
     
-    func getAppStatus() async throws -> [AppNotice] {
-        struct RootWrapper: Decodable { let notices: [AppNotice] }
-        let wrapper: RootWrapper = try await fetch(from: "/status")
-        return wrapper.notices
+    func getAppStatus(appVersion: String, osVersion: String) async throws -> [AppNotice] {
+        struct RootWrapper: Decodable { let notices: [Lossy<AppNotice>] }
+        let wrapper: RootWrapper = try await fetch(from: "/status?appVersion=\(appVersion)&osVersion=\(osVersion)")
+        return wrapper.notices.compactMap(\.value)
+    }
+}
+
+private struct Lossy<T: Decodable>: Decodable {
+    let value: T?
+    init(from decoder: Decoder) throws {
+        self.value = try? T(from: decoder)
     }
 }

@@ -31,6 +31,16 @@ extension AppColor {
     }
 }
 
+extension NoticeLevel {
+    var tintColor: Color {
+        switch self {
+        case .info: .blue
+        case .warning: .orange
+        case .blocking: .red
+        }
+    }
+}
+
 extension Color {
     init?(hex: String) {
         guard let components = HexColorParser.parse(hex) else { return nil }

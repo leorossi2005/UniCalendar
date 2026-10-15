@@ -22,8 +22,10 @@ struct RootView: View {
     var body: some View {
         Group {
             if let blockingNotice = statusManager.activeNotices.first(where: { $0.level == .blocking }) {
-                AppNoticeView(notices: [blockingNotice])
-                    .transition(.opacity)
+                NavigationStack {
+                    AppNoticeView(notices: [blockingNotice])
+                }
+                .transition(.opacity)
             } else {
                 ZStack {
                     if showSplash {
