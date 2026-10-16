@@ -230,7 +230,7 @@ struct Settings: View {
                             tempSettings.matricola = "even"
                         }
                         
-                        if tempSettings.selectedYear == "0", let lastYear = viewModel.years.last {
+                        if tempSettings.selectedYear == "0", let lastYear = viewModel.years.first {
                             tempSettings.selectedYear = lastYear.id
                         }
                         

@@ -25,6 +25,7 @@ struct Onboarding: View {
     
     var body: some View {
         @Bindable var settings = settings
+        let selectedYear = settings.selectedYear
         
         NavigationStack {
             ScrollView(.horizontal) {
@@ -42,7 +43,7 @@ struct Onboarding: View {
                                 try await viewModel.loadYears()
                                 
                                 if settings.selectedYear == "0" || !viewModel.years.contains(where: { $0.id == settings.selectedYear }) {
-                                    if let lastYear = viewModel.years.last {
+                                    if let lastYear = viewModel.years.first {
                                         await MainActor.run {
                                             settings.selectedYear = lastYear.id
                                         }
@@ -59,12 +60,39 @@ struct Onboarding: View {
                         errorMessage: $errorText,
                         isTopContent: false,
                         content: {
-                            Picker("", selection: $settings.selectedYear) {
+                            VStack(spacing: 12) {
                                 ForEach(viewModel.years) { year in
-                                    Text(year.label).tag(year.id)
+                                    let isSelected = selectedYear == year.id
+
+                                    Button {
+                                        Haptics.play(.selection)
+                                        settings.selectedYear = year.id
+                                    } label: {
+                                        HStack {
+                                            Text(year.label)
+                                                .fontWeight(isSelected ? .semibold : .regular)
+                                            Spacer()
+                                            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                                .font(.title3)
+                                                .foregroundStyle(isSelected ? Color.accentColor : .secondary.opacity(0.35))
+                                                .symbolReplace()
+                                        }
+                                        .padding(.horizontal, 16)
+                                        .frame(height: 56)
+                                        .background(
+                                            isSelected ? Color(.secondarySystemFill) : Color(.tertiarySystemFill),
+                                            in: .rect(cornerRadius: 24, style: .continuous)
+                                        )
+                                        .overlay {
+                                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                                .strokeBorder(Color.accentColor.opacity(isSelected ? 0.6 : 0), lineWidth: 1.5)
+                                        }
+                                    }
+                                    .buttonStyle(.plain)
                                 }
                             }
-                            .pickerStyle(.segmented)
+                            .animation(.snappy(duration: 0.25), value: settings.selectedYear)
+                            .padding(.top, 16)
                         },
                         bottomPadding: safeAreas.bottom,
                         buttonTitle: "Continua",
