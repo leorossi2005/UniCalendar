@@ -54,7 +54,8 @@ struct Onboarding: View {
                     .id(0)
                     OnboardingPage(
                         title: "Scegli un anno",
-                        subtitle: "Seleziona un anno precedente per vedere l'archivio, sennò procedi pure con l'ultimo ;)",
+                        subtitle: "Seleziona un **anno precedente** per consultare l'archivio, oppure procedi con **l'ultimo disponibile**.",
+                        isActive: currentIndex == 1,
                         errorMessage: $errorText,
                         isTopContent: false,
                         content: {
@@ -81,7 +82,8 @@ struct Onboarding: View {
                     .id(1)
                     OnboardingPage(
                         title: "Bene! Ora scegli un corso",
-                        subtitle: "Sono mostrati i corsi per l'anno \(viewModel.years.filter{$0.id == settings.selectedYear}.first?.label ?? "")",
+                        subtitle: "Stai visualizzando i corsi per l'anno **\(viewModel.years.filter{$0.id == settings.selectedYear}.first?.label ?? "")**.",
+                        isActive: currentIndex == 2,
                         errorMessage: $errorText,
                         isTopContent: false,
                         content: {
@@ -117,7 +119,8 @@ struct Onboarding: View {
                     .id(2)
                     OnboardingPage(
                         title: "Che anno frequenti?",
-                        subtitle: "Se vedi solo un anno allora lascia così, non puoi sbagliare!",
+                        subtitle: "Se è presente **un solo anno**, puoi procedere direttamente.",
+                        isActive: currentIndex == 3,
                         errorMessage: $errorText,
                         isTopContent: false,
                         content: {
@@ -150,7 +153,8 @@ struct Onboarding: View {
                     .id(3)
                     OnboardingPage(
                         title: "Sei matricola pari o dispari?",
-                        subtitle: "O il tuo amico, ovvio",
+                        subtitle: "Serve per filtrare le lezioni divise per **gruppo pari o dispari**.",
+                        isActive: currentIndex == 4,
                         errorMessage: $errorText,
                         isTopContent: false,
                         content: {
@@ -398,8 +402,8 @@ private struct WelcomeOnboardingPage: View {
                     isDisabled: isButtonDisabled,
                     action: buttonAction
                 )
-                .padding(.horizontal, bottomPadding)
-                .safeAreaPadding(.bottom, 10)
+                .padding(.horizontal, max(bottomPadding, 16))
+                .safeAreaPadding(.bottom, bottomPadding == 0 ? 16 : 10)
                 .opacity(showButton ? 1 : 0)
                 .blur(radius: showButton ? 0 : 12)
                 .allowsHitTesting(showButton)
@@ -520,7 +524,8 @@ private struct WelcomeOnboardingPage: View {
 // MARK: - Onboarding Page
 private struct OnboardingPage<Content: View>: View {
     let title: LocalizedStringKey
-    let subtitle: LocalizedStringKey
+    let subtitle: LocalizedStringResource
+    let isActive: Bool
     @Binding var errorMessage: String
     let isTopContent: Bool
     @ViewBuilder let content: Content
@@ -531,21 +536,57 @@ private struct OnboardingPage<Content: View>: View {
     let isButtonDisabled: Bool
     let buttonAction: () -> Void
     
+    @State private var showTitle: Bool = false
+    @State private var showSubtitle: Bool = false
+    @State private var showContent: Bool = false
+    
+    private var styledSubtitle: AttributedString {
+        var attributed = AttributedString(localized: subtitle)
+        attributed.foregroundColor = Color.secondary
+        
+        for run in attributed.runs {
+            if let intent = run.inlinePresentationIntent, intent.contains(.stronglyEmphasized) {
+                attributed[run.range].foregroundColor = Color.primary
+            }
+        }
+        
+        return attributed
+    }
+    
     var body: some View {
         VStack(spacing: 12) {
             Color.clear
                 .overlay(alignment: .bottom) {
                     VStack(spacing: 12) {
                         Spacer(minLength: 0)
-                        if isTopContent { content }
+                        if isTopContent {
+                            content
+                                .opacity(showContent ? 1 : 0)
+                                .blur(radius: showContent ? 0 : 8)
+                                .offset(y: showContent ? 0 : 20)
+                        }
                         Text(title)
                             .font(.largeTitle.bold())
                             .fixedSize(horizontal: false, vertical: true)
-                        Text(subtitle)
+                            .opacity(showTitle ? 1 : 0)
+                            .blur(radius: showTitle ? 0 : 8)
+                            .scaleEffect(showTitle ? 1 : 0.95)
+                            .offset(y: showTitle ? 0 : 28)
+                        
+                        Text(styledSubtitle)
                             .font(.body)
-                            .foregroundStyle(.secondary)
+                            .lineSpacing(2)
                             .fixedSize(horizontal: false, vertical: true)
-                        if !isTopContent { content }
+                            .opacity(showSubtitle ? 1 : 0)
+                            .blur(radius: showSubtitle ? 0 : 8)
+                            .offset(y: showSubtitle ? 0 : 22)
+                        
+                        if !isTopContent {
+                            content
+                                .opacity(showContent ? 1 : 0)
+                                .blur(radius: showContent ? 0 : 8)
+                                .offset(y: showContent ? 0 : 20)
+                        }
                         Spacer(minLength: 0)
                     }
                 }
@@ -566,11 +607,37 @@ private struct OnboardingPage<Content: View>: View {
                 isDisabled: isButtonDisabled,
                 action: buttonAction
             )
-            .safeAreaPadding(.bottom, 10)
         }
-        .padding(.horizontal, bottomPadding)
+        .padding(.horizontal, max(bottomPadding, 16))
+        .safeAreaPadding(.bottom, bottomPadding == 0 ? 16 : 10)
         .multilineTextAlignment(.center)
         .containerRelativeFrame([.horizontal, .vertical], alignment: .bottom)
+        .task(id: isActive) {
+            if isActive {
+                guard !Task.isCancelled, isActive else { return }
+                
+                withAnimation(.spring(response: 0.80, dampingFraction: 0.84)) {
+                    showTitle = true
+                }
+                withAnimation(.spring(response: 0.80, dampingFraction: 0.84).delay(0.10)) {
+                    showSubtitle = true
+                }
+                withAnimation(.spring(response: 0.80, dampingFraction: 0.84).delay(0.20)) {
+                    showContent = true
+                }
+            } else {
+                try? await Task.sleep(for: .milliseconds(250))
+                guard !Task.isCancelled, !isActive else { return }
+                
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) {
+                    showTitle = false
+                    showSubtitle = false
+                    showContent = false
+                }
+            }
+        }
     }
 }
 

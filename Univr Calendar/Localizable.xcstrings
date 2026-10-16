@@ -1097,16 +1097,6 @@
         }
       }
     },
-    "O il tuo amico, ovvio" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Or your friend, of course"
-          }
-        }
-      }
-    },
     "Oggi" : {
       "localizations" : {
         "en" : {
@@ -1297,12 +1287,12 @@
         }
       }
     },
-    "Se vedi solo un anno allora lascia così, non puoi sbagliare!" : {
+    "Se è presente **un solo anno**, puoi procedere direttamente." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "If you only see one year then leave it like that, you can't go wrong!"
+            "value" : "If only **one year** is available, you can proceed right away."
           }
         }
       }
@@ -1367,12 +1357,22 @@
         }
       }
     },
-    "Seleziona un anno precedente per vedere l'archivio, sennò procedi pure con l'ultimo ;)" : {
+    "Seleziona un **anno precedente** per consultare l'archivio, oppure procedi con **l'ultimo disponibile**." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Select a previous year to see the archive, otherwise proceed with the last one ;)"
+            "value" : "Select a **previous year** to browse the archive, or proceed with the **latest available**."
+          }
+        }
+      }
+    },
+    "Serve per filtrare le lezioni divise per **gruppo pari o dispari**." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Used to filter classes split by **even or odd group**."
           }
         }
       }
@@ -1387,12 +1387,12 @@
         }
       }
     },
-    "Sono mostrati i corsi per l'anno %@" : {
+    "Stai visualizzando i corsi per l'anno **%@**." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The courses for the year %@ are shown"
+            "value" : "Showing courses for the **%@** academic year."
           }
         }
       }
