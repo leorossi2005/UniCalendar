@@ -287,6 +287,16 @@
         }
       }
     },
+    "Basta siti lenti o **app obsolete** per capire che **lezioni** hai.\n**Ora hai tutto in un unico posto.**" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tired of slow websites or **outdated apps** just to check your **classes**?\n**Now everything is in one place.**"
+          }
+        }
+      }
+    },
     "Bene! Ora scegli un corso" : {
       "localizations" : {
         "en" : {
@@ -717,6 +727,16 @@
         }
       }
     },
+    "Indietro" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
+          }
+        }
+      }
+    },
     "Informazioni" : {
       "localizations" : {
         "en" : {
@@ -963,16 +983,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Name"
-          }
-        }
-      }
-    },
-    "Non capisci mai che lezioni hai? Non hai voglia di aprire il sito ogni volta o usare app obsolete? Ora puoi fare tutto qui!" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Don't you ever understand what classes you have? Don't you want to open the site every time or use outdated apps? Now you can do everything here!"
           }
         }
       }

@@ -26,192 +26,216 @@ struct Onboarding: View {
     var body: some View {
         @Bindable var settings = settings
         
-        ScrollView(.horizontal) {
-            LazyHStack(spacing: 0) {
-                WelcomeOnboardingPage(
-                    title: "Benvenuto!",
-                    subtitle: "Non capisci mai che lezioni hai? Non hai voglia di aprire il sito ogni volta o usare app obsolete? Ora puoi fare tutto qui!",
-                    errorMessage: $errorText,
-                    bottomPadding: safeAreas.bottom,
-                    buttonTitle: "Continua",
-                    isLoading: nextIndexLoading > 0,
-                    isButtonDisabled: viewModel.isOffline,
-                    buttonAction: {
-                        handlePageTransition(to: 1) {
-                            try await viewModel.loadYears()
-                            
-                            if settings.selectedYear == "0" || !viewModel.years.contains(where: { $0.id == settings.selectedYear }) {
-                                if let lastYear = viewModel.years.last {
-                                    await MainActor.run {
-                                        settings.selectedYear = lastYear.id
+        NavigationStack {
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: 0) {
+                    WelcomeOnboardingPage(
+                        title: "Benvenuto!",
+                        subtitle: "Basta siti lenti o **app obsolete** per capire che **lezioni** hai.\n**Ora hai tutto in un unico posto.**",
+                        errorMessage: $errorText,
+                        bottomPadding: safeAreas.bottom,
+                        buttonTitle: "Continua",
+                        isLoading: nextIndexLoading > 0,
+                        isButtonDisabled: viewModel.isOffline,
+                        buttonAction: {
+                            handlePageTransition(to: 1) {
+                                try await viewModel.loadYears()
+                                
+                                if settings.selectedYear == "0" || !viewModel.years.contains(where: { $0.id == settings.selectedYear }) {
+                                    if let lastYear = viewModel.years.last {
+                                        await MainActor.run {
+                                            settings.selectedYear = lastYear.id
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                )
-                .id(0)
-                OnboardingPage(
-                    title: "Scegli un anno",
-                    subtitle: "Seleziona un anno precedente per vedere l'archivio, sennò procedi pure con l'ultimo ;)",
-                    errorMessage: $errorText,
-                    isTopContent: false,
-                    content: {
-                        Picker(selection: $settings.selectedYear) {
-                            ForEach(viewModel.years) { year in
-                                Text(year.label).tag(year.id)
-                            }
-                        } label: {}
-                        .pickerStyle(.segmented)
-                        .padding()
-                    },
-                    bottomPadding: safeAreas.bottom,
-                    buttonTitle: "Continua",
-                    isLoading: nextIndexLoading > 1,
-                    isButtonDisabled: viewModel.isOffline,
-                    buttonAction: {
-                        viewModel.resetCourses()
-                        settings.selectedCourse = "0"
-                        
-                        handlePageTransition(to: 2) {
-                            try await viewModel.loadCourses(year: settings.selectedYear)
-                        }
-                    }
-                )
-                .id(1)
-                OnboardingPage(
-                    title: "Bene! Ora scegli un corso",
-                    subtitle: "Sono mostrati i corsi per l'anno \(viewModel.years.filter{$0.id == settings.selectedYear}.first?.label ?? "")",
-                    errorMessage: $errorText,
-                    isTopContent: false,
-                    content: {
-                        CourseSelector(
-                            isFocused: $searchTextFieldFocus,
-                            selectedCourse: $settings.selectedCourse,
-                            courses: viewModel.courses
-                        )
-                    },
-                    bottomPadding: safeAreas.bottom,
-                    buttonTitle: "Continua",
-                    isLoading: nextIndexLoading > 2,
-                    isButtonDisabled: settings.selectedCourse == "0",
-                    buttonAction: {
-                        searchTextFieldFocus = false
-                        
-                        viewModel.academicYears = []
-                        settings.foundMatricola = false
-                        
-                        handlePageTransition(to: 3) {
-                            viewModel.updateAcademicYears(for: settings.selectedCourse)
+                    )
+                    .id(0)
+                    OnboardingPage(
+                        title: "Scegli un anno",
+                        subtitle: "Seleziona un anno precedente per vedere l'archivio, sennò procedi pure con l'ultimo ;)",
+                        errorMessage: $errorText,
+                        isTopContent: false,
+                        content: {
+                            Picker(selection: $settings.selectedYear) {
+                                ForEach(viewModel.years) { year in
+                                    Text(year.label).tag(year.id)
+                                }
+                            } label: {}
+                                .pickerStyle(.segmented)
+                                .padding()
+                        },
+                        bottomPadding: safeAreas.bottom,
+                        buttonTitle: "Continua",
+                        isLoading: nextIndexLoading > 1,
+                        isButtonDisabled: viewModel.isOffline,
+                        buttonAction: {
+                            viewModel.resetCourses()
+                            settings.selectedCourse = "0"
                             
-                            if let firstYear = viewModel.academicYears.first {
-                                await MainActor.run {
-                                    settings.selectedAcademicYear = firstYear.id
-                                    settings.selectedAcademicYearName = firstYear.label
-                                    settings.foundMatricola = viewModel.checkForMatricola(in: settings.selectedAcademicYear)
+                            handlePageTransition(to: 2) {
+                                try await viewModel.loadCourses(year: settings.selectedYear)
+                            }
+                        }
+                    )
+                    .id(1)
+                    OnboardingPage(
+                        title: "Bene! Ora scegli un corso",
+                        subtitle: "Sono mostrati i corsi per l'anno \(viewModel.years.filter{$0.id == settings.selectedYear}.first?.label ?? "")",
+                        errorMessage: $errorText,
+                        isTopContent: false,
+                        content: {
+                            CourseSelector(
+                                isFocused: $searchTextFieldFocus,
+                                selectedCourse: $settings.selectedCourse,
+                                courses: viewModel.courses
+                            )
+                        },
+                        bottomPadding: safeAreas.bottom,
+                        buttonTitle: "Continua",
+                        isLoading: nextIndexLoading > 2,
+                        isButtonDisabled: settings.selectedCourse == "0",
+                        buttonAction: {
+                            searchTextFieldFocus = false
+                            
+                            viewModel.academicYears = []
+                            settings.foundMatricola = false
+                            
+                            handlePageTransition(to: 3) {
+                                viewModel.updateAcademicYears(for: settings.selectedCourse)
+                                
+                                if let firstYear = viewModel.academicYears.first {
+                                    await MainActor.run {
+                                        settings.selectedAcademicYear = firstYear.id
+                                        settings.selectedAcademicYearName = firstYear.label
+                                        settings.foundMatricola = viewModel.checkForMatricola(in: settings.selectedAcademicYear)
+                                    }
                                 }
                             }
                         }
-                    }
-                )
-                .id(2)
-                OnboardingPage(
-                    title: "Che anno frequenti?",
-                    subtitle: "Se vedi solo un anno allora lascia così, non puoi sbagliare!",
-                    errorMessage: $errorText,
-                    isTopContent: false,
-                    content: {
-                        Picker(selection: $settings.selectedAcademicYear) {
-                            ForEach(viewModel.academicYears) { year in
-                                Text(year.label).tag(year.id)
+                    )
+                    .id(2)
+                    OnboardingPage(
+                        title: "Che anno frequenti?",
+                        subtitle: "Se vedi solo un anno allora lascia così, non puoi sbagliare!",
+                        errorMessage: $errorText,
+                        isTopContent: false,
+                        content: {
+                            Picker(selection: $settings.selectedAcademicYear) {
+                                ForEach(viewModel.academicYears) { year in
+                                    Text(year.label).tag(year.id)
+                                }
+                            } label: {}
+                                .pickerStyle(.segmented)
+                                .padding()
+                                .disabled(viewModel.courses.isEmpty)
+                                .onChange(of: settings.selectedAcademicYear) { oldValue, newValue in
+                                    if let yearLabel = viewModel.academicYears.first(where: { $0.id == newValue })?.label {
+                                        settings.selectedAcademicYearName = yearLabel
+                                    }
+                                    settings.foundMatricola = viewModel.checkForMatricola(in: settings.selectedAcademicYear)
+                                }
+                        },
+                        bottomPadding: safeAreas.bottom,
+                        buttonTitle: settings.foundMatricola ? "Continua" : "Comincia!",
+                        isLoading: nextIndexLoading > 3,
+                        isButtonDisabled: false,
+                        buttonAction: {
+                            if settings.foundMatricola {
+                                handlePageTransition(to: 4) {}
+                            } else {
+                                completeOnboarding()
                             }
-                        } label: {}
-                        .pickerStyle(.segmented)
-                        .padding()
-                        .disabled(viewModel.courses.isEmpty)
-                        .onChange(of: settings.selectedAcademicYear) { oldValue, newValue in
-                            if let yearLabel = viewModel.academicYears.first(where: { $0.id == newValue })?.label {
-                                settings.selectedAcademicYearName = yearLabel
-                            }
-                            settings.foundMatricola = viewModel.checkForMatricola(in: settings.selectedAcademicYear)
                         }
-                    },
-                    bottomPadding: safeAreas.bottom,
-                    buttonTitle: settings.foundMatricola ? "Continua" : "Comincia!",
-                    isLoading: nextIndexLoading > 3,
-                    isButtonDisabled: false,
-                    buttonAction: {
-                        if settings.foundMatricola {
-                            handlePageTransition(to: 4) {}
-                        } else {
+                    )
+                    .id(3)
+                    OnboardingPage(
+                        title: "Sei matricola pari o dispari?",
+                        subtitle: "O il tuo amico, ovvio",
+                        errorMessage: $errorText,
+                        isTopContent: false,
+                        content: {
+                            Picker(selection: $settings.matricola) {
+                                Text("Pari").tag("even")
+                                Text("Dispari").tag("odd")
+                            } label: {}
+                                .pickerStyle(.segmented)
+                                .padding()
+                        },
+                        bottomPadding: safeAreas.bottom,
+                        buttonTitle: "Comincia!",
+                        isLoading: false,
+                        isButtonDisabled: false,
+                        buttonAction: {
                             completeOnboarding()
                         }
-                    }
-                )
-                .id(3)
-                OnboardingPage(
-                    title: "Sei matricola pari o dispari?",
-                    subtitle: "O il tuo amico, ovvio",
-                    errorMessage: $errorText,
-                    isTopContent: false,
-                    content: {
-                        Picker(selection: $settings.matricola) {
-                            Text("Pari").tag("even")
-                            Text("Dispari").tag("odd")
-                        } label: {}
-                        .pickerStyle(.segmented)
-                        .padding()
-                    },
-                    bottomPadding: safeAreas.bottom,
-                    buttonTitle: "Comincia!",
-                    isLoading: false,
-                    isButtonDisabled: false,
-                    buttonAction: {
-                        completeOnboarding()
-                    }
-                )
-                .id(4)
+                    )
+                    .id(4)
+                }
+                .scrollTargetLayout()
             }
-            .scrollTargetLayout()
-        }
-        .overlay(alignment: .top) {
-            if #available(iOS 26, *) {
-                Text("Al momento sei offline.")
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background {
-                        RoundedRectangle(cornerRadius: 25)
+            .toolbar(.visible, for: .navigationBar)
+            .toolbar {
+                if let index = currentIndex, index > 0 {
+                    ToolbarItem(placement: .navigation) {
+                        Button {
+                                currentIndex = index - 1
+                                nextIndexLoading -= 1
+                            } label: {
+                                if #available(iOS 26, *) {
+                                    Image(systemName: "chevron.left")
+                                        .fontWeight(.semibold)
+                                } else {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "chevron.left")
+                                            .fontWeight(.semibold)
+                                        Text("Indietro")
+                                    }
+                                }
+                            }
                     }
-                    .glassEffect(.regular.interactive().tint(.yellow.opacity(0.7)))
-                    .blur(radius: viewModel.isOffline ? 0 : 20)
-                    .offset(y: viewModel.isOffline ? safeAreas.top : safeAreas.top / 2)
-                    .scaleEffect(viewModel.isOffline ? 1 : 0)
-                    .animation(.bouncy(extraBounce: 0.1), value: viewModel.isOffline)
-                    .ignoresSafeArea()
-            } else {
-                Text("Al momento sei offline.")
-                    .blur(radius: viewModel.isOffline ? 0 : 20)
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background {
-                        RoundedRectangle(cornerRadius: 25)
-                            .fill(colorScheme == .light ? .yellow : Color(hex: "#CCAA00")!)
-                            .strokeBorder(colorScheme == .light ? Color(hex: "#CCAA00")! : Color(hex: "#B39500")!, lineWidth: 2)
-                    }
-                    .blur(radius: viewModel.isOffline ? 0 : 20)
-                    .offset(y: viewModel.isOffline ? safeAreas.top : safeAreas.top / 2)
-                    .scaleEffect(viewModel.isOffline ? 1 : 0)
-                    .animation(.bouncy(extraBounce: 0.1), value: viewModel.isOffline)
-                    .ignoresSafeArea()
+                }
             }
+            .overlay(alignment: .top) {
+                if #available(iOS 26, *) {
+                    Text("Al momento sei offline.")
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background {
+                            RoundedRectangle(cornerRadius: 25)
+                        }
+                        .glassEffect(.regular.interactive().tint(.yellow.opacity(0.7)))
+                        .blur(radius: viewModel.isOffline ? 0 : 20)
+                        .offset(y: viewModel.isOffline ? safeAreas.top : safeAreas.top / 2)
+                        .scaleEffect(viewModel.isOffline ? 1 : 0)
+                        .animation(.bouncy(extraBounce: 0.1), value: viewModel.isOffline)
+                        .ignoresSafeArea()
+                } else {
+                    Text("Al momento sei offline.")
+                        .blur(radius: viewModel.isOffline ? 0 : 20)
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background {
+                            RoundedRectangle(cornerRadius: 25)
+                                .fill(colorScheme == .light ? .yellow : Color(hex: "#CCAA00")!)
+                                .strokeBorder(colorScheme == .light ? Color(hex: "#CCAA00")! : Color(hex: "#B39500")!, lineWidth: 2)
+                        }
+                        .blur(radius: viewModel.isOffline ? 0 : 20)
+                        .offset(y: viewModel.isOffline ? safeAreas.top : safeAreas.top / 2)
+                        .scaleEffect(viewModel.isOffline ? 1 : 0)
+                        .animation(.bouncy(extraBounce: 0.1), value: viewModel.isOffline)
+                        .ignoresSafeArea()
+                }
+            }
+            .scrollTargetBehavior(.paging)
+            .scrollIndicators(.never, axes: .horizontal)
+            .scrollPosition(id: $currentIndex, anchor: .center)
+            .scrollDisabled(true)
+            .animation(.snappy, value: currentIndex)
         }
-        .scrollTargetBehavior(.paging)
-        .scrollIndicators(.never, axes: .horizontal)
-        .scrollPosition(id: $currentIndex, anchor: .center)
-        .scrollDisabled(true)
-        .animation(.snappy, value: currentIndex)
     }
     
     // MARK: - Helpers
@@ -275,10 +299,10 @@ private struct OnboardingButton: View {
     }
 }
 
-// MARK: - Welcome Onboarding Page (Solo Pagina 0)
+// MARK: - Welcome Onboarding Page
 private struct WelcomeOnboardingPage: View {
     let title: LocalizedStringKey
-    let subtitle: LocalizedStringKey
+    let subtitle: LocalizedStringResource
     @Binding var errorMessage: String
     let bottomPadding: CGFloat
     
@@ -291,7 +315,8 @@ private struct WelcomeOnboardingPage: View {
     
     @State private var isExpanded: Bool = false
     @State private var isBlurred: Bool = false
-    @State private var showText: Bool = false
+    @State private var showTitle: Bool = false
+    @State private var showSubtitle: Bool = false
     @State private var showButton: Bool = false
     
     @State private var zStackCenterY: CGFloat = 0
@@ -304,6 +329,19 @@ private struct WelcomeOnboardingPage: View {
         return screenCenterY - zStackCenterY
     }
     
+    private var styledSubtitle: AttributedString {
+        var attributed = AttributedString(localized: subtitle)
+        attributed.foregroundColor = Color.secondary
+        
+        for run in attributed.runs {
+            if let intent = run.inlinePresentationIntent, intent.contains(.stronglyEmphasized) {
+                attributed[run.range].foregroundColor = Color.primary
+            }
+        }
+        
+        return attributed
+    }
+    
     var body: some View {
         GeometryReader { proxy in
             let targetSize = max(proxy.size.width - 32, 200)
@@ -314,21 +352,25 @@ private struct WelcomeOnboardingPage: View {
                 Spacer()
                 
                 ZStack {
-                    // Icona che parte dal centro esatto dello schermo e sale a -40
                     iconView(size: currentSize)
                         .offset(y: currentOffset)
                     
-                    // Testo centrato (rialzato) sopra la parte sfocata dell'icona
                     VStack(spacing: 12) {
                         Text(title)
                             .font(.largeTitle.bold())
-                        Text(subtitle)
+                            .opacity(showTitle ? 1 : 0)
+                            .blur(radius: showTitle ? 0 : 8)
+                            .scaleEffect(showTitle ? 1 : 0.95)
+                            .offset(y: showTitle ? 0 : 32)
+                        
+                        Text(styledSubtitle)
                             .font(.body)
-                            .foregroundStyle(.secondary)
+                            .lineSpacing(2)
+                            .opacity(showSubtitle ? 1 : 0)
+                            .blur(radius: showSubtitle ? 0 : 8)
+                            .offset(y: showSubtitle ? 0 : 26)
                     }
                     .padding(.horizontal, 24)
-                    .opacity(showText ? 1 : 0)
-                    .offset(y: showText ? 0 : 16)
                 }
                 .frame(maxWidth: .infinity)
                 .background {
@@ -377,12 +419,10 @@ private struct WelcomeOnboardingPage: View {
     @ViewBuilder
     private func iconView(size: CGFloat) -> some View {
         ZStack {
-            // 1. Icona base nitida
             Image("InternalIcon")
                 .resizable()
                 .scaledToFit()
             
-            // 2. Overlay sfocato con maschera progressiva
             Image("InternalIcon")
                 .resizable()
                 .scaledToFit()
@@ -399,7 +439,6 @@ private struct WelcomeOnboardingPage: View {
                 )
                 .opacity(isBlurred ? 1 : 0)
             
-            // 3. Velo del colore di sfondo in Light Mode (Idea 2: dissolve il contrasto residuo nel bianco)
             if colorScheme == .light {
                 LinearGradient(
                     stops: [
@@ -455,34 +494,33 @@ private struct WelcomeOnboardingPage: View {
         guard !isExpanded else { return }
         
         Task { @MainActor in
-            // Breve respiro per garantire il calcolo geometrico della posizione iniziale
             try? await Task.sleep(for: .milliseconds(50))
             guard !isExpanded else { return }
             
-            // 1. Si allarga verso (schermo - 32) e si sposta in alto a -40 partendo dal centro schermo
             withAnimation(.spring(response: 0.85, dampingFraction: 0.78)) {
                 isExpanded = true
             }
             
-            // 2. Blur dal basso + dissolvenza opacità
             withAnimation(.easeInOut(duration: 0.7).delay(0.35)) {
                 isBlurred = true
             }
             
-            // 3. Il testo compare centrato salendo leggermente
-            withAnimation(.spring(response: 0.65, dampingFraction: 0.8).delay(0.45)) {
-                showText = true
+            withAnimation(.spring(response: 0.85, dampingFraction: 0.84).delay(0.50)) {
+                showTitle = true
             }
             
-            // 4. Il pulsante si materializza sul posto con sfocatura e dissolvenza
-            withAnimation(.easeInOut(duration: 0.6).delay(0.50)) {
+            withAnimation(.spring(response: 0.85, dampingFraction: 0.84).delay(0.62)) {
+                showSubtitle = true
+            }
+            
+            withAnimation(.easeInOut(duration: 0.6).delay(0.75)) {
                 showButton = true
             }
         }
     }
 }
 
-// MARK: - Onboarding Page (Pagine 1, 2, 3...)
+// MARK: - Onboarding Page
 private struct OnboardingPage<Content: View>: View {
     let title: LocalizedStringKey
     let subtitle: LocalizedStringKey
