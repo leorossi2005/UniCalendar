@@ -97,7 +97,7 @@ public final class AppStatusManager {
             saveClosedIDs()
             lastAttemptFailed = false
         } catch {
-            print("AppStatusManager: errore nel recupero dello stato dell'app: \(error)")
+            print("AppStatusManager: Error getting app status: \(error)")
             lastAttemptFailed = true
         }
         

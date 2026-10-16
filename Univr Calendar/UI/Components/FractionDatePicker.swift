@@ -32,7 +32,7 @@ struct FractionDatePickerView: View {
                 } label: {
                     VStack(spacing: 3) {
                         Text(day.dayNumber)
-                            .font(.system(size: itemWidth * 0.40)).bold()
+                            .font(.system(size: itemWidth * 0.40).bold())
                         Text(day.weekdayString)
                             .font(.system(size: itemWidth * 0.35))
                     }

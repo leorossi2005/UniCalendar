@@ -82,8 +82,7 @@ struct CourseSelector: View {
                                     .frame(width: size, height: size)
 
                                 Image(systemName: "xmark")
-                                    .font(Font.system(size: size / 2))
-                                    .bold()
+                                    .font(Font.system(size: size / 2).bold())
                                     .blendMode(.destinationOut)
                             }
                             .compositingGroup()

@@ -139,9 +139,7 @@ struct PauseCard: View {
             Image(systemName: .cupDynamic)
                 .font(.system(size: 40))
             Text(Duration.seconds(item.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)))
-                .font(.system(size: 30))
-                .italic()
-                .bold()
+                .font(.system(size: 30).bold().italic())
         }
         .foregroundStyle(.secondary)
     }

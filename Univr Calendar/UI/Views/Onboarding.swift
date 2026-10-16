@@ -23,28 +23,15 @@ struct Onboarding: View {
     
     @State private var searchTextFieldFocus: Bool = false
     
-    let animation: Namespace.ID
-    @Binding var showSplash: Bool
-    
     var body: some View {
         @Bindable var settings = settings
         
         ScrollView(.horizontal) {
             LazyHStack(spacing: 0) {
-                OnboardingPage(
+                WelcomeOnboardingPage(
                     title: "Benvenuto!",
                     subtitle: "Non capisci mai che lezioni hai? Non hai voglia di aprire il sito ogni volta o usare app obsolete? Ora puoi fare tutto qui!",
                     errorMessage: $errorText,
-                    isTopContent: true,
-                    content: {
-                        if !showSplash {
-                            Image("InternalIcon")
-                                .resizable()
-                                .clipShape(RoundedRectangle(cornerRadius: 100 * 0.225, style: .continuous))
-                                .matchedGeometryEffect(id: "appIcon", in: animation, isSource: false)
-                                .frame(width: 100, height: 100)
-                        }
-                    },
                     bottomPadding: safeAreas.bottom,
                     buttonTitle: "Continua",
                     isLoading: nextIndexLoading > 0,
@@ -285,10 +272,217 @@ private struct OnboardingButton: View {
         .controlSize(.large)
         .glassIfAvailable(prominent: true)
         .disabled(isDisabled || isLoading)
-        .keyboardPadding(10)
     }
 }
 
+// MARK: - Welcome Onboarding Page (Solo Pagina 0)
+private struct WelcomeOnboardingPage: View {
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+    @Binding var errorMessage: String
+    let bottomPadding: CGFloat
+    
+    let buttonTitle: LocalizedStringKey
+    let isLoading: Bool
+    let isButtonDisabled: Bool
+    let buttonAction: () -> Void
+    
+    @Environment(\.colorScheme) private var colorScheme
+    
+    @State private var isExpanded: Bool = false
+    @State private var isBlurred: Bool = false
+    @State private var showText: Bool = false
+    @State private var showButton: Bool = false
+    
+    @State private var zStackCenterY: CGFloat = 0
+    
+    private let initialSize: CGFloat = 200
+    
+    private var initialOffset: CGFloat {
+        guard zStackCenterY > 0 else { return 0 }
+        let screenCenterY = UIScreen.main.bounds.height / 2
+        return screenCenterY - zStackCenterY
+    }
+    
+    var body: some View {
+        GeometryReader { proxy in
+            let targetSize = max(proxy.size.width - 32, 200)
+            let currentSize = isExpanded ? targetSize : initialSize
+            let currentOffset = isExpanded ? -40 : initialOffset
+            
+            VStack(spacing: 12) {
+                Spacer()
+                
+                ZStack {
+                    // Icona che parte dal centro esatto dello schermo e sale a -40
+                    iconView(size: currentSize)
+                        .offset(y: currentOffset)
+                    
+                    // Testo centrato (rialzato) sopra la parte sfocata dell'icona
+                    VStack(spacing: 12) {
+                        Text(title)
+                            .font(.largeTitle.bold())
+                        Text(subtitle)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 24)
+                    .opacity(showText ? 1 : 0)
+                    .offset(y: showText ? 0 : 16)
+                }
+                .frame(maxWidth: .infinity)
+                .background {
+                    Color.clear
+                        .onGeometryChange(for: CGFloat.self) { proxy in
+                            proxy.frame(in: .global).midY
+                        } action: { midY in
+                            zStackCenterY = midY
+                        }
+                }
+                
+                Spacer()
+                
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .opacity(errorMessage == "nope" ? 0 : 1)
+                    .task(id: errorMessage) {
+                        do {
+                            try await Task.sleep(for: .seconds(3))
+                            errorMessage = "nope"
+                        } catch {}
+                    }
+                
+                OnboardingButton(
+                    title: buttonTitle,
+                    isLoading: isLoading,
+                    isDisabled: isButtonDisabled,
+                    action: buttonAction
+                )
+                .padding(.horizontal, max(bottomPadding, 16))
+                .keyboardPadding(10)
+                .opacity(showButton ? 1 : 0)
+                .blur(radius: showButton ? 0 : 12)
+                .allowsHitTesting(showButton)
+            }
+            .multilineTextAlignment(.center)
+            .frame(width: proxy.size.width, height: proxy.size.height)
+        }
+        .containerRelativeFrame(.horizontal)
+        .onAppear {
+            startAnimation()
+        }
+    }
+    
+    @ViewBuilder
+    private func iconView(size: CGFloat) -> some View {
+        ZStack {
+            // 1. Icona base nitida
+            Image("InternalIcon")
+                .resizable()
+                .scaledToFit()
+            
+            // 2. Overlay sfocato con maschera progressiva
+            Image("InternalIcon")
+                .resizable()
+                .scaledToFit()
+                .blur(radius: isBlurred ? 28 : 0)
+                .mask(
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: 0.08),
+                            .init(color: .black, location: 0.40)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .opacity(isBlurred ? 1 : 0)
+            
+            // 3. Velo del colore di sfondo in Light Mode (Idea 2: dissolve il contrasto residuo nel bianco)
+            if colorScheme == .light {
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: 0.25),
+                        .init(color: Color(.systemBackground).opacity(0.70), location: 0.72),
+                        .init(color: Color(.systemBackground), location: 0.85)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .opacity(isBlurred ? 1 : 0)
+            }
+        }
+        .frame(width: size, height: size)
+        .mask(
+            LinearGradient(
+                stops: opacityStops,
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+        .mask {
+            Image("InternalIcon")
+                .resizable()
+                .scaledToFit()
+        }
+    }
+    
+    private var opacityStops: [Gradient.Stop] {
+        if colorScheme == .light {
+            return [
+                .init(color: .black, location: 0.0),
+                .init(color: .black, location: 0.10),
+                .init(color: .black.opacity(isBlurred ? 0.70 : 1.0), location: 0.35),
+                .init(color: .black.opacity(isBlurred ? 0.38 : 1.0), location: 0.52),
+                .init(color: .black.opacity(isBlurred ? 0.15 : 1.0), location: 0.68),
+                .init(color: .black.opacity(isBlurred ? 0.04 : 1.0), location: 0.78),
+                .init(color: .black.opacity(isBlurred ? 0.008 : 1.0), location: 0.84),
+                .init(color: .black.opacity(isBlurred ? 0.0 : 1.0), location: 0.88),
+                .init(color: .black.opacity(isBlurred ? 0.0 : 1.0), location: 1.0)
+            ]
+        } else {
+            return [
+                .init(color: .black, location: 0.0),
+                .init(color: .black, location: 0.12),
+                .init(color: .black.opacity(isBlurred ? 0.08 : 1.0), location: 0.82),
+                .init(color: .black.opacity(isBlurred ? 0.0 : 1.0), location: 1.0)
+            ]
+        }
+    }
+    
+    private func startAnimation() {
+        guard !isExpanded else { return }
+        
+        Task { @MainActor in
+            // Breve respiro per garantire il calcolo geometrico della posizione iniziale
+            try? await Task.sleep(for: .milliseconds(50))
+            guard !isExpanded else { return }
+            
+            // 1. Si allarga verso (schermo - 32) e si sposta in alto a -40 partendo dal centro schermo
+            withAnimation(.spring(response: 0.85, dampingFraction: 0.78)) {
+                isExpanded = true
+            }
+            
+            // 2. Blur dal basso + dissolvenza opacità
+            withAnimation(.easeInOut(duration: 0.7).delay(0.35)) {
+                isBlurred = true
+            }
+            
+            // 3. Il testo compare centrato salendo leggermente
+            withAnimation(.spring(response: 0.65, dampingFraction: 0.8).delay(0.45)) {
+                showText = true
+            }
+            
+            // 4. Il pulsante si materializza sul posto con sfocatura e dissolvenza
+            withAnimation(.easeInOut(duration: 0.6).delay(0.50)) {
+                showButton = true
+            }
+        }
+    }
+}
+
+// MARK: - Onboarding Page (Pagine 1, 2, 3...)
 private struct OnboardingPage<Content: View>: View {
     let title: LocalizedStringKey
     let subtitle: LocalizedStringKey
@@ -303,25 +497,15 @@ private struct OnboardingPage<Content: View>: View {
     let buttonAction: () -> Void
     
     var body: some View {
-        VStack {
+        VStack(spacing: 12) {
             Spacer()
-            if isTopContent {
-                content
-                    .multilineTextAlignment(.center)
-            }
+            if isTopContent { content }
             Text(title)
-                .font(.title)
-                .bold()
-                .multilineTextAlignment(.center)
+                .font(.largeTitle.bold())
             Text(subtitle)
                 .font(.body)
                 .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
-            if !isTopContent {
-                content
-                    .multilineTextAlignment(.center)
-            }
+            if !isTopContent { content }
             Spacer()
             Text(errorMessage)
                 .font(.caption)
@@ -330,7 +514,6 @@ private struct OnboardingPage<Content: View>: View {
                 .task(id: errorMessage) {
                     do {
                         try await Task.sleep(for: .seconds(3))
-                        
                         errorMessage = "nope"
                     } catch {}
                 }
@@ -340,8 +523,10 @@ private struct OnboardingPage<Content: View>: View {
                 isDisabled: isButtonDisabled,
                 action: buttonAction
             )
-            .padding(.horizontal, bottomPadding)
+            .keyboardPadding(10)
         }
+        .padding(.horizontal, bottomPadding)
+        .multilineTextAlignment(.center)
         .containerRelativeFrame(.horizontal)
     }
 }
@@ -365,9 +550,7 @@ private struct RotatingSemicircleLoader: View {
 }
 
 #Preview {
-    @Previewable @Namespace var animation: Namespace.ID
-    @Previewable @State var showSplash: Bool = false
-    
-    Onboarding(animation: animation, showSplash: $showSplash)
+    Onboarding()
         .environment(UserSettings.shared)
+        .readSafeAreaInsets()
 }
