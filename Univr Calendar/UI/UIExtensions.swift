@@ -133,11 +133,6 @@ extension View {
             }
     }
     
-    func keyboardPadding(_ value: CGFloat) -> some View {
-        self.safeAreaPadding(.bottom, value)
-            .ignoresSafeArea(.keyboard, edges: .bottom)
-    }
-    
     // MARK: Fallback iOS 18
     @ViewBuilder
     func glassIfAvailable(prominent: Bool) -> some View {
@@ -205,25 +200,54 @@ extension EnvironmentValues {
     @Entry var safeAreaInsets: UIEdgeInsets = .zero
 }
 
+private struct WindowInsetsReader: UIViewRepresentable {
+    let onChange: (UIEdgeInsets) -> Void
+
+    func makeUIView(context: Context) -> ReaderView {
+        let view = ReaderView()
+        view.isUserInteractionEnabled = false
+        view.onChange = onChange
+        return view
+    }
+
+    func updateUIView(_ uiView: ReaderView, context: Context) {
+        uiView.onChange = onChange
+        uiView.report()
+    }
+
+    final class ReaderView: UIView {
+        var onChange: ((UIEdgeInsets) -> Void)?
+        private var last: UIEdgeInsets?
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            report()
+        }
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            report()
+        }
+
+        func report() {
+            guard let insets = window?.safeAreaInsets, insets != last else { return }
+            last = insets
+            DispatchQueue.main.async { [weak self] in
+                self?.onChange?(insets)
+            }
+        }
+    }
+}
+
 private struct SafeAreaInsetsReader: ViewModifier {
     @State private var insets: UIEdgeInsets = .zero
-    
+
     func body(content: Content) -> some View {
         content
             .environment(\.safeAreaInsets, insets)
             .background {
-                Color.clear
-                    .ignoresSafeArea(.keyboard)
-                    .onGeometryChange(for: EdgeInsets.self) { proxy in
-                        proxy.safeAreaInsets
-                    } action: { new in
-                        insets = UIEdgeInsets(
-                            top: new.top,
-                            left: new.leading,
-                            bottom: new.bottom,
-                            right: new.trailing
-                        )
-                    }
+                WindowInsetsReader { insets = $0 }
+                    .allowsHitTesting(false)
             }
     }
 }

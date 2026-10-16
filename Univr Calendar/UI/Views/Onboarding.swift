@@ -58,13 +58,12 @@ struct Onboarding: View {
                         errorMessage: $errorText,
                         isTopContent: false,
                         content: {
-                            Picker(selection: $settings.selectedYear) {
+                            Picker("", selection: $settings.selectedYear) {
                                 ForEach(viewModel.years) { year in
                                     Text(year.label).tag(year.id)
                                 }
-                            } label: {}
-                                .pickerStyle(.segmented)
-                                .padding()
+                            }
+                            .pickerStyle(.segmented)
                         },
                         bottomPadding: safeAreas.bottom,
                         buttonTitle: "Continua",
@@ -122,20 +121,19 @@ struct Onboarding: View {
                         errorMessage: $errorText,
                         isTopContent: false,
                         content: {
-                            Picker(selection: $settings.selectedAcademicYear) {
+                            Picker("", selection: $settings.selectedAcademicYear) {
                                 ForEach(viewModel.academicYears) { year in
                                     Text(year.label).tag(year.id)
                                 }
-                            } label: {}
-                                .pickerStyle(.segmented)
-                                .padding()
-                                .disabled(viewModel.courses.isEmpty)
-                                .onChange(of: settings.selectedAcademicYear) { oldValue, newValue in
-                                    if let yearLabel = viewModel.academicYears.first(where: { $0.id == newValue })?.label {
-                                        settings.selectedAcademicYearName = yearLabel
-                                    }
-                                    settings.foundMatricola = viewModel.checkForMatricola(in: settings.selectedAcademicYear)
+                            }
+                            .pickerStyle(.segmented)
+                            .disabled(viewModel.courses.isEmpty)
+                            .onChange(of: settings.selectedAcademicYear) { oldValue, newValue in
+                                if let yearLabel = viewModel.academicYears.first(where: { $0.id == newValue })?.label {
+                                    settings.selectedAcademicYearName = yearLabel
                                 }
+                                settings.foundMatricola = viewModel.checkForMatricola(in: settings.selectedAcademicYear)
+                            }
                         },
                         bottomPadding: safeAreas.bottom,
                         buttonTitle: settings.foundMatricola ? "Continua" : "Comincia!",
@@ -156,12 +154,11 @@ struct Onboarding: View {
                         errorMessage: $errorText,
                         isTopContent: false,
                         content: {
-                            Picker(selection: $settings.matricola) {
+                            Picker("", selection: $settings.matricola) {
                                 Text("Pari").tag("even")
                                 Text("Dispari").tag("odd")
-                            } label: {}
-                                .pickerStyle(.segmented)
-                                .padding()
+                            }
+                            .pickerStyle(.segmented)
                         },
                         bottomPadding: safeAreas.bottom,
                         buttonTitle: "Comincia!",
@@ -401,8 +398,8 @@ private struct WelcomeOnboardingPage: View {
                     isDisabled: isButtonDisabled,
                     action: buttonAction
                 )
-                .padding(.horizontal, max(bottomPadding, 16))
-                .keyboardPadding(10)
+                .padding(.horizontal, bottomPadding)
+                .safeAreaPadding(.bottom, 10)
                 .opacity(showButton ? 1 : 0)
                 .blur(radius: showButton ? 0 : 12)
                 .allowsHitTesting(showButton)
@@ -536,15 +533,23 @@ private struct OnboardingPage<Content: View>: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            Spacer()
-            if isTopContent { content }
-            Text(title)
-                .font(.largeTitle.bold())
-            Text(subtitle)
-                .font(.body)
-                .foregroundStyle(.secondary)
-            if !isTopContent { content }
-            Spacer()
+            Color.clear
+                .overlay(alignment: .bottom) {
+                    VStack(spacing: 12) {
+                        Spacer(minLength: 0)
+                        if isTopContent { content }
+                        Text(title)
+                            .font(.largeTitle.bold())
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(subtitle)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        if !isTopContent { content }
+                        Spacer(minLength: 0)
+                    }
+                }
+
             Text(errorMessage)
                 .font(.caption)
                 .foregroundStyle(.red)
@@ -561,11 +566,11 @@ private struct OnboardingPage<Content: View>: View {
                 isDisabled: isButtonDisabled,
                 action: buttonAction
             )
-            .keyboardPadding(10)
+            .safeAreaPadding(.bottom, 10)
         }
         .padding(.horizontal, bottomPadding)
         .multilineTextAlignment(.center)
-        .containerRelativeFrame(.horizontal)
+        .containerRelativeFrame([.horizontal, .vertical], alignment: .bottom)
     }
 }
 

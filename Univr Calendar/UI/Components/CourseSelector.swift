@@ -26,14 +26,11 @@ struct CourseSelector: View {
         VStack {
             searchBar
                 .padding(.top)
-                .padding(.horizontal)
             if !isSearching {
                 defaultMenu
-                    .padding(.horizontal)
                     .padding(.bottom)
             } else {
                 searchResultsList
-                    .padding(.horizontal)
                     .padding(.bottom)
             }
         }

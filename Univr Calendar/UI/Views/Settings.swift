@@ -41,6 +41,7 @@ struct Settings: View {
                     selectedCourse: $tempSettings.selectedCourse,
                     courses: viewModel.courses
                 )
+                .padding(.horizontal)
                 .onChange(of: tempSettings.selectedCourse) {
                     handleCourseChange()
                 }
