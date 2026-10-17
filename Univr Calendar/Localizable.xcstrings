@@ -497,6 +497,16 @@
         }
       }
     },
+    "Corso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Course"
+          }
+        }
+      }
+    },
     "Crediti" : {
       "localizations" : {
         "en" : {

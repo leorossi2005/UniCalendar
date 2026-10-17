@@ -18,7 +18,6 @@ struct Settings: View {
     
     @State private var viewModel = UniversityDataManager()
     @State private var showDeleteAlert = false
-    @State private var searchTextFieldFocus: Bool = false
     
     @Binding var tempSettings: TempSettingsState
     
@@ -36,12 +35,29 @@ struct Settings: View {
                 .onChange(of: tempSettings.selectedYear) {
                     handleYearChange()
                 }
-                CourseSelector(
-                    isFocused: $searchTextFieldFocus,
-                    selectedCourse: $tempSettings.selectedCourse,
-                    courses: viewModel.courses
-                )
-                .padding(.horizontal)
+                NavigationLink {
+                    CourseSelectorSettings(
+                        courses: viewModel.courses,
+                        selectedCourse: $tempSettings.selectedCourse
+                    )
+                } label: {
+                    HStack(spacing: 12) {
+                        Label("Corso", systemImage: "graduationcap")
+                            .foregroundStyle(.primary)
+                            .environment(\.isEnabled, true)
+                            .layoutPriority(1)
+                        Spacer(minLength: 8)
+                        if viewModel.courses.isEmpty {
+                            ProgressView()
+                        } else {
+                            Text(viewModel.courses.first { $0.id == tempSettings.selectedCourse }?.label ?? String(localized: "Scegli un corso"))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                        }
+                    }
+                }
+                .disabled(viewModel.courses.isEmpty)
                 .onChange(of: tempSettings.selectedCourse) {
                     handleCourseChange()
                 }
@@ -67,6 +83,7 @@ struct Settings: View {
                     HStack {
                         Label("Matricola", systemImage: "person.text.rectangle")
                             .foregroundStyle(.primary)
+                            .environment(\.isEnabled, true)
                             .padding(.trailing)
                         Picker("", selection: $tempSettings.matricola) {
                             Text("Pari").tag("even")
@@ -143,13 +160,6 @@ struct Settings: View {
         }
         .navigationTitle("Impostazioni")
         .navigationBarTitleDisplayMode(.inline)
-        .onChange(of: searchTextFieldFocus) {
-            if searchTextFieldFocus {
-                sheetManager.setLock(true)
-            } else if tempSettings.selectedCourse != "0" {
-                sheetManager.setLock(false)
-            }
-        }
         .onAppear {
             loadInitialData()
         }
@@ -268,4 +278,89 @@ struct Settings: View {
             .navigationBarTitleDisplayMode(.inline)
     }
     .environment(UserSettings.shared)
+}
+
+private struct CourseSelectorSettings: View {
+    @Environment(GlobalSheetManager.self) private var sheetManager
+    @Environment(\.dismiss) private var dismiss
+    
+    let courses: [Corso]
+    @Binding var selectedCourse: String
+    
+    @State private var searchText: String = ""
+    @State private var isSearching: Bool = false
+    
+    private var filteredCourses: [Corso] { courses.filtered(by: searchText) }
+    
+    var body: some View {
+        ScrollViewReader { proxy in
+            List {
+                ForEach(filteredCourses) { course in
+                    let isSelected = course.id == selectedCourse
+                    
+                    Button {
+                        if !isSelected {
+                            Haptics.play(.selection)
+                            selectedCourse = course.id
+                        }
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 14) {
+                            Text(highlightedText(course.label, query: searchText, baseColor: .primary))
+                                .font(.body.weight(isSelected ? .semibold : .regular))
+                            
+                            Spacer(minLength: 8)
+                            
+                            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                .font(.title3)
+                                .foregroundStyle(isSelected ? Color.accentColor : Color.secondary.opacity(0.3))
+                        }
+                        .padding(.vertical, 2)
+                        .contentShape(.rect)
+                    }
+                    .id(course.id)
+                }
+            }
+            .overlay {
+                if filteredCourses.isEmpty && !searchText.isEmpty {
+                    ContentUnavailableView.search(text: searchText)
+                }
+            }
+            .onAppear {
+                if selectedCourse != "0" {
+                    proxy.scrollTo(selectedCourse, anchor: .center)
+                }
+            }
+        }
+        .navigationTitle("Corso")
+        .navigationBarTitleDisplayMode(.inline)
+        .searchable(
+            text: $searchText,
+            isPresented: $isSearching,
+            prompt: "Cerca un corso"
+        )
+        .onChange(of: isSearching) { _, active in
+            sheetManager.setLock(active || selectedCourse == "0")
+        }
+        .onDisappear {
+            sheetManager.setLock(selectedCourse == "0")
+        }
+    }
+    
+    private func highlightedText(_ text: String, query: String, baseColor: Color) -> AttributedString {
+        var attributed = AttributedString(text)
+        attributed.foregroundColor = baseColor
+        
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return attributed }
+        
+        var searchRange = attributed.startIndex..<attributed.endIndex
+        while let matchRange = attributed[searchRange].range(of: trimmed, options: [.caseInsensitive, .diacriticInsensitive]) {
+            attributed[matchRange].foregroundColor = Color.accentColor
+            attributed[matchRange].inlinePresentationIntent = .stronglyEmphasized
+            searchRange = matchRange.upperBound..<attributed.endIndex
+        }
+        
+        return attributed
+    }
 }

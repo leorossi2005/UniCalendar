@@ -235,6 +235,7 @@ struct CustomSheet<Content: View>: View {
                 .opacity(enableBackground ? 1 : 0)
             
             content
+                .scrollDismissesKeyboard(.interactively)
                 .frame(width: min(580, width))
                 .frame(maxHeight: CustomSheetDetent.large.value)
                 .overlay(alignment: .top) {
