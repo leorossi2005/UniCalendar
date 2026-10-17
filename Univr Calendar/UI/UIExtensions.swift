@@ -258,13 +258,6 @@ extension View {
     }
 }
 
-extension Array where Element == Corso {
-    public func filtered(by searchText: String) -> [Corso] {
-        guard !searchText.isEmpty else { return self }
-        return self.filter { $0.label.localizedCaseInsensitiveContains(searchText) }
-    }
-}
-
 extension String {
     static var cupDynamic: String {
         if #available(iOS 18, *) {

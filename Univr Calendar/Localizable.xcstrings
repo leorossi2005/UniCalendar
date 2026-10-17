@@ -357,6 +357,16 @@
         }
       }
     },
+    "Cerca un anno di corso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search for a course year"
+          }
+        }
+      }
+    },
     "Cerca un corso" : {
       "localizations" : {
         "en" : {
@@ -937,12 +947,12 @@
         }
       }
     },
-    "Nessun corso trovato" : {
+    "Nessun elemento trovato" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No course found"
+            "value" : "No element found"
           }
         }
       }

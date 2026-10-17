@@ -16,7 +16,7 @@ public final class UniversityDataManager {
     private let cacheManager: CacheManager = .shared
     
     private let yearsResource: CachedResource<[AcademicYear]> = CachedResource(cacheFileName: .years, cacheManager: .shared)
-    private var coursesResource: CachedResource<[Corso]>?
+    private var coursesResource: CachedResource<[Course]>?
     private var currentCoursesYear: String = ""
     private var activeResource: Resource = .years
 
@@ -26,7 +26,7 @@ public final class UniversityDataManager {
     }
     
     public var years: [AcademicYear] { yearsResource.value ?? [] }
-    public var courses: [Corso] { coursesResource?.value ?? [] }
+    public var courses: [Course] { coursesResource?.value ?? [] }
     public var academicYears: [AcademicYear] = []
     
     public var isOffline: Bool { NetworkStatusMonitor.shared.status == .disconnected }

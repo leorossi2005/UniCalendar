@@ -1,5 +1,5 @@
 //
-//  CourseSelector.swift
+//  LongListSelector.swift
 //  Univr Calendar
 //
 //  Created by Leonardo Rossi on 08/12/25.
@@ -10,16 +10,19 @@
 import SwiftUI
 import UnivrCore
 
-struct CourseSelector: View {
+struct LongListSelector<Item: SelectableItem>: View {
     @Binding var isFocused: Bool
-    @Binding var selectedCourse: String
+    @Binding var selectedItem: String
     
-    let courses: [Corso]
+    let items: [Item]
+    var searchPrompt: LocalizedStringKey = "Cerca un corso"
+    var defaultPrompt: LocalizedStringKey = "Scegli un corso"
+    var emptyPrompt: LocalizedStringKey = "Nessun elemento trovato"
     
     @State var searchText: String = ""
     @FocusState private var internalFocus: Bool
     
-    private var filteredCourses: [Corso] { courses.filtered(by: searchText) }
+    private var filteredItems: [Item] { items.filtered(by: searchText) }
     private var isSearching: Bool { !searchText.isEmpty || internalFocus }
     
     var body: some View {
@@ -34,7 +37,7 @@ struct CourseSelector: View {
                     .padding(.bottom)
             }
         }
-        .disabled(courses.isEmpty)
+        .disabled(items.isEmpty)
         .onChange(of: internalFocus) { _, newValue in
             if isFocused != newValue {
                 if newValue == true {
@@ -50,10 +53,10 @@ struct CourseSelector: View {
         }
     }
     
-    // MARK: - Componets
+    // MARK: - Components
     private var searchBar: some View {
         HStack {
-            TextField("Cerca un corso", text: $searchText)
+            TextField(searchPrompt, text: $searchText)
                 .keyboardType(.asciiCapable)
                 .autocorrectionDisabled()
                 .focused($internalFocus)
@@ -111,16 +114,18 @@ struct CourseSelector: View {
     
     private var defaultMenu: some View {
         Menu {
-            courseButton(value: "0", label: "Scegli un corso")
-            ForEach(courses) { course in
-                courseButton(value: course.id, label: LocalizedStringKey(course.label))
+            itemButton(value: "0", label: defaultPrompt)
+            ForEach(items) { item in
+                itemButton(value: item.id, label: LocalizedStringKey(item.label))
             }
         } label: {
             ZStack {
-                if courses.isEmpty {
+                if items.isEmpty {
                     ProgressView()
+                } else if let selected = items.first(where: { $0.id == selectedItem }) {
+                    Text(selected.label)
                 } else {
-                    Text(courses.first{$0.id == selectedCourse}?.label ?? String(localized: "Scegli un corso"))
+                    Text(defaultPrompt)
                 }
             }
             .frame(height: 100)
@@ -135,22 +140,22 @@ struct CourseSelector: View {
     
     private var searchResultsList: some View {
         Group {
-            if !filteredCourses.isEmpty {
+            if !filteredItems.isEmpty {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(Array(filteredCourses.enumerated()), id: \.element.id) { index, course in
+                        ForEach(Array(filteredItems.enumerated()), id: \.element.id) { index, item in
                             Button {
-                                if course.id != selectedCourse {
+                                if item.id != selectedItem {
                                     Haptics.play(.selection)
                                     searchText = ""
                                     internalFocus = false
-                                    selectedCourse = course.id
+                                    selectedItem = item.id
                                 }
                             } label: {
                                 HStack(spacing: 16) {
                                     Image(systemName: "checkmark")
-                                        .opacity(selectedCourse == course.id ? 1 : 0)
-                                    Text(course.label)
+                                        .opacity(selectedItem == item.id ? 1 : 0)
+                                    Text(item.label)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .multilineTextAlignment(.leading)
                                 }
@@ -158,7 +163,7 @@ struct CourseSelector: View {
                             }
                             .buttonStyle(.borderless)
                             .tint(.primary)
-                            if index < filteredCourses.count - 1  {
+                            if index < filteredItems.count - 1  {
                                 Divider()
                             }
                         }
@@ -167,7 +172,7 @@ struct CourseSelector: View {
                 .frame(minHeight: 150)
                 .frame(maxHeight: 250)
             } else {
-                Text("Nessun corso trovato")
+                Text(emptyPrompt)
                     .padding()
                     .frame(maxWidth: .infinity)
                     .foregroundStyle(.secondary)
@@ -180,12 +185,12 @@ struct CourseSelector: View {
     }
     
     // MARK: - Logic
-    private func courseButton(value: String, label: LocalizedStringKey) -> some View {
+    private func itemButton(value: String, label: LocalizedStringKey) -> some View {
         Button {
-            selectedCourse = value
+            selectedItem = value
         } label: {
             HStack {
-                if selectedCourse == value {
+                if selectedItem == value {
                     Image(systemName: "checkmark")
                 }
                 Text(label)
@@ -197,8 +202,8 @@ struct CourseSelector: View {
 #Preview {
     @Previewable @State var selectedCourse: String = "0"
     @Previewable @State var isFocused: Bool = false
-    let courses: [Corso] = []
+    let courses: [Course] = []
     
-    CourseSelector(isFocused: $isFocused, selectedCourse: $selectedCourse, courses: courses)
+    LongListSelector(isFocused: $isFocused, selectedItem: $selectedCourse, items: courses)
         .environment(UserSettings.shared)
 }

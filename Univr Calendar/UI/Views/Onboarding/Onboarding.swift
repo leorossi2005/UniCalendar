@@ -22,10 +22,10 @@ struct Onboarding: View {
     @State private var errorText: String = "nope"
     
     @State private var searchTextFieldFocus: Bool = false
+    @State private var academicYearSearchFocus: Bool = false
     
     var body: some View {
         @Bindable var settings = settings
-        let selectedYear = settings.selectedYear
         
         NavigationStack {
             ScrollView(.horizontal) {
@@ -59,41 +59,7 @@ struct Onboarding: View {
                         isActive: currentIndex == 1,
                         errorMessage: $errorText,
                         isTopContent: false,
-                        content: {
-                            VStack(spacing: 12) {
-                                ForEach(viewModel.years) { year in
-                                    let isSelected = selectedYear == year.id
-
-                                    Button {
-                                        Haptics.play(.selection)
-                                        settings.selectedYear = year.id
-                                    } label: {
-                                        HStack {
-                                            Text(year.label)
-                                                .fontWeight(isSelected ? .semibold : .regular)
-                                            Spacer()
-                                            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                                                .font(.title3)
-                                                .foregroundStyle(isSelected ? Color.accentColor : .secondary.opacity(0.35))
-                                                .symbolReplace()
-                                        }
-                                        .padding(.horizontal, 16)
-                                        .frame(height: 56)
-                                        .background(
-                                            isSelected ? Color(.secondarySystemFill) : Color(.tertiarySystemFill),
-                                            in: .rect(cornerRadius: 24, style: .continuous)
-                                        )
-                                        .overlay {
-                                            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                                .strokeBorder(Color.accentColor.opacity(isSelected ? 0.6 : 0), lineWidth: 1.5)
-                                        }
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                            .animation(.snappy(duration: 0.25), value: settings.selectedYear)
-                            .padding(.top, 16)
-                        },
+                        content: ShortListSelector(items: viewModel.years, selectedItem: $settings.selectedYear),
                         bottomPadding: safeAreas.bottom,
                         buttonTitle: "Continua",
                         isLoading: nextIndexLoading > 1,
@@ -115,10 +81,10 @@ struct Onboarding: View {
                         errorMessage: $errorText,
                         isTopContent: false,
                         content: {
-                            CourseSelector(
+                            LongListSelector(
                                 isFocused: $searchTextFieldFocus,
-                                selectedCourse: $settings.selectedCourse,
-                                courses: viewModel.courses
+                                selectedItem: $settings.selectedCourse,
+                                items: viewModel.courses
                             )
                         },
                         bottomPadding: safeAreas.bottom,
@@ -152,12 +118,22 @@ struct Onboarding: View {
                         errorMessage: $errorText,
                         isTopContent: false,
                         content: {
-                            Picker("", selection: $settings.selectedAcademicYear) {
-                                ForEach(viewModel.academicYears) { year in
-                                    Text(year.label).tag(year.id)
+                            Group {
+                                if viewModel.academicYears.count <= 5 {
+                                    ShortListSelector(
+                                        items: viewModel.academicYears,
+                                        selectedItem: $settings.selectedAcademicYear
+                                    )
+                                } else {
+                                    LongListSelector(
+                                        isFocused: $academicYearSearchFocus,
+                                        selectedItem: $settings.selectedAcademicYear,
+                                        items: viewModel.academicYears,
+                                        searchPrompt: "Cerca un anno di corso",
+                                        defaultPrompt: "Scegli un anno"
+                                    )
                                 }
                             }
-                            .pickerStyle(.segmented)
                             .disabled(viewModel.courses.isEmpty)
                             .onChange(of: settings.selectedAcademicYear) { oldValue, newValue in
                                 if let yearLabel = viewModel.academicYears.first(where: { $0.id == newValue })?.label {
@@ -171,6 +147,7 @@ struct Onboarding: View {
                         isLoading: nextIndexLoading > 3,
                         isButtonDisabled: false,
                         buttonAction: {
+                            academicYearSearchFocus = false
                             if settings.foundMatricola {
                                 handlePageTransition(to: 4) {}
                             } else {
@@ -556,7 +533,7 @@ private struct OnboardingPage<Content: View>: View {
     let isActive: Bool
     @Binding var errorMessage: String
     let isTopContent: Bool
-    @ViewBuilder let content: Content
+    let content: Content
     let bottomPadding: CGFloat
     
     let buttonTitle: LocalizedStringKey
@@ -567,6 +544,60 @@ private struct OnboardingPage<Content: View>: View {
     @State private var showTitle: Bool = false
     @State private var showSubtitle: Bool = false
     @State private var showContent: Bool = false
+    
+    init(
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringResource,
+        isActive: Bool,
+        errorMessage: Binding<String>,
+        isTopContent: Bool,
+        content: Content,
+        bottomPadding: CGFloat,
+        buttonTitle: LocalizedStringKey,
+        isLoading: Bool,
+        isButtonDisabled: Bool,
+        buttonAction: @escaping () -> Void
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.isActive = isActive
+        self._errorMessage = errorMessage
+        self.isTopContent = isTopContent
+        self.content = content
+        self.bottomPadding = bottomPadding
+        self.buttonTitle = buttonTitle
+        self.isLoading = isLoading
+        self.isButtonDisabled = isButtonDisabled
+        self.buttonAction = buttonAction
+    }
+    
+    init(
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringResource,
+        isActive: Bool,
+        errorMessage: Binding<String>,
+        isTopContent: Bool,
+        @ViewBuilder content: () -> Content,
+        bottomPadding: CGFloat,
+        buttonTitle: LocalizedStringKey,
+        isLoading: Bool,
+        isButtonDisabled: Bool,
+        buttonAction: @escaping () -> Void
+    ) {
+        self.init(
+            title: title,
+            subtitle: subtitle,
+            isActive: isActive,
+            errorMessage: errorMessage,
+            isTopContent: isTopContent,
+            content: content(),
+            bottomPadding: bottomPadding,
+            buttonTitle: buttonTitle,
+            isLoading: isLoading,
+            isButtonDisabled: isButtonDisabled,
+            buttonAction: buttonAction
+        )
+    }
     
     private var styledSubtitle: AttributedString {
         var attributed = AttributedString(localized: subtitle)

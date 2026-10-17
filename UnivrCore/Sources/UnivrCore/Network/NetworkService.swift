@@ -86,8 +86,8 @@ struct NetworkService {
         return wrapper.years
     }
     
-    func getCourses(year: String) async throws -> [Corso] {
-        struct RootWrapper: Decodable { let courses: [Corso] }
+    func getCourses(year: String) async throws -> [Course] {
+        struct RootWrapper: Decodable { let courses: [Course] }
         let wrapper: RootWrapper = try await fetch(from: "/courses?year=\(year)")
         return wrapper.courses
     }

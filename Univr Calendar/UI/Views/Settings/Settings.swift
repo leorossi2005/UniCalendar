@@ -37,8 +37,10 @@ struct Settings: View {
                 }
                 NavigationLink {
                     CourseSelectorSettings(
-                        courses: viewModel.courses,
-                        selectedCourse: $tempSettings.selectedCourse
+                        title: "Corso",
+                        prompt: "Cerca un corso",
+                        items: viewModel.courses,
+                        selectedItem: $tempSettings.selectedCourse
                     )
                 } label: {
                     HStack(spacing: 12) {
@@ -62,13 +64,38 @@ struct Settings: View {
                     handleCourseChange()
                 }
                 if tempSettings.selectedCourse != "0" {
-                    Picker(selection: $tempSettings.selectedAcademicYear) {
-                        ForEach(viewModel.academicYears) { year in
-                            Text(year.label).tag(year.id)
+                    Group {
+                        if viewModel.academicYears.count <= 5 {
+                            Picker(selection: $tempSettings.selectedAcademicYear) {
+                                ForEach(viewModel.academicYears) { year in
+                                    Text(year.label).tag(year.id)
+                                }
+                            } label: {
+                                Label("Anno di Corso", systemImage: "calendar.badge.clock")
+                                    .foregroundStyle(.primary)
+                            }
+                        } else {
+                            NavigationLink {
+                                CourseSelectorSettings(
+                                    title: "Anno di Corso",
+                                    prompt: "Cerca un anno di corso",
+                                    items: viewModel.academicYears,
+                                    selectedItem: $tempSettings.selectedAcademicYear
+                                )
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Label("Anno di Corso", systemImage: "calendar.badge.clock")
+                                        .foregroundStyle(.primary)
+                                        .environment(\.isEnabled, true)
+                                        .layoutPriority(1)
+                                    Spacer(minLength: 8)
+                                    Text(viewModel.academicYears.first { $0.id == tempSettings.selectedAcademicYear }?.label ?? String(localized: "Scegli un anno"))
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                }
+                            }
                         }
-                    } label: {
-                        Label("Anno di Corso", systemImage: "calendar.badge.clock")
-                            .foregroundStyle(.primary)
                     }
                     .onChange(of: tempSettings.selectedAcademicYear) {
                         if tempSettings.selectedAcademicYear != "0" {
@@ -280,33 +307,35 @@ struct Settings: View {
     .environment(UserSettings.shared)
 }
 
-private struct CourseSelectorSettings: View {
+struct CourseSelectorSettings<Item: SelectableItem>: View {
     @Environment(GlobalSheetManager.self) private var sheetManager
     @Environment(\.dismiss) private var dismiss
     
-    let courses: [Corso]
-    @Binding var selectedCourse: String
+    let title: LocalizedStringKey
+    let prompt: LocalizedStringKey
+    let items: [Item]
+    @Binding var selectedItem: String
     
     @State private var searchText: String = ""
     @State private var isSearching: Bool = false
     
-    private var filteredCourses: [Corso] { courses.filtered(by: searchText) }
+    private var filteredItems: [Item] { items.filtered(by: searchText) }
     
     var body: some View {
         ScrollViewReader { proxy in
             List {
-                ForEach(filteredCourses) { course in
-                    let isSelected = course.id == selectedCourse
+                ForEach(filteredItems) { item in
+                    let isSelected = item.id == selectedItem
                     
                     Button {
                         if !isSelected {
                             Haptics.play(.selection)
-                            selectedCourse = course.id
+                            selectedItem = item.id
                         }
                         dismiss()
                     } label: {
                         HStack(spacing: 14) {
-                            Text(highlightedText(course.label, query: searchText, baseColor: .primary))
+                            Text(highlightedText(item.label, query: searchText, baseColor: .primary))
                                 .font(.body.weight(isSelected ? .semibold : .regular))
                             
                             Spacer(minLength: 8)
@@ -318,32 +347,32 @@ private struct CourseSelectorSettings: View {
                         .padding(.vertical, 2)
                         .contentShape(.rect)
                     }
-                    .id(course.id)
+                    .id(item.id)
                 }
             }
             .overlay {
-                if filteredCourses.isEmpty && !searchText.isEmpty {
+                if filteredItems.isEmpty && !searchText.isEmpty {
                     ContentUnavailableView.search(text: searchText)
                 }
             }
             .onAppear {
-                if selectedCourse != "0" {
-                    proxy.scrollTo(selectedCourse, anchor: .center)
+                if selectedItem != "0" {
+                    proxy.scrollTo(selectedItem, anchor: .center)
                 }
             }
         }
-        .navigationTitle("Corso")
+        .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .searchable(
             text: $searchText,
             isPresented: $isSearching,
-            prompt: "Cerca un corso"
+            prompt: prompt
         )
         .onChange(of: isSearching) { _, active in
-            sheetManager.setLock(active || selectedCourse == "0")
+            sheetManager.setLock(active || selectedItem == "0")
         }
         .onDisappear {
-            sheetManager.setLock(selectedCourse == "0")
+            sheetManager.setLock(selectedItem == "0")
         }
     }
     
