@@ -194,6 +194,7 @@ struct Settings: View {
     
     // MARK: - Logic Methods
     private func handleYearChange() {
+        guard tempSettings.selectedYear != "0" && !tempSettings.selectedYear.isEmpty else { return }
         sheetManager.setLock(true)
         viewModel.resetCourses()
         tempSettings.selectedCourse = "0"
@@ -257,7 +258,7 @@ struct Settings: View {
             }
         }
         
-        if viewModel.courses.isEmpty {
+        if viewModel.courses.isEmpty, tempSettings.selectedYear != "0", !tempSettings.selectedYear.isEmpty {
             Task {
                 do {
                     try await viewModel.loadCourses(year: tempSettings.selectedYear)

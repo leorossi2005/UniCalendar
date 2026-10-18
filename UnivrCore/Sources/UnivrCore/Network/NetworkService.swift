@@ -89,6 +89,7 @@ struct NetworkService {
     }
     
     func getCourses(year: String) async throws -> [Course] {
+        guard year != "0", !year.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return [] }
         struct RootWrapper: Decodable { let courses: [Course] }
         let wrapper: RootWrapper = try await fetch(from: "/courses?year=\(year)")
         return wrapper.courses

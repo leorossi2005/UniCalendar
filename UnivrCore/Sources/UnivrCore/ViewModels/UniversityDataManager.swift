@@ -53,6 +53,7 @@ public final class UniversityDataManager {
     }
     
     public func loadCourses(year: String) async throws {
+        guard year != "0", !year.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         activeResource = .courses
         if year != currentCoursesYear || coursesResource == nil {
             currentCoursesYear = year
