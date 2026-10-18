@@ -43,11 +43,13 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
 
     private let cacheFileName: CacheFile?
     private let cacheManager: CacheManager
+    private let autoSaveToDisk: Bool
     private var lastFetch: (@Sendable () async throws -> T)?
 
-    init(cacheFileName: CacheFile? = nil, cacheManager: CacheManager = .shared) {
+    init(cacheFileName: CacheFile? = nil, cacheManager: CacheManager = .shared, autoSaveToDisk: Bool = true) {
         self.cacheFileName = cacheFileName
         self.cacheManager = cacheManager
+        self.autoSaveToDisk = autoSaveToDisk
         observeNetworkStatus()
     }
 
@@ -76,10 +78,19 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
     }
 
     func loadFromDisk() async {
-        guard let cacheFileName, value == nil,
+        guard let cacheFileName,
               let cached = await cacheManager.load(file: cacheFileName, type: T.self) else { return }
         value = cached
         phase = .loaded
+    }
+
+    func saveToDisk(_ data: T? = nil) async {
+        guard let cacheFileName else { return }
+        let target = data ?? value
+        if let target {
+            value = target
+            await cacheManager.save(target, file: cacheFileName)
+        }
     }
 
     @discardableResult
@@ -91,7 +102,7 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
             try Task.checkCancellation()
             value = fresh
             phase = .loaded
-            if let cacheFileName { await cacheManager.save(fresh, file: cacheFileName) }
+            if autoSaveToDisk, let cacheFileName { await cacheManager.save(fresh, file: cacheFileName) }
             return fresh
         } catch {
             if error is CancellationError { throw error }

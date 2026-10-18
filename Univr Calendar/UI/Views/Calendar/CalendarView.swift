@@ -14,6 +14,7 @@ import CustomSheet
 
 struct CalendarView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(UserSettings.self) var settings
     @Environment(AppStatusManager.self) var statusManager
   
@@ -57,6 +58,18 @@ struct CalendarView: View {
             .onAppear {
                 inizializeData()
                 checkPendingNotificationTap()
+            }
+            .onChange(of: scenePhase) { oldPhase, newPhase in
+                if newPhase == .active {
+                    Task {
+                        await viewModel.refreshIfNeeded(
+                            corso: settings.selectedCourse,
+                            anno: settings.selectedAcademicYear,
+                            selYear: settings.selectedYear,
+                            matricola: settings.matricola
+                        )
+                    }
+                }
             }
             .onChange(of: NotificationManager.shared.itemToOpen) { _, _ in
                 checkPendingNotificationTap()

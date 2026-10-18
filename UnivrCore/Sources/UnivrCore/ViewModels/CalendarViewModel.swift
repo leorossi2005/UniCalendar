@@ -22,8 +22,10 @@ public class CalendarViewModel {
     
     private var pendingNewLessons: [DailySchedule]? = nil
     private let service: NetworkService = .init()
-    private let resource: CachedResource<[DailySchedule]> = CachedResource(cacheFileName: .calendarSchedule, cacheManager: .shared)
+    private let resource: CachedResource<[DailySchedule]> = CachedResource(cacheFileName: .calendarSchedule, cacheManager: .shared, autoSaveToDisk: false)
     private var lastMatricola: String = ""
+    private var lastCheck: Date = .distantPast
+    private var lastAttemptFailed: Bool = false
     
     public init() {
         observeResource()
@@ -76,6 +78,14 @@ public class CalendarViewModel {
         }
     }
     
+    public func refreshIfNeeded(corso: String, anno: String, selYear: String, matricola: String) async {
+        guard corso != "0", !checkingUpdates, !updateAvailable else { return }
+        let interval: TimeInterval = lastAttemptFailed ? 300 : 3600
+        if Date.now.timeIntervalSince(lastCheck) >= interval {
+            await loadLessons(corso: corso, anno: anno, selYear: selYear, matricola: matricola, updating: false)
+        }
+    }
+    
     public func loadLessons(corso: String, anno: String, selYear: String, matricola: String, updating: Bool) async {
         lastMatricola = matricola
         guard corso != "0" else {
@@ -100,8 +110,12 @@ public class CalendarViewModel {
         do {
             let fetched = try await resource.refresh { try await self.service.fetchOrario(corso: corso, anno: anno, selyear: selYear) }
             handleNewData(fetched, matricola: matricola, update: updating)
+            lastCheck = .now
+            lastAttemptFailed = false
         } catch is CancellationError {
         } catch {
+            lastCheck = .now
+            lastAttemptFailed = true
             handleFetchFailure()
         }
         
@@ -120,12 +134,16 @@ public class CalendarViewModel {
         
         if schedule.isEmpty || update {
             processAndSave(fetched, matricola: matricola)
+            Task { await resource.saveToDisk(fetched) }
+            clearPendingUpdate()
         } else {
             let fetchedFiltered = processRawLessons(fetched, matricola: matricola).processed
             
             if schedule != fetchedFiltered {
                 pendingNewLessons = fetched
                 updateAvailable = true
+            } else {
+                clearPendingUpdate()
             }
         }
     }
@@ -144,6 +162,7 @@ public class CalendarViewModel {
     public func confirmUpdate(matricola: String) async {
         guard let newLessons = pendingNewLessons else { return }
         processAndSave(newLessons, matricola: matricola)
+        await resource.saveToDisk(newLessons)
         clearPendingUpdate()
     }
     

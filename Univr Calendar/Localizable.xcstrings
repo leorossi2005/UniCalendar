@@ -1177,12 +1177,32 @@
         }
       }
     },
-    "Posizione non trovata\n\n%@" : {
+    "Posizione non disponibile" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Location not found\n\n%@"
+            "value" : "Location not available"
+          }
+        }
+      }
+    },
+    "Posizione non attualmente presente, siamo già al corrente e il problema verrà risolto." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location currently not available, we are already aware and the issue will be resolved."
+          }
+        }
+      }
+    },
+    "Posizione non trovata" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location not found"
           }
         }
       }

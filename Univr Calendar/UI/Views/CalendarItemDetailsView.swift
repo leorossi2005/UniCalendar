@@ -415,7 +415,19 @@ struct StableMapView: View {
             } else if isLoadingMap {
                 ProgressView()
             } else {
-                ContentUnavailableView("Posizione non trovata\n\n\(internalItem.displayAddress ?? "")", systemImage: "mappin.slash")
+                switch item {
+                case .lesson:
+                    ContentUnavailableView(
+                        "Posizione non disponibile",
+                        systemImage: "mappin.slash",
+                        description: Text("Posizione non attualmente presente, siamo già al corrente e il problema verrà risolto.")
+                    )
+                case .personal:
+                    ContentUnavailableView(
+                        "Posizione non trovata",
+                        systemImage: "mappin.slash"
+                    )
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -511,7 +523,19 @@ struct StableMapView: View {
             return
         }
         
-        guard let address = internalItem.displayAddress, !address.isEmpty else { return }
+        
+        if case .lesson = item {
+            await MainActor.run {
+                self.externalCoordinate = nil
+                self.isLoadingMap = false
+            }
+            return
+        }
+        
+        guard let address = internalItem.displayAddress, !address.isEmpty else {
+            await MainActor.run { self.isLoadingMap = false }
+            return
+        }
         
         if let cachedCoord = await CoordinateCache.shared.coordinate(for: address) {
             let clCoord = CLLocationCoordinate2D(latitude: cachedCoord.latitude, longitude: cachedCoord.longitude)
