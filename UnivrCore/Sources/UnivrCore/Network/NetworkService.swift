@@ -64,6 +64,8 @@ struct NetworkService {
             
             return try decoder.decode(T.self, from: data)
             
+        } catch let error as NetworkError {
+            throw error
         } catch let error as URLError {
             switch error.code {
             case .notConnectedToInternet: throw NetworkError.offline
