@@ -458,6 +458,7 @@
       }
     },
     "Connettiti a internet per configurare il tuo corso." : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -927,6 +928,9 @@
         }
       }
     },
+    "Nessun anno di corso" : {
+
+    },
     "Nessun Avviso" : {
       "localizations" : {
         "en" : {
@@ -1296,6 +1300,9 @@
           }
         }
       }
+    },
+    "Scegli un anno di corso dalle impostazioni per iniziare." : {
+
     },
     "Scegli un corso" : {
       "localizations" : {

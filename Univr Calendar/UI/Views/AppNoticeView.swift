@@ -160,6 +160,7 @@ struct AppNoticeView: View {
                 }
             }
         }
-        .padding(.horizontal, safeAreas.bottom > 0 ? safeAreas.bottom : 24)
+        .padding(.horizontal, max(safeAreas.bottom, 16))
+        .safeAreaPadding(.bottom, safeAreas.bottom == 0 ? 16 : 0)
     }
 }

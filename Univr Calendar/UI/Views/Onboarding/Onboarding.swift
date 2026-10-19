@@ -92,11 +92,15 @@ struct Onboarding: View {
                             handlePageTransition(to: 3) {
                                 viewModel.updateAcademicYears(for: settings.selectedCourse)
                                 
-                                if let firstYear = viewModel.academicYears.first {
-                                    await MainActor.run {
+                                await MainActor.run {
+                                    if viewModel.academicYears.count <= 5, let firstYear = viewModel.academicYears.first {
                                         settings.selectedAcademicYear = firstYear.id
                                         settings.selectedAcademicYearName = firstYear.label
                                         settings.foundMatricola = viewModel.checkForMatricola(in: settings.selectedAcademicYear)
+                                    } else {
+                                        settings.selectedAcademicYear = "0"
+                                        settings.selectedAcademicYearName = ""
+                                        settings.foundMatricola = false
                                     }
                                 }
                             }
@@ -138,7 +142,7 @@ struct Onboarding: View {
                         bottomPadding: safeAreas.bottom,
                         buttonTitle: settings.foundMatricola ? "Continua" : "Comincia!",
                         isLoading: nextIndexLoading > 3,
-                        isButtonDisabled: false,
+                        isButtonDisabled: settings.selectedAcademicYear == "0" || settings.selectedAcademicYear.isEmpty,
                         buttonAction: {
                             academicYearSearchFocus = false
                             if settings.foundMatricola {

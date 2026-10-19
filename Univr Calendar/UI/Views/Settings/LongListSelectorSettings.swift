@@ -75,9 +75,6 @@ struct LongListSelectorSettings<Item: SelectableItem>: View {
         .onChange(of: isSearching) { _, active in
             sheetManager.setLock(active || selectedItem == "0")
         }
-        .onDisappear {
-            sheetManager.setLock(selectedItem == "0")
-        }
     }
     
     private func highlightedText(_ text: String, query: String, baseColor: Color) -> AttributedString {

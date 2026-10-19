@@ -99,10 +99,13 @@ struct Settings: View {
                     }
                     .onChange(of: tempSettings.selectedAcademicYear) {
                         if tempSettings.selectedAcademicYear != "0" {
+                            sheetManager.setLock(false)
                             if let yearLabel = viewModel.academicYears.first(where: { $0.id == tempSettings.selectedAcademicYear })?.label {
                                 settings.selectedAcademicYearName = yearLabel
                             }
                             settings.foundMatricola = viewModel.checkForMatricola(in: tempSettings.selectedAcademicYear)
+                        } else {
+                            sheetManager.setLock(true)
                         }
                     }
                 }
@@ -221,12 +224,18 @@ struct Settings: View {
             
             viewModel.updateAcademicYears(for: tempSettings.selectedCourse)
             
-            if let firstYear = viewModel.academicYears.first {
+            if viewModel.academicYears.count <= 5, let firstYear = viewModel.academicYears.first {
                 tempSettings.selectedAcademicYear = firstYear.id
                 settings.selectedAcademicYearName = firstYear.label
+                sheetManager.setLock(false)
                 if tempSettings.selectedAcademicYear != "0" {
                     settings.foundMatricola = viewModel.checkForMatricola(in: tempSettings.selectedAcademicYear)
                 }
+            } else {
+                tempSettings.selectedAcademicYear = "0"
+                settings.selectedAcademicYearName = ""
+                settings.foundMatricola = false
+                sheetManager.setLock(true)
             }
         } else {
             sheetManager.setLock(true)
@@ -276,8 +285,12 @@ struct Settings: View {
                                 tempSettings.selectedCourseName = course.label
                                 viewModel.academicYears = course.years
                                 
-                                if tempSettings.selectedAcademicYear == "0", let firstAcademicYear = viewModel.academicYears.last {
-                                    tempSettings.selectedAcademicYear = firstAcademicYear.id
+                                if tempSettings.selectedAcademicYear == "0" {
+                                    if viewModel.academicYears.count <= 5, let firstAcademicYear = viewModel.academicYears.first {
+                                        tempSettings.selectedAcademicYear = firstAcademicYear.id
+                                    } else {
+                                        sheetManager.setLock(true)
+                                    }
                                 }
                                 settings.foundMatricola = viewModel.checkForMatricola(in: tempSettings.selectedAcademicYear)
                             }
