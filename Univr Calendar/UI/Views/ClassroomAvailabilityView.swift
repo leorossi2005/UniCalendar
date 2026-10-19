@@ -40,6 +40,9 @@ struct ClassroomAvailabilityView: View {
                 )) {
                     await availabilityManager.getAvailability(locationKey: settings.locationKey, date: coordinator.selectedWeek)
                 }
+                .task {
+                    await availabilityManager.loadLocations()
+                }
                 .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
                 .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
         }

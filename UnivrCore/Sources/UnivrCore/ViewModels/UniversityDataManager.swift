@@ -23,6 +23,7 @@ public final class UniversityDataManager {
     private var yearsTask: Task<Void, Error>?
     private var coursesTask: Task<Void, Error>?
     private var coursesTaskYear: String?
+    private var locationsTask: Task<Void, Error>?
 
     private enum Resource {
         case years
@@ -50,6 +51,7 @@ public final class UniversityDataManager {
     @discardableResult
     public func prefetch(preferredYear: String?) async -> String? {
         guard !isOffline else { return nil }
+        Task { await prefetchLocations() }
         do { try await ensureYears() } catch { return nil }
 
         let year = years.contains(where: { $0.id == preferredYear })
@@ -59,6 +61,19 @@ public final class UniversityDataManager {
 
         Task { try? await ensureCourses(year: year) }
         return year
+    }
+
+    public func prefetchLocations() async {
+        guard locationsTask == nil else { return }
+        let task = Task {
+            defer { locationsTask = nil }
+            let locationsResource = CachedResource<[String: String]>(cacheFileName: .locations, cacheManager: cacheManager)
+            try await locationsResource.refreshStaleWhileRevalidate {
+                try await self.service.getLocations()
+            }
+        }
+        locationsTask = task
+        try? await task.value
     }
     
     public func ensureYears() async throws {
@@ -101,6 +116,7 @@ public final class UniversityDataManager {
         yearsTask?.cancel(); yearsTask = nil
         coursesTask?.cancel(); coursesTask = nil
         coursesTaskYear = nil
+        locationsTask?.cancel(); locationsTask = nil
     }
     
     public func resetCourses() {

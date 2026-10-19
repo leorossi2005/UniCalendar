@@ -9,11 +9,6 @@
 
 import Foundation
 
-struct Availability: Codable, Equatable, Sendable {
-    let locations: [String: String]
-    let rooms: [String: [Room]]
-}
-
 public struct Room: Codable, Equatable, Sendable, Identifiable {
     public let id: String
     public let name: String

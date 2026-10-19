@@ -77,13 +77,17 @@ public enum RoomDailyStatus: Equatable {
 @MainActor
 @Observable
 public final class AvailabilityDataManager {
-    public var locations: [String: String] = [:]
+    private let locationsResource = CachedResource<[String: String]>(cacheFileName: .locations, cacheManager: .shared)
+    
+    public var locations: [String: String] {
+        locationsResource.value ?? [:]
+    }
     public var rooms: [Room]?
     
     public var state: ResourcePhase = .loading
     
     private let service = NetworkService()
-    private let resource = CachedResource<Availability>()
+    private let resource = CachedResource<[String: [Room]]>()
     private var locationKey: String = ""
     private var loadedDate: String?
     
@@ -94,6 +98,9 @@ public final class AvailabilityDataManager {
     }
     
     public init() {
+        Task { [weak self] in
+            await self?.locationsResource.loadFromDisk()
+        }
         observeResource()
         observeNetworkStatus()
     }
@@ -129,18 +136,11 @@ public final class AvailabilityDataManager {
         state = resource.phase
 
         switch resource.phase {
-        case .idle:
-            break
-        case .loading:
+        case .idle, .loading:
             break
         case .loaded:
-            if let availability = resource.value {
-                locations = availability.locations
-                rooms = availability.rooms[locationKey]
-            }
-        case .empty:
-            rooms = nil
-        case .offline:
+            rooms = resource.value?[locationKey]
+        case .empty, .offline:
             rooms = nil
         case .error(let message):
             rooms = nil
@@ -148,15 +148,23 @@ public final class AvailabilityDataManager {
         }
     }
     
+    public func loadLocations() async {
+        do {
+            try await locationsResource.refreshStaleWhileRevalidate {
+                try await self.service.getLocations()
+            }
+        } catch {
+        }
+    }
+
     public func getAvailability(locationKey: String, date: Date) async {
         let dateString = String(format: "%02d-%02d-%04d", date.day, date.month, date.year)
         self.locationKey = locationKey
 
         if loadedDate == dateString,
            NetworkStatusMonitor.shared.status == .connected,
-           let availability = resource.value {
-            locations = availability.locations
-            rooms = availability.rooms[locationKey]
+           let roomsMap = resource.value {
+            rooms = roomsMap[locationKey]
             state = .loaded
             return
         }
@@ -164,13 +172,12 @@ public final class AvailabilityDataManager {
         state = .loading
         rooms = nil
         do {
-            let availability = try await resource.refresh {
-                try await self.service.getAvailability(date: dateString)
+            let roomsMap = try await resource.refresh {
+                try await self.service.getRoomsAvailability(date: dateString)
             }
             try Task.checkCancellation()
             loadedDate = dateString
-            locations = availability.locations
-            rooms = availability.rooms[locationKey]
+            rooms = roomsMap[locationKey]
             state = .loaded
         } catch is CancellationError {
         } catch {

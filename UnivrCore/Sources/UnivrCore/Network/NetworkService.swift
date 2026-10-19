@@ -99,10 +99,16 @@ struct NetworkService {
         return try await fetch(from: "/schedule?course=\(corso)&academicYear=\(anno)&year=\(selyear)")
     }
     
-    func getAvailability(date: String) async throws -> Availability {
-        struct RootWrapper: Decodable { let availability: Availability }
+    func getRoomsAvailability(date: String) async throws -> [String: [Room]] {
+        struct RootWrapper: Decodable { let rooms: [String: [Room]] }
         let wrapper: RootWrapper = try await fetch(from: "/roomsavailability?date=\(date)")
-        return wrapper.availability
+        return wrapper.rooms
+    }
+    
+    func getLocations() async throws -> [String: String] {
+        struct RootWrapper: Decodable { let locations: [String: String] }
+        let wrapper: RootWrapper = try await fetch(from: "/locations")
+        return wrapper.locations
     }
     
     func getAppStatus(appVersion: String, osVersion: String) async throws -> [AppNotice] {
