@@ -24,8 +24,13 @@ struct ShortListSelector<Item: SelectableItem>: View {
                     selectedItem = item.id
                 } label: {
                     HStack {
-                        Text(item.label)
-                            .fontWeight(isSelected ? .semibold : .regular)
+                        if item is SelectableOption {
+                            Text(LocalizedStringKey(item.label))
+                                .fontWeight(isSelected ? .semibold : .regular)
+                        } else {
+                            Text(item.label)
+                                .fontWeight(isSelected ? .semibold : .regular)
+                        }
                         Spacer()
                         Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                             .font(.title3)
@@ -49,4 +54,13 @@ struct ShortListSelector<Item: SelectableItem>: View {
         .animation(.snappy(duration: 0.25), value: selectedItem)
         .padding(.top, 16)
     }
+}
+
+#Preview {
+    @Previewable @State var selected = "even"
+    ShortListSelector<SelectableOption>(
+        items: [.even, .odd],
+        selectedItem: $selected
+    )
+    .padding()
 }

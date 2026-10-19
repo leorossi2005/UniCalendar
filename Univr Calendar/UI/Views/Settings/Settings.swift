@@ -36,7 +36,7 @@ struct Settings: View {
                     handleYearChange()
                 }
                 NavigationLink {
-                    CourseSelectorSettings(
+                    LongListSelectorSettings(
                         title: "Corso",
                         prompt: "Cerca un corso",
                         items: viewModel.courses,
@@ -76,7 +76,7 @@ struct Settings: View {
                             }
                         } else {
                             NavigationLink {
-                                CourseSelectorSettings(
+                                LongListSelectorSettings(
                                     title: "Anno di Corso",
                                     prompt: "Cerca un anno di corso",
                                     items: viewModel.academicYears,
@@ -238,14 +238,13 @@ struct Settings: View {
     
     private func performReset() {
         Haptics.play(.impact(weight: .heavy))
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(0.1))
+        
+        Task(priority: .background) {
             await NotificationManager.shared.removeAllNotifications()
             await CommitmentsManager.shared.deleteAllEvents()
             await CacheManager.shared.clear(file: .calendarSchedule)
             settings.reset()
             tempSettings.sync(with: settings)
-            sheetManager.dismiss()
         }
     }
     
@@ -306,91 +305,4 @@ struct Settings: View {
             .navigationBarTitleDisplayMode(.inline)
     }
     .environment(UserSettings.shared)
-}
-
-struct CourseSelectorSettings<Item: SelectableItem>: View {
-    @Environment(GlobalSheetManager.self) private var sheetManager
-    @Environment(\.dismiss) private var dismiss
-    
-    let title: LocalizedStringKey
-    let prompt: LocalizedStringKey
-    let items: [Item]
-    @Binding var selectedItem: String
-    
-    @State private var searchText: String = ""
-    @State private var isSearching: Bool = false
-    
-    private var filteredItems: [Item] { items.filtered(by: searchText) }
-    
-    var body: some View {
-        ScrollViewReader { proxy in
-            List {
-                ForEach(filteredItems) { item in
-                    let isSelected = item.id == selectedItem
-                    
-                    Button {
-                        if !isSelected {
-                            Haptics.play(.selection)
-                            selectedItem = item.id
-                        }
-                        dismiss()
-                    } label: {
-                        HStack(spacing: 14) {
-                            Text(highlightedText(item.label, query: searchText, baseColor: .primary))
-                                .font(.body.weight(isSelected ? .semibold : .regular))
-                            
-                            Spacer(minLength: 8)
-                            
-                            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                                .font(.title3)
-                                .foregroundStyle(isSelected ? Color.accentColor : Color.secondary.opacity(0.3))
-                        }
-                        .padding(.vertical, 2)
-                        .contentShape(.rect)
-                    }
-                    .id(item.id)
-                }
-            }
-            .overlay {
-                if filteredItems.isEmpty && !searchText.isEmpty {
-                    ContentUnavailableView.search(text: searchText)
-                }
-            }
-            .onAppear {
-                if selectedItem != "0" {
-                    proxy.scrollTo(selectedItem, anchor: .center)
-                }
-            }
-        }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .searchable(
-            text: $searchText,
-            isPresented: $isSearching,
-            prompt: prompt
-        )
-        .onChange(of: isSearching) { _, active in
-            sheetManager.setLock(active || selectedItem == "0")
-        }
-        .onDisappear {
-            sheetManager.setLock(selectedItem == "0")
-        }
-    }
-    
-    private func highlightedText(_ text: String, query: String, baseColor: Color) -> AttributedString {
-        var attributed = AttributedString(text)
-        attributed.foregroundColor = baseColor
-        
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return attributed }
-        
-        var searchRange = attributed.startIndex..<attributed.endIndex
-        while let matchRange = attributed[searchRange].range(of: trimmed, options: [.caseInsensitive, .diacriticInsensitive]) {
-            attributed[matchRange].foregroundColor = Color.accentColor
-            attributed[matchRange].inlinePresentationIntent = .stronglyEmphasized
-            searchRange = matchRange.upperBound..<attributed.endIndex
-        }
-        
-        return attributed
-    }
 }

@@ -40,15 +40,7 @@ struct Onboarding: View {
                         isButtonDisabled: viewModel.isOffline,
                         buttonAction: {
                             handlePageTransition(to: 1) {
-                                try await viewModel.loadYears()
-                                
-                                if settings.selectedYear == "0" || !viewModel.years.contains(where: { $0.id == settings.selectedYear }) {
-                                    if let lastYear = viewModel.years.first {
-                                        await MainActor.run {
-                                            settings.selectedYear = lastYear.id
-                                        }
-                                    }
-                                }
+                                try await viewModel.ensureYears()
                             }
                         }
                     )
@@ -65,11 +57,10 @@ struct Onboarding: View {
                         isLoading: nextIndexLoading > 1,
                         isButtonDisabled: viewModel.isOffline,
                         buttonAction: {
-                            viewModel.resetCourses()
-                            settings.selectedCourse = "0"
-                            
                             handlePageTransition(to: 2) {
-                                try await viewModel.loadCourses(year: settings.selectedYear)
+                                let year = settings.selectedYear
+                                if year != viewModel.coursesYear { settings.selectedCourse = "0" }
+                                try await viewModel.ensureCourses(year: year)
                             }
                         }
                     )
@@ -165,11 +156,10 @@ struct Onboarding: View {
                         errorMessage: $errorText,
                         isTopContent: false,
                         content: {
-                            Picker("", selection: $settings.matricola) {
-                                Text("Pari").tag("even")
-                                Text("Dispari").tag("odd")
-                            }
-                            .pickerStyle(.segmented)
+                            ShortListSelector<SelectableOption>(
+                                items: [.even, .odd],
+                                selectedItem: $settings.matricola
+                            )
                         },
                         bottomPadding: safeAreas.bottom,
                         buttonTitle: "Comincia!",
@@ -245,6 +235,12 @@ struct Onboarding: View {
             .scrollPosition(id: $currentIndex, anchor: .center)
             .scrollDisabled(true)
             .animation(.snappy, value: currentIndex)
+            .task(id: viewModel.isOffline) {
+                if let year = await viewModel.prefetch(preferredYear: settings.selectedYear) {
+                    settings.selectedYear = year
+                }
+            }
+            .onDisappear { viewModel.cancelAll() }
         }
     }
     
@@ -263,6 +259,8 @@ struct Onboarding: View {
                         currentIndex = targetIndex
                     }
                 }
+            } catch is CancellationError {
+                return
             } catch {
                 if let errorMessage = viewModel.errorMessage {
                     self.errorText = errorMessage

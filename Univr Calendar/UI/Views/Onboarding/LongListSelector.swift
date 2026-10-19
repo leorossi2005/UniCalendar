@@ -183,6 +183,10 @@ struct LongListSelector<Item: SelectableItem>: View {
                 } else {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 0) {
+                            Color.clear
+                                .frame(height: 0)
+                                .id("topListAnchor")
+                            
                             ForEach(results, id: \.id) { item in
                                 Button {
                                     Haptics.play(.selection)
@@ -209,6 +213,17 @@ struct LongListSelector<Item: SelectableItem>: View {
                     }
                 }
             }
+            .onChange(of: searchText) { _, newText in
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) {
+                    if newText.isEmpty, selectedItem != "0" {
+                        proxy.scrollTo(selectedItem, anchor: .center)
+                    } else {
+                        proxy.scrollTo("topListAnchor", anchor: .top)
+                    }
+                }
+            }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background {
                 GeometryReader { geometry in
@@ -227,7 +242,7 @@ struct LongListSelector<Item: SelectableItem>: View {
     }
     
     private func recenter(_ proxy: ScrollViewProxy) {
-        guard isSettling, selectedItem != "0" else { return }
+        guard isSettling, searchText.isEmpty, selectedItem != "0" else { return }
         withAnimation(toggleAnimation) {
             proxy.scrollTo(selectedItem, anchor: .center)
         }

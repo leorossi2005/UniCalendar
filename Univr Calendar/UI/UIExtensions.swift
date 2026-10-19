@@ -185,6 +185,16 @@ extension View {
     }
 }
 
+extension SearchFieldPlacement {
+    static var automaticPlacement: SearchFieldPlacement {
+        if #available(iOS 26, *) {
+            .automatic
+        } else {
+            .navigationBarDrawer(displayMode: .always)
+        }
+    }
+}
+
 extension ToolbarItem {
     @ToolbarContentBuilder
     func toolbarBackgroundVisibility(_ visibility: Visibility) -> some ToolbarContent {

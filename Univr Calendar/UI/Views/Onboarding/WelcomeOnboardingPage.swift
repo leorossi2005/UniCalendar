@@ -203,7 +203,6 @@ struct WelcomeOnboardingPage: View {
         guard !isExpanded else { return }
         
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(50))
             guard !isExpanded else { return }
             
             withAnimation(.spring(response: 0.85, dampingFraction: 0.78)) {

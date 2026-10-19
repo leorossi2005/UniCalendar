@@ -24,27 +24,21 @@ struct RootView: View {
                 NavigationStack {
                     AppNoticeView(notices: [blockingNotice])
                 }
-                .transition(.opacity)
             } else {
                 ZStack {
                     if showSplash {
                         splashScreen
                     } else if settings.onboardingCompleted {
                         CalendarView()
-                            .transition(.opacity)
                     } else {
                         Onboarding()
-                            .transition(.opacity)
                     }
                 }
             }
         }
-        .animation(.default, value: settings.onboardingCompleted)
-        .animation(.default, value: statusManager.activeNotices)
         .task {
             Task { await statusManager.refresh() }
-            let delay = settings.onboardingCompleted ? 500 : 1500
-            try? await Task.sleep(for: .milliseconds(delay))
+            try? await Task.sleep(for: .milliseconds(250))
             showSplash = false
         }
         .onChange(of: statusManager.isResolved, initial: true) { _, resolved in

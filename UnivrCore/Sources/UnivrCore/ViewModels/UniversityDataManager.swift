@@ -19,6 +19,10 @@ public final class UniversityDataManager {
     private var coursesResource: CachedResource<[Course]>?
     private var currentCoursesYear: String = ""
     private var activeResource: Resource = .years
+    
+    private var yearsTask: Task<Void, Error>?
+    private var coursesTask: Task<Void, Error>?
+    private var coursesTaskYear: String?
 
     private enum Resource {
         case years
@@ -26,6 +30,7 @@ public final class UniversityDataManager {
     }
     
     public var years: [AcademicYear] { yearsResource.value ?? [] }
+    public var coursesYear: String { currentCoursesYear }
     public var courses: [Course] { coursesResource?.value ?? [] }
     public var academicYears: [AcademicYear] = []
     
@@ -41,6 +46,62 @@ public final class UniversityDataManager {
     }
     
     public init() {}
+    
+    @discardableResult
+    public func prefetch(preferredYear: String?) async -> String? {
+        guard !isOffline else { return nil }
+        do { try await ensureYears() } catch { return nil }
+
+        let year = years.contains(where: { $0.id == preferredYear })
+            ? preferredYear
+            : years.first?.id
+        guard let year, year != "0" else { return nil }
+
+        Task { try? await ensureCourses(year: year) }
+        return year
+    }
+    
+    public func ensureYears() async throws {
+        if !years.isEmpty { return }
+        if yearsTask == nil {
+            yearsTask = Task {
+                defer { yearsTask = nil }
+                try await loadYears()
+            }
+        }
+        try await yearsTask?.value
+    }
+
+    public func ensureCourses(year: String) async throws {
+        if coursesTaskYear == year, let task = coursesTask {
+            try await task.value
+            return
+        }
+        
+        if currentCoursesYear == year, !courses.isEmpty { return }
+
+        coursesTask?.cancel()
+        resetCourses()
+
+        coursesTaskYear = year
+        let task = Task {
+            defer {
+                if coursesTaskYear == year {
+                    coursesTask = nil
+                    coursesTaskYear = nil
+                }
+            }
+            try await loadCourses(year: year)
+        }
+        coursesTask = task
+        try await task.value
+    }
+
+    public func cancelAll() {
+        yearsTask?.cancel(); yearsTask = nil
+        coursesTask?.cancel(); coursesTask = nil
+        coursesTaskYear = nil
+    }
     
     public func resetCourses() {
         currentCoursesYear = ""
