@@ -457,17 +457,6 @@
         }
       }
     },
-    "Connettiti a internet per configurare il tuo corso." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Connect to the internet to configure your course."
-          }
-        }
-      }
-    },
     "Connettiti a internet per controllare le disponibilità di oggi." : {
       "localizations" : {
         "en" : {
@@ -929,7 +918,14 @@
       }
     },
     "Nessun anno di corso" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No course year"
+          }
+        }
+      }
     },
     "Nessun Avviso" : {
       "localizations" : {
@@ -947,16 +943,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No course"
-          }
-        }
-      }
-    },
-    "Nessun elemento trovato" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No element found"
           }
         }
       }
@@ -1302,7 +1288,14 @@
       }
     },
     "Scegli un anno di corso dalle impostazioni per iniziare." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a course year from the settings to start."
+          }
+        }
+      }
     },
     "Scegli un corso" : {
       "localizations" : {

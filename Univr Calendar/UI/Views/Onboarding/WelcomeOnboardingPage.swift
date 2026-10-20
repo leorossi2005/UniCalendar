@@ -12,7 +12,7 @@ import SwiftUI
 struct WelcomeOnboardingPage: View {
     let title: LocalizedStringKey
     let subtitle: LocalizedStringResource
-    @Binding var errorMessage: String
+    @Binding var errorMessage: String?
     let bottomPadding: CGFloat
     
     let buttonTitle: LocalizedStringKey
@@ -93,17 +93,7 @@ struct WelcomeOnboardingPage: View {
                 
                 Spacer()
                 
-                Text(errorMessage)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .opacity(errorMessage == "nope" ? 0 : 1)
-                    .task(id: errorMessage) {
-                        do {
-                            try await Task.sleep(for: .seconds(3))
-                            errorMessage = "nope"
-                        } catch {}
-                    }
-                
+                OnboardingErrorLabel(message: $errorMessage)
                 OnboardingButton(
                     title: buttonTitle,
                     isLoading: isLoading,
@@ -117,10 +107,9 @@ struct WelcomeOnboardingPage: View {
                 .allowsHitTesting(showButton)
             }
             .multilineTextAlignment(.center)
-            .frame(width: proxy.size.width, height: proxy.size.height)
         }
         .containerRelativeFrame(.horizontal)
-        .onAppear {
+        .task {
             startAnimation()
         }
     }
@@ -203,8 +192,6 @@ struct WelcomeOnboardingPage: View {
         guard !isExpanded else { return }
         
         Task { @MainActor in
-            guard !isExpanded else { return }
-            
             withAnimation(.spring(response: 0.85, dampingFraction: 0.78)) {
                 isExpanded = true
             }

@@ -16,8 +16,6 @@ struct LongListSelector<Item: SelectableItem>: View {
     
     let items: [Item]
     var searchPrompt: LocalizedStringKey = "Cerca un corso"
-    var defaultPrompt: LocalizedStringKey = "Scegli un corso"
-    var emptyPrompt: LocalizedStringKey = "Nessun elemento trovato"
     
     @State private var searchText: String = ""
     @State private var isSettling: Bool = false
@@ -60,7 +58,7 @@ struct LongListSelector<Item: SelectableItem>: View {
     private func open() {
         if !isFocused {
             Haptics.play(.impact(weight: .light))
-            withAnimation(toggleAnimation) { isFocused = true }
+            isFocused = true
         }
         internalFocus = true
     }
@@ -80,7 +78,7 @@ struct LongListSelector<Item: SelectableItem>: View {
                     .foregroundStyle(.secondary)
                     .font(.body.weight(.medium))
                 
-                TextField(searchPrompt, text: $searchText, prompt: Text(""))
+                TextField("", text: $searchText)
                     .keyboardType(.asciiCapable)
                     .autocorrectionDisabled()
                     .focused($internalFocus)
@@ -141,7 +139,6 @@ struct LongListSelector<Item: SelectableItem>: View {
     
     private var resultsCard: some View {
         ZStack(alignment: .top) {
-            Color.clear.frame(height: 0)
             selectedRow
         }
         .frame(maxWidth: .infinity, maxHeight: isFocused ? .infinity : nil, alignment: .top)
@@ -225,13 +222,8 @@ struct LongListSelector<Item: SelectableItem>: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background {
-                GeometryReader { geometry in
-                    Color.clear
-                        .onChange(of: geometry.size.height) { _, _ in
-                            recenter(proxy)
-                        }
-                }
+            .onGeometryChange(for: CGFloat.self, of: \.size.height) { _ in
+                recenter(proxy)
             }
             .task {
                 isSettling = true
@@ -289,5 +281,4 @@ struct LongListSelector<Item: SelectableItem>: View {
     let courses: [Course] = []
     
     LongListSelector(isFocused: $isFocused, selectedItem: $selectedCourse, items: courses)
-        .environment(UserSettings.shared)
 }

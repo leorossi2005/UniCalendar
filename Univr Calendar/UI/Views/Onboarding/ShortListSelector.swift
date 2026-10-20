@@ -24,17 +24,18 @@ struct ShortListSelector<Item: SelectableItem>: View {
                     selectedItem = item.id
                 } label: {
                     HStack {
-                        if item is SelectableOption {
-                            Text(LocalizedStringKey(item.label))
-                                .fontWeight(isSelected ? .semibold : .regular)
-                        } else {
-                            Text(item.label)
-                                .fontWeight(isSelected ? .semibold : .regular)
+                        Group {
+                            if item is SelectableOption {
+                                Text(LocalizedStringKey(item.label))
+                            } else {
+                                Text(item.label)
+                            }
                         }
+                        .fontWeight(isSelected ? .semibold : .regular)
                         Spacer()
                         Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                             .font(.title3)
-                            .foregroundStyle(isSelected ? Color.accentColor : .secondary.opacity(0.35))
+                            .foregroundStyle(isSelected ? Color.accentColor : .secondary.opacity(0.3))
                             .symbolReplace()
                     }
                     .padding(.horizontal, 16)

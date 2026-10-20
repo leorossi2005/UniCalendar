@@ -97,6 +97,6 @@ extension Bundle {
 extension Array where Element: SelectableItem {
     public func filtered(by searchText: String) -> [Element] {
         guard !searchText.isEmpty else { return self }
-        return self.filter { $0.label.localizedCaseInsensitiveContains(searchText) }
+        return self.filter { $0.label.localizedCaseInsensitiveContains(searchText.trimmingCharacters(in: .whitespacesAndNewlines)) }
     }
 }
