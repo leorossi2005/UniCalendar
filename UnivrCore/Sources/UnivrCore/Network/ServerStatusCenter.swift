@@ -25,6 +25,7 @@ public final class ServerStatusCenter {
     private var hadFailureInCurrentTick: Bool = false
     private var hadSuccessInCurrentTick: Bool = false
     private var blockedDuringTick: Bool = false
+    private var lastSuccessAt: Date?
     private var handlers: [AnyHashable: @MainActor @Sendable () async -> Void] = [:]
     private let autoRetry = AutoRetry()
     
@@ -49,6 +50,7 @@ public final class ServerStatusCenter {
     }
     
     public func reportSuccess() {
+        lastSuccessAt = Date()
         if isTickInProgress {
             hadSuccessInCurrentTick = true
         } else {
@@ -57,14 +59,31 @@ public final class ServerStatusCenter {
         }
     }
     
-    public func reportServerFailure() {
+    public func reportServerFailure(startedAt: Date = Date()) {
         if isTickInProgress {
             hadFailureInCurrentTick = true
             isUnreachable = true
         } else {
+            if let lastSuccessAt, lastSuccessAt > startedAt {
+                return
+            }
             isUnreachable = true
             startLoopIfNeeded()
         }
+    }
+    
+    public func networkDidReconnect() async {
+        NetworkService.resetConnections()
+        if isUnreachable {
+            await retryNow()
+        } else {
+            await executeHandlersOnce()
+        }
+    }
+    
+    public func retryAfterForeground() async {
+        NetworkService.resetConnections()
+        await retryNow()
     }
     
     public func retryNow() async {

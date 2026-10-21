@@ -9,47 +9,97 @@
 
 import Foundation
 
-struct NetworkService {
-    private let session: URLSession
-    let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
-    
-    private static var userAgent: String {
-        "UniCalendar/\(Bundle.main.clearAppVersion) (\(Device.model); \(Device.os.name) \(Device.os.version))"
-    }
+fileprivate final class SessionStore: @unchecked Sendable {
+    private let lock = NSLock()
+    private var currentSession: URLSession
+    private var currentGeneration: Int = 1
     
     init() {
+        self.currentSession = Self.makeSession()
+    }
+    
+    var session: URLSession {
+        lock.lock()
+        defer { lock.unlock() }
+        return currentSession
+    }
+    
+    var generation: Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return currentGeneration
+    }
+    
+    func replace() -> Int {
+        let old: URLSession
+        let newGen: Int
+        
+        lock.lock()
+        old = currentSession
+        currentGeneration += 1
+        newGen = currentGeneration
+        currentSession = Self.makeSession()
+        lock.unlock()
+        
+        old.finishTasksAndInvalidate()
+        
+        return newGen
+    }
+    
+    private static func makeSession() -> URLSession {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 15
         configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         configuration.urlCache = nil
         
         configuration.httpAdditionalHeaders = [
-            "User-Agent": Self.userAgent,
+            "User-Agent": NetworkService.userAgent,
             "Accept": "application/json",
             "Content-Type": "application/json"
         ]
         
-        self.session = URLSession(configuration: configuration)
+        return URLSession(configuration: configuration)
+    }
+}
+
+struct NetworkService: Sendable {
+    fileprivate static let store = SessionStore()
+    
+    static func resetConnections() {
+        _ = store.replace()
     }
     
+    let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
+    
+    fileprivate static var userAgent: String {
+        "UniCalendar/\(Bundle.main.clearAppVersion) (\(Device.model); \(Device.os.name) \(Device.os.version))"
+    }
+    
+    init() {}
+    
     private func fetch<T: Decodable>(from endpoint: String) async throws -> T {
+        let startedAt = Date()
+        let session = Self.store.session
+
         let insideHandler = TickContext.isHandler
         if await ServerStatusCenter.shared.shouldBlockRequest(insideHandler: insideHandler) {
             await ServerStatusCenter.shared.noteBlockedRequest()
             throw NetworkError.serverUnreachable
         }
         
-        guard let url = URL(string: "\(baseURL)\(endpoint)") else { throw NetworkError.badURL }
+        guard let url = URL(string: "\(baseURL)\(endpoint)") else {
+            throw NetworkError.badURL
+        }
         
         do {
-            let (data, response) = try await self.session.data(from: url)
+            let (data, response) = try await session.data(from: url)
             
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw NetworkError.unknown(URLError(.unknown))
             }
             
             if (500...599).contains(httpResponse.statusCode) {
-                await ServerStatusCenter.shared.reportServerFailure()
+                await ServerStatusCenter.shared.reportServerFailure(startedAt: startedAt)
                 throw NetworkError.serverUnreachable
             }
             
@@ -81,16 +131,21 @@ struct NetworkService {
             throw error
         } catch let error as URLError {
             switch error.code {
-            case .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff: throw NetworkError.offline
+            case .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff:
+                throw NetworkError.offline
             case .timedOut:
-                await ServerStatusCenter.shared.reportServerFailure()
+                await ServerStatusCenter.shared.reportServerFailure(startedAt: startedAt)
                 throw NetworkError.timeout
-            case .cancelled: throw CancellationError()
+            case .cancelled:
+                throw CancellationError()
             case .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed, .networkConnectionLost, .resourceUnavailable:
-                await ServerStatusCenter.shared.reportServerFailure()
+                await ServerStatusCenter.shared.reportServerFailure(startedAt: startedAt)
                 throw NetworkError.serverUnreachable
-            default: throw NetworkError.unknown(error)
+            default:
+                throw NetworkError.unknown(error)
             }
+        } catch is CancellationError {
+            throw CancellationError()
         } catch let error as DecodingError {
             print("Decode error for \(endpoint): \(error)")
             throw NetworkError.decodingError(error)

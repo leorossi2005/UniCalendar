@@ -51,18 +51,14 @@ struct RootView: View {
             guard newPhase == .active else { return }
             if ServerStatusCenter.shared.isUnreachable {
                 Task {
-                    await ServerStatusCenter.shared.retryNow()
+                    await ServerStatusCenter.shared.retryAfterForeground()
                 }
             }
         }
         .onChange(of: NetworkStatusMonitor.shared.status) { oldStatus, newStatus in
             if oldStatus == .disconnected && newStatus == .connected {
                 Task {
-                    if ServerStatusCenter.shared.isUnreachable {
-                        await ServerStatusCenter.shared.retryNow()
-                    } else {
-                        await ServerStatusCenter.shared.executeHandlersOnce()
-                    }
+                    await ServerStatusCenter.shared.networkDidReconnect()
                 }
             }
         }
