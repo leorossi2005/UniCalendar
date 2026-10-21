@@ -11,6 +11,7 @@ import SwiftUI
 import UnivrCore
 
 struct RootView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(UserSettings.self) var settings
     @Environment(AppStatusManager.self) var statusManager
     
@@ -44,6 +45,25 @@ struct RootView: View {
         .onChange(of: statusManager.isResolved, initial: true) { _, resolved in
             if resolved && settings.onboardingCompleted {
                 showSplash = false
+            }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
+            if ServerStatusCenter.shared.isUnreachable {
+                Task {
+                    await ServerStatusCenter.shared.retryNow()
+                }
+            }
+        }
+        .onChange(of: NetworkStatusMonitor.shared.status) { oldStatus, newStatus in
+            if oldStatus == .disconnected && newStatus == .connected {
+                Task {
+                    if ServerStatusCenter.shared.isUnreachable {
+                        await ServerStatusCenter.shared.retryNow()
+                    } else {
+                        await ServerStatusCenter.shared.executeHandlersOnce()
+                    }
+                }
             }
         }
     }

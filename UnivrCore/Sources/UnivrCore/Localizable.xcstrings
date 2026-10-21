@@ -239,6 +239,23 @@
         }
       }
     },
+    "network_error_server_unreachable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server not reachable, try again later."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server non raggiungibile, riprova più tardi."
+          }
+        }
+      }
+    },
     "network_error_timeout" : {
       "extractionState" : "manual",
       "localizations" : {

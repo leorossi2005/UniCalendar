@@ -85,11 +85,15 @@ public final class AvailabilityDataManager {
     public var rooms: [Room]?
     
     public var state: ResourcePhase = .loading
+    public var isRetrying: Bool { ServerStatusCenter.shared.isRetrying }
+    public var isOffline: Bool { NetworkStatusMonitor.shared.status == .disconnected }
     
+    private let registrationId = UUID()
     private let service = NetworkService()
     private let resource = CachedResource<[String: [Room]]>()
     private var locationKey: String = ""
     private var loadedDate: String?
+    private var lastRequestedDate: Date?
     
     public var sortedLocations: [(key: String, value: String)] {
         locations.sorted {
@@ -103,6 +107,17 @@ public final class AvailabilityDataManager {
         }
         observeResource()
         observeNetworkStatus()
+        ensureRegistered()
+    }
+    
+    private func ensureRegistered() {
+        ServerStatusCenter.shared.register(id: registrationId) { [weak self] in
+            guard let self else { return }
+            await self.loadLocations()
+            if let date = self.lastRequestedDate {
+                await self.performGetAvailability(locationKey: self.locationKey, date: date)
+            }
+        }
     }
 
     private func observeResource() {
@@ -126,6 +141,9 @@ public final class AvailabilityDataManager {
                 if NetworkStatusMonitor.shared.status == .disconnected {
                     self.rooms = nil
                     self.state = .offline
+                } else if self.state == .offline {
+                    self.loadedDate = nil
+                    self.state = .loading
                 }
                 self.observeNetworkStatus()
             }
@@ -133,14 +151,19 @@ public final class AvailabilityDataManager {
     }
 
     private func applyResourceState() {
+        if resource.phase == .loading && (state == .serverUnreachable || (state == .offline && isOffline)) {
+            return
+        }
         state = resource.phase
 
         switch resource.phase {
         case .idle, .loading:
             break
         case .loaded:
-            rooms = resource.value?[locationKey]
-        case .empty, .offline:
+            let fetchedRooms = resource.value?[locationKey]
+            rooms = fetchedRooms
+            state = (fetchedRooms?.isEmpty ?? true) ? .empty : .loaded
+        case .empty, .offline, .serverUnreachable:
             rooms = nil
         case .error(let message):
             rooms = nil
@@ -158,32 +181,46 @@ public final class AvailabilityDataManager {
     }
 
     public func getAvailability(locationKey: String, date: Date) async {
+        ensureRegistered()
+        lastRequestedDate = date
+        await performGetAvailability(locationKey: locationKey, date: date)
+    }
+    
+    private func performGetAvailability(locationKey: String, date: Date) async {
         let dateString = String(format: "%02d-%02d-%04d", date.day, date.month, date.year)
         self.locationKey = locationKey
 
         if loadedDate == dateString,
            NetworkStatusMonitor.shared.status == .connected,
            let roomsMap = resource.value {
-            rooms = roomsMap[locationKey]
-            state = .loaded
+            let fetchedRooms = roomsMap[locationKey]
+            rooms = fetchedRooms
+            state = (fetchedRooms?.isEmpty ?? true) ? .empty : .loaded
             return
         }
 
-        state = .loading
-        rooms = nil
+        if state != .serverUnreachable && !(state == .offline && isOffline) {
+            state = .loading
+            rooms = nil
+        }
         do {
             let roomsMap = try await resource.refresh {
                 try await self.service.getRoomsAvailability(date: dateString)
             }
             try Task.checkCancellation()
             loadedDate = dateString
-            rooms = roomsMap[locationKey]
-            state = .loaded
+            let fetchedRooms = roomsMap[locationKey]
+            rooms = fetchedRooms
+            state = (fetchedRooms?.isEmpty ?? true) ? .empty : .loaded
         } catch is CancellationError {
         } catch {
             loadedDate = nil
             applyResourceState()
         }
+    }
+    
+    public func cancelAutoRetry() {
+        ServerStatusCenter.shared.unregister(id: registrationId)
     }
     
     public func reset() {

@@ -76,8 +76,20 @@ struct CalendarView: View {
             .onChange(of: NotificationManager.shared.itemToOpen) { _, _ in
                 checkPendingNotificationTap()
             }
-            .onChange(of: viewModel.state == .loading) { _, isLoading in
-                Haptics.play(isLoading ? .start : .success)
+            .onChange(of: viewModel.state) { oldState, newState in
+                if newState == .loading {
+                    Haptics.play(.start)
+                } else if newState == .loaded {
+                    switch oldState {
+                    case .loading, .serverUnreachable, .offline, .error:
+                        Haptics.play(.success)
+                    case .idle, .loaded, .empty:
+                        break
+                    }
+                }
+            }
+            .onDisappear {
+                viewModel.cancelAutoRetry()
             }
             .modifier(SelectionFeedback(coordinator: coordinator, sheetRouter: sheetRouter))
             .animation(.default, value: viewModel.checkingUpdates)
@@ -125,6 +137,29 @@ struct CalendarView: View {
                     systemImage: "wifi.slash",
                     description: Text("Connettiti a internet per scaricare le tue lezioni.")
                 )
+            case .serverUnreachable:
+                ContentUnavailableView {
+                    Label("Server non raggiungibile", systemImage: "server.rack")
+                } description: {
+                    Text("Non riusciamo a contattare il server. Riprova più tardi.")
+                } actions: {
+                    Button {
+                        Haptics.play(.impact(weight: .medium))
+                        Task {
+                            await ServerStatusCenter.shared.retryNow()
+                        }
+                    } label: {
+                        if viewModel.isRetrying {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Text("Riprova adesso")
+                        }
+                    }
+                    .disabled(viewModel.isRetrying)
+                    .buttonStyle(.borderedProminent)
+                    .tint(.orange)
+                }
             case .error(let msg):
                 ContentUnavailableView(
                     "Si è verificato un errore",
@@ -190,13 +225,16 @@ struct CalendarView: View {
     @ToolbarContentBuilder
     private func buildToolbar() -> some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            HStack {
+            HStack(spacing: 6) {
                 SelectedDayLabel(coordinator: coordinator)
-                
                 Image(systemName: "wifi.slash")
                     .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isOffline)
                     .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(.yellow.opacity(0.8))
+                Image(systemName: "server.rack")
+                    .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isServerUnreachable)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.orange.opacity(0.8))
             }
             .fixedSize()
             .modify { view in
@@ -208,7 +246,7 @@ struct CalendarView: View {
         }
         .toolbarBackgroundVisibility(.hidden)
         
-        if viewModel.checkingUpdates {
+        if viewModel.checkingUpdates || ServerStatusCenter.shared.isRetrying {
             ToolbarItem(placement: .topBarTrailing) {
                 ProgressView()
                     .controlSize(.small)

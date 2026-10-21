@@ -26,15 +26,27 @@ public final class AppStatusManager {
     private var lastCheck = Date.distantPast
     public private(set) var lastAttemptFailed = false
     
+    private let registrationId = UUID()
     private static let closedKey = "appStatus_closedIDs"
     
     public init() {
         closedIDs = Set(UserDefaults.standard.stringArray(forKey: Self.closedKey) ?? [])
+        activate()
         
         Task {
             await loadCache()
             evaluateCurrentState()
         }
+    }
+    
+    public func activate() {
+        ServerStatusCenter.shared.register(id: registrationId) { [weak self] in
+            await self?.refresh()
+        }
+    }
+    
+    public func deactivate() {
+        ServerStatusCenter.shared.unregister(id: registrationId)
     }
     
     // MARK: - Public

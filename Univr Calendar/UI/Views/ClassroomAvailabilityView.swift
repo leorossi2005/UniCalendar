@@ -22,6 +22,7 @@ struct ClassroomAvailabilityView: View {
     private struct RequestKey: Equatable {
         let locationKey: String
         let date: Date
+        let isOffline: Bool
     }
     
     var body: some View {
@@ -36,12 +37,16 @@ struct ClassroomAvailabilityView: View {
                 }
                 .task(id: RequestKey(
                     locationKey: settings.locationKey,
-                    date: coordinator.selectedWeek
+                    date: coordinator.selectedWeek,
+                    isOffline: NetworkStatusMonitor.shared.status == .disconnected
                 )) {
                     await availabilityManager.getAvailability(locationKey: settings.locationKey, date: coordinator.selectedWeek)
                 }
                 .task {
                     await availabilityManager.loadLocations()
+                }
+                .onDisappear {
+                    availabilityManager.cancelAutoRetry()
                 }
                 .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
                 .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
@@ -54,6 +59,7 @@ struct ClassroomAvailabilityView: View {
                 Text(location.value).tag(location.key)
             }
         }
+        .disabled(availabilityManager.state == .offline || availabilityManager.state == .serverUnreachable)
         .tint(.primary)
         .frame(maxWidth: .infinity)
         .frame(height: 48)
@@ -95,6 +101,29 @@ struct ClassroomAvailabilityView: View {
                 systemImage: "wifi.slash",
                 description: Text("Connettiti a internet per controllare le disponibilità di oggi.")
             )
+        case .serverUnreachable:
+            ContentUnavailableView {
+                Label("Server non raggiungibile", systemImage: "server.rack")
+            } description: {
+                Text("Non riusciamo a contattare il server. Riprova più tardi.")
+            } actions: {
+                Button {
+                    Haptics.play(.impact(weight: .medium))
+                    Task {
+                        await ServerStatusCenter.shared.retryNow()
+                    }
+                } label: {
+                    if availabilityManager.isRetrying {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text("Riprova adesso")
+                    }
+                }
+                .disabled(availabilityManager.isRetrying)
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
+            }
         case .error(let msg):
             ContentUnavailableView(
                 "Si è verificato un errore",

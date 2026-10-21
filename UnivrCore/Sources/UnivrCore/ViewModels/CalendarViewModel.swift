@@ -18,7 +18,18 @@ public class CalendarViewModel {
     public var state: ResourcePhase = .loading
     public var updateAvailable: Bool = false
     public var checkingUpdates: Bool = false
-    public var isOffline: Bool { NetworkStatusMonitor.shared.status == .disconnected }
+    public private(set) var isOffline: Bool = NetworkStatusMonitor.shared.status == .disconnected
+    public var isServerUnreachable: Bool { !isOffline && ServerStatusCenter.shared.isUnreachable }
+    public var isRetrying: Bool { ServerStatusCenter.shared.isRetrying }
+    
+    private let registrationId = UUID()
+    private struct LastLoadParams {
+        var corso: String
+        var anno: String
+        var selYear: String
+        var matricola: String
+    }
+    private var lastParams: LastLoadParams?
     
     private var pendingNewLessons: [DailySchedule]? = nil
     private let service: NetworkService = .init()
@@ -30,6 +41,20 @@ public class CalendarViewModel {
     public init() {
         observeResource()
         observeNetworkStatus()
+        ensureRegistered()
+    }
+    
+    private func ensureRegistered() {
+        ServerStatusCenter.shared.register(id: registrationId) { [weak self] in
+            guard let self, let params = self.lastParams else { return }
+            await self.performLoadLessons(
+                corso: params.corso,
+                anno: params.anno,
+                selYear: params.selYear,
+                matricola: params.matricola,
+                updating: false
+            )
+        }
     }
     
     private func observeResource() {
@@ -52,10 +77,14 @@ public class CalendarViewModel {
             }
         case .offline:
             if schedule.isEmpty { state = .offline }
+        case .serverUnreachable:
+            if schedule.isEmpty { state = .serverUnreachable }
         case .error(let message):
             if schedule.isEmpty { state = .error(message) }
         case .loading:
-            if schedule.isEmpty { state = .loading }
+            if schedule.isEmpty && state != .serverUnreachable && !(state == .offline && isOffline) {
+                state = .loading
+            }
         case .idle, .empty:
             break
         }
@@ -68,6 +97,7 @@ public class CalendarViewModel {
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 let offline = NetworkStatusMonitor.shared.status == .disconnected
+                self.isOffline = offline
                 if offline, self.schedule.isEmpty, self.resource.value == nil {
                     self.state = .offline
                 } else if !offline, self.state == .offline, self.resource.value == nil, self.schedule.isEmpty, !self.resource.hasLastFetch {
@@ -87,6 +117,12 @@ public class CalendarViewModel {
     }
     
     public func loadLessons(corso: String, anno: String, selYear: String, matricola: String, updating: Bool) async {
+        ensureRegistered()
+        lastParams = LastLoadParams(corso: corso, anno: anno, selYear: selYear, matricola: matricola)
+        await performLoadLessons(corso: corso, anno: anno, selYear: selYear, matricola: matricola, updating: updating)
+    }
+    
+    private func performLoadLessons(corso: String, anno: String, selYear: String, matricola: String, updating: Bool) async {
         lastMatricola = matricola
         guard corso != "0" else {
             await clearAll(state: NetworkStatusMonitor.shared.status == .disconnected ? .offline : .empty)
@@ -100,7 +136,7 @@ public class CalendarViewModel {
                 await loadFromCache(matricola: matricola)
             }
             checkingUpdates = !schedule.isEmpty
-            if schedule.isEmpty {
+            if schedule.isEmpty && state != .serverUnreachable && !(state == .offline && isOffline) {
                 state = .loading
             }
         } else {
@@ -120,6 +156,11 @@ public class CalendarViewModel {
         }
         
         checkingUpdates = false
+    }
+    
+    // MARK: - Retry & Auto Retry
+    public func cancelAutoRetry() {
+        ServerStatusCenter.shared.unregister(id: registrationId)
     }
     
     // MARK: - Data Handling
@@ -152,6 +193,8 @@ public class CalendarViewModel {
         switch resource.phase {
         case .offline:
             if schedule.isEmpty { state = .offline }
+        case .serverUnreachable:
+            if schedule.isEmpty { state = .serverUnreachable }
         case .error(let message):
             if schedule.isEmpty { state = .error(message) }
         case .idle, .loading, .loaded, .empty:
@@ -204,6 +247,7 @@ public class CalendarViewModel {
     
     // MARK: - Helpers & Cache
     public func loadFromCache(matricola: String) async {
+        ensureRegistered()
         await resource.loadFromDisk()
         if let cached = resource.value {
             processAndSave(cached, matricola: matricola)

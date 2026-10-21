@@ -19,7 +19,7 @@ struct NetworkService {
     
     init() {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 30
+        configuration.timeoutIntervalForRequest = 15
         configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         configuration.urlCache = nil
         
@@ -33,6 +33,12 @@ struct NetworkService {
     }
     
     private func fetch<T: Decodable>(from endpoint: String) async throws -> T {
+        let insideHandler = TickContext.isHandler
+        if await ServerStatusCenter.shared.shouldBlockRequest(insideHandler: insideHandler) {
+            await ServerStatusCenter.shared.noteBlockedRequest()
+            throw NetworkError.serverUnreachable
+        }
+        
         guard let url = URL(string: "\(baseURL)\(endpoint)") else { throw NetworkError.badURL }
         
         do {
@@ -41,6 +47,13 @@ struct NetworkService {
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw NetworkError.unknown(URLError(.unknown))
             }
+            
+            if (500...599).contains(httpResponse.statusCode) {
+                await ServerStatusCenter.shared.reportServerFailure()
+                throw NetworkError.serverUnreachable
+            }
+            
+            await ServerStatusCenter.shared.reportSuccess()
             
             guard (200...299).contains(httpResponse.statusCode) else {
                 throw NetworkError.badServerResponse(statusCode: httpResponse.statusCode)
@@ -68,9 +81,14 @@ struct NetworkService {
             throw error
         } catch let error as URLError {
             switch error.code {
-            case .notConnectedToInternet: throw NetworkError.offline
-            case .timedOut: throw NetworkError.timeout
+            case .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff: throw NetworkError.offline
+            case .timedOut:
+                await ServerStatusCenter.shared.reportServerFailure()
+                throw NetworkError.timeout
             case .cancelled: throw CancellationError()
+            case .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed, .networkConnectionLost, .resourceUnavailable:
+                await ServerStatusCenter.shared.reportServerFailure()
+                throw NetworkError.serverUnreachable
             default: throw NetworkError.unknown(error)
             }
         } catch let error as DecodingError {

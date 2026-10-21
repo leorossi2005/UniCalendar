@@ -31,6 +31,7 @@ struct Settings: View {
                 } label: {
                     Label("Anno", systemImage: "calendar")
                         .foregroundStyle(.primary)
+                        .environment(\.isEnabled, true)
                 }
                 .onChange(of: tempSettings.selectedYear) {
                     handleYearChange()
@@ -73,6 +74,7 @@ struct Settings: View {
                             } label: {
                                 Label("Anno di Corso", systemImage: "calendar.badge.clock")
                                     .foregroundStyle(.primary)
+                                    .environment(\.isEnabled, true)
                             }
                         } else {
                             NavigationLink {
@@ -129,10 +131,35 @@ struct Settings: View {
                     if viewModel.isOffline {
                         Text("In modalità offline non puoi modificare queste opzioni.")
                             .foregroundStyle(.yellow)
+                    } else if ServerStatusCenter.shared.isUnreachable && ServerStatusCenter.shared.isRetrying {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Sto provando a contattare il server...")
+                                .foregroundStyle(.orange)
+                        }
+                    } else if ServerStatusCenter.shared.isUnreachable {
+                        HStack {
+                            Text("Server non raggiungibile, riprova più tardi.")
+                                .foregroundStyle(.orange)
+                            Spacer()
+                            Button("Riprova") {
+                                Haptics.play(.impact(weight: .medium))
+                                Task { await viewModel.retry(year: tempSettings.selectedYear) }
+                            }
+                            .disabled(ServerStatusCenter.shared.isRetrying)
+                            .buttonStyle(.bordered)
+                            .controlSize(.mini)
+                            .tint(.orange)
+                            .environment(\.isEnabled, true)
+                        }
+                    } else if viewModel.isLoading {
+                        Text("Aggiornamento dei dati in corso...")
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
-            .disabled(viewModel.isOffline)
+            .disabled(viewModel.isOffline || viewModel.isServerUnreachable || viewModel.isLoading)
             Section {
                 NavigationLink(destination: NotificationsView()) {
                     Label("Notifiche Programmate", systemImage: "bell.badge")
@@ -191,7 +218,11 @@ struct Settings: View {
         .navigationTitle("Impostazioni")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
+            viewModel.activate()
             loadInitialData()
+        }
+        .onDisappear {
+            viewModel.cancelAll()
         }
     }
     

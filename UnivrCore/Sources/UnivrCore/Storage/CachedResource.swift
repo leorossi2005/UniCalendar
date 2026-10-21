@@ -15,6 +15,7 @@ public enum ResourcePhase: Equatable, Sendable {
     case loaded
     case empty
     case offline
+    case serverUnreachable
     case error(String)
 }
 
@@ -47,6 +48,7 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
     private let cacheManager: CacheManager
     private let autoSaveToDisk: Bool
     private var lastFetch: (@Sendable () async throws -> T)?
+    private var generation = 0
 
     init(cacheFileName: CacheFile? = nil, cacheManager: CacheManager = .shared, autoSaveToDisk: Bool = true) {
         self.cacheFileName = cacheFileName
@@ -73,9 +75,7 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
         case .disconnected:
             if value == nil { phase = .offline }
         case .connected:
-            if let lastFetch {
-                Task { try? await self.refresh(fetch: lastFetch) }
-            }
+            break
         }
     }
 
@@ -97,23 +97,37 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
 
     @discardableResult
     func refresh(fetch: @escaping @Sendable () async throws -> T) async throws -> T {
+        generation += 1
+        let myGen = generation
+        let previous = phase
         lastFetch = fetch
         phase = .loading
         do {
             let fresh = try await fetch()
             try Task.checkCancellation()
-            value = fresh
-            phase = .loaded
-            if autoSaveToDisk, let cacheFileName { await cacheManager.save(fresh, file: cacheFileName) }
+            if generation == myGen {
+                value = fresh
+                phase = .loaded
+                if autoSaveToDisk, let cacheFileName { await cacheManager.save(fresh, file: cacheFileName) }
+            }
             return fresh
         } catch {
-            if error is CancellationError { throw error }
-            if isOfflineFailure(error) {
-                phase = .offline
-            } else if let networkError = error as? NetworkError {
-                phase = .error(networkError.errorDescription ?? String(localized: .unknownError))
-            } else {
-                phase = .error(String(localized: .genericError(error.localizedDescription)))
+            if error is CancellationError {
+                if generation == myGen {
+                    phase = previous == .loading ? (value == nil ? .idle : .loaded) : previous
+                }
+                throw error
+            }
+            if generation == myGen {
+                if isOfflineFailure(error) {
+                    phase = .offline
+                } else if isServerUnreachableFailure(error) {
+                    phase = .serverUnreachable
+                } else if let networkError = error as? NetworkError {
+                    phase = .error(networkError.errorDescription ?? String(localized: .unknownError))
+                } else {
+                    phase = .error(String(localized: .genericError(error.localizedDescription)))
+                }
             }
             throw error
         }
@@ -122,6 +136,12 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
     private func isOfflineFailure(_ error: Error) -> Bool {
         if NetworkStatusMonitor.shared.status == .disconnected { return true }
         if case NetworkError.offline = error { return true }
+        return false
+    }
+    
+    private func isServerUnreachableFailure(_ error: Error) -> Bool {
+        if case NetworkError.serverUnreachable = error { return true }
+        if case NetworkError.timeout = error { return true }
         return false
     }
     
@@ -138,6 +158,7 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
     }
 
     func clear() async {
+        generation += 1
         value = nil
         phase = .idle
         lastFetch = nil

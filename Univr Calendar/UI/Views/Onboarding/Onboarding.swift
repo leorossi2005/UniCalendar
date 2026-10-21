@@ -25,6 +25,7 @@ struct Onboarding: View {
     
     @State private var step: OnboardingStep? = .welcome
     @State private var loadingStep: OnboardingStep? = nil
+    @State private var transitionTask: Task<Void, Never>? = nil
     @State private var errorText: String?
     
     @State private var searchTextFieldFocus: Bool = false
@@ -65,35 +66,79 @@ struct Onboarding: View {
                 }
             }
             .overlay(alignment: .top) {
-                Text("Al momento sei offline.")
+                let isOffline = viewModel.isOffline
+                let isUnreachable = ServerStatusCenter.shared.isUnreachable
+                let isRetrying = ServerStatusCenter.shared.isRetrying
+                let isWarningVisible = isOffline || isUnreachable
+                
+                Button {
+                    Haptics.play(.impact(weight: .medium))
+                    Task {
+                        await ServerStatusCenter.shared.retryNow()
+                        if (settings.selectedYear.isEmpty || settings.selectedYear == "0"), let firstYear = viewModel.years.first {
+                            settings.selectedYear = firstYear.id
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        if isOffline {
+                            Image(systemName: "wifi.slash")
+                                .font(.subheadline.weight(.semibold))
+                            Text("Al momento sei offline.")
+                                .font(.subheadline.weight(.medium))
+                        } else if isRetrying {
+                            ProgressView()
+                                .controlSize(.small)
+                                .tint(.black)
+                            Text("Sto provando a contattare il server...")
+                                .font(.subheadline.weight(.medium))
+                        } else {
+                            Image(systemName: "server.rack")
+                                .font(.subheadline.weight(.semibold))
+                            Text("Server non raggiungibile, riprova più tardi.")
+                                .font(.subheadline.weight(.medium))
+                        }
+                    }
                     .foregroundStyle(.black)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 20)
                     .padding(.vertical, 12)
                     .background {
                         if #available(iOS 26, *) {
                             RoundedRectangle(cornerRadius: 25)
-                                .glassEffect(.regular.interactive().tint(.yellow.opacity(0.7)))
+                                .glassEffect(.regular.interactive().tint(isOffline ? .yellow : .orange))
                         } else {
                             RoundedRectangle(cornerRadius: 25)
-                                .fill(colorScheme == .light ? .yellow : Color(hex: "#CCAA00")!)
-                                .strokeBorder(colorScheme == .light ? Color(hex: "#CCAA00")! : Color(hex: "#B39500")!, lineWidth: 2)
+                                .fill(isOffline ? .yellow : .orange)
                         }
                     }
-                    .blur(radius: viewModel.isOffline ? 0 : 20)
-                    .offset(y: viewModel.isOffline ? safeAreas.top : safeAreas.top / 2)
-                    .scaleEffect(viewModel.isOffline ? 1 : 0)
-                    .animation(.bouncy(extraBounce: 0.1), value: viewModel.isOffline)
-                    .allowsHitTesting(false)
-                    .ignoresSafeArea()
+                }
+                .disabled(isRetrying)
+                .buttonStyle(.plain)
+                .blur(radius: isWarningVisible ? 0 : 20)
+                .offset(y: isWarningVisible ? safeAreas.top : safeAreas.top / 2)
+                .scaleEffect(isWarningVisible ? 1 : 0)
+                .animation(.bouncy(extraBounce: 0.1), value: isWarningVisible)
+                .allowsHitTesting(isWarningVisible)
+                .ignoresSafeArea()
             }
             .scrollTargetBehavior(.paging)
             .scrollIndicators(.never, axes: .horizontal)
             .scrollPosition(id: $step, anchor: .center)
             .scrollDisabled(true)
             .animation(.snappy, value: step)
-            .task(id: viewModel.isOffline) {
+            .task(id: viewModel.isOffline || ServerStatusCenter.shared.isUnreachable) {
+                guard !viewModel.isOffline && !ServerStatusCenter.shared.isUnreachable else { return }
                 if let year = await viewModel.prefetch(preferredYear: settings.selectedYear) {
                     settings.selectedYear = year
+                }
+            }
+            .onChange(of: ServerStatusCenter.shared.isUnreachable) { _, isUnreachable in
+                if isUnreachable && loadingStep != nil {
+                    transitionTask?.cancel()
+                    transitionTask = nil
+                    withAnimation {
+                        loadingStep = nil
+                    }
                 }
             }
             .onDisappear { viewModel.cancelAll() }
@@ -112,11 +157,11 @@ struct Onboarding: View {
             bottomPadding: safeAreas.bottom,
             buttonTitle: "Continua",
             isLoading: loadingStep == .year,
-            isButtonDisabled: viewModel.isOffline || step != .welcome || loadingStep != nil,
+            isButtonDisabled: viewModel.isOffline || ServerStatusCenter.shared.isUnreachable || step != .welcome || loadingStep != nil,
             buttonAction: {
                 guard step == .welcome, loadingStep == nil else { return }
                 handlePageTransition(to: .year) {
-                    try await viewModel.ensureYears()
+                    try await viewModel.reloadYears()
                 }
             }
         )
@@ -128,13 +173,13 @@ struct Onboarding: View {
             bottomPadding: safeAreas.bottom,
             buttonTitle: "Continua",
             isLoading: loadingStep == .course,
-            isButtonDisabled: viewModel.isOffline || loadingStep != nil,
+            isButtonDisabled: viewModel.isOffline || ServerStatusCenter.shared.isUnreachable || loadingStep != nil,
             buttonAction: {
                 guard step == .year, loadingStep == nil else { return }
                 handlePageTransition(to: .course) {
                     let year = settings.selectedYear
                     if year != viewModel.coursesYear { settings.selectedCourse = "0" }
-                    try await viewModel.ensureCourses(year: year)
+                    try await viewModel.reloadCourses(year: year)
                 }
             }
         ) { ShortListSelector(items: viewModel.years, selectedItem: $settings.selectedYear) }
@@ -241,9 +286,13 @@ struct Onboarding: View {
             loadingStep = targetIndex
         }
         
-        Task {
+        transitionTask?.cancel()
+        transitionTask = Task {
+            defer { transitionTask = nil }
             do {
                 try await operation()
+                
+                guard loadingStep == targetIndex else { return }
                 
                 withAnimation {
                     step = targetIndex

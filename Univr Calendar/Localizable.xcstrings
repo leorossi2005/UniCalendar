@@ -177,6 +177,23 @@
         }
       }
     },
+    "Aggiornamento dei dati in corso..." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updating data in progress..."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiornamento dei dati in corso..."
+          }
+        }
+      }
+    },
     "Aggiugni un nuovo tag" : {
       "localizations" : {
         "en" : {
@@ -1047,6 +1064,16 @@
         }
       }
     },
+    "Non riusciamo a contattare il server. Riprova più tardi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We are unable to contact the server. Try again later."
+          }
+        }
+      }
+    },
     "Non specificato" : {
       "localizations" : {
         "en" : {
@@ -1257,6 +1284,26 @@
         }
       }
     },
+    "Riprova" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again"
+          }
+        }
+      }
+    },
+    "Riprova adesso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again now"
+          }
+        }
+      }
+    },
     "Risultati" : {
       "localizations" : {
         "en" : {
@@ -1417,6 +1464,26 @@
         }
       }
     },
+    "Server non raggiungibile" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server unreachable"
+          }
+        }
+      }
+    },
+    "Server non raggiungibile, riprova più tardi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server unreachable, try again later."
+          }
+        }
+      }
+    },
     "Si è verificato un errore" : {
       "localizations" : {
         "en" : {
@@ -1433,6 +1500,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Showing courses for the **%@** academic year."
+          }
+        }
+      }
+    },
+    "Sto provando a contattare il server..." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trying to contact server..."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sto provando a contattare il server..."
           }
         }
       }

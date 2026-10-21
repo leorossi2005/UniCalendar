@@ -16,12 +16,14 @@ enum NetworkError: Error, LocalizedError {
     case decodingError(Error)
     case offline
     case timeout
+    case serverUnreachable
     case unknown(Error)
     
     var errorDescription: String? {
         switch self {
         case .offline: return String(localized: .networkErrorOffline)
         case .timeout: return String(localized: .networkErrorTimeout)
+        case .serverUnreachable: return String(localized: .networkErrorServerUnreachable)
         case .badURL: return String(localized: .networkErrorBadUrl)
         case .badServerResponse: return String(localized: .networkErrorServer)
         case .emptyData: return String(localized: .networkErrorEmptyData)
