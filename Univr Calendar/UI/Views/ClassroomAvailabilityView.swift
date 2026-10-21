@@ -103,7 +103,7 @@ struct ClassroomAvailabilityView: View {
             )
         case .serverUnreachable:
             ContentUnavailableView {
-                Label("Server non raggiungibile", systemImage: "server.rack")
+                Label("Server non raggiungibile", systemImage: "network.slash")
             } description: {
                 Text("Non riusciamo a contattare il server. Riprova più tardi.")
             }

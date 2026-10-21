@@ -59,18 +59,26 @@ struct ShimmeringGradient: View {
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
-        PhaseAnimator([false, true]) { phase in
-            LinearGradient(
-                colors: [
-                    .black.opacity(0),
-                    colorScheme == .light ? .black.opacity(0.3) : .white.opacity(0.05),
-                    .black.opacity(0)
-                ],
-                startPoint: phase ? UnitPoint(x: 1, y: 0.5) : UnitPoint(x: -1, y: 0.5),
-                endPoint: phase ? UnitPoint(x: 2, y: 0.5) : UnitPoint(x: 0, y: 0.5)
-            )
-        } animation: { _ in
-            .linear(duration: 1.5).repeatForever(autoreverses: false)
+        GeometryReader { geometry in
+            let width = max(geometry.size.width, 1)
+            TimelineView(.animation) { timeline in
+                let time = timeline.date.timeIntervalSinceReferenceDate
+                let duration: Double = 1.5
+                let progress = (time.truncatingRemainder(dividingBy: duration)) / duration
+                let xOffset = -width + (progress * width * 2)
+                
+                LinearGradient(
+                    colors: [
+                        .black.opacity(0),
+                        colorScheme == .light ? .black.opacity(0.3) : .white.opacity(0.05),
+                        .black.opacity(0)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(width: width, height: geometry.size.height)
+                .offset(x: xOffset)
+            }
         }
     }
 }
@@ -85,14 +93,12 @@ extension View {
                 .opacity(opacity)
                 .colorMultiply(Color(.tertiarySystemGroupedBackground))
                 .overlay {
-                    ZStack {
-                        ShimmeringGradient()
-                            .mask {
-                                self
-                                    .redacted(reason: .placeholder)
-                            }
-                    }
-                    .opacity(opacity)
+                    ShimmeringGradient()
+                        .mask {
+                            self
+                                .redacted(reason: .placeholder)
+                        }
+                        .opacity(opacity)
                 }
         } else {
             self
@@ -195,7 +201,7 @@ extension SearchFieldPlacement {
     }
 }
 
-extension ToolbarItem {
+extension ToolbarContent {
     @ToolbarContentBuilder
     func toolbarBackgroundVisibility(_ visibility: Visibility) -> some ToolbarContent {
         if #available(iOS 26, *) {
@@ -203,6 +209,11 @@ extension ToolbarItem {
         } else {
             self
         }
+    }
+    
+    @ToolbarContentBuilder
+    func modify<Content: ToolbarContent>(@ToolbarContentBuilder _ transform: (Self) -> Content) -> some ToolbarContent {
+        transform(self)
     }
 }
 

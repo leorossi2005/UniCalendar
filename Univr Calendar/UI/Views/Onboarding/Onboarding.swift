@@ -65,60 +65,6 @@ struct Onboarding: View {
                     }
                 }
             }
-            .overlay(alignment: .top) {
-                let isOffline = viewModel.isOffline
-                let isUnreachable = ServerStatusCenter.shared.isUnreachable
-                let isRetrying = ServerStatusCenter.shared.isRetrying
-                let isWarningVisible = isOffline || isUnreachable
-                
-                HStack(spacing: 8) {
-                    if isOffline {
-                        Image(systemName: "wifi.slash")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Al momento sei offline.")
-                            .font(.subheadline.weight(.medium))
-                    } else if isRetrying {
-                        ProgressView()
-                            .controlSize(.small)
-                            .tint(.black)
-                        Text("Sto provando a contattare il server...")
-                            .font(.subheadline.weight(.medium))
-                    } else {
-                        Image(systemName: "server.rack")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Server non raggiungibile, riprova più tardi.")
-                            .font(.subheadline.weight(.medium))
-                    }
-                }
-                .foregroundStyle(.black)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .modify { view in
-                    if #available(iOS 26, *) {
-                        view.glassEffect(.regular.interactive().tint(isOffline ? .yellow : .orange), in: .capsule)
-                    } else {
-                        view.background(isOffline ? .yellow : .orange, in: .capsule)
-                    }
-                }
-                .padding(.top, safeAreas.bottom > 0 ? 0 : 8)
-                .disabled(isRetrying)
-                .buttonStyle(.plain)
-                .blur(radius: isWarningVisible ? 0 : 20)
-                .offset(y: isWarningVisible ? safeAreas.top : safeAreas.top / 2)
-                .scaleEffect(isWarningVisible ? 1 : 0)
-                .animation(.bouncy(extraBounce: 0.1), value: isWarningVisible)
-                .allowsHitTesting(isWarningVisible)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    Haptics.play(.impact(weight: .medium))
-                    Task {
-                        await ServerStatusCenter.shared.retryNow()
-                        if (settings.selectedYear.isEmpty || settings.selectedYear == "0"), let firstYear = viewModel.years.first {
-                            settings.selectedYear = firstYear.id
-                        }
-                    }
-                }
-            }
             .scrollTargetBehavior(.paging)
             .scrollIndicators(.never, axes: .horizontal)
             .scrollPosition(id: $step, anchor: .center)
@@ -140,6 +86,59 @@ struct Onboarding: View {
                 }
             }
             .onDisappear { viewModel.cancelAll() }
+        }
+        .overlay(alignment: .top) {
+            let isOffline = viewModel.isOffline
+            let isUnreachable = ServerStatusCenter.shared.isUnreachable
+            let isRetrying = ServerStatusCenter.shared.isRetrying
+            let isWarningVisible = isOffline || isUnreachable
+            
+            HStack(spacing: 8) {
+                if isOffline {
+                    Image(systemName: "wifi.slash")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Al momento sei offline.")
+                        .font(.subheadline.weight(.medium))
+                } else if isRetrying {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(.black)
+                    Text("Sto provando a contattare il server...")
+                        .font(.subheadline.weight(.medium))
+                } else {
+                    Image(systemName: "network.slash")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Server non raggiungibile, riprova più tardi.")
+                        .font(.subheadline.weight(.medium))
+                }
+            }
+            .foregroundStyle(.black)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .modify { view in
+                if #available(iOS 26, *) {
+                    view.glassEffect(.regular.interactive().tint(isOffline ? .yellow : .orange), in: .capsule)
+                } else {
+                    view.background(isOffline ? .yellow : .orange, in: .capsule)
+                }
+            }
+            .contentShape(Capsule())
+            .padding(.top, safeAreas.bottom > 0 ? 0 : 8)
+            .blur(radius: isWarningVisible ? 0 : 20)
+            .offset(y: isWarningVisible ? safeAreas.top : safeAreas.top / 2)
+            .scaleEffect(isWarningVisible ? 1 : 0)
+            .animation(.bouncy(extraBounce: 0.1), value: isWarningVisible)
+            .allowsHitTesting(isWarningVisible && !isRetrying)
+            .ignoresSafeArea()
+            .onTapGesture {
+                Haptics.play(.impact(weight: .medium))
+                Task {
+                    await ServerStatusCenter.shared.retryNow()
+                    if (settings.selectedYear.isEmpty || settings.selectedYear == "0"), let firstYear = viewModel.years.first {
+                        settings.selectedYear = firstYear.id
+                    }
+                }
+            }
         }
     }
     
@@ -191,6 +190,7 @@ struct Onboarding: View {
             buttonTitle: "Continua",
             isLoading: false,
             isButtonDisabled: settings.selectedCourse == "0" || loadingStep != nil,
+            textFieldFocus: searchTextFieldFocus,
             buttonAction: {
                 guard step == .course else { return }
                 searchTextFieldFocus = false
@@ -225,6 +225,7 @@ struct Onboarding: View {
             buttonTitle: settings.foundMatricola ? "Continua" : "Comincia!",
             isLoading: false,
             isButtonDisabled: settings.selectedAcademicYear == "0" || settings.selectedAcademicYear.isEmpty || loadingStep != nil,
+            textFieldFocus: academicYearSearchFocus,
             buttonAction: {
                 guard step == .academicYear else { return }
                 academicYearSearchFocus = false

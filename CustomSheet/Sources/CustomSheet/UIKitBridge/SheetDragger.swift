@@ -66,6 +66,7 @@ struct SheetDragger: UIViewRepresentable {
         }
         
         func setupGesture(on window: UIWindow, targetedTo view: UIView) {
+            removeGesture()
             self.window = window
             self.targetView = view
             
@@ -102,6 +103,7 @@ struct SheetDragger: UIViewRepresentable {
             if gesture.state == .changed {
                 parent.onDrag(translation.y, parent.direction)
             } else if gesture.state == .ended || gesture.state == .cancelled {
+                parent.direction = .none
                 if let scrollView = trackedScrollView {
                     scrollView.panGestureRecognizer.isEnabled = true
                     trackedScrollView = nil
@@ -160,8 +162,8 @@ struct SheetDragger: UIViewRepresentable {
             if parent.direction == .none {
                 let translation = pan.translation(in: targetView)
                 
-                let isDraggingUp = translation.y > 0
-                let isDraggingDown = translation.y < 0
+                let isDraggingUp = translation.y < 0
+                let isDraggingDown = translation.y > 0
                 
                 if isDraggingUp {
                     parent.direction = .up

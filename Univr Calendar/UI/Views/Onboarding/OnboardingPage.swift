@@ -20,6 +20,7 @@ struct OnboardingPage<Content: View>: View {
     let buttonTitle: LocalizedStringKey
     let isLoading: Bool
     let isButtonDisabled: Bool
+    var textFieldFocus: Bool = false
     let buttonAction: () -> Void
     @ViewBuilder let content: Content
     
@@ -89,9 +90,9 @@ struct OnboardingPage<Content: View>: View {
             )
         }
         .padding(.horizontal, max(bottomPadding, 16))
-        .safeAreaPadding(.bottom, bottomPadding == 0 ? 16 : 10)
+        .safeAreaPadding(.bottom, bottomPadding == 0 ? 16 : textFieldFocus ? 10 : 0)
         .multilineTextAlignment(.center)
-        .containerRelativeFrame([.horizontal, .vertical], alignment: .bottom)
+        .containerRelativeFrame(.horizontal)
         .task(id: isActive) {
             if isActive {
                 withAnimation(.spring(response: 0.80, dampingFraction: 0.84)) {

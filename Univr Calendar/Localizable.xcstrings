@@ -1294,17 +1294,6 @@
         }
       }
     },
-    "Riprova adesso" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Try again now"
-          }
-        }
-      }
-    },
     "Risultati" : {
       "localizations" : {
         "en" : {

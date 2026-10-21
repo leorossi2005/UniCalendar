@@ -101,7 +101,7 @@ struct WelcomeOnboardingPage: View {
                     action: buttonAction
                 )
                 .padding(.horizontal, max(bottomPadding, 16))
-                .safeAreaPadding(.bottom, bottomPadding == 0 ? 16 : 10)
+                .safeAreaPadding(.bottom, bottomPadding == 0 ? 16 : 0)
                 .opacity(showButton ? 1 : 0)
                 .blur(radius: showButton ? 0 : 12)
                 .allowsHitTesting(showButton)

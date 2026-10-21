@@ -94,6 +94,9 @@ struct CalendarView: View {
             .modifier(SelectionFeedback(coordinator: coordinator, sheetRouter: sheetRouter))
             .animation(.default, value: viewModel.checkingUpdates)
             .animation(.default, value: viewModel.updateAvailable)
+            .animation(.default, value: ServerStatusCenter.shared.isUnreachable)
+            .animation(.default, value: ServerStatusCenter.shared.isRetrying)
+            .animation(.default, value: viewModel.isOffline)
         }
         .customSheet(isPresented: .constant(true), manager: sheetRouter.manager, detents: sheetRouter.detents) {
             CalendarSheetContent(
@@ -139,7 +142,7 @@ struct CalendarView: View {
                 )
             case .serverUnreachable:
                 ContentUnavailableView {
-                    Label("Server non raggiungibile", systemImage: "server.rack")
+                    Label("Server non raggiungibile", systemImage: "network.slash")
                 } description: {
                     Text("Non riusciamo a contattare il server. Riprova più tardi.")
                 }
@@ -214,7 +217,7 @@ struct CalendarView: View {
                     Image(systemName: "wifi.slash")
                         .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isOffline)
                         .foregroundStyle(.yellow.opacity(0.8))
-                    Image(systemName: "server.rack")
+                    Image(systemName: "network.slash")
                         .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isServerUnreachable)
                         .foregroundStyle(.orange.opacity(0.8))
                 }
@@ -230,20 +233,30 @@ struct CalendarView: View {
         }
         .toolbarBackgroundVisibility(.hidden)
         
-        if (viewModel.checkingUpdates || ServerStatusCenter.shared.isRetrying || ServerStatusCenter.shared.isUnreachable) && !viewModel.isOffline {
+        if ServerStatusCenter.shared.isUnreachable && !viewModel.isOffline {
             ToolbarItem(placement: .topBarTrailing) {
-                if ServerStatusCenter.shared.isUnreachable && !ServerStatusCenter.shared.isRetrying {
-                    Button("Riprova", systemImage: "arrow.triangle.2.circlepath") {
-                        Haptics.play(.impact(weight: .medium))
-                        Task {
-                            await ServerStatusCenter.shared.retryNow()
-                        }
+                Button {
+                    Haptics.play(.impact(weight: .medium))
+                    Task {
+                        await ServerStatusCenter.shared.retryNow()
                     }
-                } else {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(ServerStatusCenter.shared.isRetrying && ServerStatusCenter.shared.isUnreachable ? .orange : nil)
+                } label: {
+                    if ServerStatusCenter.shared.isRetrying {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(.white)
+                    } else {
+                        Label("Riprova", systemImage: "arrow.triangle.2.circlepath")
+                    }
                 }
+                .allowsHitTesting(!ServerStatusCenter.shared.isRetrying)
+                .buttonStyle(.borderedProminent)
+                .tint(.orange)
+            }
+        } else if viewModel.checkingUpdates && !viewModel.isOffline {
+            ToolbarItem(placement: .topBarTrailing) {
+                ProgressView()
+                    .controlSize(.small)
             }
         } else if viewModel.updateAvailable {
             ToolbarItem(placement: .topBarTrailing) {
@@ -271,12 +284,13 @@ struct CalendarView: View {
                     coordinator.page = coordinator.page == .main ? .classrooms : .main
                 }
             }
-            .symbolReplace()
+            .modify { view in if #available(iOS 26, *) { view } else { view.symbolReplace() }}
         }
         
         ToolbarItem(placement: .topBarTrailing) {
             Button("Impostazioni", systemImage: "gearshape.fill", action: openSettingsAction)
         }
+        .modify { view in if #available(iOS 27, *) { view.visibilityPriority(.high) } else { view }}
     }
     
     // MARK: - Logic Methods
