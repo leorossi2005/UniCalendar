@@ -150,9 +150,9 @@ struct CalendarView: View {
                 }
             case .univrOffline:
                 ContentUnavailableView {
-                    Label("UniVR non raggiungibile", systemImage: UniVROfflineStyle.symbolName)
+                    Label("Università non raggiungibile", systemImage: UniVROfflineStyle.symbolName)
                 } description: {
-                    Text("Non riusciamo a contattare i server dell'università. Riprova più tardi.")
+                    Text("Questo corso non è disponibile finché i server dell'università non tornano online. Riprova più tardi.")
                 }
             case .error(let msg):
                 ContentUnavailableView(

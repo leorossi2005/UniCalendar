@@ -1074,16 +1074,6 @@
         }
       }
     },
-    "Non riusciamo a contattare i server dell'università. Riprova più tardi." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "We can't reach the university servers. Try again later."
-          }
-        }
-      }
-    },
     "Non riusciamo a contattare il server. Riprova più tardi." : {
       "localizations" : {
         "en" : {
@@ -1270,6 +1260,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This section includes everything that concerns you, accessible in one place without having to search around the app."
+          }
+        }
+      }
+    },
+    "Questo corso non è disponibile finché i server dell'università non tornano online. Riprova più tardi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This course is not available until the university servers are back online. Try again later."
           }
         }
       }
@@ -1601,12 +1601,12 @@
         }
       }
     },
-    "UniVR non raggiungibile" : {
+    "Università non raggiungibile" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "UniVR unreachable"
+            "value" : "University unreachable"
           }
         }
       }

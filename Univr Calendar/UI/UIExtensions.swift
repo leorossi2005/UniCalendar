@@ -11,7 +11,6 @@ import SwiftUI
 import UnivrCore
 import CustomSheet
 
-/// Stile unico per lo stato "server UniVR non raggiungibile" (offline = giallo, server proprio giù = arancione, UniVR giù = blu).
 enum UniVROfflineStyle {
     static let symbolName = "building.columns"
 }
