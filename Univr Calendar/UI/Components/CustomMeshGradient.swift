@@ -10,9 +10,9 @@
 import SwiftUI
 
 struct BaseGradient {
-    public static let width: Int = 5
-    public static let height: Int = 5
-    public static let points: [SIMD2<Float>] =
+    static let width: Int = 5
+    static let height: Int = 5
+    static let points: [SIMD2<Float>] =
         [
             SIMD2<Float>(0.0, 0.0),
             SIMD2<Float>(0.18819128, 0.0),
@@ -40,7 +40,7 @@ struct BaseGradient {
             SIMD2<Float>(0.8822501, 1.0),
             SIMD2<Float>(1.0, 1.0)
         ]
-    public static let colors: [Color] =
+    static let colors: [Color] =
         [
             Color(red: 1, green: 0.222, blue: 0.235),
             Color(red: 0, green: 0.534, blue: 1),
@@ -68,8 +68,8 @@ struct BaseGradient {
             Color(red: 0.381, green: 0.331, blue: 0.960),
             Color(red: -0.002, green: 0.784, blue: 0.701)
         ]
-    public static let background: Color = Color(red: 1, green: 1, blue: 1)
-    public static let smoothsColors: Bool = true
+    static let background: Color = Color(red: 1, green: 1, blue: 1)
+    static let smoothsColors: Bool = true
 }
 
 struct CustomMeshGradient: View {

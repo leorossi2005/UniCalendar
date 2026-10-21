@@ -42,12 +42,11 @@ public enum CacheFile: Equatable, Sendable {
 final class CachedResource<T: Codable & Equatable & Sendable> {
     private(set) var phase: ResourcePhase = .idle
     private(set) var value: T?
-    var hasLastFetch: Bool { lastFetch != nil }
+    private(set) var hasLastFetch: Bool = false
 
     private let cacheFileName: CacheFile?
     private let cacheManager: CacheManager
     private let autoSaveToDisk: Bool
-    private var lastFetch: (@Sendable () async throws -> T)?
     private var generation = 0
 
     init(cacheFileName: CacheFile? = nil, cacheManager: CacheManager = .shared, autoSaveToDisk: Bool = true) {
@@ -100,7 +99,7 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
         generation += 1
         let myGen = generation
         let previous = phase
-        lastFetch = fetch
+        hasLastFetch = true
         phase = .loading
         do {
             let fresh = try await fetch()
@@ -150,7 +149,7 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
         if value == nil { await loadFromDisk() }
         
         if let currentValue = value {
-            lastFetch = fetch
+            hasLastFetch = true
             Task { try? await self.refresh(fetch: fetch) }
             return currentValue
         }
@@ -161,7 +160,7 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
         generation += 1
         value = nil
         phase = .idle
-        lastFetch = nil
+        hasLastFetch = false
         if let cacheFileName {
             await cacheManager.clear(file: cacheFileName)
         }

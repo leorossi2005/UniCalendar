@@ -20,7 +20,7 @@ public final class ServerStatusCenter {
     
     public private(set) var isUnreachable: Bool = false
     public private(set) var isRetrying: Bool = false
-    public private(set) var isTickInProgress: Bool = false
+    private var isTickInProgress: Bool = false
     
     private var hadFailureInCurrentTick: Bool = false
     private var hadSuccessInCurrentTick: Bool = false
@@ -68,6 +68,7 @@ public final class ServerStatusCenter {
     }
     
     public func retryNow() async {
+        guard NetworkStatusMonitor.shared.status != .disconnected else { return }
         guard !isTickInProgress else { return }
         autoRetry.cancel()
         await performTick()
@@ -130,13 +131,17 @@ public final class ServerStatusCenter {
         }
         
         if !isUnreachable && blockedDuringTick {
-            await executeHandlersOnce()
+            Task {
+                await self.executeHandlersOnce()
+            }
         }
     }
     
     private func startLoopIfNeeded() {
         autoRetry.startIfNeeded(
-            while: { [weak self] in self?.isUnreachable == true },
+            while: { [weak self] in
+                self?.isUnreachable == true && NetworkStatusMonitor.shared.status != .disconnected
+            },
             attempt: { [weak self] in
                 await self?.performTick()
             }
@@ -145,7 +150,9 @@ public final class ServerStatusCenter {
     
     private func startLoop() {
         autoRetry.start(
-            while: { [weak self] in self?.isUnreachable == true },
+            while: { [weak self] in
+                self?.isUnreachable == true && NetworkStatusMonitor.shared.status != .disconnected
+            },
             attempt: { [weak self] in
                 await self?.performTick()
             }

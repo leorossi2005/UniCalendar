@@ -71,47 +71,36 @@ struct Onboarding: View {
                 let isRetrying = ServerStatusCenter.shared.isRetrying
                 let isWarningVisible = isOffline || isUnreachable
                 
-                Button {
-                    Haptics.play(.impact(weight: .medium))
-                    Task {
-                        await ServerStatusCenter.shared.retryNow()
-                        if (settings.selectedYear.isEmpty || settings.selectedYear == "0"), let firstYear = viewModel.years.first {
-                            settings.selectedYear = firstYear.id
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 8) {
-                        if isOffline {
-                            Image(systemName: "wifi.slash")
-                                .font(.subheadline.weight(.semibold))
-                            Text("Al momento sei offline.")
-                                .font(.subheadline.weight(.medium))
-                        } else if isRetrying {
-                            ProgressView()
-                                .controlSize(.small)
-                                .tint(.black)
-                            Text("Sto provando a contattare il server...")
-                                .font(.subheadline.weight(.medium))
-                        } else {
-                            Image(systemName: "server.rack")
-                                .font(.subheadline.weight(.semibold))
-                            Text("Server non raggiungibile, riprova più tardi.")
-                                .font(.subheadline.weight(.medium))
-                        }
-                    }
-                    .foregroundStyle(.black)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
-                    .background {
-                        if #available(iOS 26, *) {
-                            RoundedRectangle(cornerRadius: 25)
-                                .glassEffect(.regular.interactive().tint(isOffline ? .yellow : .orange))
-                        } else {
-                            RoundedRectangle(cornerRadius: 25)
-                                .fill(isOffline ? .yellow : .orange)
-                        }
+                HStack(spacing: 8) {
+                    if isOffline {
+                        Image(systemName: "wifi.slash")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Al momento sei offline.")
+                            .font(.subheadline.weight(.medium))
+                    } else if isRetrying {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(.black)
+                        Text("Sto provando a contattare il server...")
+                            .font(.subheadline.weight(.medium))
+                    } else {
+                        Image(systemName: "server.rack")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Server non raggiungibile, riprova più tardi.")
+                            .font(.subheadline.weight(.medium))
                     }
                 }
+                .foregroundStyle(.black)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .modify { view in
+                    if #available(iOS 26, *) {
+                        view.glassEffect(.regular.interactive().tint(isOffline ? .yellow : .orange), in: .capsule)
+                    } else {
+                        view.background(isOffline ? .yellow : .orange, in: .capsule)
+                    }
+                }
+                .padding(.top, safeAreas.bottom > 0 ? 0 : 8)
                 .disabled(isRetrying)
                 .buttonStyle(.plain)
                 .blur(radius: isWarningVisible ? 0 : 20)
@@ -120,6 +109,15 @@ struct Onboarding: View {
                 .animation(.bouncy(extraBounce: 0.1), value: isWarningVisible)
                 .allowsHitTesting(isWarningVisible)
                 .ignoresSafeArea()
+                .onTapGesture {
+                    Haptics.play(.impact(weight: .medium))
+                    Task {
+                        await ServerStatusCenter.shared.retryNow()
+                        if (settings.selectedYear.isEmpty || settings.selectedYear == "0"), let firstYear = viewModel.years.first {
+                            settings.selectedYear = firstYear.id
+                        }
+                    }
+                }
             }
             .scrollTargetBehavior(.paging)
             .scrollIndicators(.never, axes: .horizontal)

@@ -39,9 +39,6 @@ public final class UniversityDataManager {
     public var isServerUnreachable: Bool {
         !isOffline && ServerStatusCenter.shared.isUnreachable
     }
-    public var isRetrying: Bool {
-        ServerStatusCenter.shared.isRetrying
-    }
     public var isLoading: Bool {
         yearsResource.phase == .loading || coursesResource?.phase == .loading
     }
@@ -190,14 +187,18 @@ public final class UniversityDataManager {
         guard year != "0", !year.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         lastRetryYear = year
         activeResource = .courses
+        let resource: CachedResource<[Course]>
         if year != currentCoursesYear || coursesResource == nil {
             currentCoursesYear = year
-            coursesResource = CachedResource(cacheFileName: .courses(year: year), cacheManager: cacheManager)
+            resource = CachedResource(cacheFileName: .courses(year: year), cacheManager: cacheManager)
+            coursesResource = resource
+        } else {
+            resource = coursesResource!
         }
-        if coursesResource?.value == nil {
-            await coursesResource?.loadFromDisk()
+        if resource.value == nil {
+            await resource.loadFromDisk()
         }
-        try await coursesResource?.refresh { try await self.service.getCourses(year: year) }
+        try await resource.refresh { try await self.service.getCourses(year: year) }
     }
     
     public func resetCourses() {
@@ -214,12 +215,16 @@ public final class UniversityDataManager {
         guard year != "0", !year.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         lastRetryYear = year
         activeResource = .courses
+        let resource: CachedResource<[Course]>
         if year != currentCoursesYear || coursesResource == nil {
             currentCoursesYear = year
-            coursesResource = CachedResource(cacheFileName: .courses(year: year), cacheManager: cacheManager)
+            resource = CachedResource(cacheFileName: .courses(year: year), cacheManager: cacheManager)
+            coursesResource = resource
+        } else {
+            resource = coursesResource!
         }
         
-        try await coursesResource?.refreshStaleWhileRevalidate(fetch: { try await self.service.getCourses(year: year) })
+        try await resource.refreshStaleWhileRevalidate(fetch: { try await self.service.getCourses(year: year) })
     }
     
     public func updateAcademicYears(for courseValue: String) {

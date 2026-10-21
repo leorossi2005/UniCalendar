@@ -46,7 +46,7 @@ struct ClassroomAvailabilityView: View {
                     await availabilityManager.loadLocations()
                 }
                 .onDisappear {
-                    availabilityManager.cancelAutoRetry()
+                    availabilityManager.unregisterFromServerStatus()
                 }
                 .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
                 .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
@@ -106,23 +106,6 @@ struct ClassroomAvailabilityView: View {
                 Label("Server non raggiungibile", systemImage: "server.rack")
             } description: {
                 Text("Non riusciamo a contattare il server. Riprova più tardi.")
-            } actions: {
-                Button {
-                    Haptics.play(.impact(weight: .medium))
-                    Task {
-                        await ServerStatusCenter.shared.retryNow()
-                    }
-                } label: {
-                    if availabilityManager.isRetrying {
-                        ProgressView()
-                            .tint(.white)
-                    } else {
-                        Text("Riprova adesso")
-                    }
-                }
-                .disabled(availabilityManager.isRetrying)
-                .buttonStyle(.borderedProminent)
-                .tint(.orange)
             }
         case .error(let msg):
             ContentUnavailableView(

@@ -39,14 +39,10 @@ public final class AppStatusManager {
         }
     }
     
-    public func activate() {
+    private func activate() {
         ServerStatusCenter.shared.register(id: registrationId) { [weak self] in
             await self?.refresh()
         }
-    }
-    
-    public func deactivate() {
-        ServerStatusCenter.shared.unregister(id: registrationId)
     }
     
     // MARK: - Public

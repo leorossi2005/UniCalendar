@@ -89,7 +89,7 @@ struct CalendarView: View {
                 }
             }
             .onDisappear {
-                viewModel.cancelAutoRetry()
+                viewModel.unregisterFromServerStatus()
             }
             .modifier(SelectionFeedback(coordinator: coordinator, sheetRouter: sheetRouter))
             .animation(.default, value: viewModel.checkingUpdates)
@@ -142,23 +142,6 @@ struct CalendarView: View {
                     Label("Server non raggiungibile", systemImage: "server.rack")
                 } description: {
                     Text("Non riusciamo a contattare il server. Riprova più tardi.")
-                } actions: {
-                    Button {
-                        Haptics.play(.impact(weight: .medium))
-                        Task {
-                            await ServerStatusCenter.shared.retryNow()
-                        }
-                    } label: {
-                        if viewModel.isRetrying {
-                            ProgressView()
-                                .tint(.white)
-                        } else {
-                            Text("Riprova adesso")
-                        }
-                    }
-                    .disabled(viewModel.isRetrying)
-                    .buttonStyle(.borderedProminent)
-                    .tint(.orange)
                 }
             case .error(let msg):
                 ContentUnavailableView(
@@ -227,14 +210,15 @@ struct CalendarView: View {
         ToolbarItem(placement: .topBarLeading) {
             HStack(spacing: 6) {
                 SelectedDayLabel(coordinator: coordinator)
-                Image(systemName: "wifi.slash")
-                    .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isOffline)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.yellow.opacity(0.8))
-                Image(systemName: "server.rack")
-                    .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isServerUnreachable)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.orange.opacity(0.8))
+                ZStack {
+                    Image(systemName: "wifi.slash")
+                        .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isOffline)
+                        .foregroundStyle(.yellow.opacity(0.8))
+                    Image(systemName: "server.rack")
+                        .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isServerUnreachable)
+                        .foregroundStyle(.orange.opacity(0.8))
+                }
+                .font(.system(size: 12, weight: .bold))
             }
             .fixedSize()
             .modify { view in
@@ -246,10 +230,20 @@ struct CalendarView: View {
         }
         .toolbarBackgroundVisibility(.hidden)
         
-        if viewModel.checkingUpdates || ServerStatusCenter.shared.isRetrying {
+        if (viewModel.checkingUpdates || ServerStatusCenter.shared.isRetrying || ServerStatusCenter.shared.isUnreachable) && !viewModel.isOffline {
             ToolbarItem(placement: .topBarTrailing) {
-                ProgressView()
-                    .controlSize(.small)
+                if ServerStatusCenter.shared.isUnreachable && !ServerStatusCenter.shared.isRetrying {
+                    Button("Riprova", systemImage: "arrow.triangle.2.circlepath") {
+                        Haptics.play(.impact(weight: .medium))
+                        Task {
+                            await ServerStatusCenter.shared.retryNow()
+                        }
+                    }
+                } else {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(ServerStatusCenter.shared.isRetrying && ServerStatusCenter.shared.isUnreachable ? .orange : nil)
+                }
             }
         } else if viewModel.updateAvailable {
             ToolbarItem(placement: .topBarTrailing) {

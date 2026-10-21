@@ -219,7 +219,7 @@ public final class AvailabilityDataManager {
         }
     }
     
-    public func cancelAutoRetry() {
+    public func unregisterFromServerStatus() {
         ServerStatusCenter.shared.unregister(id: registrationId)
     }
     

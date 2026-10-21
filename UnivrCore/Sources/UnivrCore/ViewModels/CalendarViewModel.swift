@@ -82,7 +82,8 @@ public class CalendarViewModel {
         case .error(let message):
             if schedule.isEmpty { state = .error(message) }
         case .loading:
-            if schedule.isEmpty && state != .serverUnreachable && !(state == .offline && isOffline) {
+            let stillOffline = NetworkStatusMonitor.shared.status == .disconnected
+            if schedule.isEmpty && state != .serverUnreachable && !(state == .offline && stillOffline) {
                 state = .loading
             }
         case .idle, .empty:
@@ -136,7 +137,8 @@ public class CalendarViewModel {
                 await loadFromCache(matricola: matricola)
             }
             checkingUpdates = !schedule.isEmpty
-            if schedule.isEmpty && state != .serverUnreachable && !(state == .offline && isOffline) {
+            let stillOffline = NetworkStatusMonitor.shared.status == .disconnected
+            if schedule.isEmpty && state != .serverUnreachable && !(state == .offline && stillOffline) {
                 state = .loading
             }
         } else {
@@ -159,7 +161,7 @@ public class CalendarViewModel {
     }
     
     // MARK: - Retry & Auto Retry
-    public func cancelAutoRetry() {
+    public func unregisterFromServerStatus() {
         ServerStatusCenter.shared.unregister(id: registrationId)
     }
     
