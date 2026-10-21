@@ -90,8 +90,11 @@ struct Onboarding: View {
         .overlay(alignment: .top) {
             let isOffline = viewModel.isOffline
             let isUnreachable = ServerStatusCenter.shared.isUnreachable
-            let isRetrying = ServerStatusCenter.shared.isRetrying
-            let isWarningVisible = isOffline || isUnreachable
+            // UniVR giù: avviso non bloccante (il server proprio giù ha la precedenza)
+            let isUniVROffline = !isOffline && !isUnreachable && ServerStatusCenter.shared.isUniVROffline
+            let isRetrying = isUniVROffline ? ServerStatusCenter.shared.isUniVRRetrying : ServerStatusCenter.shared.isRetrying
+            let isWarningVisible = isOffline || isUnreachable || isUniVROffline
+            let tint: Color = isOffline ? .yellow : (isUniVROffline ? .univrOffline : .orange)
             
             HStack(spacing: 8) {
                 if isOffline {
@@ -102,8 +105,13 @@ struct Onboarding: View {
                 } else if isRetrying {
                     ProgressView()
                         .controlSize(.small)
-                        .tint(.black)
-                    Text("Sto provando a contattare il server...")
+                        .tint(isUniVROffline ? .white : .black)
+                    Text(isUniVROffline ? "Sto provando a contattare l'università..." : "Sto provando a contattare il server...")
+                        .font(.subheadline.weight(.medium))
+                } else if isUniVROffline {
+                    Image(systemName: UniVROfflineStyle.symbolName)
+                        .font(.subheadline.weight(.semibold))
+                    Text("I dati potrebbero non essere aggiornati.")
                         .font(.subheadline.weight(.medium))
                 } else {
                     Image(systemName: "network.slash")
@@ -112,14 +120,14 @@ struct Onboarding: View {
                         .font(.subheadline.weight(.medium))
                 }
             }
-            .foregroundStyle(.black)
+            .foregroundStyle(isUniVROffline ? .white : .black)
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
             .modify { view in
                 if #available(iOS 26, *) {
-                    view.glassEffect(.regular.interactive().tint(isOffline ? .yellow : .orange), in: .capsule)
+                    view.glassEffect(.regular.interactive().tint(tint), in: .capsule)
                 } else {
-                    view.background(isOffline ? .yellow : .orange, in: .capsule)
+                    view.background(tint, in: .capsule)
                 }
             }
             .contentShape(Capsule())
@@ -133,7 +141,11 @@ struct Onboarding: View {
             .onTapGesture {
                 Haptics.play(.impact(weight: .medium))
                 Task {
-                    await ServerStatusCenter.shared.retryNow()
+                    if isUniVROffline {
+                        await ServerStatusCenter.shared.retryUniVRNow()
+                    } else {
+                        await ServerStatusCenter.shared.retryNow()
+                    }
                     if (settings.selectedYear.isEmpty || settings.selectedYear == "0"), let firstYear = viewModel.years.first {
                         settings.selectedYear = firstYear.id
                     }

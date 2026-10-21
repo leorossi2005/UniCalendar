@@ -59,6 +59,7 @@ struct AppNoticesListView: View {
                             .symbolEffect(.pulse, isActive: isRefreshing)
                     }
                 }
+                .disabled(statusManager.isOffline || statusManager.isServerUnreachable)
             }
         }
     }

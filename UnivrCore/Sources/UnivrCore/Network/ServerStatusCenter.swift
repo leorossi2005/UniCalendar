@@ -20,6 +20,10 @@ public final class ServerStatusCenter {
     
     public private(set) var isUnreachable: Bool = false
     public private(set) var isRetrying: Bool = false
+    public private(set) var isUniVROffline: Bool = false
+    public private(set) var isUniVRRetrying: Bool = false
+    private var univrWaiters: Set<AnyHashable> = []
+    private let univrAutoRetry = AutoRetry()
     private var isTickInProgress: Bool = false
     
     private var hadFailureInCurrentTick: Bool = false
@@ -57,6 +61,76 @@ public final class ServerStatusCenter {
             isUnreachable = false
             autoRetry.cancel()
         }
+    }
+
+    public func reportUniVROffline() {
+        guard !isUniVROffline else { return }
+        isUniVROffline = true
+    }
+
+    public func reportUniVROnline() {
+        guard isUniVROffline else { return }
+        isUniVROffline = false
+        if !univrWaiters.isEmpty && !isUniVRRetrying {
+            Task { await self.performUniVRPass(onlyWaiters: true) }
+        }
+    }
+    
+    // MARK: - UniVR offline (indipendente da isUnreachable: non blocca mai le richieste)
+    
+    /// Registra/rimuove una risorsa che al momento è in `.univrOffline` e va ricaricata appena UniVR torna raggiungibile.
+    public func setUniVRWaiting(id: AnyHashable, _ waiting: Bool) {
+        if waiting {
+            univrWaiters.insert(id)
+            startUniVRLoopIfNeeded()
+        } else {
+            univrWaiters.remove(id)
+            if univrWaiters.isEmpty {
+                univrAutoRetry.cancel()
+            }
+        }
+    }
+    
+    /// Retry manuale: esegue tutti gli handler registrati (come `retryNow`) senza toccare `isUnreachable`.
+    public func retryUniVRNow() async {
+        guard NetworkStatusMonitor.shared.status != .disconnected, !isUniVRRetrying else { return }
+        univrAutoRetry.cancel()
+        await performUniVRPass(onlyWaiters: false)
+        if !univrWaiters.isEmpty {
+            startUniVRLoopIfNeeded()
+        }
+    }
+    
+    private func performUniVRPass(onlyWaiters: Bool) async {
+        guard !isUniVRRetrying else { return }
+        isUniVRRetrying = true
+        let ids = onlyWaiters ? Array(univrWaiters) : Array(handlers.keys)
+        let currentHandlers = ids.compactMap { handlers[$0] }
+        await withTaskGroup(of: Void.self) { group in
+            for handler in currentHandlers {
+                group.addTask {
+                    await TickContext.$isHandler.withValue(true) {
+                        await handler()
+                    }
+                }
+            }
+            await group.waitForAll()
+        }
+        isUniVRRetrying = false
+    }
+    
+    private func startUniVRLoopIfNeeded() {
+        univrAutoRetry.startIfNeeded(
+            while: { [weak self] in
+                guard let self else { return false }
+                return !self.univrWaiters.isEmpty
+                    && !self.isUnreachable
+                    && NetworkStatusMonitor.shared.status != .disconnected
+            },
+            attempt: { [weak self] in
+                await self?.performUniVRPass(onlyWaiters: true)
+            }
+        )
     }
     
     public func reportServerFailure(startedAt: Date = Date()) {

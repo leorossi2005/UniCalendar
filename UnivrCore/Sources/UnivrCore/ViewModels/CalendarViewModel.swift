@@ -20,6 +20,8 @@ public class CalendarViewModel {
     public var checkingUpdates: Bool = false
     public private(set) var isOffline: Bool = NetworkStatusMonitor.shared.status == .disconnected
     public var isServerUnreachable: Bool { !isOffline && ServerStatusCenter.shared.isUnreachable }
+    public var isUniVROffline: Bool { !isOffline && !ServerStatusCenter.shared.isUnreachable && ServerStatusCenter.shared.isUniVROffline }
+    public var isUniVRRetrying: Bool { ServerStatusCenter.shared.isUniVRRetrying }
     public var isRetrying: Bool { ServerStatusCenter.shared.isRetrying }
     
     private let registrationId = UUID()
@@ -79,16 +81,24 @@ public class CalendarViewModel {
             if schedule.isEmpty { state = .offline }
         case .serverUnreachable:
             if schedule.isEmpty { state = .serverUnreachable }
+        case .univrOffline:
+            if schedule.isEmpty { state = .univrOffline }
         case .error(let message):
             if schedule.isEmpty { state = .error(message) }
         case .loading:
             let stillOffline = NetworkStatusMonitor.shared.status == .disconnected
-            if schedule.isEmpty && state != .serverUnreachable && !(state == .offline && stillOffline) {
+            if schedule.isEmpty && state != .serverUnreachable && state != .univrOffline && !(state == .offline && stillOffline) {
                 state = .loading
             }
         case .idle, .empty:
             break
         }
+        syncUniVRWaiting()
+    }
+    
+    /// Segnala a `ServerStatusCenter` se questa risorsa sta aspettando che UniVR torni (loop di retry dedicato).
+    private func syncUniVRWaiting() {
+        ServerStatusCenter.shared.setUniVRWaiting(id: registrationId, state == .univrOffline && schedule.isEmpty)
     }
     
     private func observeNetworkStatus() {
@@ -104,6 +114,7 @@ public class CalendarViewModel {
                 } else if !offline, self.state == .offline, self.resource.value == nil, self.schedule.isEmpty, !self.resource.hasLastFetch {
                     self.state = .empty
                 }
+                self.syncUniVRWaiting()
                 self.observeNetworkStatus()
             }
         }
@@ -111,7 +122,7 @@ public class CalendarViewModel {
     
     public func refreshIfNeeded(corso: String, anno: String, selYear: String, matricola: String) async {
         guard corso != "0", !checkingUpdates, !updateAvailable else { return }
-        let interval: TimeInterval = lastAttemptFailed ? 300 : 3600
+        let interval: TimeInterval = (lastAttemptFailed || ServerStatusCenter.shared.isUniVROffline) ? 300 : 3600
         if Date.now.timeIntervalSince(lastCheck) >= interval {
             await loadLessons(corso: corso, anno: anno, selYear: selYear, matricola: matricola, updating: false)
         }
@@ -138,7 +149,7 @@ public class CalendarViewModel {
             }
             checkingUpdates = !schedule.isEmpty
             let stillOffline = NetworkStatusMonitor.shared.status == .disconnected
-            if schedule.isEmpty && state != .serverUnreachable && !(state == .offline && stillOffline) {
+            if schedule.isEmpty && state != .serverUnreachable && state != .univrOffline && !(state == .offline && stillOffline) {
                 state = .loading
             }
         } else {
@@ -163,6 +174,7 @@ public class CalendarViewModel {
     // MARK: - Retry & Auto Retry
     public func unregisterFromServerStatus() {
         ServerStatusCenter.shared.unregister(id: registrationId)
+        ServerStatusCenter.shared.setUniVRWaiting(id: registrationId, false)
     }
     
     // MARK: - Data Handling
@@ -197,11 +209,14 @@ public class CalendarViewModel {
             if schedule.isEmpty { state = .offline }
         case .serverUnreachable:
             if schedule.isEmpty { state = .serverUnreachable }
+        case .univrOffline:
+            if schedule.isEmpty { state = .univrOffline }
         case .error(let message):
             if schedule.isEmpty { state = .error(message) }
         case .idle, .loading, .loaded, .empty:
             break
         }
+        syncUniVRWaiting()
     }
     
     public func confirmUpdate(matricola: String) async {
@@ -243,6 +258,7 @@ public class CalendarViewModel {
         
         self.schedule = result.processed
         self.state = result.processed.isEmpty ? .empty : .loaded
+        syncUniVRWaiting()
         
         DatePickerCache.shared.updateActivities(dates: result.activities)
     }
@@ -261,6 +277,7 @@ public class CalendarViewModel {
         await resource.clear()
         schedule.removeAll()
         clearPendingUpdate()
+        syncUniVRWaiting()
     }
     
     public func clearPendingUpdate() {

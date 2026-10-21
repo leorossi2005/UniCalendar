@@ -98,7 +98,18 @@ struct NetworkService: Sendable {
                 throw NetworkError.unknown(URLError(.unknown))
             }
             
+            let univrStatus = httpResponse.value(forHTTPHeaderField: "X-UniVR-Status")
+            switch univrStatus {
+            case "offline": await ServerStatusCenter.shared.reportUniVROffline()
+            case "online": await ServerStatusCenter.shared.reportUniVROnline()
+            default: break // route senza header (es. /status): non cambia il flag
+            }
+            
             if (500...599).contains(httpResponse.statusCode) {
+                if univrStatus == "offline" {
+                    await ServerStatusCenter.shared.reportSuccess()
+                    throw NetworkError.univrOffline
+                }
                 await ServerStatusCenter.shared.reportServerFailure(startedAt: startedAt)
                 throw NetworkError.serverUnreachable
             }

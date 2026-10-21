@@ -81,7 +81,7 @@ struct CalendarView: View {
                     Haptics.play(.start)
                 } else if newState == .loaded {
                     switch oldState {
-                    case .loading, .serverUnreachable, .offline, .error:
+                    case .loading, .serverUnreachable, .univrOffline, .offline, .error:
                         Haptics.play(.success)
                     case .idle, .loaded, .empty:
                         break
@@ -96,6 +96,8 @@ struct CalendarView: View {
             .animation(.default, value: viewModel.updateAvailable)
             .animation(.default, value: ServerStatusCenter.shared.isUnreachable)
             .animation(.default, value: ServerStatusCenter.shared.isRetrying)
+            .animation(.default, value: ServerStatusCenter.shared.isUniVRRetrying)
+            .animation(.default, value: viewModel.isUniVROffline)
             .animation(.default, value: viewModel.isOffline)
         }
         .customSheet(isPresented: .constant(true), manager: sheetRouter.manager, detents: sheetRouter.detents) {
@@ -145,6 +147,12 @@ struct CalendarView: View {
                     Label("Server non raggiungibile", systemImage: "network.slash")
                 } description: {
                     Text("Non riusciamo a contattare il server. Riprova più tardi.")
+                }
+            case .univrOffline:
+                ContentUnavailableView {
+                    Label("UniVR non raggiungibile", systemImage: UniVROfflineStyle.symbolName)
+                } description: {
+                    Text("Non riusciamo a contattare i server dell'università. Riprova più tardi.")
                 }
             case .error(let msg):
                 ContentUnavailableView(
@@ -220,6 +228,9 @@ struct CalendarView: View {
                     Image(systemName: "network.slash")
                         .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isServerUnreachable)
                         .foregroundStyle(.orange.opacity(0.8))
+                    Image(systemName: UniVROfflineStyle.symbolName)
+                        .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isUniVROffline)
+                        .foregroundStyle(Color.univrOffline.opacity(0.8))
                 }
                 .font(.system(size: 12, weight: .bold))
             }
@@ -233,25 +244,9 @@ struct CalendarView: View {
         }
         .toolbarBackgroundVisibility(.hidden)
         
-        if ServerStatusCenter.shared.isUnreachable && !viewModel.isOffline {
+        if (ServerStatusCenter.shared.isUnreachable || ServerStatusCenter.shared.isUniVROffline) && !viewModel.isOffline {
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    Haptics.play(.impact(weight: .medium))
-                    Task {
-                        await ServerStatusCenter.shared.retryNow()
-                    }
-                } label: {
-                    if ServerStatusCenter.shared.isRetrying {
-                        ProgressView()
-                            .controlSize(.small)
-                            .tint(.white)
-                    } else {
-                        Label("Riprova", systemImage: "arrow.triangle.2.circlepath")
-                    }
-                }
-                .allowsHitTesting(!ServerStatusCenter.shared.isRetrying)
-                .buttonStyle(.borderedProminent)
-                .tint(.orange)
+                statusRetryButton
             }
         } else if viewModel.checkingUpdates && !viewModel.isOffline {
             ToolbarItem(placement: .topBarTrailing) {
@@ -291,6 +286,32 @@ struct CalendarView: View {
             Button("Impostazioni", systemImage: "gearshape.fill", action: openSettingsAction)
         }
         .modify { view in if #available(iOS 27, *) { view.visibilityPriority(.high) } else { view }}
+    }
+    
+    private var statusRetryButton: some View {
+        let serverDown = ServerStatusCenter.shared.isUnreachable
+        let isRetrying = serverDown ? ServerStatusCenter.shared.isRetrying : ServerStatusCenter.shared.isUniVRRetrying
+        return Button {
+            Haptics.play(.impact(weight: .medium))
+            Task {
+                if serverDown {
+                    await ServerStatusCenter.shared.retryNow()
+                } else {
+                    await ServerStatusCenter.shared.retryUniVRNow()
+                }
+            }
+        } label: {
+            if isRetrying {
+                ProgressView()
+                    .controlSize(.small)
+                    .tint(.white)
+            } else {
+                Label("Riprova", systemImage: "arrow.triangle.2.circlepath")
+            }
+        }
+        .allowsHitTesting(!isRetrying)
+        .buttonStyle(.borderedProminent)
+        .tint(serverDown ? .orange : Color.univrOffline)
     }
     
     // MARK: - Logic Methods

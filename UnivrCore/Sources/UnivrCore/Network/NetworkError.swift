@@ -17,6 +17,7 @@ enum NetworkError: Error, LocalizedError {
     case offline
     case timeout
     case serverUnreachable
+    case univrOffline
     case unknown(Error)
     
     var errorDescription: String? {
@@ -24,6 +25,7 @@ enum NetworkError: Error, LocalizedError {
         case .offline: return String(localized: .networkErrorOffline)
         case .timeout: return String(localized: .networkErrorTimeout)
         case .serverUnreachable: return String(localized: .networkErrorServerUnreachable)
+        case .univrOffline: return String(localized: .networkErrorUnivrOffline)
         case .badURL: return String(localized: .networkErrorBadUrl)
         case .badServerResponse: return String(localized: .networkErrorServer)
         case .emptyData: return String(localized: .networkErrorEmptyData)

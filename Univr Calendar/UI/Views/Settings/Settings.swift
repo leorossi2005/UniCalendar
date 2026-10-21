@@ -153,6 +153,28 @@ struct Settings: View {
                             .tint(.orange)
                             .environment(\.isEnabled, true)
                         }
+                    } else if ServerStatusCenter.shared.isUniVROffline && ServerStatusCenter.shared.isUniVRRetrying {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Sto provando a contattare l'università...")
+                                .foregroundStyle(Color.univrOffline)
+                        }
+                    } else if ServerStatusCenter.shared.isUniVROffline {
+                        HStack {
+                            Text("I dati potrebbero non essere aggiornati.")
+                                .foregroundStyle(Color.univrOffline)
+                            Spacer()
+                            Button("Riprova") {
+                                Haptics.play(.impact(weight: .medium))
+                                Task { await ServerStatusCenter.shared.retryUniVRNow() }
+                            }
+                            .disabled(ServerStatusCenter.shared.isUniVRRetrying)
+                            .buttonStyle(.bordered)
+                            .controlSize(.mini)
+                            .tint(Color.univrOffline)
+                            .environment(\.isEnabled, true)
+                        }
                     } else if viewModel.isLoading {
                         Text("Aggiornamento dei dati in corso...")
                             .foregroundStyle(.secondary)

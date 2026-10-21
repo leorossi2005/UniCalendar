@@ -12,6 +12,7 @@ import UnivrCore
 import CustomSheet
 
 struct ClassroomAvailabilityView: View {
+    @Environment(\.colorScheme) var colorScheme
     @Environment(UserSettings.self) var settings
     
     var coordinator: CalendarCoordinator
@@ -59,7 +60,7 @@ struct ClassroomAvailabilityView: View {
                 Text(location.value).tag(location.key)
             }
         }
-        .disabled(availabilityManager.state == .offline || availabilityManager.state == .serverUnreachable)
+        .disabled(availabilityManager.state == .offline || availabilityManager.state == .serverUnreachable || availabilityManager.state == .univrOffline)
         .tint(.primary)
         .frame(maxWidth: .infinity)
         .frame(height: 48)
@@ -72,8 +73,7 @@ struct ClassroomAvailabilityView: View {
     private var content: some View {
         switch availabilityManager.state {
         case .idle, .loading:
-            ProgressView("Caricamento disponibilità...")
-                .frame(maxHeight: .infinity)
+            loadingPlaceholder
         case .loaded:
             ScrollView {
                 VStack {
@@ -107,6 +107,12 @@ struct ClassroomAvailabilityView: View {
             } description: {
                 Text("Non riusciamo a contattare il server. Riprova più tardi.")
             }
+        case .univrOffline:
+            ContentUnavailableView {
+                Label("UniVR non raggiungibile", systemImage: UniVROfflineStyle.symbolName)
+            } description: {
+                Text("La disponibilità delle aule non è consultabile finché i server dell'università non tornano raggiungibili.")
+            }
         case .error(let msg):
             ContentUnavailableView(
                 "Si è verificato un errore",
@@ -114,6 +120,21 @@ struct ClassroomAvailabilityView: View {
                 description: Text(msg)
             )
         }
+    }
+    
+    @ViewBuilder
+    private var loadingPlaceholder: some View {
+        ScrollView {
+            VStack {
+                ForEach(0..<6, id: \.self) { _ in
+                    RoomCard(room: .sample, selectedDate: .now)
+                        .shimmeringPlaceholder(opacity: colorScheme == .light ? 0.5 : 0.7)
+                }
+            }
+            .allowsHitTesting(false)
+        }
+        .cornerRadius(35)
+        .scrollIndicators(.never)
     }
 }
 

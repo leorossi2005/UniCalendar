@@ -16,6 +16,7 @@ public enum ResourcePhase: Equatable, Sendable {
     case empty
     case offline
     case serverUnreachable
+    case univrOffline
     case error(String)
 }
 
@@ -120,6 +121,8 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
             if generation == myGen {
                 if isOfflineFailure(error) {
                     phase = .offline
+                } else if isUniVROfflineFailure(error) {
+                    phase = .univrOffline
                 } else if isServerUnreachableFailure(error) {
                     phase = .serverUnreachable
                 } else if let networkError = error as? NetworkError {
@@ -135,6 +138,11 @@ final class CachedResource<T: Codable & Equatable & Sendable> {
     private func isOfflineFailure(_ error: Error) -> Bool {
         if NetworkStatusMonitor.shared.status == .disconnected { return true }
         if case NetworkError.offline = error { return true }
+        return false
+    }
+    
+    private func isUniVROfflineFailure(_ error: Error) -> Bool {
+        if case NetworkError.univrOffline = error { return true }
         return false
     }
     

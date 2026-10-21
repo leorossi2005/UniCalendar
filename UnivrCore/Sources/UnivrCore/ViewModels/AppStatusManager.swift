@@ -20,6 +20,9 @@ public final class AppStatusManager {
     private let service = NetworkService()
     private let resource = CachedResource<[AppNotice]>(cacheFileName: .appStatus, cacheManager: .shared)
     
+    public var isOffline: Bool { NetworkStatusMonitor.shared.status == .disconnected }
+    public var isServerUnreachable: Bool { !isOffline && ServerStatusCenter.shared.isUnreachable }
+    
     private var notices: [AppNotice] = []
     private var closedIDs: Set<String>
     private var isFetching = false

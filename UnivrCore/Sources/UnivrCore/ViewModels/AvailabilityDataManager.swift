@@ -145,13 +145,14 @@ public final class AvailabilityDataManager {
                     self.loadedDate = nil
                     self.state = .loading
                 }
+                self.syncUniVRWaiting()
                 self.observeNetworkStatus()
             }
         }
     }
 
     private func applyResourceState() {
-        if resource.phase == .loading && (state == .serverUnreachable || (state == .offline && isOffline)) {
+        if resource.phase == .loading && (state == .serverUnreachable || state == .univrOffline || (state == .offline && isOffline)) {
             return
         }
         state = resource.phase
@@ -163,12 +164,18 @@ public final class AvailabilityDataManager {
             let fetchedRooms = resource.value?[locationKey]
             rooms = fetchedRooms
             state = (fetchedRooms?.isEmpty ?? true) ? .empty : .loaded
-        case .empty, .offline, .serverUnreachable:
+        case .empty, .offline, .serverUnreachable, .univrOffline:
             rooms = nil
         case .error(let message):
             rooms = nil
             state = .error(message)
         }
+        syncUniVRWaiting()
+    }
+    
+    /// Segnala a `ServerStatusCenter` se questa risorsa sta aspettando che UniVR torni (loop di retry dedicato).
+    private func syncUniVRWaiting() {
+        ServerStatusCenter.shared.setUniVRWaiting(id: registrationId, state == .univrOffline)
     }
     
     public func loadLocations() async {
@@ -196,10 +203,11 @@ public final class AvailabilityDataManager {
             let fetchedRooms = roomsMap[locationKey]
             rooms = fetchedRooms
             state = (fetchedRooms?.isEmpty ?? true) ? .empty : .loaded
+            syncUniVRWaiting()
             return
         }
 
-        if state != .serverUnreachable && !(state == .offline && isOffline) {
+        if state != .serverUnreachable && state != .univrOffline && !(state == .offline && isOffline) {
             state = .loading
             rooms = nil
         }
@@ -212,6 +220,7 @@ public final class AvailabilityDataManager {
             let fetchedRooms = roomsMap[locationKey]
             rooms = fetchedRooms
             state = (fetchedRooms?.isEmpty ?? true) ? .empty : .loaded
+            syncUniVRWaiting()
         } catch is CancellationError {
         } catch {
             loadedDate = nil
@@ -221,10 +230,12 @@ public final class AvailabilityDataManager {
     
     public func unregisterFromServerStatus() {
         ServerStatusCenter.shared.unregister(id: registrationId)
+        ServerStatusCenter.shared.setUniVRWaiting(id: registrationId, false)
     }
     
     public func reset() {
         state = .loading
         rooms = nil
+        syncUniVRWaiting()
     }
 }

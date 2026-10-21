@@ -273,6 +273,23 @@
         }
       }
     },
+    "network_error_univr_offline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "University servers are currently unreachable. Please try again later."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I server dell'università non sono al momento disponibili. Riprova più tardi."
+          }
+        }
+      }
+    },
     "occupied_until" : {
       "extractionState" : "manual",
       "localizations" : {

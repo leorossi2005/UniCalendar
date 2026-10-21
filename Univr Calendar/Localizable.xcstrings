@@ -364,16 +364,6 @@
         }
       }
     },
-    "Caricamento disponibilità..." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Loading availability…"
-          }
-        }
-      }
-    },
     "Cerca un anno di corso" : {
       "localizations" : {
         "en" : {
@@ -704,6 +694,16 @@
         }
       }
     },
+    "I dati potrebbero non essere aggiornati." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data might not be up to date."
+          }
+        }
+      }
+    },
     "I miei progetti" : {
       "localizations" : {
         "en" : {
@@ -820,6 +820,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The commitment is starting now"
+          }
+        }
+      }
+    },
+    "La disponibilità delle aule non è consultabile finché i server dell'università non tornano raggiungibili." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classroom availability can't be checked until the university servers are reachable again."
           }
         }
       }
@@ -1060,6 +1070,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You haven’t scheduled any notifications for your classes yet."
+          }
+        }
+      }
+    },
+    "Non riusciamo a contattare i server dell'università. Riprova più tardi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We can't reach the university servers. Try again later."
           }
         }
       }
@@ -1511,6 +1531,16 @@
         }
       }
     },
+    "Sto provando a contattare l'università..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I'm trying to reach the university..."
+          }
+        }
+      }
+    },
     "Suona %lld minuti prima" : {
       "localizations" : {
         "en" : {
@@ -1567,6 +1597,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tap to open the details"
+          }
+        }
+      }
+    },
+    "UniVR non raggiungibile" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "UniVR unreachable"
           }
         }
       }
