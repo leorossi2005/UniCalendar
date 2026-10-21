@@ -21,8 +21,6 @@ public class CalendarViewModel {
     public private(set) var isOffline: Bool = NetworkStatusMonitor.shared.status == .disconnected
     public var isServerUnreachable: Bool { !isOffline && ServerStatusCenter.shared.isUnreachable }
     public var isUniVROffline: Bool { !isOffline && !ServerStatusCenter.shared.isUnreachable && ServerStatusCenter.shared.isUniVROffline }
-    public var isUniVRRetrying: Bool { ServerStatusCenter.shared.isUniVRRetrying }
-    public var isRetrying: Bool { ServerStatusCenter.shared.isRetrying }
     
     private let registrationId = UUID()
     private struct LastLoadParams {

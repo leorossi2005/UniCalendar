@@ -85,7 +85,6 @@ public final class AvailabilityDataManager {
     public var rooms: [Room]?
     
     public var state: ResourcePhase = .loading
-    public var isRetrying: Bool { ServerStatusCenter.shared.isRetrying }
     public var isOffline: Bool { NetworkStatusMonitor.shared.status == .disconnected }
     
     private let registrationId = UUID()

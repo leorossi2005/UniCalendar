@@ -13,7 +13,6 @@ import UnivrCore
 import CustomSheet
 
 struct ManagePersonalEventView: View {
-    @Environment(\.modelContext) private var modelContext
     @Environment(GlobalSheetManager.self) private var sheetManager
     
     let selectedDate: Date

@@ -10,15 +10,15 @@
 import Foundation
 
 @MainActor
-public final class AutoRetry {
+final class AutoRetry {
     private var task: Task<Void, Never>?
     private var generation: Int = 0
-    public private(set) var isRunning: Bool = false
+    private(set) var isRunning: Bool = false
     private let backoffDelays: [Double] = [5, 10, 20, 40, 60]
     
-    public init() {}
+    init() {}
     
-    public func startIfNeeded(
+    func startIfNeeded(
         while condition: @escaping @MainActor () -> Bool,
         attempt: @escaping @MainActor () async -> Void
     ) {
@@ -26,7 +26,7 @@ public final class AutoRetry {
         start(while: condition, attempt: attempt)
     }
     
-    public func start(
+    func start(
         while condition: @escaping @MainActor () -> Bool,
         attempt: @escaping @MainActor () async -> Void
     ) {
@@ -56,7 +56,7 @@ public final class AutoRetry {
         }
     }
     
-    public func cancel() {
+    func cancel() {
         task?.cancel()
         task = nil
         isRunning = false

@@ -42,6 +42,7 @@ public class GlobalSheetManager {
     var onBackgroundToggle: ((Bool) -> Void)?
     var actionDismiss: (() -> Void)?
     
+    // periphery:ignore
     public func dismiss() {
         actionDismiss?()
     }

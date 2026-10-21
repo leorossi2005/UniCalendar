@@ -21,8 +21,11 @@ struct ClassroomAvailabilityView: View {
     @State private var availabilityManager = AvailabilityDataManager()
     
     private struct RequestKey: Equatable {
+        // periphery:ignore
         let locationKey: String
+        // periphery:ignore
         let date: Date
+        // periphery:ignore
         let isOffline: Bool
     }
     

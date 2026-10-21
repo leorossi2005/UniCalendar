@@ -49,13 +49,6 @@ extension NoticeLevel {
     }
 }
 
-extension Color {
-    init?(hex: String) {
-        guard let components = HexColorParser.parse(hex) else { return nil }
-        self.init(red: components.red, green: components.green, blue: components.blue, opacity: components.opacity)
-    }
-}
-
 extension Lesson {
     var uiColor: Color {
         guard let components = HexColorParser.parse(color) else { return .secondary }

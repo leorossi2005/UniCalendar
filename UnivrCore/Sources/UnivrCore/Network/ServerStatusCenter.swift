@@ -9,8 +9,8 @@
 
 import Foundation
 
-public enum TickContext: Sendable {
-    @TaskLocal public static var isHandler: Bool = false
+enum TickContext: Sendable {
+    @TaskLocal static var isHandler: Bool = false
 }
 
 @MainActor

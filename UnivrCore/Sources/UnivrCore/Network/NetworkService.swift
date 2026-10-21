@@ -12,7 +12,6 @@ import Foundation
 fileprivate final class SessionStore: @unchecked Sendable {
     private let lock = NSLock()
     private var currentSession: URLSession
-    private var currentGeneration: Int = 1
     
     init() {
         self.currentSession = Self.makeSession()
@@ -24,26 +23,15 @@ fileprivate final class SessionStore: @unchecked Sendable {
         return currentSession
     }
     
-    var generation: Int {
-        lock.lock()
-        defer { lock.unlock() }
-        return currentGeneration
-    }
-    
-    func replace() -> Int {
+    func replace() {
         let old: URLSession
-        let newGen: Int
         
         lock.lock()
         old = currentSession
-        currentGeneration += 1
-        newGen = currentGeneration
         currentSession = Self.makeSession()
         lock.unlock()
         
         old.finishTasksAndInvalidate()
-        
-        return newGen
     }
     
     private static func makeSession() -> URLSession {
@@ -66,7 +54,7 @@ struct NetworkService: Sendable {
     fileprivate static let store = SessionStore()
     
     static func resetConnections() {
-        _ = store.replace()
+        store.replace()
     }
     
     let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
