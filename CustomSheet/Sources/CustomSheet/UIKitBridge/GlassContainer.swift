@@ -72,8 +72,14 @@ final class GlassContainerView: UIView {
         addSubview(glassView)
         glassView.clipsToBounds = true
         
-        if #unavailable(iOS 26) {
-            registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: GlassContainerView, previousTraitCollection: UITraitCollection) in
+        if #available(iOS 26, *) {
+            registerForTraitChanges([UITraitActiveAppearance.self, UITraitUserInterfaceStyle.self]) { (self: GlassContainerView, _) in
+                UIView.animate(withDuration: 0.25, delay: 0, options: [.allowUserInteraction, .beginFromCurrentState]) {
+                    self.updateEffect()
+                }
+            }
+        } else {
+            registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: GlassContainerView, _) in
                 self.updateAppearance()
             }
         }
@@ -257,7 +263,10 @@ public struct GlassContainer<Content: View>: UIViewControllerRepresentable {
         if let glass = context.coordinator.glassContainer {
             if glass.cornerRadii != radii { glass.cornerRadii = radii }
             if glass.style != style { glass.style = style }
-            glass.tint = tint.map { UIColor($0) }
+            
+            let newTint = tint.map { UIColor($0) }
+            if glass.tint != newTint { glass.tint = newTint }
+            
             if glass.isEnabled != isEnabled { glass.isEnabled = isEnabled }
             if glass.resetTrigger != resetGlassEffect { glass.resetTrigger = resetGlassEffect }
             glass.applyCorners(animated: shouldAnimate, duration: animationDuration, useSpring: useSpring)

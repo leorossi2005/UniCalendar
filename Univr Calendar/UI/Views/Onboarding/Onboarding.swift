@@ -96,28 +96,44 @@ struct Onboarding: View {
             let isWarningVisible = isOffline || isUnreachable || isUniVROffline
             let tint: Color = isOffline ? .yellow : (isUniVROffline ? .blue : .orange)
             
-            HStack(spacing: 8) {
+            ZStack {
                 if isOffline {
-                    Image(systemName: "wifi.slash")
-                        .font(.subheadline.weight(.semibold))
-                    Text("Al momento sei offline.")
-                        .font(.subheadline.weight(.medium))
+                    HStack(spacing: 8) {
+                        Image(systemName: "wifi.slash")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Al momento sei offline.")
+                            .font(.subheadline.weight(.medium))
+                    }
                 } else if isRetrying {
-                    ProgressView()
-                        .controlSize(.small)
-                        .tint(isUniVROffline ? .white : .black)
-                    Text(isUniVROffline ? "Sto provando a contattare l'università..." : "Sto provando a contattare il server...")
-                        .font(.subheadline.weight(.medium))
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(isUniVROffline ? .white : .black)
+                        Text(isUniVROffline ? "Sto provando a contattare l'università..." : "Sto provando a contattare il server...")
+                            .font(.subheadline.weight(.medium))
+                    }
                 } else if isUniVROffline {
-                    Image(systemName: "building.columns")
-                        .font(.subheadline.weight(.semibold))
-                    Text("I dati potrebbero non essere aggiornati.")
-                        .font(.subheadline.weight(.medium))
+                    VStack {
+                        HStack(spacing: 8) {
+                            Image(systemName: "building.columns")
+                                .font(.subheadline.weight(.semibold))
+                            Text("I dati potrebbero non essere aggiornati.")
+                                .font(.subheadline.weight(.medium))
+                        }
+                        Text("Tocca per riprovare.")
+                            .font(.caption2.weight(.medium))
+                    }
                 } else {
-                    Image(systemName: "network.slash")
-                        .font(.subheadline.weight(.semibold))
-                    Text("Server non raggiungibile, riprova più tardi.")
-                        .font(.subheadline.weight(.medium))
+                    VStack {
+                        HStack(spacing: 8) {
+                            Image(systemName: "network.slash")
+                                .font(.subheadline.weight(.semibold))
+                            Text("Server non raggiungibile, riprova più tardi.")
+                                .font(.subheadline.weight(.medium))
+                        }
+                        Text("Tocca per riprovare.")
+                            .font(.caption2.weight(.medium))
+                    }
                 }
             }
             .foregroundStyle(isUniVROffline ? .white : .black)

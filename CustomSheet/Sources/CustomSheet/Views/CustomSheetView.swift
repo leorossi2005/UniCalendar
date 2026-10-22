@@ -303,64 +303,50 @@ struct CustomSheet<Content: View>: View {
         let minDetent = first.value
         let maxDetent = last.value
         
-        if maxDetent == CustomSheetDetent.large.value && activeDetents.contains(.medium) {
-            if predictedHeight >= CustomSheetDetent.medium.value && predictedHeight <= CustomSheetDetent.large.value {
-                sheetPadding = min(max(defaultPadding - ((defaultPadding * (predictedHeight - CustomSheetDetent.medium.value)) / (CustomSheetDetent.large.value - CustomSheetDetent.medium.value)), 0), defaultPadding)
-            } else if predictedHeight > CustomSheetDetent.large.value {
+        // 1. Calcola prima stato e offset (incluso il rubber-banding se bloccata)
+        if predictedHeight >= minDetent && predictedHeight <= maxDetent {
+            state = value
+            offset = 0
+        } else if predictedHeight > maxDetent {
+            let excess = predictedHeight - maxDetent
+            let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent - maxDetent * 0.75)
+            state = baseHeight - (maxDetent + dampedExcess)
+            offset = 0
+        } else if predictedHeight < minDetent {
+            let excess = minDetent - predictedHeight
+            let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent - maxDetent * 0.75)
+            state = baseHeight - minDetent
+            offset = -dampedExcess
+        }
+        
+        // 2. Calcola l'altezza visiva reale sullo schermo (considerando anche l'offset del rubber-band)
+        let effectiveHeight = (baseHeight - state) + offset
+        
+        // 3. Usa `detents` invece di `activeDetents` così il padding si adatta anche col lock attivo
+        if detents.contains(.large) && detents.contains(.medium) {
+            if effectiveHeight >= CustomSheetDetent.medium.value && effectiveHeight <= CustomSheetDetent.large.value {
+                sheetPadding = min(max(defaultPadding - ((defaultPadding * (effectiveHeight - CustomSheetDetent.medium.value)) / (CustomSheetDetent.large.value - CustomSheetDetent.medium.value)), 0), defaultPadding)
+            } else if effectiveHeight > CustomSheetDetent.large.value {
                 sheetPadding = 0
             } else {
                 sheetPadding = defaultPadding
             }
         }
         
-        if predictedHeight >= minDetent && predictedHeight <= maxDetent {
-            state = value
-
-            let shouldEnableBackground = predictedHeight > CustomSheetDetent.large.value * 0.8
-            let currentlyAtMax = predictedHeight >= CustomSheetDetent.large.value
-
-            let backgroundChanged = enableBackground != shouldEnableBackground
-            let maxChanged = isAtMax != currentlyAtMax
-
-            if backgroundChanged || maxChanged {
-                enableBackground = shouldEnableBackground
-                isAtMax = currentlyAtMax
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    setSheetShape(
-                        sheetCornerRadius: shouldEnableBackground ? (UIDevice.isIpad ? 29 : 37) : -1,
-                        isAtMax: currentlyAtMax
-                    )
-                }
-            }
-            
-            offset = 0
-        } else {
-            if predictedHeight > maxDetent {
-                if maxDetent == CustomSheetDetent.large.value {
-                    if !isAtMax || !enableBackground {
-                        isAtMax = true
-                        enableBackground = true
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37, isAtMax: true)
-                        }
-                    }
-                }
-                let excess = predictedHeight - maxDetent
-                let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent - maxDetent * 0.75)
-                state = baseHeight - (maxDetent + dampedExcess)
-                offset = 0
-            } else if predictedHeight < minDetent {
-                if isAtMax || enableBackground {
-                    isAtMax = false
-                    enableBackground = false
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        setSheetShape(isAtMax: false)
-                    }
-                }
-                let excess = minDetent - predictedHeight
-                let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent - maxDetent * 0.75)
-                state = baseHeight - minDetent
-                offset = -dampedExcess
+        // 4. Unifica il controllo della soglia dell'80% e degli angoli per tutti i casi
+        let shouldEnableBackground = effectiveHeight > CustomSheetDetent.large.value * 0.8
+        let currentlyAtMax = effectiveHeight >= CustomSheetDetent.large.value
+        let backgroundChanged = enableBackground != shouldEnableBackground
+        let maxChanged = isAtMax != currentlyAtMax
+        
+        if backgroundChanged || maxChanged {
+            enableBackground = shouldEnableBackground
+            isAtMax = currentlyAtMax
+            withAnimation(.easeInOut(duration: 0.2)) {
+                setSheetShape(
+                    sheetCornerRadius: shouldEnableBackground ? (UIDevice.isIpad ? 29 : 37) : -1,
+                    isAtMax: currentlyAtMax
+                )
             }
         }
     }

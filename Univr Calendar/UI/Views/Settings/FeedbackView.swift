@@ -19,6 +19,7 @@ private struct Attachment {
 }
 
 struct FeedbackView: View {
+    @Environment(GlobalSheetManager.self) private var sheetManager
     @Environment(\.dismiss) private var dismiss
     
     @State private var title = ""
@@ -36,6 +37,8 @@ struct FeedbackView: View {
     
     private var isOffline: Bool { NetworkStatusMonitor.shared.status == .disconnected }
     private var isServerDown: Bool { ServerStatusCenter.shared.isUnreachable }
+    
+    private var lockSheet: Bool { attachment != nil || !title.isEmpty || !details.isEmpty }
     
     private var canSend: Bool {
         title.trimmingCharacters(in: .whitespacesAndNewlines).count >= FeedbackLimits.titleMin
@@ -131,6 +134,12 @@ struct FeedbackView: View {
         }
         .task(id: pickerItem) {
             await loadAttachment()
+        }
+        .onChange(of: lockSheet) {
+            sheetManager.setLock(lockSheet)
+        }
+        .onDisappear {
+            sheetManager.setLock(false)
         }
         .alert("Grazie!", isPresented: $showSuccess) {
             Button("OK") { dismiss() }
