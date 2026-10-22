@@ -11,14 +11,6 @@ import SwiftUI
 import UnivrCore
 import CustomSheet
 
-enum UniVROfflineStyle {
-    static let symbolName = "building.columns"
-}
-
-extension Color {
-    static let univrOffline = Color.blue
-}
-
 extension AppColor {
     var color: Color {
         switch self {
@@ -304,4 +296,66 @@ extension String {
             return "person.badge.clock"
         }
     }
+    
+    @available(iOSApplicationExtension, unavailable)
+    static var deviceSymbol: String {
+        if UIDevice.isIpad {
+            switch UIDevice.iPadScreenType {
+            case .homeButton: "ipad.gen1"
+            case .noHomeButton: "ipad.gen2"
+            case .unknown : "ipad"
+            }
+        } else {
+            switch UIDevice.iPhoneScreenType {
+            case .homeButton: "iphone.gen1"
+            case .notch: "iphone.gen2"
+            case .dynamicIsland: "iphone.gen3"
+            case .unknown : "iphone"
+            }
+        }
+    }
 }
+
+enum iPhoneScreenType {
+    case homeButton
+    case notch
+    case dynamicIsland
+    case unknown
+}
+
+enum iPadScreenType {
+    case homeButton
+    case noHomeButton
+    case unknown
+}
+
+@available(iOSApplicationExtension, unavailable)
+extension UIDevice {
+    static var iPhoneScreenType: iPhoneScreenType {
+        guard !UIDevice.isIpad else { return .unknown }
+        let safeAreas = UIApplication.shared.safeAreas
+        
+        if safeAreas.bottom == 0 {
+            return .homeButton
+        }
+        
+        let sensorInset = max(safeAreas.top, safeAreas.left, safeAreas.right)
+        
+        if sensorInset >= 51.0 {
+            return .dynamicIsland
+        } else {
+            return .notch
+        }
+    }
+    
+    static var iPadScreenType: iPadScreenType {
+        guard UIDevice.isIpad else { return .unknown }
+        
+        if UIApplication.shared.safeAreas.bottom > 0 {
+            return .noHomeButton
+        } else {
+            return .homeButton
+        }
+    }
+}
+

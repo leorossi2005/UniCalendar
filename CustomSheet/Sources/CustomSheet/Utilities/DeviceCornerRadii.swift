@@ -1,6 +1,9 @@
 // File generato automaticamente da generate_radii.py
 // Non modificare manualmente.
 
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
+
 import CoreGraphics
 
 enum DeviceCornerRadii {

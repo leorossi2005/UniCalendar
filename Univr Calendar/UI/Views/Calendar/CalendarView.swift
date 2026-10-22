@@ -150,7 +150,7 @@ struct CalendarView: View {
                 }
             case .univrOffline:
                 ContentUnavailableView {
-                    Label("Università non raggiungibile", systemImage: UniVROfflineStyle.symbolName)
+                    Label("Università non raggiungibile", systemImage: "building.columns")
                 } description: {
                     Text("Questo corso non è disponibile finché i server dell'università non tornano online. Riprova più tardi.")
                 }
@@ -228,9 +228,9 @@ struct CalendarView: View {
                     Image(systemName: "network.slash")
                         .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isServerUnreachable)
                         .foregroundStyle(.orange.opacity(0.8))
-                    Image(systemName: UniVROfflineStyle.symbolName)
+                    Image(systemName: "building.columns")
                         .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isUniVROffline)
-                        .foregroundStyle(Color.univrOffline.opacity(0.8))
+                        .foregroundStyle(.blue.opacity(0.8))
                 }
                 .font(.system(size: 12, weight: .bold))
             }
@@ -311,7 +311,7 @@ struct CalendarView: View {
         }
         .allowsHitTesting(!isRetrying)
         .buttonStyle(.borderedProminent)
-        .tint(serverDown ? .orange : Color.univrOffline)
+        .tint(serverDown ? .orange : .blue)
     }
     
     // MARK: - Logic Methods

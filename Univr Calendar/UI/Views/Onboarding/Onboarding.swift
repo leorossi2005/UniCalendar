@@ -94,7 +94,7 @@ struct Onboarding: View {
             let isUniVROffline = !isOffline && !isUnreachable && ServerStatusCenter.shared.isUniVROffline
             let isRetrying = isUniVROffline ? ServerStatusCenter.shared.isUniVRRetrying : ServerStatusCenter.shared.isRetrying
             let isWarningVisible = isOffline || isUnreachable || isUniVROffline
-            let tint: Color = isOffline ? .yellow : (isUniVROffline ? .univrOffline : .orange)
+            let tint: Color = isOffline ? .yellow : (isUniVROffline ? .blue : .orange)
             
             HStack(spacing: 8) {
                 if isOffline {
@@ -109,7 +109,7 @@ struct Onboarding: View {
                     Text(isUniVROffline ? "Sto provando a contattare l'università..." : "Sto provando a contattare il server...")
                         .font(.subheadline.weight(.medium))
                 } else if isUniVROffline {
-                    Image(systemName: UniVROfflineStyle.symbolName)
+                    Image(systemName: "building.columns")
                         .font(.subheadline.weight(.semibold))
                     Text("I dati potrebbero non essere aggiornati.")
                         .font(.subheadline.weight(.medium))

@@ -112,7 +112,7 @@ struct ClassroomAvailabilityView: View {
             }
         case .univrOffline:
             ContentUnavailableView {
-                Label("Università non raggiungibile", systemImage: UniVROfflineStyle.symbolName)
+                Label("Università non raggiungibile", systemImage: "building.columns")
             } description: {
                 Text("La disponibilità delle aule non è consultabile finché i server dell'università non tornano raggiungibili.")
             }

@@ -3,6 +3,8 @@
 //  Univr Calendar
 //
 //  Created by Leonardo Rossi on 18/10/2026.
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
 //
 
 import SwiftUI

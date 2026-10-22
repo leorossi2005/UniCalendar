@@ -117,6 +117,22 @@
         }
       }
     },
+    "%lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld/%2$lld"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
     "•" : {
       "localizations" : {
         "en" : {
@@ -224,6 +240,16 @@
         }
       }
     },
+    "Aggiungi uno screenshot" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a screenshot"
+          }
+        }
+      }
+    },
     "Al momento non ci sono avvisi attivi." : {
       "localizations" : {
         "en" : {
@@ -240,6 +266,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You’re offline at the moment."
+          }
+        }
+      }
+    },
+    "Allegati" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attachments"
           }
         }
       }
@@ -270,6 +306,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "App" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App"
           }
         }
       }
@@ -544,6 +590,26 @@
         }
       }
     },
+    "Descrivi il problema o il consiglio" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Describe the problem or the advice"
+          }
+        }
+      }
+    },
+    "Descrizione" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Description"
+          }
+        }
+      }
+    },
     "Dettagli" : {
       "localizations" : {
         "en" : {
@@ -614,6 +680,16 @@
         }
       }
     },
+    "Es. Le aule non si aggiornano" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ex. The classrooms do not update"
+          }
+        }
+      }
+    },
     "Espandi tutto" : {
       "localizations" : {
         "en" : {
@@ -630,6 +706,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Make me a little gift"
+          }
+        }
+      }
+    },
+    "Feedback" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback"
           }
         }
       }
@@ -694,6 +780,26 @@
         }
       }
     },
+    "Grazie!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thank you!"
+          }
+        }
+      }
+    },
+    "Hai inviato troppi feedback in poco tempo. Riprova tra qualche minuto." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have sent too many feedback in a short time. Try again in a few minutes."
+          }
+        }
+      }
+    },
     "I dati potrebbero non essere aggiornati." : {
       "localizations" : {
         "en" : {
@@ -714,12 +820,42 @@
         }
       }
     },
+    "Il server ha rifiutato lo screenshot. Rimuovilo o scegline un altro." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The server rejected the screenshot. Remove it or choose another one."
+          }
+        }
+      }
+    },
+    "Il tuo feedback è stato inviato." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your feedback has been sent."
+          }
+        }
+      }
+    },
     "Impegni Personali" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Personal Commitments"
+          }
+        }
+      }
+    },
+    "Impossibile usare questa immagine: non è leggibile o è troppo pesante." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to use this image: it is unreadable or it is too heavy."
           }
         }
       }
@@ -804,6 +940,36 @@
         }
       }
     },
+    "Invia" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send"
+          }
+        }
+      }
+    },
+    "Invia un Feedback" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send a Feedback"
+          }
+        }
+      }
+    },
+    "Invio non riuscito" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Submission failed"
+          }
+        }
+      }
+    },
     "L'impegno inizia tra %lld minuti" : {
       "localizations" : {
         "en" : {
@@ -850,6 +1016,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The lesson is starting now"
+          }
+        }
+      }
+    },
+    "Le informazioni sul dispositivo vengono incluse automaticamente per aiutarmi a riprodurre il problema. Lo screenshot è facoltativo." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device information is automatically included to help me reproduce the problem. The screenshot is optional."
           }
         }
       }
@@ -1154,6 +1330,16 @@
         }
       }
     },
+    "OK" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
+    },
     "Orario" : {
       "localizations" : {
         "en" : {
@@ -1374,6 +1560,16 @@
         }
       }
     },
+    "Screenshot allegato" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attached screenshot"
+          }
+        }
+      }
+    },
     "Scrivimi!" : {
       "localizations" : {
         "en" : {
@@ -1444,6 +1640,16 @@
         }
       }
     },
+    "Sei offline: non puoi inviare feedback." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You are offline: you cannot send feedback."
+          }
+        }
+      }
+    },
     "Seleziona Luogo" : {
       "localizations" : {
         "en" : {
@@ -1500,6 +1706,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "An error has occurred"
+          }
+        }
+      }
+    },
+    "Sistema" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System"
           }
         }
       }

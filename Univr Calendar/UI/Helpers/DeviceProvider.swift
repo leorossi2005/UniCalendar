@@ -11,30 +11,30 @@ import UIKit
 import UnivrCore
 
 final class IOSDeviceService: Sendable {
-    static func info() -> Device.Info {        
+    static func info() -> Device.Info {
         let os = ProcessInfo.processInfo.operatingSystemVersion
         let osVersion = "\(os.majorVersion).\(os.minorVersion).\(os.patchVersion)"
         let osName = UIDevice.current.systemName
+        let deviceName = UIDevice.current.model
         
-        let deviceModel: String = {
-            #if targetEnvironment(simulator)
-            if let sim = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] {
-                return "\(sim); Simulator"
-            }
-            return "Simulator"
-            #else
-            var systemInfo = utsname()
-            uname(&systemInfo)
-            let model = withUnsafeBytes(of: &systemInfo.machine) { rawBuffer in
-                let bytes = rawBuffer.prefix(while: { $0 != 0 })
-                return String(decoding: bytes, as: UTF8.self)
-            }
-            return model.isEmpty ? UIDevice.current.model : model
-            #endif
-        }()
+        #if targetEnvironment(simulator)
+        let isSimulator = true
+        let deviceModel = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] ?? "Simulator"
+        #else
+        let isSimulator = false
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        let model = withUnsafeBytes(of: &systemInfo.machine) { rawBuffer in
+            let bytes = rawBuffer.prefix(while: { $0 != 0 })
+            return String(decoding: bytes, as: UTF8.self)
+        }
+        let deviceModel = model.isEmpty ? deviceName : model
+        #endif
         
         return Device.Info(
+            name: deviceName,
             model: deviceModel,
+            isSimulator: isSimulator,
             os: Device.OS(name: osName, version: osVersion)
         )
     }

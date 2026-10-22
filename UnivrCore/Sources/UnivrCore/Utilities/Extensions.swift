@@ -92,6 +92,11 @@ extension Bundle {
         let version = object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
         return version
     }
+    
+    public var clearBuildNumber: String {
+        let build = object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "N/A"
+        return build
+    }
 }
 
 extension Array where Element: SelectableItem {

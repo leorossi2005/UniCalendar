@@ -190,6 +190,73 @@ struct NetworkService: Sendable {
         let wrapper: RootWrapper = try await fetch(from: "/status?appVersion=\(safeApp)&osVersion=\(safeOS)")
         return wrapper.notices.compactMap(\.value)
     }
+
+    // MARK: - Feedback (POST multipart)
+    func sendFeedback(_ payload: FeedbackPayload) async throws {
+        let startedAt = Date()
+        let session = Self.store.session
+        
+        if await ServerStatusCenter.shared.shouldBlockRequest(insideHandler: TickContext.isHandler) {
+            await ServerStatusCenter.shared.noteBlockedRequest()
+            throw NetworkError.serverUnreachable
+        }
+        guard let url = URL(string: "\(baseURL)/feedback") else { throw NetworkError.badURL }
+        
+        var form = MultipartForm()
+        form.addField("title", payload.title)
+        form.addField("message", payload.details)
+        form.addField("appVersion", payload.device.appVersion)
+        form.addField("build", payload.device.build)
+        form.addField("deviceIdentifier", payload.device.deviceIdentifier)
+        form.addField("deviceName", payload.device.deviceName)
+        form.addField("osName", payload.device.osName)
+        form.addField("osVersion", payload.device.osVersion)
+        if let attachment = payload.attachment {
+            form.addFile("attachment", filename: "screenshot.jpg", mimeType: "image/jpeg", data: attachment)
+        }
+        form.finish()
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 45
+        request.setValue(form.contentType, forHTTPHeaderField: "Content-Type")
+        
+        do {
+            let (_, response) = try await session.upload(for: request, from: form.body)
+            guard let http = response as? HTTPURLResponse else {
+                throw NetworkError.unknown(URLError(.unknown))
+            }
+            if (500...599).contains(http.statusCode) {
+                await ServerStatusCenter.shared.reportServerFailure(startedAt: startedAt)
+                throw NetworkError.serverUnreachable
+            }
+            await ServerStatusCenter.shared.reportSuccess()
+            guard (200...299).contains(http.statusCode) else {
+                throw NetworkError.badServerResponse(statusCode: http.statusCode)
+            }
+        } catch {
+            throw await mapTransportError(error, startedAt: startedAt)
+        }
+    }
+    
+    private func mapTransportError(_ error: Error, startedAt: Date) async -> Error {
+        if error is NetworkError || error is CancellationError { return error }
+        guard let urlError = error as? URLError else { return NetworkError.unknown(error) }
+        switch urlError.code {
+        case .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff:
+            return NetworkError.offline
+        case .timedOut:
+            await ServerStatusCenter.shared.reportServerFailure(startedAt: startedAt)
+            return NetworkError.timeout
+        case .cancelled:
+            return CancellationError()
+        case .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed, .networkConnectionLost, .resourceUnavailable:
+            await ServerStatusCenter.shared.reportServerFailure(startedAt: startedAt)
+            return NetworkError.serverUnreachable
+        default:
+            return NetworkError.unknown(urlError)
+        }
+    }
 }
 
 private struct Lossy<T: Decodable>: Decodable {
@@ -197,4 +264,25 @@ private struct Lossy<T: Decodable>: Decodable {
     init(from decoder: Decoder) throws {
         self.value = try? T(from: decoder)
     }
+}
+
+fileprivate struct MultipartForm {
+    let boundary = "Boundary-\(UUID().uuidString)"
+    private(set) var body = Data()
+    
+    var contentType: String { "multipart/form-data; boundary=\(boundary)" }
+    
+    mutating func addField(_ name: String, _ value: String) {
+        append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n")
+    }
+    
+    mutating func addFile(_ name: String, filename: String, mimeType: String, data: Data) {
+        append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"; filename=\"\(filename)\"\r\nContent-Type: \(mimeType)\r\n\r\n")
+        body.append(data)
+        append("\r\n")
+    }
+    
+    mutating func finish() { append("--\(boundary)--\r\n") }
+    
+    private mutating func append(_ string: String) { body.append(Data(string.utf8)) }
 }

@@ -65,6 +65,8 @@ OUTPUT_SWIFT_FILE.parent.mkdir(parents=True, exist_ok=True)
 with open(OUTPUT_SWIFT_FILE, "w", encoding="utf-8") as out:
     out.write("// File generato automaticamente da generate_radii.py\n")
     out.write("// Non modificare manualmente.\n\n")
+    out.write("//  Copyright (C) 2026 Leonardo Rossi\n")
+    out.write("//  SPDX-License-Identifier: GPL-3.0-or-later\n\n")
     out.write("import CoreGraphics\n\n")
     out.write("enum DeviceCornerRadii {\n")
     out.write("    static let all: [String: CGFloat] = [\n")

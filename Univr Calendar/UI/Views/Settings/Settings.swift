@@ -158,12 +158,12 @@ struct Settings: View {
                             ProgressView()
                                 .controlSize(.small)
                             Text("Sto provando a contattare l'università...")
-                                .foregroundStyle(Color.univrOffline)
+                                .foregroundStyle(.blue)
                         }
                     } else if ServerStatusCenter.shared.isUniVROffline {
                         HStack {
                             Text("I dati potrebbero non essere aggiornati.")
-                                .foregroundStyle(Color.univrOffline)
+                                .foregroundStyle(.blue)
                             Spacer()
                             Button("Riprova") {
                                 Haptics.play(.impact(weight: .medium))
@@ -172,7 +172,7 @@ struct Settings: View {
                             .disabled(ServerStatusCenter.shared.isUniVRRetrying)
                             .buttonStyle(.bordered)
                             .controlSize(.mini)
-                            .tint(Color.univrOffline)
+                            .tint(.blue)
                             .environment(\.isEnabled, true)
                         }
                     } else if viewModel.isLoading {
@@ -207,6 +207,10 @@ struct Settings: View {
                 }
                 NavigationLink(destination: DeveloperProfileView()) {
                     Label("Lo Sviluppatore", systemImage: "chevron.left.forwardslash.chevron.right")
+                        .foregroundStyle(.primary)
+                }
+                NavigationLink(destination: FeedbackView()) {
+                    Label("Invia un Feedback", systemImage: "text.bubble")
                         .foregroundStyle(.primary)
                 }
                 NavigationLink(destination: AboutView()) {
