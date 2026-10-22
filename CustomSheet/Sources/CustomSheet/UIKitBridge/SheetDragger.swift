@@ -27,6 +27,7 @@ final class SheetPanGestureRecognizer: UIPanGestureRecognizer {
 
 struct SheetDragger: UIViewRepresentable {
     var direction: CustomSheetDraggingDirection = .none
+    var isAtLargeDetent: Bool = false
     
     var onDrag: (CGFloat, CustomSheetDraggingDirection) -> Void
     var onEnded: (CGFloat, CGFloat) -> Void
@@ -68,9 +69,11 @@ struct SheetDragger: UIViewRepresentable {
         weak var targetView: UIView?
         weak var window: UIWindow?
         weak var trackedScrollView: UIScrollView?
+        var savedShowsVerticalScrollIndicator: Bool = true
         
         var isDraggingSheet: Bool = false
         var canHandoffToSheet: Bool = false
+        var startedAtLargeDetent: Bool = false
         var gesture: SheetPanGestureRecognizer?
         
         init(parent: SheetDragger) {
@@ -110,6 +113,8 @@ struct SheetDragger: UIViewRepresentable {
                 return
             }
             
+            startedAtLargeDetent = parent.isAtLargeDetent
+            
             let locationInWindow = touch.location(in: window)
             var viewToCheck = window.hitTest(locationInWindow, with: nil)
             var foundScrollView: UIScrollView? = nil
@@ -129,6 +134,13 @@ struct SheetDragger: UIViewRepresentable {
             self.isDraggingSheet = false
             
             if let sv = foundScrollView {
+                self.savedShowsVerticalScrollIndicator = sv.showsVerticalScrollIndicator
+                
+                if !startedAtLargeDetent {
+                    self.canHandoffToSheet = true
+                    return
+                }
+                
                 let topOffset = -sv.adjustedContentInset.top
                 let deltaFromTop = sv.contentOffset.y - topOffset
                 
@@ -147,34 +159,40 @@ struct SheetDragger: UIViewRepresentable {
             if let scrollView = trackedScrollView {
                 let topOffset = -scrollView.adjustedContentInset.top
                 
-                if gesture.state == .began {
-                    isDraggingSheet = false
+                if !startedAtLargeDetent {
+                    isDraggingSheet = true
+                    scrollView.contentOffset.y = topOffset
+                    scrollView.showsVerticalScrollIndicator = false
                 }
-                
-                if !isDraggingSheet {
-                    if scrollView.contentOffset.y <= topOffset + 6.0 && translation.y > 0 {
-                        isDraggingSheet = true
-                        scrollView.showsVerticalScrollIndicator = false
-                        
-                        scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: topOffset), animated: false)
-                        
-                        gesture.setTranslation(.zero, in: targetView)
-                        translation = .zero
-                    } else {
-                        gesture.setTranslation(.zero, in: targetView)
-                        translation = .zero
-                    }
-                } else {
-                    if translation.y <= 0 {
+                else {
+                    if gesture.state == .began {
                         isDraggingSheet = false
-                        scrollView.showsVerticalScrollIndicator = true
-                        
-                        parent.onDrag(0, parent.direction)
-                        
-                        gesture.setTranslation(.zero, in: targetView)
-                        translation = .zero
+                    }
+                    
+                    if !isDraggingSheet {
+                        if scrollView.contentOffset.y <= topOffset + 6.0 && translation.y > 0 {
+                            isDraggingSheet = true
+                            scrollView.showsVerticalScrollIndicator = false
+                            scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: topOffset), animated: false)
+                            
+                            gesture.setTranslation(.zero, in: targetView)
+                            translation = .zero
+                        } else {
+                            gesture.setTranslation(.zero, in: targetView)
+                            translation = .zero
+                        }
                     } else {
-                        scrollView.contentOffset.y = topOffset
+                        if translation.y <= 0 {
+                            isDraggingSheet = false
+                            scrollView.showsVerticalScrollIndicator = savedShowsVerticalScrollIndicator
+                            
+                            parent.onDrag(0, parent.direction)
+                            
+                            gesture.setTranslation(.zero, in: targetView)
+                            translation = .zero
+                        } else {
+                            scrollView.contentOffset.y = topOffset
+                        }
                     }
                 }
             }
@@ -188,9 +206,16 @@ struct SheetDragger: UIViewRepresentable {
                 let wasDraggingSheet = (trackedScrollView == nil) || isDraggingSheet
                 
                 if let scrollView = trackedScrollView {
-                    scrollView.showsVerticalScrollIndicator = true
+                    scrollView.showsVerticalScrollIndicator = savedShowsVerticalScrollIndicator
                     if wasDraggingSheet {
-                        scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: -scrollView.adjustedContentInset.top), animated: false)
+                        let topY = -scrollView.adjustedContentInset.top
+                        scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: topY), animated: false)
+                        
+                        DispatchQueue.main.async {
+                            if scrollView.isDecelerating || scrollView.contentOffset.y != topY {
+                                scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: topY), animated: false)
+                            }
+                        }
                     }
                 }
                 

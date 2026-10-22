@@ -137,13 +137,15 @@ struct CustomSheet<Content: View>: View {
                     radii: sheetShapeRadii,
                     animationDuration: cornerAnimationDuration,
                     useSpring: useSpringForCorners,
-                    isEnabled: !enableBackground
+                    isEnabled: !enableBackground,
+                    isDragging: manager.isDragging
                 ) {
                     mainSheet
                         .ignoresSafeArea()
                 }
                 .overlay {
                     SheetDragger(
+                        isAtLargeDetent: manager.selectedDetent == .large,
                         onDrag: { translationY, _ in
                             handleDragUpdating(value: translationY, state: &self.dragY)
                         },
@@ -168,6 +170,7 @@ struct CustomSheet<Content: View>: View {
             }
             .onAppear {
                 manager.onBackgroundToggle?(enableBackground)
+                manager.onLargeDetentToggle?(manager.selectedDetent == .large)
             }
         }
         .background {
@@ -189,6 +192,7 @@ struct CustomSheet<Content: View>: View {
         }
         .onChange(of: manager.selectedDetent) { oldValue, newValue in
             manager.previousDetent = oldValue
+            manager.onLargeDetentToggle?(newValue == .large)
             enableBackground = newValue == .large
             let atMax = newValue == .large
             isAtMax = atMax
@@ -281,9 +285,12 @@ struct CustomSheet<Content: View>: View {
     }
     
     private func handleDragUpdating(value: CGFloat, state: inout CGFloat) {
-        cornerAnimationDuration = 0.2
-        useSpringForCorners = false
+        if cornerAnimationDuration != 0.2 { cornerAnimationDuration = 0.2 }
+        if useSpringForCorners { useSpringForCorners = false }
         if !manager.isDragging { manager.isDragging = true }
+        
+        let largeValue = CustomSheetDetent.large.value
+        let mediumValue = CustomSheetDetent.medium.value
         
         if manager.selectedDetent == .large {
             if value < 0 {
@@ -292,7 +299,7 @@ struct CustomSheet<Content: View>: View {
                     enableBackground = true
                     setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37, isAtMax: true)
                 }
-                state = 0
+                if state != 0 { state = 0 }
                 return
             }
         }
@@ -303,39 +310,39 @@ struct CustomSheet<Content: View>: View {
         let minDetent = first.value
         let maxDetent = last.value
         
-        // 1. Calcola prima stato e offset (incluso il rubber-banding se bloccata)
+        var newOffset: CGFloat = 0
         if predictedHeight >= minDetent && predictedHeight <= maxDetent {
             state = value
-            offset = 0
+            newOffset = 0
         } else if predictedHeight > maxDetent {
             let excess = predictedHeight - maxDetent
             let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent - maxDetent * 0.75)
             state = baseHeight - (maxDetent + dampedExcess)
-            offset = 0
+            newOffset = 0
         } else if predictedHeight < minDetent {
             let excess = minDetent - predictedHeight
             let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent - maxDetent * 0.75)
             state = baseHeight - minDetent
-            offset = -dampedExcess
+            newOffset = -dampedExcess
         }
+        if offset != newOffset { offset = newOffset }
         
-        // 2. Calcola l'altezza visiva reale sullo schermo (considerando anche l'offset del rubber-band)
         let effectiveHeight = (baseHeight - state) + offset
         
-        // 3. Usa `detents` invece di `activeDetents` così il padding si adatta anche col lock attivo
         if detents.contains(.large) && detents.contains(.medium) {
-            if effectiveHeight >= CustomSheetDetent.medium.value && effectiveHeight <= CustomSheetDetent.large.value {
-                sheetPadding = min(max(defaultPadding - ((defaultPadding * (effectiveHeight - CustomSheetDetent.medium.value)) / (CustomSheetDetent.large.value - CustomSheetDetent.medium.value)), 0), defaultPadding)
-            } else if effectiveHeight > CustomSheetDetent.large.value {
-                sheetPadding = 0
+            let newPadding: CGFloat
+            if effectiveHeight >= mediumValue && effectiveHeight <= largeValue {
+                newPadding = min(max(defaultPadding - ((defaultPadding * (effectiveHeight - mediumValue)) / (largeValue - mediumValue)), 0), defaultPadding)
+            } else if effectiveHeight > largeValue {
+                newPadding = 0
             } else {
-                sheetPadding = defaultPadding
+                newPadding = defaultPadding
             }
+            if sheetPadding != newPadding { sheetPadding = newPadding }
         }
         
-        // 4. Unifica il controllo della soglia dell'80% e degli angoli per tutti i casi
-        let shouldEnableBackground = effectiveHeight > CustomSheetDetent.large.value * 0.8
-        let currentlyAtMax = effectiveHeight >= CustomSheetDetent.large.value
+        let shouldEnableBackground = effectiveHeight > largeValue * 0.8
+        let currentlyAtMax = effectiveHeight >= largeValue
         let backgroundChanged = enableBackground != shouldEnableBackground
         let maxChanged = isAtMax != currentlyAtMax
         

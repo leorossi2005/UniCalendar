@@ -18,30 +18,36 @@ struct CalendarSheetContent: View {
     @Binding var selectedWeek: Date
     
     var body: some View {
+        let windowHeight = UIApplication.shared.windowSize.height
+        let largeHeight = CustomSheetDetent.large.value
+        let mediumHeightHigh = CustomSheetDetent.medium.value * 1.05
+        let mediumHeightLow = CustomSheetDetent.medium.value * 0.95
+        let smallHeight = CustomSheetDetent.small.value
+        let fadeRange: CGFloat = windowHeight * 0.05
+        
         GeometryReader { proxy in
             let currentHeight = proxy.size.height
-            let windowHeight = UIApplication.shared.windowSize.height
             
-            let largeHeight = CustomSheetDetent.large.value
-            let mediumHeightHigh = CustomSheetDetent.medium.value * 1.05
-            let mediumHeightLow = CustomSheetDetent.medium.value * 0.95
-            let smallHeight = CustomSheetDetent.small.value
-            let fadeRange: CGFloat = windowHeight * 0.05
+            let rawLargeOpacity = 1.0 - (Double(largeHeight - currentHeight) / Double(fadeRange))
+            let rawMediumOpacity = 1.0 - ((currentHeight < mediumHeightHigh ? Double(mediumHeightLow - currentHeight) : Double(currentHeight - mediumHeightHigh)) / Double(fadeRange))
+            let rawSmallOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
             
-            let largeOpacity = 1.0 - (Double(largeHeight - currentHeight) / Double(fadeRange))
-            let mediumOpacity = 1.0 - ((currentHeight < mediumHeightHigh ? Double(mediumHeightLow - currentHeight) : Double(currentHeight - mediumHeightHigh)) / Double(fadeRange))
-            let smallOpacity = 1.0 - (Double(currentHeight - smallHeight) / Double(fadeRange))
+            let isAnimatingDirectlyToLarge = sheetManager.previousDetent != .large && sheetManager.selectedDetent == .large && !sheetManager.isDragging
+            let smallIsHidden = currentHeight > smallHeight + fadeRange || isAnimatingDirectlyToLarge
+            let mediumIsHidden = currentHeight > mediumHeightHigh + fadeRange || isAnimatingDirectlyToLarge
             
-            let smallIsHidden = currentHeight > smallHeight + fadeRange || sheetManager.previousDetent != .large && sheetManager.selectedDetent == .large && !sheetManager.isDragging
-            let mediumIsHidden = currentHeight > mediumHeightHigh + fadeRange || sheetManager.previousDetent != .large && sheetManager.selectedDetent == .large && !sheetManager.isDragging
+            let finalSmallOpacity = smallIsHidden ? 0.0 : min(max(rawSmallOpacity, 0.0), 1.0)
+            let finalMediumOpacity = mediumIsHidden ? 0.0 : min(max(rawMediumOpacity, 0.0), 1.0)
+            let finalLargeOpacity = min(max(rawLargeOpacity, 0.0), 1.0)
+            
             ZStack(alignment: .top) {
                 FractionDatePickerContainer(selectedWeek: $selectedWeek)
-                    .opacity(smallIsHidden ? 0 : min(max(smallOpacity, 0), 1))
+                    .frame(height: smallHeight)
+                    .opacity(finalSmallOpacity)
                     .allowsHitTesting(sheetManager.selectedDetent == .small)
-                    .frame(height: CustomSheetDetent.small.value)
                 
                 DatePickerContainer(selectedWeek: $selectedWeek)
-                    .opacity(mediumIsHidden ? 0 : min(max(mediumOpacity, 0), 1))
+                    .opacity(finalMediumOpacity)
                     .allowsHitTesting(sheetManager.selectedDetent == .medium)
                 
                 NavigationStack {
@@ -81,9 +87,9 @@ struct CalendarSheetContent: View {
                     }
                 }
                 .id(router.openSettings)
-                .opacity(min(max(largeOpacity, 0), 1))
+                .frame(height: largeHeight)
+                .opacity(finalLargeOpacity)
                 .allowsHitTesting(sheetManager.selectedDetent == .large)
-                .frame(height: CustomSheetDetent.large.value)
             }
         }
     }

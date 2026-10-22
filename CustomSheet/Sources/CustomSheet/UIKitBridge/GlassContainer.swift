@@ -202,6 +202,7 @@ public struct GlassContainer<Content: View>: UIViewControllerRepresentable {
     var animationDuration: TimeInterval = 0.2
     var useSpring: Bool = false
     var isEnabled: Bool = true
+    var isDragging: Bool = false
     var resetGlassEffect: Int = 0
     private let content: Content
     
@@ -212,6 +213,7 @@ public struct GlassContainer<Content: View>: UIViewControllerRepresentable {
         animationDuration: TimeInterval = 0.2,
         useSpring: Bool = false,
         isEnabled: Bool = true,
+        isDragging: Bool = false,
         resetGlassEffect: Int = 0,
         @ViewBuilder content: @escaping () -> Content
     ) {
@@ -221,6 +223,7 @@ public struct GlassContainer<Content: View>: UIViewControllerRepresentable {
         self.animationDuration = animationDuration
         self.useSpring = useSpring
         self.isEnabled = isEnabled
+        self.isDragging = isDragging
         self.resetGlassEffect = resetGlassEffect
         self.content = content()
     }
@@ -234,6 +237,7 @@ public struct GlassContainer<Content: View>: UIViewControllerRepresentable {
         if let tint { glassContainer.tint = UIColor(tint) }
         glassContainer.isEnabled = isEnabled
         glassContainer.resetTrigger = resetGlassEffect
+        glassContainer.applyCorners(animated: false, duration: 0)
         
         controller.view.addSubview(glassContainer)
         glassContainer.frame = controller.view.bounds
@@ -261,19 +265,27 @@ public struct GlassContainer<Content: View>: UIViewControllerRepresentable {
     public func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
         let shouldAnimate = (context.transaction.animation != nil)
         if let glass = context.coordinator.glassContainer {
-            if glass.cornerRadii != radii { glass.cornerRadii = radii }
+            let radiiChanged = glass.cornerRadii != radii
+            if radiiChanged { glass.cornerRadii = radii }
             if glass.style != style { glass.style = style }
             
             let newTint = tint.map { UIColor($0) }
             if glass.tint != newTint { glass.tint = newTint }
             
-            if glass.isEnabled != isEnabled { glass.isEnabled = isEnabled }
-            if glass.resetTrigger != resetGlassEffect { glass.resetTrigger = resetGlassEffect }
-            glass.applyCorners(animated: shouldAnimate, duration: animationDuration, useSpring: useSpring)
+            let enabledChanged = glass.isEnabled != isEnabled
+            if enabledChanged { glass.isEnabled = isEnabled }
             
-            let transaction = context.transaction
-            withTransaction(transaction) {
-                context.coordinator.hostingController?.rootView = content
+            if glass.resetTrigger != resetGlassEffect { glass.resetTrigger = resetGlassEffect }
+            
+            if radiiChanged {
+                glass.applyCorners(animated: shouldAnimate, duration: animationDuration, useSpring: useSpring)
+            }
+            
+            if !isDragging || enabledChanged {
+                let transaction = context.transaction
+                withTransaction(transaction) {
+                    context.coordinator.hostingController?.rootView = content
+                }
             }
         }
     }

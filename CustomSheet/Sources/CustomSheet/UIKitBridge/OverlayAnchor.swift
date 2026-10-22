@@ -178,8 +178,9 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
             uiView?.containerView?.shouldPassThrough = !isEnabled
         }
         
-        let isLarge = manager?.selectedDetent == .large
-        uiView.updateNavigationSafeArea(isLarge: isLarge)
+        manager?.onLargeDetentToggle = { [weak uiView] isLarge in
+            uiView?.updateNavigationSafeArea(isLarge: isLarge)
+        }
     }
     
     static func dismantleUIView(_ uiView: OverlayAnchorUIView, coordinator: ()) {
