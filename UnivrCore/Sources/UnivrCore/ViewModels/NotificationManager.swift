@@ -53,7 +53,7 @@ public final class NotificationManager {
             activeNotifications = try await storage.fetchNotifications()
             scheduleNextCleanup()
         } catch {
-            print("Errore caricamento notifiche dal database: \(error)")
+            print("Error loading notifications from database: \(error)")
         }
     }
     
@@ -126,7 +126,7 @@ public final class NotificationManager {
             await fetchSavedNotifications()
             return true
         } catch {
-            print("Errore salvataggio database: \(error)")
+            print("Error saving database: \(error)")
             return false
         }
     }
@@ -146,7 +146,7 @@ public final class NotificationManager {
                 try await storage.saveNotification(notification)
                 await fetchSavedNotifications()
             } catch {
-                print("Errore salvataggio database update: \(error)")
+                print("Error saving database update: \(error)")
             }
         }
     }
@@ -163,7 +163,7 @@ public final class NotificationManager {
             try await storage.deleteNotification(id)
             await fetchSavedNotifications()
         } catch {
-            print("Errore eliminazione dal database: \(error)")
+            print("Error while deleting database: \(error)")
         }
     }
     

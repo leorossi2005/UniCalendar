@@ -117,6 +117,22 @@
         }
       }
     },
+    "%lld/%lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld/%2$lld"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld/%2$lld"
+          }
+        }
+      }
+    },
     "•" : {
       "localizations" : {
         "en" : {
@@ -177,6 +193,23 @@
         }
       }
     },
+    "Aggiornamento dei dati in corso..." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Updating data in progress..."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiornamento dei dati in corso..."
+          }
+        }
+      }
+    },
     "Aggiugni un nuovo tag" : {
       "localizations" : {
         "en" : {
@@ -207,6 +240,16 @@
         }
       }
     },
+    "Aggiungi uno screenshot" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a screenshot"
+          }
+        }
+      }
+    },
     "Al momento non ci sono avvisi attivi." : {
       "localizations" : {
         "en" : {
@@ -223,6 +266,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You’re offline at the moment."
+          }
+        }
+      }
+    },
+    "Allegati" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attachments"
           }
         }
       }
@@ -257,6 +310,16 @@
         }
       }
     },
+    "App" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App"
+          }
+        }
+      }
+    },
     "Area Personale" : {
       "localizations" : {
         "en" : {
@@ -283,6 +346,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alert"
+          }
+        }
+      }
+    },
+    "Basta siti lenti o **app obsolete** per capire che **lezioni** hai.\n**Ora hai tutto in un unico posto.**" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tired of slow websites or **outdated apps** just to check your **classes**?\n**Now everything is in one place.**"
           }
         }
       }
@@ -337,12 +410,12 @@
         }
       }
     },
-    "Caricamento disponibilità..." : {
+    "Cerca un anno di corso" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Loading availability…"
+            "value" : "Search for a course year"
           }
         }
       }
@@ -437,16 +510,6 @@
         }
       }
     },
-    "Connettiti a internet per configurare il tuo corso." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Connect to the internet to configure your course."
-          }
-        }
-      }
-    },
     "Connettiti a internet per controllare le disponibilità di oggi." : {
       "localizations" : {
         "en" : {
@@ -487,6 +550,16 @@
         }
       }
     },
+    "Corso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Course"
+          }
+        }
+      }
+    },
     "Crediti" : {
       "localizations" : {
         "en" : {
@@ -513,6 +586,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "DANGER ZONE"
+          }
+        }
+      }
+    },
+    "Descrivi il problema o il consiglio" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Describe the problem or the advice"
+          }
+        }
+      }
+    },
+    "Descrizione" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Description"
           }
         }
       }
@@ -587,6 +680,16 @@
         }
       }
     },
+    "Es. Le aule non si aggiornano" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ex. The classrooms do not update"
+          }
+        }
+      }
+    },
     "Espandi tutto" : {
       "localizations" : {
         "en" : {
@@ -603,6 +706,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Make me a little gift"
+          }
+        }
+      }
+    },
+    "Feedback" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Feedback"
           }
         }
       }
@@ -667,6 +780,36 @@
         }
       }
     },
+    "Grazie!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thank you!"
+          }
+        }
+      }
+    },
+    "Hai inviato troppi feedback in poco tempo. Riprova tra qualche minuto." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have sent too many feedback in a short time. Try again in a few minutes."
+          }
+        }
+      }
+    },
+    "I dati potrebbero non essere aggiornati." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Data might not be up to date."
+          }
+        }
+      }
+    },
     "I miei progetti" : {
       "localizations" : {
         "en" : {
@@ -677,12 +820,52 @@
         }
       }
     },
+    "Il server ha rifiutato lo screenshot. Rimuovilo o scegline un altro." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The server rejected the screenshot. Remove it or choose another one."
+          }
+        }
+      }
+    },
+    "Il server non è raggiungibile, non potrai effettuare nuovamente l'onboarding finché il server non tornerà raggiungibile." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The server is not reachable, you will not be able to complete the onboarding again until the server is reachable again."
+          }
+        }
+      }
+    },
+    "Il tuo feedback è stato inviato." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your feedback has been sent."
+          }
+        }
+      }
+    },
     "Impegni Personali" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Personal Commitments"
+          }
+        }
+      }
+    },
+    "Impossibile usare questa immagine: non è leggibile o è troppo pesante." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to use this image: it is unreadable or it is too heavy."
           }
         }
       }
@@ -713,6 +896,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "In offline mode you can’t change this options."
+          }
+        }
+      }
+    },
+    "Indietro" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
           }
         }
       }
@@ -757,6 +950,36 @@
         }
       }
     },
+    "Invia" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send"
+          }
+        }
+      }
+    },
+    "Invia un Feedback" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send a Feedback"
+          }
+        }
+      }
+    },
+    "Invio non riuscito" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Submission failed"
+          }
+        }
+      }
+    },
     "L'impegno inizia tra %lld minuti" : {
       "localizations" : {
         "en" : {
@@ -777,6 +1000,16 @@
         }
       }
     },
+    "La disponibilità delle aule non è consultabile finché i server dell'università non tornano raggiungibili." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classroom availability can't be checked until the university servers are reachable again."
+          }
+        }
+      }
+    },
     "La lezione inizia tra %lld minuti" : {
       "localizations" : {
         "en" : {
@@ -793,6 +1026,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The lesson is starting now"
+          }
+        }
+      }
+    },
+    "Le informazioni sul dispositivo vengono incluse automaticamente per aiutarmi a riprodurre il problema. Lo screenshot è facoltativo." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device information is automatically included to help me reproduce the problem. The screenshot is optional."
           }
         }
       }
@@ -887,6 +1130,16 @@
         }
       }
     },
+    "Nessun anno di corso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No course year"
+          }
+        }
+      }
+    },
     "Nessun Avviso" : {
       "localizations" : {
         "en" : {
@@ -903,16 +1156,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No course"
-          }
-        }
-      }
-    },
-    "Nessun corso trovato" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No course found"
           }
         }
       }
@@ -967,16 +1210,6 @@
         }
       }
     },
-    "Non capisci mai che lezioni hai? Non hai voglia di aprire il sito ogni volta o usare app obsolete? Ora puoi fare tutto qui!" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Don't you ever understand what classes you have? Don't you want to open the site every time or use outdated apps? Now you can do everything here!"
-          }
-        }
-      }
-    },
     "Non ci sono aule disponibili per questa sede." : {
       "localizations" : {
         "en" : {
@@ -1023,6 +1256,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You haven’t scheduled any notifications for your classes yet."
+          }
+        }
+      }
+    },
+    "Non riusciamo a contattare il server. Riprova più tardi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We are unable to contact the server. Try again later."
           }
         }
       }
@@ -1087,22 +1330,22 @@
         }
       }
     },
-    "O il tuo amico, ovvio" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Or your friend, of course"
-          }
-        }
-      }
-    },
     "Oggi" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Today"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         }
       }
@@ -1157,12 +1400,32 @@
         }
       }
     },
-    "Posizione non trovata\n\n%@" : {
+    "Posizione non attualmente presente, siamo già al corrente e il problema verrà risolto." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Location not found\n\n%@"
+            "value" : "Location currently not available, we are already aware and the issue will be resolved."
+          }
+        }
+      }
+    },
+    "Posizione non disponibile" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location not available"
+          }
+        }
+      }
+    },
+    "Posizione non trovata" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location not found"
           }
         }
       }
@@ -1197,6 +1460,16 @@
         }
       }
     },
+    "Questo corso non è disponibile finché i server dell'università non tornano online. Riprova più tardi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This course is not available until the university servers are back online. Try again later."
+          }
+        }
+      }
+    },
     "Questo sono io ↓" : {
       "localizations" : {
         "en" : {
@@ -1223,6 +1496,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remove notifications"
+          }
+        }
+      }
+    },
+    "Riprova" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try again"
           }
         }
       }
@@ -1257,6 +1540,16 @@
         }
       }
     },
+    "Scegli un anno di corso dalle impostazioni per iniziare." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a course year from the settings to start."
+          }
+        }
+      }
+    },
     "Scegli un corso" : {
       "localizations" : {
         "en" : {
@@ -1277,6 +1570,16 @@
         }
       }
     },
+    "Screenshot allegato" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attached screenshot"
+          }
+        }
+      }
+    },
     "Scrivimi!" : {
       "localizations" : {
         "en" : {
@@ -1287,12 +1590,12 @@
         }
       }
     },
-    "Se vedi solo un anno allora lascia così, non puoi sbagliare!" : {
+    "Se è presente **un solo anno**, puoi procedere direttamente." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "If you only see one year then leave it like that, you can't go wrong!"
+            "value" : "If only **one year** is available, you can proceed right away."
           }
         }
       }
@@ -1303,16 +1606,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "If you want to help"
-          }
-        }
-      }
-    },
-    "Segnala un problema" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Leave a feedback"
           }
         }
       }
@@ -1347,6 +1640,26 @@
         }
       }
     },
+    "Sei offline, non potrai effettuare nuovamente l'onboarding finché non tornerai online." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You are offline, you will not be able to complete the onboarding again until you get back online."
+          }
+        }
+      }
+    },
+    "Sei offline, non puoi inviare feedback." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You are offline, you cannot send feedback."
+          }
+        }
+      }
+    },
     "Seleziona Luogo" : {
       "localizations" : {
         "en" : {
@@ -1357,12 +1670,52 @@
         }
       }
     },
-    "Seleziona un anno precedente per vedere l'archivio, sennò procedi pure con l'ultimo ;)" : {
+    "Seleziona un **anno precedente** per consultare l'archivio, oppure procedi con **l'ultimo disponibile**." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Select a previous year to see the archive, otherwise proceed with the last one ;)"
+            "value" : "Select a **previous year** to browse the archive, or proceed with the **latest available**."
+          }
+        }
+      }
+    },
+    "Serve per filtrare le lezioni divise per **gruppo pari o dispari**." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Used to filter classes split by **even or odd group**."
+          }
+        }
+      }
+    },
+    "Server non raggiungibile" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server unreachable"
+          }
+        }
+      }
+    },
+    "Server non raggiungibile, non puoi inviare feedback." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server unreachable, you cannot send feedback."
+          }
+        }
+      }
+    },
+    "Server non raggiungibile, riprova più tardi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server unreachable, try again later."
           }
         }
       }
@@ -1377,12 +1730,49 @@
         }
       }
     },
-    "Sono mostrati i corsi per l'anno %@" : {
+    "Sistema" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "The courses for the year %@ are shown"
+            "value" : "System"
+          }
+        }
+      }
+    },
+    "Stai visualizzando i corsi per l'anno **%@**." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Showing courses for the **%@** academic year."
+          }
+        }
+      }
+    },
+    "Sto provando a contattare il server..." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trying to contact server..."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sto provando a contattare il server..."
+          }
+        }
+      }
+    },
+    "Sto provando a contattare l'università..." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I'm trying to reach the university..."
           }
         }
       }
@@ -1443,6 +1833,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tap to open the details"
+          }
+        }
+      }
+    },
+    "Tocca per riprovare" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to try again"
+          }
+        }
+      }
+    },
+    "Università non raggiungibile" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "University unreachable"
           }
         }
       }

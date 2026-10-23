@@ -236,8 +236,7 @@ struct CalendarItemDetailsView: View {
     private var headerInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(internalItem.displayTitle)
-                .font(.title2)
-                .bold()
+                .font(.title2.bold())
                 .contentShape(.rect)
             if !internalItem.tagsItems.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -416,7 +415,19 @@ struct StableMapView: View {
             } else if isLoadingMap {
                 ProgressView()
             } else {
-                ContentUnavailableView("Posizione non trovata\n\n\(internalItem.displayAddress ?? "")", systemImage: "mappin.slash")
+                switch item {
+                case .lesson:
+                    ContentUnavailableView(
+                        "Posizione non disponibile",
+                        systemImage: "mappin.slash",
+                        description: Text("Posizione non attualmente presente, siamo già al corrente e il problema verrà risolto.")
+                    )
+                case .personal:
+                    ContentUnavailableView(
+                        "Posizione non trovata",
+                        systemImage: "mappin.slash"
+                    )
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -457,8 +468,7 @@ struct StableMapView: View {
             
             Text(internalItem.displayAddress ?? "")
                 .frame(height: 10)
-                .font(.caption)
-                .bold()
+                .font(.caption.bold())
                 .foregroundStyle(.primary)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
@@ -513,7 +523,19 @@ struct StableMapView: View {
             return
         }
         
-        guard let address = internalItem.displayAddress, !address.isEmpty else { return }
+        
+        if case .lesson = item {
+            await MainActor.run {
+                self.externalCoordinate = nil
+                self.isLoadingMap = false
+            }
+            return
+        }
+        
+        guard let address = internalItem.displayAddress, !address.isEmpty else {
+            await MainActor.run { self.isLoadingMap = false }
+            return
+        }
         
         if let cachedCoord = await CoordinateCache.shared.coordinate(for: address) {
             let clCoord = CLLocationCoordinate2D(latitude: cachedCoord.latitude, longitude: cachedCoord.longitude)

@@ -11,11 +11,11 @@ import SwiftUI
 import UnivrCore
 
 struct RootView: View {
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(UserSettings.self) var settings
     @Environment(AppStatusManager.self) var statusManager
     
     @State private var showSplash: Bool = true
-    @Namespace private var animation
     
     private static let iconSize: CGFloat = 200
     
@@ -25,35 +25,40 @@ struct RootView: View {
                 NavigationStack {
                     AppNoticeView(notices: [blockingNotice])
                 }
-                .transition(.opacity)
             } else {
                 ZStack {
                     if showSplash {
                         splashScreen
                     } else if settings.onboardingCompleted {
                         CalendarView()
-                            .transition(.opacity)
                     } else {
-                        Onboarding(animation: animation, showSplash: $showSplash)
-                            .transition(.opacity)
+                        Onboarding()
                     }
                 }
             }
         }
-        .animation(.default, value: settings.onboardingCompleted)
-        .animation(.default, value: statusManager.activeNotices)
         .task {
             Task { await statusManager.refresh() }
-            let delay = settings.onboardingCompleted ? 500 : 1500
-            try? await Task.sleep(for: .milliseconds(delay))
-            withAnimation(settings.onboardingCompleted ? nil : .spring(response: 0.7, dampingFraction: 0.8)) {
-                showSplash = false
-            }
+            try? await Task.sleep(for: .milliseconds(250))
+            showSplash = false
         }
         .onChange(of: statusManager.isResolved, initial: true) { _, resolved in
             if resolved && settings.onboardingCompleted {
-                withAnimation(nil) {
-                    showSplash = false
+                showSplash = false
+            }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
+            if ServerStatusCenter.shared.isUnreachable {
+                Task {
+                    await ServerStatusCenter.shared.retryAfterForeground()
+                }
+            }
+        }
+        .onChange(of: NetworkStatusMonitor.shared.status) { oldStatus, newStatus in
+            if oldStatus == .disconnected && newStatus == .connected {
+                Task {
+                    await ServerStatusCenter.shared.networkDidReconnect()
                 }
             }
         }
@@ -67,11 +72,8 @@ struct RootView: View {
             
             Image("InternalIcon")
                 .resizable()
-                .clipShape(RoundedRectangle(cornerRadius: Self.iconSize * 0.225, style: .continuous))
-                .matchedGeometryEffect(id: "appIcon", in: animation, isSource: true)
                 .frame(width: Self.iconSize, height: Self.iconSize)
         }
-        .zIndex(1)
         .ignoresSafeArea()
     }
 }
@@ -80,4 +82,5 @@ struct RootView: View {
     RootView()
         .environment(UserSettings.shared)
         .environment(AppStatusManager())
+        .readSafeAreaInsets()
 }

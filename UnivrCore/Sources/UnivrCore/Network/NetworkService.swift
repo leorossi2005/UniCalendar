@@ -9,38 +9,100 @@
 
 import Foundation
 
-struct NetworkService {
-    private let session: URLSession
-    let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
-    
-    private static var userAgent: String {
-        "UniCalendar/\(Bundle.main.clearAppVersion) (\(Device.model); \(Device.os.name) \(Device.os.version))"
-    }
+fileprivate final class SessionStore: @unchecked Sendable {
+    private let lock = NSLock()
+    private var currentSession: URLSession
     
     init() {
+        self.currentSession = Self.makeSession()
+    }
+    
+    var session: URLSession {
+        lock.lock()
+        defer { lock.unlock() }
+        return currentSession
+    }
+    
+    func replace() {
+        let old: URLSession
+        
+        lock.lock()
+        old = currentSession
+        currentSession = Self.makeSession()
+        lock.unlock()
+        
+        old.finishTasksAndInvalidate()
+    }
+    
+    private static func makeSession() -> URLSession {
         let configuration = URLSessionConfiguration.default
-        configuration.timeoutIntervalForRequest = 30
+        configuration.timeoutIntervalForRequest = 15
         configuration.requestCachePolicy = .reloadIgnoringLocalAndRemoteCacheData
         configuration.urlCache = nil
         
         configuration.httpAdditionalHeaders = [
-            "User-Agent": Self.userAgent,
+            "User-Agent": NetworkService.userAgent,
             "Accept": "application/json",
             "Content-Type": "application/json"
         ]
         
-        self.session = URLSession(configuration: configuration)
+        return URLSession(configuration: configuration)
+    }
+}
+
+struct NetworkService: Sendable {
+    fileprivate static let store = SessionStore()
+    
+    static func resetConnections() {
+        store.replace()
     }
     
+    let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
+    
+    fileprivate static var userAgent: String {
+        "UniCalendar/\(Bundle.main.clearAppVersion) (\(Device.model); \(Device.os.name) \(Device.os.version))"
+    }
+    
+    init() {}
+    
     private func fetch<T: Decodable>(from endpoint: String) async throws -> T {
-        guard let url = URL(string: "\(baseURL)\(endpoint)") else { throw NetworkError.badURL }
+        let startedAt = Date()
+        let session = Self.store.session
+
+        let insideHandler = TickContext.isHandler
+        if await ServerStatusCenter.shared.shouldBlockRequest(insideHandler: insideHandler) {
+            await ServerStatusCenter.shared.noteBlockedRequest()
+            throw NetworkError.serverUnreachable
+        }
+        
+        guard let url = URL(string: "\(baseURL)\(endpoint)") else {
+            throw NetworkError.badURL
+        }
         
         do {
-            let (data, response) = try await self.session.data(from: url)
+            let (data, response) = try await session.data(from: url)
             
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw NetworkError.unknown(URLError(.unknown))
             }
+            
+            let univrStatus = httpResponse.value(forHTTPHeaderField: "X-UniVR-Status")
+            switch univrStatus {
+            case "offline": await ServerStatusCenter.shared.reportUniVROffline()
+            case "online": await ServerStatusCenter.shared.reportUniVROnline()
+            default: break // route senza header (es. /status): non cambia il flag
+            }
+            
+            if (500...599).contains(httpResponse.statusCode) {
+                if univrStatus == "offline" {
+                    await ServerStatusCenter.shared.reportSuccess()
+                    throw NetworkError.univrOffline
+                }
+                await ServerStatusCenter.shared.reportServerFailure(startedAt: startedAt)
+                throw NetworkError.serverUnreachable
+            }
+            
+            await ServerStatusCenter.shared.reportSuccess()
             
             guard (200...299).contains(httpResponse.statusCode) else {
                 throw NetworkError.badServerResponse(statusCode: httpResponse.statusCode)
@@ -64,13 +126,25 @@ struct NetworkService {
             
             return try decoder.decode(T.self, from: data)
             
+        } catch let error as NetworkError {
+            throw error
         } catch let error as URLError {
             switch error.code {
-            case .notConnectedToInternet: throw NetworkError.offline
-            case .timedOut: throw NetworkError.timeout
-            case .cancelled: throw CancellationError()
-            default: throw NetworkError.unknown(error)
+            case .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff:
+                throw NetworkError.offline
+            case .timedOut:
+                await ServerStatusCenter.shared.reportServerFailure(startedAt: startedAt)
+                throw NetworkError.timeout
+            case .cancelled:
+                throw CancellationError()
+            case .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed, .networkConnectionLost, .resourceUnavailable:
+                await ServerStatusCenter.shared.reportServerFailure(startedAt: startedAt)
+                throw NetworkError.serverUnreachable
+            default:
+                throw NetworkError.unknown(error)
             }
+        } catch is CancellationError {
+            throw CancellationError()
         } catch let error as DecodingError {
             print("Decode error for \(endpoint): \(error)")
             throw NetworkError.decodingError(error)
@@ -86,8 +160,9 @@ struct NetworkService {
         return wrapper.years
     }
     
-    func getCourses(year: String) async throws -> [Corso] {
-        struct RootWrapper: Decodable { let courses: [Corso] }
+    func getCourses(year: String) async throws -> [Course] {
+        guard year != "0", !year.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return [] }
+        struct RootWrapper: Decodable { let courses: [Course] }
         let wrapper: RootWrapper = try await fetch(from: "/courses?year=\(year)")
         return wrapper.courses
     }
@@ -96,10 +171,16 @@ struct NetworkService {
         return try await fetch(from: "/schedule?course=\(corso)&academicYear=\(anno)&year=\(selyear)")
     }
     
-    func getAvailability(date: String) async throws -> Availability {
-        struct RootWrapper: Decodable { let availability: Availability }
+    func getRoomsAvailability(date: String) async throws -> [String: [Room]] {
+        struct RootWrapper: Decodable { let rooms: [String: [Room]] }
         let wrapper: RootWrapper = try await fetch(from: "/roomsavailability?date=\(date)")
-        return wrapper.availability
+        return wrapper.rooms
+    }
+    
+    func getLocations() async throws -> [String: String] {
+        struct RootWrapper: Decodable { let locations: [String: String] }
+        let wrapper: RootWrapper = try await fetch(from: "/locations")
+        return wrapper.locations
     }
     
     func getAppStatus(appVersion: String, osVersion: String) async throws -> [AppNotice] {
@@ -109,6 +190,73 @@ struct NetworkService {
         let wrapper: RootWrapper = try await fetch(from: "/status?appVersion=\(safeApp)&osVersion=\(safeOS)")
         return wrapper.notices.compactMap(\.value)
     }
+
+    // MARK: - Feedback (POST multipart)
+    func sendFeedback(_ payload: FeedbackPayload) async throws {
+        let startedAt = Date()
+        let session = Self.store.session
+        
+        if await ServerStatusCenter.shared.shouldBlockRequest(insideHandler: TickContext.isHandler) {
+            await ServerStatusCenter.shared.noteBlockedRequest()
+            throw NetworkError.serverUnreachable
+        }
+        guard let url = URL(string: "\(baseURL)/feedback") else { throw NetworkError.badURL }
+        
+        var form = MultipartForm()
+        form.addField("title", payload.title)
+        form.addField("message", payload.details)
+        form.addField("appVersion", payload.device.appVersion)
+        form.addField("build", payload.device.build)
+        form.addField("deviceIdentifier", payload.device.deviceIdentifier)
+        form.addField("deviceName", payload.device.deviceName)
+        form.addField("osName", payload.device.osName)
+        form.addField("osVersion", payload.device.osVersion)
+        if let attachment = payload.attachment {
+            form.addFile("attachment", filename: "screenshot.jpg", mimeType: "image/jpeg", data: attachment)
+        }
+        form.finish()
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 45
+        request.setValue(form.contentType, forHTTPHeaderField: "Content-Type")
+        
+        do {
+            let (_, response) = try await session.upload(for: request, from: form.body)
+            guard let http = response as? HTTPURLResponse else {
+                throw NetworkError.unknown(URLError(.unknown))
+            }
+            if (500...599).contains(http.statusCode) {
+                await ServerStatusCenter.shared.reportServerFailure(startedAt: startedAt)
+                throw NetworkError.serverUnreachable
+            }
+            await ServerStatusCenter.shared.reportSuccess()
+            guard (200...299).contains(http.statusCode) else {
+                throw NetworkError.badServerResponse(statusCode: http.statusCode)
+            }
+        } catch {
+            throw await mapTransportError(error, startedAt: startedAt)
+        }
+    }
+    
+    private func mapTransportError(_ error: Error, startedAt: Date) async -> Error {
+        if error is NetworkError || error is CancellationError { return error }
+        guard let urlError = error as? URLError else { return NetworkError.unknown(error) }
+        switch urlError.code {
+        case .notConnectedToInternet, .dataNotAllowed, .internationalRoamingOff:
+            return NetworkError.offline
+        case .timedOut:
+            await ServerStatusCenter.shared.reportServerFailure(startedAt: startedAt)
+            return NetworkError.timeout
+        case .cancelled:
+            return CancellationError()
+        case .cannotConnectToHost, .cannotFindHost, .dnsLookupFailed, .networkConnectionLost, .resourceUnavailable:
+            await ServerStatusCenter.shared.reportServerFailure(startedAt: startedAt)
+            return NetworkError.serverUnreachable
+        default:
+            return NetworkError.unknown(urlError)
+        }
+    }
 }
 
 private struct Lossy<T: Decodable>: Decodable {
@@ -116,4 +264,25 @@ private struct Lossy<T: Decodable>: Decodable {
     init(from decoder: Decoder) throws {
         self.value = try? T(from: decoder)
     }
+}
+
+fileprivate struct MultipartForm {
+    let boundary = "Boundary-\(UUID().uuidString)"
+    private(set) var body = Data()
+    
+    var contentType: String { "multipart/form-data; boundary=\(boundary)" }
+    
+    mutating func addField(_ name: String, _ value: String) {
+        append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n")
+    }
+    
+    mutating func addFile(_ name: String, filename: String, mimeType: String, data: Data) {
+        append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"; filename=\"\(filename)\"\r\nContent-Type: \(mimeType)\r\n\r\n")
+        body.append(data)
+        append("\r\n")
+    }
+    
+    mutating func finish() { append("--\(boundary)--\r\n") }
+    
+    private mutating func append(_ string: String) { body.append(Data(string.utf8)) }
 }

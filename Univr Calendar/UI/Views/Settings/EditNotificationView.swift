@@ -15,6 +15,7 @@ struct EditNotificationView: View {
     
     let notification: SavedNotification
     @State private var offsetMinutes: Int
+    // periphery:ignore
     @State private var enableLiveActivity: Bool = false
     
     private var notificationManager = NotificationManager.shared

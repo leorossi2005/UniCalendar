@@ -47,6 +47,8 @@ public actor CacheManager: Sendable {
     public func clear(file: CacheFile) async {
         let fileUrl = folder.appending(path: file.fileName)
         
+        guard FileManager.default.fileExists(atPath: fileUrl.path()) else { return }
+        
         do {
             try await Task.detached(priority: .utility) {
                 try FileManager.default.removeItem(at: fileUrl)

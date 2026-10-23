@@ -88,7 +88,7 @@ public struct AppNotice: Codable, Sendable, Equatable, Identifiable {
             lines.append("🔗 \(label): \(actionURL.absoluteString)")
         }
         
-        lines.append("📱 Univr Calendar")
+        lines.append("📱 UniCalendar")
         
         return lines.joined(separator: "\n\n")
     }

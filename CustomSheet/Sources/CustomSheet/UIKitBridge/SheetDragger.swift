@@ -8,13 +8,26 @@
 //
 
 import SwiftUI
+import UIKit.UIGestureRecognizerSubclass
 
 enum CustomSheetDraggingDirection {
     case up, down, none
 }
 
+final class SheetPanGestureRecognizer: UIPanGestureRecognizer {
+    var onTouchBegan: ((UITouch) -> Void)?
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
+        if state == .possible, let touch = touches.first {
+            onTouchBegan?(touch)
+        }
+        super.touchesBegan(touches, with: event)
+    }
+}
+
 struct SheetDragger: UIViewRepresentable {
     var direction: CustomSheetDraggingDirection = .none
+    var isAtLargeDetent: Bool = false
     
     var onDrag: (CGFloat, CustomSheetDraggingDirection) -> Void
     var onEnded: (CGFloat, CGFloat) -> Void
@@ -22,9 +35,7 @@ struct SheetDragger: UIViewRepresentable {
     func makeUIView(context: Context) -> UIView {
         let view = PassThroughView()
         view.backgroundColor = .clear
-        
         view.coordinator = context.coordinator
-        
         return view
     }
 
@@ -58,61 +69,229 @@ struct SheetDragger: UIViewRepresentable {
         weak var targetView: UIView?
         weak var window: UIWindow?
         weak var trackedScrollView: UIScrollView?
-        var initialIsAtTop: Bool?
-        var gesture: UIPanGestureRecognizer?
+        var savedShowsVerticalScrollIndicator: Bool = true
+        var savedBounces: Bool = true
+    
+        private weak var lockedPanScrollView: UIScrollView?
+        private var isForcingOffset: Bool = false
+        
+        var isDraggingSheet: Bool = false
+        var canHandoffToSheet: Bool = false
+        var startedAtLargeDetent: Bool = false
+        var gesture: SheetPanGestureRecognizer?
         
         init(parent: SheetDragger) {
             self.parent = parent
         }
         
         func setupGesture(on window: UIWindow, targetedTo view: UIView) {
+            removeGesture()
             self.window = window
             self.targetView = view
             
-            let gesture = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
+            let gesture = SheetPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
             gesture.delegate = self
             gesture.cancelsTouchesInView = false
+            
+            gesture.onTouchBegan = { [weak self] touch in
+                self?.captureInitialScrollState(for: touch)
+            }
             
             window.addGestureRecognizer(gesture)
             self.gesture = gesture
         }
         
         func removeGesture() {
+            stopLockingScrollView()
             if let gesture = gesture {
                 window?.removeGestureRecognizer(gesture)
             }
         }
+
+        private func startLockingScrollView(_ scrollView: UIScrollView) {
+            stopLockingScrollView()
+            lockedPanScrollView = scrollView
+            scrollView.panGestureRecognizer.addTarget(self, action: #selector(handleScrollViewPan(_:)))
+        }
+
+        private func stopLockingScrollView() {
+            if let sv = lockedPanScrollView {
+                sv.panGestureRecognizer.removeTarget(self, action: #selector(handleScrollViewPan(_:)))
+                lockedPanScrollView = nil
+            }
+        }
+
+        @objc private func handleScrollViewPan(_ gesture: UIPanGestureRecognizer) {
+            guard isDraggingSheet,
+                  !isForcingOffset,
+                  let scrollView = lockedPanScrollView else { return }
+            
+            let topOffset = -scrollView.adjustedContentInset.top
+            if scrollView.contentOffset.y != topOffset {
+                isForcingOffset = true
+                scrollView.contentOffset = CGPoint(x: scrollView.contentOffset.x, y: topOffset)
+                gesture.setTranslation(.zero, in: scrollView)
+                isForcingOffset = false
+            }
+        }
+        
+        private func captureInitialScrollState(for touch: UITouch) {
+            guard let window = window, let targetView = targetView else { return }
+            
+            stopLockingScrollView()
+            
+            let locationInTarget = touch.location(in: targetView)
+            guard targetView.bounds.contains(locationInTarget) else {
+                trackedScrollView = nil
+                canHandoffToSheet = false
+                return
+            }
+            
+            startedAtLargeDetent = parent.isAtLargeDetent
+            
+            let locationInWindow = touch.location(in: window)
+            var viewToCheck = window.hitTest(locationInWindow, with: nil)
+            var foundScrollView: UIScrollView? = nil
+            
+            while let view = viewToCheck {
+                if let sv = view as? UIScrollView {
+                    if !sv.isPagingEnabled && sv.isScrollEnabled {
+                        foundScrollView = sv
+                        break
+                    }
+                }
+                viewToCheck = view.superview
+                if view == window { break }
+            }
+            
+            self.trackedScrollView = foundScrollView
+            self.isDraggingSheet = false
+            
+            if let sv = foundScrollView {
+                self.savedShowsVerticalScrollIndicator = sv.showsVerticalScrollIndicator
+                self.savedBounces = sv.bounces
+                
+                if !startedAtLargeDetent {
+                    self.canHandoffToSheet = true
+                    self.isDraggingSheet = true
+                    startLockingScrollView(sv)
+                    return
+                }
+                
+                let topOffset = -sv.adjustedContentInset.top
+                let deltaFromTop = sv.contentOffset.y - topOffset
+                
+                let isNearOrBouncingAtTop = (deltaFromTop >= -30.0 && deltaFromTop <= 6.0)
+                self.canHandoffToSheet = isNearOrBouncingAtTop
+                if isNearOrBouncingAtTop {
+                    startLockingScrollView(sv)
+                }
+            } else {
+                self.canHandoffToSheet = true
+            }
+        }
+        
+        private func lockScrollViewAtTop(_ scrollView: UIScrollView, topOffset: CGFloat) {
+            isForcingOffset = true
+            if scrollView.bounces { scrollView.bounces = false }
+            if scrollView.showsVerticalScrollIndicator { scrollView.showsVerticalScrollIndicator = false }
+            if scrollView.contentOffset.y != topOffset {
+                scrollView.contentOffset = CGPoint(x: scrollView.contentOffset.x, y: topOffset)
+            }
+            scrollView.panGestureRecognizer.setTranslation(.zero, in: scrollView)
+            isForcingOffset = false
+        }
+        
+        private func unlockScrollView(_ scrollView: UIScrollView) {
+            if scrollView.bounces != savedBounces { scrollView.bounces = savedBounces }
+            if scrollView.showsVerticalScrollIndicator != savedShowsVerticalScrollIndicator {
+                scrollView.showsVerticalScrollIndicator = savedShowsVerticalScrollIndicator
+            }
+        }
         
         @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
-            guard let targetView = targetView else { return }
-            let translation = gesture.translation(in: targetView)
-            let velocity = gesture.velocity(in: targetView)
+            guard let window = window else { return }
+            var translation = gesture.translation(in: window)
+            let velocity = gesture.velocity(in: window)
             
             if let scrollView = trackedScrollView {
-                if initialIsAtTop == nil {
-                    initialIsAtTop = scrollView.contentOffset.y <= 0
-                }
-                let isPullingDown = translation.y > 0
+                let topOffset = -scrollView.adjustedContentInset.top
                 
-                if isPullingDown && initialIsAtTop! {
-                    scrollView.panGestureRecognizer.isEnabled = false
+                if !startedAtLargeDetent {
+                    isDraggingSheet = true
+                    lockScrollViewAtTop(scrollView, topOffset: topOffset)
+                } else {
+                    if gesture.state == .began {
+                        isDraggingSheet = false
+                    }
+                    
+                    if !isDraggingSheet {
+                        if scrollView.contentOffset.y <= topOffset + 6.0 && translation.y > 0 {
+                            isDraggingSheet = true
+                            lockScrollViewAtTop(scrollView, topOffset: topOffset)
+                            
+                            gesture.setTranslation(.zero, in: window)
+                            translation = .zero
+                        } else {
+                            gesture.setTranslation(.zero, in: window)
+                            translation = .zero
+                        }
+                    } else {
+                        if translation.y <= 0 {
+                            isDraggingSheet = false
+                            unlockScrollView(scrollView)
+                            
+                            parent.onDrag(0, parent.direction)
+                            
+                            gesture.setTranslation(.zero, in: window)
+                            translation = .zero
+                        } else {
+                            lockScrollViewAtTop(scrollView, topOffset: topOffset)
+                        }
+                    }
                 }
             }
             
             if gesture.state == .changed {
-                parent.onDrag(translation.y, parent.direction)
+                if trackedScrollView == nil || isDraggingSheet {
+                    parent.onDrag(translation.y, parent.direction)
+                }
             } else if gesture.state == .ended || gesture.state == .cancelled {
+                parent.direction = .none
+                let wasDraggingSheet = (trackedScrollView == nil) || isDraggingSheet
+                
+                stopLockingScrollView()
+                
                 if let scrollView = trackedScrollView {
-                    scrollView.panGestureRecognizer.isEnabled = true
-                    trackedScrollView = nil
-                    initialIsAtTop = nil
+                    unlockScrollView(scrollView)
+                    if wasDraggingSheet {
+                        let topY = -scrollView.adjustedContentInset.top
+                        isForcingOffset = true
+                        scrollView.panGestureRecognizer.setTranslation(.zero, in: scrollView)
+                        scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: topY), animated: false)
+                        isForcingOffset = false
+                        
+                        DispatchQueue.main.async {
+                            if scrollView.isDecelerating || scrollView.contentOffset.y != topY {
+                                scrollView.setContentOffset(CGPoint(x: scrollView.contentOffset.x, y: topY), animated: false)
+                            }
+                        }
+                    }
                 }
                 
-                let decelerationRate = 0.994
-                let extra = (velocity.y / 1000.0) * decelerationRate / (1 - decelerationRate)
-                let predictedEndTranslation = translation.y + extra
+                trackedScrollView = nil
+                isDraggingSheet = false
+                canHandoffToSheet = false
                 
-                parent.onEnded(translation.y, predictedEndTranslation)
+                if wasDraggingSheet {
+                    let decelerationRate = 0.994
+                    let extra = (velocity.y / 1000.0) * decelerationRate / (1 - decelerationRate)
+                    let predictedEndTranslation = translation.y + extra
+                    
+                    parent.onEnded(translation.y, predictedEndTranslation)
+                } else {
+                    parent.onEnded(0, 0)
+                }
             }
         }
         
@@ -126,46 +305,20 @@ struct SheetDragger: UIViewRepresentable {
                 return false
             }
             
-            let velocity = pan.velocity(in: targetView)
-            
+            let velocity = pan.velocity(in: window)
             if abs(velocity.x) > abs(velocity.y) {
                 return false
             }
             
-            let locationInWindow = pan.location(in: window)
-            
-            var viewToCheck = window.hitTest(locationInWindow, with: nil)
-            var foundScrollView: UIScrollView? = nil
-            
-            while let view = viewToCheck {
-                if let sv = view as? UIScrollView {
-                    if !sv.isPagingEnabled {
-                        foundScrollView = sv
-                        break
-                    }
-                }
-                viewToCheck = view.superview
-                
-                if view == window { break }
-            }
-            
-            if let scrollView = foundScrollView {
-                self.trackedScrollView = scrollView
-                
-                if scrollView.contentOffset.y + scrollView.adjustedContentInset.top > 0 {
-                    return false
-                }
+            if trackedScrollView != nil && !canHandoffToSheet {
+                return false
             }
             
             if parent.direction == .none {
-                let translation = pan.translation(in: targetView)
-                
-                let isDraggingUp = translation.y > 0
-                let isDraggingDown = translation.y < 0
-                
-                if isDraggingUp {
+                let translation = pan.translation(in: window)
+                if translation.y < 0 {
                     parent.direction = .up
-                } else if isDraggingDown {
+                } else if translation.y > 0 {
                     parent.direction = .down
                 }
             }
@@ -180,7 +333,6 @@ struct SheetDragger: UIViewRepresentable {
             
             if let scrollView = otherGestureRecognizer.view as? UIScrollView {
                 if scrollView.isPagingEnabled { return false }
-                
                 return true
             }
             return false

@@ -186,16 +186,6 @@ struct DeveloperProfileView: View {
                     .opacity(appear ? 1 : 0)
                     .offset(y: appear ? 0 : 50)
                     .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.3), value: appear)
-                    
-                    Button(action: { UIApplication.shared.open(AppConstants.URLs.feedback) }) {
-                        Text("Segnala un problema")
-                            .font(.caption)
-                            .underline()
-                            .foregroundStyle(.white.opacity(0.4))
-                    }
-                    .opacity(appear ? 1 : 0)
-                    .offset(y: appear ? 0 : 50)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.4), value: appear)
                 }
             }
             .padding(.horizontal, 20)

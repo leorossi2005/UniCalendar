@@ -40,8 +40,10 @@ public class GlobalSheetManager {
     public internal(set) var previousDetent: CustomSheetDetent?
     
     var onBackgroundToggle: ((Bool) -> Void)?
+    var onLargeDetentToggle: ((Bool) -> Void)?
     var actionDismiss: (() -> Void)?
     
+    // periphery:ignore
     public func dismiss() {
         actionDismiss?()
     }

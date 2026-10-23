@@ -43,7 +43,8 @@ struct CustomSheet<Content: View>: View {
     @State private var activeDetents: [CustomSheetDetent]
     
     @State var sheetShapeRadii: SheetCornerRadii
-        
+    @State private var isAtMax: Bool
+    
     // Gesture & Layout States
     @State private var enableBackground: Bool
     @State private var baseHeight: CGFloat
@@ -56,6 +57,8 @@ struct CustomSheet<Content: View>: View {
     @State private var sheetPadding: CGFloat
     
     @State private var offset: CGFloat = .zero
+    @State private var cornerAnimationDuration: TimeInterval = 0.2
+    @State private var useSpringForCorners: Bool = false
     
     private var liveHeight: CGFloat {
         let h = baseHeight - dragY
@@ -105,14 +108,14 @@ struct CustomSheet<Content: View>: View {
         self._sheetPadding = State(initialValue: actualPadding)
         
         let isLarge = (startingDetent == .large)
-        let topRadius: CGFloat = isLarge ? 37 : max(0, .deviceCornerRadius - actualPadding)
-        let bottomRadius: CGFloat = basePad == 0 ? 0 : max(0, .deviceCornerRadius - actualPadding)
-                
-        if UIDevice.isIpad {
-            self._sheetShapeRadii = State(initialValue: .init(tl: 32, tr: 32, bl: basePad == 0 ? 0 : 32, br: basePad == 0 ? 0 : 32))
-        } else {
-            self._sheetShapeRadii = State(initialValue: .init(tl: topRadius, tr: topRadius, bl: bottomRadius, br: bottomRadius))
-        }
+        self._isAtMax = State(initialValue: isLarge)
+        let initialRadius: CGFloat = isLarge ? (UIDevice.isIpad ? 29 : 37) : -1
+        self._sheetShapeRadii = State(initialValue: Self.calculateRadii(
+            sheetCornerRadius: initialRadius,
+            padding: actualPadding,
+            defaultPadding: basePad,
+            isAtMax: isLarge
+        ))
         
         self._width = State(initialValue: UIApplication.shared.windowSize.width)
         
@@ -130,12 +133,19 @@ struct CustomSheet<Content: View>: View {
                     .animation(.easeInOut(duration: 0.2), value: isPresented)
                     .animation(.easeInOut(duration: 0.2), value: hasMounted)
                 
-                GlassContainer(radii: sheetShapeRadii, animationDuration: 0.2, isEnabled: !enableBackground) {
+                GlassContainer(
+                    radii: sheetShapeRadii,
+                    animationDuration: cornerAnimationDuration,
+                    useSpring: useSpringForCorners,
+                    isEnabled: !enableBackground,
+                    isDragging: manager.isDragging
+                ) {
                     mainSheet
                         .ignoresSafeArea()
                 }
                 .overlay {
                     SheetDragger(
+                        isAtLargeDetent: manager.selectedDetent == .large,
                         onDrag: { translationY, _ in
                             handleDragUpdating(value: translationY, state: &self.dragY)
                         },
@@ -160,6 +170,7 @@ struct CustomSheet<Content: View>: View {
             }
             .onAppear {
                 manager.onBackgroundToggle?(enableBackground)
+                manager.onLargeDetentToggle?(manager.selectedDetent == .large)
             }
         }
         .background {
@@ -181,7 +192,13 @@ struct CustomSheet<Content: View>: View {
         }
         .onChange(of: manager.selectedDetent) { oldValue, newValue in
             manager.previousDetent = oldValue
+            manager.onLargeDetentToggle?(newValue == .large)
             enableBackground = newValue == .large
+            let atMax = newValue == .large
+            isAtMax = atMax
+            
+            cornerAnimationDuration = newValue == .large ? 0.55 : 0.35
+            useSpringForCorners = true
             
             withAnimation(.interpolatingSpring(
                 mass: 1.0,
@@ -191,13 +208,14 @@ struct CustomSheet<Content: View>: View {
             )) {
                 if newValue == .large {
                     sheetPadding = 0
-                    setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37)
+                    setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37, isAtMax: true)
                 } else {
                     sheetPadding = defaultPadding
-                    setSheetShape()
+                    setSheetShape(isAtMax: false)
                 }
                 
                 baseHeight = newValue.value
+                dragY = 0
                 offset = 0
             }
         }
@@ -235,6 +253,7 @@ struct CustomSheet<Content: View>: View {
                 .opacity(enableBackground ? 1 : 0)
             
             content
+                .scrollDismissesKeyboard(.interactively)
                 .frame(width: min(580, width))
                 .frame(maxHeight: CustomSheetDetent.large.value)
                 .overlay(alignment: .top) {
@@ -266,11 +285,21 @@ struct CustomSheet<Content: View>: View {
     }
     
     private func handleDragUpdating(value: CGFloat, state: inout CGFloat) {
+        if cornerAnimationDuration != 0.2 { cornerAnimationDuration = 0.2 }
+        if useSpringForCorners { useSpringForCorners = false }
         if !manager.isDragging { manager.isDragging = true }
+        
+        let largeValue = CustomSheetDetent.large.value
+        let mediumValue = CustomSheetDetent.medium.value
         
         if manager.selectedDetent == .large {
             if value < 0 {
-                state = 0
+                if !isAtMax || !enableBackground {
+                    isAtMax = true
+                    enableBackground = true
+                    setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37, isAtMax: true)
+                }
+                if state != 0 { state = 0 }
                 return
             }
         }
@@ -281,52 +310,75 @@ struct CustomSheet<Content: View>: View {
         let minDetent = first.value
         let maxDetent = last.value
         
-        if maxDetent == CustomSheetDetent.large.value && activeDetents.contains(.medium) {
-            if predictedHeight >= CustomSheetDetent.medium.value && predictedHeight <= CustomSheetDetent.large.value {
-                sheetPadding = min(max(defaultPadding - ((defaultPadding * (predictedHeight - CustomSheetDetent.medium.value)) / (CustomSheetDetent.large.value - CustomSheetDetent.medium.value)), 0), defaultPadding)
-            } else if predictedHeight > CustomSheetDetent.large.value {
-                sheetPadding = 0
-            } else {
-                sheetPadding = defaultPadding
-            }
-        }
-        
+        var newOffset: CGFloat = 0
         if predictedHeight >= minDetent && predictedHeight <= maxDetent {
             state = value
-
-            let shouldEnableBackground = predictedHeight > CustomSheetDetent.large.value * 0.8
-
-            if enableBackground != shouldEnableBackground {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    if shouldEnableBackground {
-                        setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37)
-                    } else {
-                        setSheetShape()
-                    }
-                }
-                enableBackground = shouldEnableBackground
+            newOffset = 0
+        } else if predictedHeight > maxDetent {
+            let excess = predictedHeight - maxDetent
+            let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent - maxDetent * 0.75)
+            state = baseHeight - (maxDetent + dampedExcess)
+            newOffset = 0
+        } else if predictedHeight < minDetent {
+            let excess = minDetent - predictedHeight
+            let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent - maxDetent * 0.75)
+            state = baseHeight - minDetent
+            newOffset = -dampedExcess
+        }
+        if offset != newOffset { offset = newOffset }
+        
+        let effectiveHeight = (baseHeight - state) + offset
+        
+        if detents.contains(.large) && detents.contains(.medium) {
+            let newPadding: CGFloat
+            if effectiveHeight >= mediumValue && effectiveHeight <= largeValue {
+                newPadding = min(max(defaultPadding - ((defaultPadding * (effectiveHeight - mediumValue)) / (largeValue - mediumValue)), 0), defaultPadding)
+            } else if effectiveHeight > largeValue {
+                newPadding = 0
+            } else {
+                newPadding = defaultPadding
             }
-            
-            offset = 0
-        } else {
-            if predictedHeight > maxDetent {
-                let excess = predictedHeight - maxDetent
-                let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent - maxDetent * 0.75)
-                state = baseHeight - (maxDetent + dampedExcess)
-                offset = 0
-            } else if predictedHeight < minDetent {
-                let excess = minDetent - predictedHeight
-                let dampedExcess = rubberBandDistance(offset: excess, dimension: maxDetent - maxDetent * 0.75)
-                state = baseHeight - minDetent
-                offset = -dampedExcess
+            if sheetPadding != newPadding { sheetPadding = newPadding }
+        }
+        
+        let shouldEnableBackground = effectiveHeight > largeValue * 0.8
+        let currentlyAtMax = effectiveHeight >= largeValue
+        let backgroundChanged = enableBackground != shouldEnableBackground
+        let maxChanged = isAtMax != currentlyAtMax
+        
+        if backgroundChanged || maxChanged {
+            enableBackground = shouldEnableBackground
+            isAtMax = currentlyAtMax
+            withAnimation(.easeInOut(duration: 0.2)) {
+                setSheetShape(
+                    sheetCornerRadius: shouldEnableBackground ? (UIDevice.isIpad ? 29 : 37) : -1,
+                    isAtMax: currentlyAtMax
+                )
             }
         }
     }
     
     private func handleDragEnded(_ value: CGFloat, _ predictedEndTranslation: CGFloat) {
+        cornerAnimationDuration = 0.2
+        useSpringForCorners = false
+        
         if manager.selectedDetent == .large {
             if value < 0 {
                 manager.isDragging = false
+                isAtMax = true
+                enableBackground = true
+                dragY = 0
+                offset = 0
+                withAnimation(.interpolatingSpring(
+                    mass: 1.0,
+                    stiffness: 300,
+                    damping: 25,
+                    initialVelocity: 0
+                )) {
+                    baseHeight = CustomSheetDetent.large.value
+                    sheetPadding = 0
+                    setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37, isAtMax: true)
+                }
                 return
             }
         }
@@ -381,13 +433,15 @@ struct CustomSheet<Content: View>: View {
         baseHeight = currentH
         
         if target == .large {
+            isAtMax = true
             withAnimation(.easeInOut(duration: 0.2)) {
-                setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37)
+                setSheetShape(sheetCornerRadius: UIDevice.isIpad ? 29 : 37, isAtMax: true)
             }
             enableBackground = true
         } else {
+            isAtMax = false
             withAnimation(.easeInOut(duration: 0.2)) {
-                setSheetShape()
+                setSheetShape(isAtMax: false)
             }
             enableBackground = false
         }
@@ -419,23 +473,44 @@ struct CustomSheet<Content: View>: View {
     }
     
     // MARK: - Logic
-    private func setSheetShape(sheetCornerRadius: CGFloat = -1) {
-        withAnimation {
-            if UIDevice.isIpad {
-                sheetShapeRadii = .init(
-                    tl: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
-                    tr: sheetCornerRadius == -1 ? 32 : sheetCornerRadius,
-                    bl: defaultPadding == 0 ? 0 : 32,
-                    br: defaultPadding == 0 ? 0 : 32
-                )
-            } else {
-                sheetShapeRadii = .init(
-                    tl: sheetCornerRadius == -1 ? max(0, .deviceCornerRadius - sheetPadding) : sheetCornerRadius,
-                    tr: sheetCornerRadius == -1 ? max(0, .deviceCornerRadius - sheetPadding) : sheetCornerRadius,
-                    bl: defaultPadding == 0 ? 0 : max(0, .deviceCornerRadius - sheetPadding),
-                    br: defaultPadding == 0 ? 0 : max(0, .deviceCornerRadius - sheetPadding)
-                )
-            }
+    @MainActor
+    private static func calculateRadii(sheetCornerRadius: CGFloat = -1, padding: CGFloat, defaultPadding: CGFloat, isAtMax: Bool) -> SheetCornerRadii {
+        let isLarge = sheetCornerRadius != -1
+        
+        if UIDevice.isIpad {
+            let top: CGFloat = sheetCornerRadius == -1 ? 32 : sheetCornerRadius
+            let bottom: CGFloat = defaultPadding == 0 ? 0 : 32
+            return .init(tl: top, tr: top, bl: bottom, br: bottom)
         }
+        
+        let isSquareScreen = CGFloat.deviceCornerRadius == 0
+        
+        if #unavailable(iOS 26) {
+            let top: CGFloat = isSquareScreen ? 16 : (isLarge ? sheetCornerRadius : .deviceCornerRadius)
+            return .init(tl: top, tr: top, bl: 0, br: 0)
+        } else {
+            if isSquareScreen {
+                let radius: CGFloat = 16
+                let bottom: CGFloat = isAtMax ? 0 : radius
+                return .init(tl: radius, tr: radius, bl: bottom, br: bottom)
+            }
+            
+            let top: CGFloat = isLarge ? sheetCornerRadius : max(0, .deviceCornerRadius - padding)
+            let bottom: CGFloat = isAtMax ? 0 : max(0, .deviceCornerRadius - padding)
+            return .init(tl: top, tr: top, bl: bottom, br: bottom)
+        }
+    }
+    
+    private func setSheetShape(sheetCornerRadius: CGFloat = -1, isAtMax: Bool? = nil) {
+        if let isAtMax {
+            self.isAtMax = isAtMax
+        }
+        let atMax = isAtMax ?? self.isAtMax
+        sheetShapeRadii = Self.calculateRadii(
+            sheetCornerRadius: sheetCornerRadius,
+            padding: sheetPadding,
+            defaultPadding: defaultPadding,
+            isAtMax: atMax
+        )
     }
 }

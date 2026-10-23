@@ -154,6 +154,142 @@
         }
       }
     },
+    "network_error_bad_url" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An unexpected error occurred with the request. Please try again later."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si è verificato un errore imprevisto nella richiesta. Riprova più tardi."
+          }
+        }
+      }
+    },
+    "network_error_decoding" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An unexpected error occurred while reading data from the server. Please try again later."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si è verificato un errore imprevisto nella lettura dei dati dal server. Riprova più tardi."
+          }
+        }
+      }
+    },
+    "network_error_empty_data" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No data was received from the server. Please try again later."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nessun dato ricevuto dal server. Riprova più tardi."
+          }
+        }
+      }
+    },
+    "network_error_offline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The device is offline."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il dispositivo è offline."
+          }
+        }
+      }
+    },
+    "network_error_server" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A temporary server issue occurred. Don't worry, we'll fix it as soon as possible, please try again later."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si è verificato un problema con il server. Non preoccuparti, risolveremo al più presto, riprova più tardi."
+          }
+        }
+      }
+    },
+    "network_error_server_unreachable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server not reachable, try again later."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server non raggiungibile, riprova più tardi."
+          }
+        }
+      }
+    },
+    "network_error_timeout" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The server is taking too long to respond. Please try again shortly."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Il server sta impiegando troppo tempo a rispondere. Riprova tra poco."
+          }
+        }
+      }
+    },
+    "network_error_univr_offline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "University servers are currently unreachable. Please try again later."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I server dell'università non sono al momento disponibili. Riprova più tardi."
+          }
+        }
+      }
+    },
     "occupied_until" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -177,13 +313,13 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Unknown error"
+            "value" : "An unexpected error occurred. Please try again later."
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Errore sconosciuto"
+            "value" : "Si è verificato un errore imprevisto. Riprova più tardi."
           }
         }
       }

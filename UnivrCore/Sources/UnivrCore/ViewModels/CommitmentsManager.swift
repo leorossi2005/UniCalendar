@@ -32,7 +32,7 @@ public final class CommitmentsManager {
         do {
             personalEvents = try await storage.fetchPersonalEvents()
         } catch {
-            print("Errore caricamento impegni dal database: \(error)")
+            print("Error loading commitments from database: \(error)")
         }
     }
     
@@ -63,7 +63,7 @@ public final class CommitmentsManager {
             
             await fetchPersonalEvents()
         } catch {
-            print("Errore salvataggio impegno: \(error)")
+            print("Error saving commitments: \(error)")
         }
     }
     
@@ -74,7 +74,7 @@ public final class CommitmentsManager {
             await NotificationManager.shared.removeNotification(id: id)
             await fetchPersonalEvents()
         } catch {
-            print("Errore eliminazione impegno: \(error)")
+            print("Error saving commitments: \(error)")
         }
     }
     

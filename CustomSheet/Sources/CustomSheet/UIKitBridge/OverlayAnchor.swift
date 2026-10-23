@@ -142,21 +142,11 @@ class OverlayAnchorUIView: UIView {
 }
 
 struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
-    var capturedEnvironment: EnvironmentValues
-    
     @Binding var isPresented: Bool
     var manager: GlobalSheetManager?
     var detents: [CustomSheetDetent]
     
     let sheetContent: () -> SheetContent
-    
-    class Coordinator {
-        var lastPhase: ScenePhase?
-    }
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
     
     func makeUIView(context: Context) -> OverlayAnchorUIView {
         let view = OverlayAnchorUIView()
@@ -166,10 +156,7 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: OverlayAnchorUIView, context: Context) {
-        let currentPhase = context.environment.scenePhase
-        let lastPhase = context.coordinator.lastPhase
-        
-        let didPhaseChange = (lastPhase != nil && lastPhase == .inactive && lastPhase != currentPhase)
+        let env = context.environment
         
         let updatedView = AnyView(
             CustomSheet(
@@ -178,34 +165,25 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
                 manager: manager,
                 content: sheetContent
             )
-            .environment(\.scenePhase, capturedEnvironment.scenePhase)
-            .environment(\.colorScheme, capturedEnvironment.colorScheme)
-            .environment(\.self, capturedEnvironment)
+            .environment(\.self, env)
         )
         
         if let hc = uiView.hostingController {
-            if didPhaseChange {
-                UIView.transition(with: hc.view, duration: 0.2, options: .transitionCrossDissolve, animations: {
-                    hc.rootView = updatedView
-                }, completion: nil)
-            } else {
-                hc.rootView = updatedView
-            }
+            hc.rootView = updatedView
         } else {
             uiView.pendingRootView = updatedView
         }
-        
-        context.coordinator.lastPhase = currentPhase
         
         manager?.onBackgroundToggle = { [weak uiView] isEnabled in
             uiView?.containerView?.shouldPassThrough = !isEnabled
         }
         
-        let isLarge = manager?.selectedDetent == .large
-        uiView.updateNavigationSafeArea(isLarge: isLarge)
+        manager?.onLargeDetentToggle = { [weak uiView] isLarge in
+            uiView?.updateNavigationSafeArea(isLarge: isLarge)
+        }
     }
     
-    static func dismantleUIView(_ uiView: OverlayAnchorUIView, coordinator: Coordinator) {
+    static func dismantleUIView(_ uiView: OverlayAnchorUIView, coordinator: ()) {
         uiView.cleanup()
     }
 }

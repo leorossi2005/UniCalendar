@@ -51,3 +51,43 @@ extension Lesson {
         location: nil
     )
 }
+
+extension Room {
+    public static var sample: Room {
+        let now = Date()
+        return Room(
+            id: "SAMPLE-123",
+            name: "Aula di prova",
+            events: [
+                Event(
+                    id: "EVENT-1",
+                    name: "Evento di prova",
+                    cleanName: "Evento di Prova",
+                    startTime: now.add(type: .minute, value: -30),
+                    endTime: now.add(type: .hour, value: 1)
+                ),
+                Event(
+                    id: "EVENT-2",
+                    name: "Evento di prova",
+                    cleanName: "Evento di Prova",
+                    startTime: now.add(type: .hour, value: 1),
+                    endTime: now.add(type: .hour, value: 3)
+                ),
+                Event(
+                    id: "EVENT-3",
+                    name: "Evento di prova",
+                    cleanName: "Evento di Prova",
+                    startTime: now.add(type: .hour, value: 4),
+                    endTime: now.add(type: .hour, value: 6)
+                ),
+                Event(
+                    id: "EVENT-4",
+                    name: "Evento di prova",
+                    cleanName: "Evento di Prova",
+                    startTime: now.add(type: .hour, value: 6),
+                    endTime: now.add(type: .hour, value: 8)
+                )
+            ]
+        )
+    }
+}

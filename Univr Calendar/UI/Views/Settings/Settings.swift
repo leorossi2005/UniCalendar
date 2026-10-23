@@ -18,7 +18,6 @@ struct Settings: View {
     
     @State private var viewModel = UniversityDataManager()
     @State private var showDeleteAlert = false
-    @State private var searchTextFieldFocus: Bool = false
     
     @Binding var tempSettings: TempSettingsState
     
@@ -32,33 +31,83 @@ struct Settings: View {
                 } label: {
                     Label("Anno", systemImage: "calendar")
                         .foregroundStyle(.primary)
+                        .environment(\.isEnabled, true)
                 }
                 .onChange(of: tempSettings.selectedYear) {
                     handleYearChange()
                 }
-                CourseSelector(
-                    isFocused: $searchTextFieldFocus,
-                    selectedCourse: $tempSettings.selectedCourse,
-                    courses: viewModel.courses
-                )
+                NavigationLink {
+                    LongListSelectorSettings(
+                        title: "Corso",
+                        prompt: "Cerca un corso",
+                        items: viewModel.courses,
+                        selectedItem: $tempSettings.selectedCourse
+                    )
+                } label: {
+                    HStack(spacing: 12) {
+                        Label("Corso", systemImage: "graduationcap")
+                            .foregroundStyle(.primary)
+                            .environment(\.isEnabled, true)
+                            .layoutPriority(1)
+                        Spacer(minLength: 8)
+                        if viewModel.courses.isEmpty {
+                            ProgressView()
+                        } else {
+                            Text(viewModel.courses.first { $0.id == tempSettings.selectedCourse }?.label ?? String(localized: "Scegli un corso"))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                        }
+                    }
+                }
+                .disabled(viewModel.courses.isEmpty)
                 .onChange(of: tempSettings.selectedCourse) {
                     handleCourseChange()
                 }
                 if tempSettings.selectedCourse != "0" {
-                    Picker(selection: $tempSettings.selectedAcademicYear) {
-                        ForEach(viewModel.academicYears) { year in
-                            Text(year.label).tag(year.id)
+                    Group {
+                        if viewModel.academicYears.count <= 5 {
+                            Picker(selection: $tempSettings.selectedAcademicYear) {
+                                ForEach(viewModel.academicYears) { year in
+                                    Text(year.label).tag(year.id)
+                                }
+                            } label: {
+                                Label("Anno di Corso", systemImage: "calendar.badge.clock")
+                                    .foregroundStyle(.primary)
+                                    .environment(\.isEnabled, true)
+                            }
+                        } else {
+                            NavigationLink {
+                                LongListSelectorSettings(
+                                    title: "Anno di Corso",
+                                    prompt: "Cerca un anno di corso",
+                                    items: viewModel.academicYears,
+                                    selectedItem: $tempSettings.selectedAcademicYear
+                                )
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Label("Anno di Corso", systemImage: "calendar.badge.clock")
+                                        .foregroundStyle(.primary)
+                                        .environment(\.isEnabled, true)
+                                        .layoutPriority(1)
+                                    Spacer(minLength: 8)
+                                    Text(viewModel.academicYears.first { $0.id == tempSettings.selectedAcademicYear }?.label ?? String(localized: "Scegli un anno"))
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                        .truncationMode(.tail)
+                                }
+                            }
                         }
-                    } label: {
-                        Label("Anno di Corso", systemImage: "calendar.badge.clock")
-                            .foregroundStyle(.primary)
                     }
                     .onChange(of: tempSettings.selectedAcademicYear) {
                         if tempSettings.selectedAcademicYear != "0" {
+                            sheetManager.setLock(false)
                             if let yearLabel = viewModel.academicYears.first(where: { $0.id == tempSettings.selectedAcademicYear })?.label {
                                 settings.selectedAcademicYearName = yearLabel
                             }
                             settings.foundMatricola = viewModel.checkForMatricola(in: tempSettings.selectedAcademicYear)
+                        } else {
+                            sheetManager.setLock(true)
                         }
                     }
                 }
@@ -66,6 +115,7 @@ struct Settings: View {
                     HStack {
                         Label("Matricola", systemImage: "person.text.rectangle")
                             .foregroundStyle(.primary)
+                            .environment(\.isEnabled, true)
                             .padding(.trailing)
                         Picker("", selection: $tempSettings.matricola) {
                             Text("Pari").tag("even")
@@ -81,10 +131,57 @@ struct Settings: View {
                     if viewModel.isOffline {
                         Text("In modalità offline non puoi modificare queste opzioni.")
                             .foregroundStyle(.yellow)
+                    } else if ServerStatusCenter.shared.isUnreachable && ServerStatusCenter.shared.isRetrying {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Sto provando a contattare il server...")
+                                .foregroundStyle(.orange)
+                        }
+                    } else if ServerStatusCenter.shared.isUnreachable {
+                        HStack {
+                            Text("Server non raggiungibile, riprova più tardi.")
+                                .foregroundStyle(.orange)
+                            Spacer()
+                            Button("Riprova") {
+                                Haptics.play(.impact(weight: .medium))
+                                Task { await viewModel.retry(year: tempSettings.selectedYear) }
+                            }
+                            .disabled(ServerStatusCenter.shared.isRetrying)
+                            .buttonStyle(.bordered)
+                            .controlSize(.mini)
+                            .tint(.orange)
+                            .environment(\.isEnabled, true)
+                        }
+                    } else if ServerStatusCenter.shared.isUniVROffline && ServerStatusCenter.shared.isUniVRRetrying {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Sto provando a contattare l'università...")
+                                .foregroundStyle(.blue)
+                        }
+                    } else if ServerStatusCenter.shared.isUniVROffline {
+                        HStack {
+                            Text("I dati potrebbero non essere aggiornati.")
+                                .foregroundStyle(.blue)
+                            Spacer()
+                            Button("Riprova") {
+                                Haptics.play(.impact(weight: .medium))
+                                Task { await ServerStatusCenter.shared.retryUniVRNow() }
+                            }
+                            .disabled(ServerStatusCenter.shared.isUniVRRetrying)
+                            .buttonStyle(.bordered)
+                            .controlSize(.mini)
+                            .tint(.blue)
+                            .environment(\.isEnabled, true)
+                        }
+                    } else if viewModel.isLoading {
+                        Text("Aggiornamento dei dati in corso...")
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
-            .disabled(viewModel.isOffline)
+            .disabled(viewModel.isOffline || viewModel.isServerUnreachable || viewModel.isLoading)
             Section {
                 NavigationLink(destination: NotificationsView()) {
                     Label("Notifiche Programmate", systemImage: "bell.badge")
@@ -112,6 +209,10 @@ struct Settings: View {
                     Label("Lo Sviluppatore", systemImage: "chevron.left.forwardslash.chevron.right")
                         .foregroundStyle(.primary)
                 }
+                NavigationLink(destination: FeedbackView()) {
+                    Label("Invia un Feedback", systemImage: "text.bubble")
+                        .foregroundStyle(.primary)
+                }
                 NavigationLink(destination: AboutView()) {
                     Label("Informazioni", systemImage: .infoPageDynamic)
                         .foregroundStyle(.primary)
@@ -129,7 +230,15 @@ struct Settings: View {
                     Button("Conferma", role: .destructive, action: performReset)
                     Button("Annulla", role: .cancel) {}
                 } message: {
-                    Text("Confermando cancellerai le impostazioni e tornerai al benvenuto iniziale.")
+                    let warningText = if viewModel.isOffline {
+                        "\n\n" + String(localized: "Sei offline, non potrai effettuare nuovamente l'onboarding finché non tornerai online.")
+                    } else if viewModel.isServerUnreachable {
+                        "\n\n" + String(localized: "Il server non è raggiungibile, non potrai effettuare nuovamente l'onboarding finché il server non tornerà raggiungibile.")
+                    } else {
+                        ""
+                    }
+                    
+                    Text(String(localized: "Confermando cancellerai le impostazioni e tornerai al benvenuto iniziale.") + warningText)
                 }
             }
             Section {
@@ -142,20 +251,18 @@ struct Settings: View {
         }
         .navigationTitle("Impostazioni")
         .navigationBarTitleDisplayMode(.inline)
-        .onChange(of: searchTextFieldFocus) {
-            if searchTextFieldFocus {
-                sheetManager.setLock(true)
-            } else if tempSettings.selectedCourse != "0" {
-                sheetManager.setLock(false)
-            }
-        }
         .onAppear {
+            viewModel.activate()
             loadInitialData()
+        }
+        .onDisappear {
+            viewModel.cancelAll()
         }
     }
     
     // MARK: - Logic Methods
     private func handleYearChange() {
+        guard tempSettings.selectedYear != "0" && !tempSettings.selectedYear.isEmpty else { return }
         sheetManager.setLock(true)
         viewModel.resetCourses()
         tempSettings.selectedCourse = "0"
@@ -182,12 +289,18 @@ struct Settings: View {
             
             viewModel.updateAcademicYears(for: tempSettings.selectedCourse)
             
-            if let firstYear = viewModel.academicYears.first {
+            if viewModel.academicYears.count <= 5, let firstYear = viewModel.academicYears.first {
                 tempSettings.selectedAcademicYear = firstYear.id
                 settings.selectedAcademicYearName = firstYear.label
+                sheetManager.setLock(false)
                 if tempSettings.selectedAcademicYear != "0" {
                     settings.foundMatricola = viewModel.checkForMatricola(in: tempSettings.selectedAcademicYear)
                 }
+            } else {
+                tempSettings.selectedAcademicYear = "0"
+                settings.selectedAcademicYearName = ""
+                settings.foundMatricola = false
+                sheetManager.setLock(true)
             }
         } else {
             sheetManager.setLock(true)
@@ -199,14 +312,13 @@ struct Settings: View {
     
     private func performReset() {
         Haptics.play(.impact(weight: .heavy))
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(0.1))
+        
+        Task(priority: .background) {
             await NotificationManager.shared.removeAllNotifications()
             await CommitmentsManager.shared.deleteAllEvents()
             await CacheManager.shared.clear(file: .calendarSchedule)
             settings.reset()
             tempSettings.sync(with: settings)
-            sheetManager.dismiss()
         }
     }
     
@@ -219,7 +331,7 @@ struct Settings: View {
             }
         }
         
-        if viewModel.courses.isEmpty {
+        if viewModel.courses.isEmpty, tempSettings.selectedYear != "0", !tempSettings.selectedYear.isEmpty {
             Task {
                 do {
                     try await viewModel.loadCourses(year: tempSettings.selectedYear)
@@ -229,7 +341,7 @@ struct Settings: View {
                             tempSettings.matricola = "even"
                         }
                         
-                        if tempSettings.selectedYear == "0", let lastYear = viewModel.years.last {
+                        if tempSettings.selectedYear == "0", let lastYear = viewModel.years.first {
                             tempSettings.selectedYear = lastYear.id
                         }
                         
@@ -238,8 +350,12 @@ struct Settings: View {
                                 tempSettings.selectedCourseName = course.label
                                 viewModel.academicYears = course.years
                                 
-                                if tempSettings.selectedAcademicYear == "0", let firstAcademicYear = viewModel.academicYears.last {
-                                    tempSettings.selectedAcademicYear = firstAcademicYear.id
+                                if tempSettings.selectedAcademicYear == "0" {
+                                    if viewModel.academicYears.count <= 5, let firstAcademicYear = viewModel.academicYears.first {
+                                        tempSettings.selectedAcademicYear = firstAcademicYear.id
+                                    } else {
+                                        sheetManager.setLock(true)
+                                    }
                                 }
                                 settings.foundMatricola = viewModel.checkForMatricola(in: tempSettings.selectedAcademicYear)
                             }

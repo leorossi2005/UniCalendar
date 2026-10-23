@@ -14,6 +14,7 @@ import CustomSheet
 
 struct CalendarView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(UserSettings.self) var settings
     @Environment(AppStatusManager.self) var statusManager
   
@@ -58,15 +59,46 @@ struct CalendarView: View {
                 inizializeData()
                 checkPendingNotificationTap()
             }
+            .onChange(of: scenePhase) { oldPhase, newPhase in
+                if newPhase == .active {
+                    if settings.selectedCourse != "0" && settings.selectedAcademicYear != "0" && !settings.selectedAcademicYear.isEmpty {
+                        Task {
+                            await viewModel.refreshIfNeeded(
+                                corso: settings.selectedCourse,
+                                anno: settings.selectedAcademicYear,
+                                selYear: settings.selectedYear,
+                                matricola: settings.matricola
+                            )
+                        }
+                    }
+                }
+            }
             .onChange(of: NotificationManager.shared.itemToOpen) { _, _ in
                 checkPendingNotificationTap()
             }
-            .onChange(of: viewModel.state == .loading) { _, isLoading in
-                Haptics.play(isLoading ? .start : .success)
+            .onChange(of: viewModel.state) { oldState, newState in
+                if newState == .loading {
+                    Haptics.play(.start)
+                } else if newState == .loaded {
+                    switch oldState {
+                    case .loading, .serverUnreachable, .univrOffline, .offline, .error:
+                        Haptics.play(.success)
+                    case .idle, .loaded, .empty:
+                        break
+                    }
+                }
+            }
+            .onDisappear {
+                viewModel.unregisterFromServerStatus()
             }
             .modifier(SelectionFeedback(coordinator: coordinator, sheetRouter: sheetRouter))
             .animation(.default, value: viewModel.checkingUpdates)
             .animation(.default, value: viewModel.updateAvailable)
+            .animation(.default, value: ServerStatusCenter.shared.isUnreachable)
+            .animation(.default, value: ServerStatusCenter.shared.isRetrying)
+            .animation(.default, value: ServerStatusCenter.shared.isUniVRRetrying)
+            .animation(.default, value: viewModel.isUniVROffline)
+            .animation(.default, value: viewModel.isOffline)
         }
         .customSheet(isPresented: .constant(true), manager: sheetRouter.manager, detents: sheetRouter.detents) {
             CalendarSheetContent(
@@ -80,30 +112,55 @@ struct CalendarView: View {
     // MARK: - MainView
     @ViewBuilder
     private var mainView: some View {
-        let hasCourse = settings.selectedCourse != "0"
-        switch viewModel.state {
-        case .idle, .loading:
-            loadingStateOverlay(hasCourse: hasCourse)
-        case .loaded:
-            calendarScrollView
-        case .empty:
+        if settings.selectedCourse == "0" {
             ContentUnavailableView(
-                "Nessuna Lezione",
+                "Nessun corso",
                 systemImage: "graduationcap",
-                description: Text(hasCourse ? "Non è stata trovata nessuna lezione per questo corso." : "Scegli un corso dalle impostazioni per iniziare.")
+                description: Text("Scegli un corso dalle impostazioni per iniziare.")
             )
-        case .offline:
+        } else if settings.selectedAcademicYear == "0" || settings.selectedAcademicYear.isEmpty {
             ContentUnavailableView(
-                "Sei Offline",
-                systemImage: "wifi.slash",
-                description: Text(hasCourse ? "Connettiti a internet per scaricare le tue lezioni." : "Connettiti a internet per configurare il tuo corso.")
+                "Nessun anno di corso",
+                systemImage: "calendar.badge.clock",
+                description: Text("Scegli un anno di corso dalle impostazioni per iniziare.")
             )
-        case .error(let msg):
-            ContentUnavailableView(
-                "Si è verificato un errore",
-                systemImage: "exclamationmark.triangle",
-                description: Text(msg)
-            )
+        } else {
+            switch viewModel.state {
+            case .idle, .loading:
+                loadingStateOverlay
+            case .loaded:
+                calendarScrollView
+            case .empty:
+                ContentUnavailableView(
+                    "Nessuna Lezione",
+                    systemImage: "graduationcap",
+                    description: Text("Non è stata trovata nessuna lezione per questo corso.")
+                )
+            case .offline:
+                ContentUnavailableView(
+                    "Sei Offline",
+                    systemImage: "wifi.slash",
+                    description: Text("Connettiti a internet per scaricare le tue lezioni.")
+                )
+            case .serverUnreachable:
+                ContentUnavailableView {
+                    Label("Server non raggiungibile", systemImage: "network.slash")
+                } description: {
+                    Text("Non riusciamo a contattare il server. Riprova più tardi.")
+                }
+            case .univrOffline:
+                ContentUnavailableView {
+                    Label("Università non raggiungibile", systemImage: "building.columns")
+                } description: {
+                    Text("Questo corso non è disponibile finché i server dell'università non tornano online. Riprova più tardi.")
+                }
+            case .error(let msg):
+                ContentUnavailableView(
+                    "Si è verificato un errore",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text(msg)
+                )
+            }
         }
     }
     
@@ -142,40 +199,40 @@ struct CalendarView: View {
     }
     
     @ViewBuilder
-    private func loadingStateOverlay(hasCourse: Bool) -> some View {
-        if hasCourse {
-            ScrollView {
-                VStack(spacing: 10) {
-                    ForEach(0..<10, id: \.self) { _ in
-                        CardItemContainer(item: .lesson(.sample), sheetRouter: sheetRouter)
-                            .shimmeringPlaceholder(opacity: colorScheme == .light ? 0.5 : 0.7)
-                    }
+    private var loadingStateOverlay: some View {
+        ScrollView {
+            VStack(spacing: 10) {
+                ForEach(0..<10, id: \.self) { _ in
+                    CardItemContainer(item: .lesson(.sample), sheetRouter: sheetRouter)
+                        .shimmeringPlaceholder(opacity: colorScheme == .light ? 0.5 : 0.7)
                 }
             }
-            .contentMargins(.top, 15, for: .scrollContent)
-            .contentMargins(.top, 15, for: .scrollIndicators)
-            .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
-            .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
-        } else {
-            ContentUnavailableView(
-                "Nessun corso",
-                systemImage: "graduationcap",
-                description: Text("Scegli un corso dalle impostazioni per iniziare.")
-            )
+            .allowsHitTesting(false)
         }
+        .contentMargins(.top, 15, for: .scrollContent)
+        .contentMargins(.top, 15, for: .scrollIndicators)
+        .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
+        .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
     }
     
     // MARK: - Toolbar Builder
     @ToolbarContentBuilder
     private func buildToolbar() -> some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            HStack {
+            HStack(spacing: 6) {
                 SelectedDayLabel(coordinator: coordinator)
-                
-                Image(systemName: "wifi.slash")
-                    .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isOffline)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.yellow.opacity(0.8))
+                ZStack {
+                    Image(systemName: "wifi.slash")
+                        .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isOffline)
+                        .foregroundStyle(.yellow.opacity(0.8))
+                    Image(systemName: "network.slash")
+                        .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isServerUnreachable)
+                        .foregroundStyle(.orange.opacity(0.8))
+                    Image(systemName: "building.columns")
+                        .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isUniVROffline)
+                        .foregroundStyle(.blue.opacity(0.8))
+                }
+                .font(.system(size: 12, weight: .bold))
             }
             .fixedSize()
             .modify { view in
@@ -187,7 +244,11 @@ struct CalendarView: View {
         }
         .toolbarBackgroundVisibility(.hidden)
         
-        if viewModel.checkingUpdates {
+        if (ServerStatusCenter.shared.isUnreachable || ServerStatusCenter.shared.isUniVROffline) && !viewModel.isOffline {
+            ToolbarItem(placement: .topBarTrailing) {
+                statusRetryButton
+            }
+        } else if viewModel.checkingUpdates && !viewModel.isOffline {
             ToolbarItem(placement: .topBarTrailing) {
                 ProgressView()
                     .controlSize(.small)
@@ -218,12 +279,39 @@ struct CalendarView: View {
                     coordinator.page = coordinator.page == .main ? .classrooms : .main
                 }
             }
-            .symbolReplace()
+            .modify { view in if #available(iOS 26, *) { view } else { view.symbolReplace() }}
         }
         
         ToolbarItem(placement: .topBarTrailing) {
             Button("Impostazioni", systemImage: "gearshape.fill", action: openSettingsAction)
         }
+        .modify { view in if #available(iOS 27, *) { view.visibilityPriority(.high) } else { view }}
+    }
+    
+    private var statusRetryButton: some View {
+        let serverDown = ServerStatusCenter.shared.isUnreachable
+        let isRetrying = serverDown ? ServerStatusCenter.shared.isRetrying : ServerStatusCenter.shared.isUniVRRetrying
+        return Button {
+            Haptics.play(.impact(weight: .medium))
+            Task {
+                if serverDown {
+                    await ServerStatusCenter.shared.retryNow()
+                } else {
+                    await ServerStatusCenter.shared.retryUniVRNow()
+                }
+            }
+        } label: {
+            if isRetrying {
+                ProgressView()
+                    .controlSize(.small)
+                    .tint(.white)
+            } else {
+                Label("Riprova", systemImage: "arrow.triangle.2.circlepath")
+            }
+        }
+        .allowsHitTesting(!isRetrying)
+        .buttonStyle(.borderedProminent)
+        .tint(serverDown ? .orange : .blue)
     }
     
     // MARK: - Logic Methods
@@ -270,17 +358,17 @@ struct CalendarView: View {
         }
         
         Task {
-            if settings.selectedCourse != "0" {
+            if settings.selectedCourse != "0" && settings.selectedAcademicYear != "0" && !settings.selectedAcademicYear.isEmpty {
                 await viewModel.loadFromCache(matricola: settings.matricola)
+                
+                await viewModel.loadLessons(
+                    corso: settings.selectedCourse,
+                    anno: settings.selectedAcademicYear,
+                    selYear: settings.selectedYear,
+                    matricola: settings.matricola,
+                    updating: false
+                )
             }
-            
-            await viewModel.loadLessons(
-                corso: settings.selectedCourse,
-                anno: settings.selectedAcademicYear,
-                selYear: settings.selectedYear,
-                matricola: settings.matricola,
-                updating: false
-            )
         }
     }
     
@@ -323,7 +411,7 @@ struct CalendarView: View {
                     viewModel.state = .loading
                     sheetRouter.tempSettings.apply(to: settings)
                     
-                    if settings.selectedCourse != "0" {
+                    if settings.selectedCourse != "0" && settings.selectedAcademicYear != "0" && !settings.selectedAcademicYear.isEmpty {
                         var transaction = Transaction()
                         transaction.disablesAnimations = true
                         withTransaction(transaction) {

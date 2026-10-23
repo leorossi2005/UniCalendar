@@ -36,18 +36,24 @@ public enum Device: Sendable {
     }
     
     public struct Info: Sendable, Equatable {
+        public let name: String
         public let model: String
+        public let isSimulator: Bool
         public let os: OS
         
-        public init(model: String, os: OS) {
+        public init(name: String, model: String, isSimulator: Bool = false, os: OS) {
+            self.name = name
             self.model = model
+            self.isSimulator = isSimulator
             self.os = os
         }
     }
     
     private static let storage = Locked(
         Info(
+            name: "Unknown",
             model: "Unknown",
+            isSimulator: false,
             os: OS(name: "Unknown", version: "0.0.0")
         )
     )
@@ -56,7 +62,9 @@ public enum Device: Sendable {
         storage.withLock { $0 }
     }
     
+    public static var name: String { current.name }
     public static var model: String { current.model }
+    public static var isSimulator: Bool { current.isSimulator }
     public static var os: OS { current.os }
     
     public static func configure(with info: Info) {

@@ -7,13 +7,26 @@
 //  SPDX-License-Identifier: GPL-3.0-or-later
 //
 
-public struct AcademicYear: Codable, Equatable, Sendable, Identifiable {
+public protocol SelectableItem: Identifiable, Equatable {
+    var id: String { get }
+    var label: String { get }
+}
+
+public struct SelectableOption: Codable, Equatable, Sendable, Identifiable, SelectableItem {
+    public let id: String
+    public let label: String
+
+    public static let even = SelectableOption(id: "even", label: "Pari")
+    public static let odd = SelectableOption(id: "odd", label: "Dispari")
+}
+
+public struct AcademicYear: Codable, Equatable, Sendable, Identifiable, SelectableItem {
     public let id: String
     public let label: String
     public let hasGroup: Bool?
 }
 
-public struct Corso: Codable, Equatable, Sendable, Identifiable {
+public struct Course: Codable, Equatable, Sendable, Identifiable, SelectableItem {
     public let id: String
     public let label: String
     public let years: [AcademicYear]

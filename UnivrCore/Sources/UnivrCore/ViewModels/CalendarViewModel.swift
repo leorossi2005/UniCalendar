@@ -18,16 +18,43 @@ public class CalendarViewModel {
     public var state: ResourcePhase = .loading
     public var updateAvailable: Bool = false
     public var checkingUpdates: Bool = false
-    public var isOffline: Bool { NetworkStatusMonitor.shared.status == .disconnected }
+    public private(set) var isOffline: Bool = NetworkStatusMonitor.shared.status == .disconnected
+    public var isServerUnreachable: Bool { !isOffline && ServerStatusCenter.shared.isUnreachable }
+    public var isUniVROffline: Bool { !isOffline && !ServerStatusCenter.shared.isUnreachable && ServerStatusCenter.shared.isUniVROffline }
+    
+    private let registrationId = UUID()
+    private struct LastLoadParams {
+        var corso: String
+        var anno: String
+        var selYear: String
+        var matricola: String
+    }
+    private var lastParams: LastLoadParams?
     
     private var pendingNewLessons: [DailySchedule]? = nil
     private let service: NetworkService = .init()
-    private let resource: CachedResource<[DailySchedule]> = CachedResource(cacheFileName: .calendarSchedule, cacheManager: .shared)
+    private let resource: CachedResource<[DailySchedule]> = CachedResource(cacheFileName: .calendarSchedule, cacheManager: .shared, autoSaveToDisk: false)
     private var lastMatricola: String = ""
+    private var lastCheck: Date = .distantPast
+    private var lastAttemptFailed: Bool = false
     
     public init() {
         observeResource()
         observeNetworkStatus()
+        ensureRegistered()
+    }
+    
+    private func ensureRegistered() {
+        ServerStatusCenter.shared.register(id: registrationId) { [weak self] in
+            guard let self, let params = self.lastParams else { return }
+            await self.performLoadLessons(
+                corso: params.corso,
+                anno: params.anno,
+                selYear: params.selYear,
+                matricola: params.matricola,
+                updating: false
+            )
+        }
     }
     
     private func observeResource() {
@@ -50,13 +77,26 @@ public class CalendarViewModel {
             }
         case .offline:
             if schedule.isEmpty { state = .offline }
+        case .serverUnreachable:
+            if schedule.isEmpty { state = .serverUnreachable }
+        case .univrOffline:
+            if schedule.isEmpty { state = .univrOffline }
         case .error(let message):
             if schedule.isEmpty { state = .error(message) }
         case .loading:
-            if schedule.isEmpty { state = .loading }
+            let stillOffline = NetworkStatusMonitor.shared.status == .disconnected
+            if schedule.isEmpty && state != .serverUnreachable && state != .univrOffline && !(state == .offline && stillOffline) {
+                state = .loading
+            }
         case .idle, .empty:
             break
         }
+        syncUniVRWaiting()
+    }
+    
+    /// Segnala a `ServerStatusCenter` se questa risorsa sta aspettando che UniVR torni (loop di retry dedicato).
+    private func syncUniVRWaiting() {
+        ServerStatusCenter.shared.setUniVRWaiting(id: registrationId, state == .univrOffline && schedule.isEmpty)
     }
     
     private func observeNetworkStatus() {
@@ -66,17 +106,33 @@ public class CalendarViewModel {
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 let offline = NetworkStatusMonitor.shared.status == .disconnected
+                self.isOffline = offline
                 if offline, self.schedule.isEmpty, self.resource.value == nil {
                     self.state = .offline
                 } else if !offline, self.state == .offline, self.resource.value == nil, self.schedule.isEmpty, !self.resource.hasLastFetch {
                     self.state = .empty
                 }
+                self.syncUniVRWaiting()
                 self.observeNetworkStatus()
             }
         }
     }
     
+    public func refreshIfNeeded(corso: String, anno: String, selYear: String, matricola: String) async {
+        guard corso != "0", !checkingUpdates, !updateAvailable else { return }
+        let interval: TimeInterval = (lastAttemptFailed || ServerStatusCenter.shared.isUniVROffline) ? 300 : 3600
+        if Date.now.timeIntervalSince(lastCheck) >= interval {
+            await loadLessons(corso: corso, anno: anno, selYear: selYear, matricola: matricola, updating: false)
+        }
+    }
+    
     public func loadLessons(corso: String, anno: String, selYear: String, matricola: String, updating: Bool) async {
+        ensureRegistered()
+        lastParams = LastLoadParams(corso: corso, anno: anno, selYear: selYear, matricola: matricola)
+        await performLoadLessons(corso: corso, anno: anno, selYear: selYear, matricola: matricola, updating: updating)
+    }
+    
+    private func performLoadLessons(corso: String, anno: String, selYear: String, matricola: String, updating: Bool) async {
         lastMatricola = matricola
         guard corso != "0" else {
             await clearAll(state: NetworkStatusMonitor.shared.status == .disconnected ? .offline : .empty)
@@ -90,7 +146,8 @@ public class CalendarViewModel {
                 await loadFromCache(matricola: matricola)
             }
             checkingUpdates = !schedule.isEmpty
-            if schedule.isEmpty {
+            let stillOffline = NetworkStatusMonitor.shared.status == .disconnected
+            if schedule.isEmpty && state != .serverUnreachable && state != .univrOffline && !(state == .offline && stillOffline) {
                 state = .loading
             }
         } else {
@@ -100,12 +157,22 @@ public class CalendarViewModel {
         do {
             let fetched = try await resource.refresh { try await self.service.fetchOrario(corso: corso, anno: anno, selyear: selYear) }
             handleNewData(fetched, matricola: matricola, update: updating)
+            lastCheck = .now
+            lastAttemptFailed = false
         } catch is CancellationError {
         } catch {
+            lastCheck = .now
+            lastAttemptFailed = true
             handleFetchFailure()
         }
         
         checkingUpdates = false
+    }
+    
+    // MARK: - Retry & Auto Retry
+    public func unregisterFromServerStatus() {
+        ServerStatusCenter.shared.unregister(id: registrationId)
+        ServerStatusCenter.shared.setUniVRWaiting(id: registrationId, false)
     }
     
     // MARK: - Data Handling
@@ -120,12 +187,16 @@ public class CalendarViewModel {
         
         if schedule.isEmpty || update {
             processAndSave(fetched, matricola: matricola)
+            Task { await resource.saveToDisk(fetched) }
+            clearPendingUpdate()
         } else {
             let fetchedFiltered = processRawLessons(fetched, matricola: matricola).processed
             
             if schedule != fetchedFiltered {
                 pendingNewLessons = fetched
                 updateAvailable = true
+            } else {
+                clearPendingUpdate()
             }
         }
     }
@@ -134,16 +205,22 @@ public class CalendarViewModel {
         switch resource.phase {
         case .offline:
             if schedule.isEmpty { state = .offline }
+        case .serverUnreachable:
+            if schedule.isEmpty { state = .serverUnreachable }
+        case .univrOffline:
+            if schedule.isEmpty { state = .univrOffline }
         case .error(let message):
             if schedule.isEmpty { state = .error(message) }
         case .idle, .loading, .loaded, .empty:
             break
         }
+        syncUniVRWaiting()
     }
     
     public func confirmUpdate(matricola: String) async {
         guard let newLessons = pendingNewLessons else { return }
         processAndSave(newLessons, matricola: matricola)
+        await resource.saveToDisk(newLessons)
         clearPendingUpdate()
     }
     
@@ -179,12 +256,14 @@ public class CalendarViewModel {
         
         self.schedule = result.processed
         self.state = result.processed.isEmpty ? .empty : .loaded
+        syncUniVRWaiting()
         
         DatePickerCache.shared.updateActivities(dates: result.activities)
     }
     
     // MARK: - Helpers & Cache
     public func loadFromCache(matricola: String) async {
+        ensureRegistered()
         await resource.loadFromDisk()
         if let cached = resource.value {
             processAndSave(cached, matricola: matricola)
@@ -196,6 +275,7 @@ public class CalendarViewModel {
         await resource.clear()
         schedule.removeAll()
         clearPendingUpdate()
+        syncUniVRWaiting()
     }
     
     public func clearPendingUpdate() {

@@ -16,17 +16,21 @@ enum NetworkError: Error, LocalizedError {
     case decodingError(Error)
     case offline
     case timeout
+    case serverUnreachable
+    case univrOffline
     case unknown(Error)
     
     var errorDescription: String? {
         switch self {
-        case .offline: return "Il dispositivo è offline."
-        case .timeout: return "La richiesta è scaduta (Timeout)."
-        case .badURL: return "L'URL non è valido."
-        case .badServerResponse(let code): return "Errore Server: \(code)."
-        case .emptyData: return "Nessun dato ricevuto dal server."
-        case .decodingError(let err): return "Errore di decodifica: \(err.localizedDescription)"
-        case .unknown(let err): return "Errore sconosciuto: \(err.localizedDescription)"
+        case .offline: return String(localized: .networkErrorOffline)
+        case .timeout: return String(localized: .networkErrorTimeout)
+        case .serverUnreachable: return String(localized: .networkErrorServerUnreachable)
+        case .univrOffline: return String(localized: .networkErrorUnivrOffline)
+        case .badURL: return String(localized: .networkErrorBadUrl)
+        case .badServerResponse: return String(localized: .networkErrorServer)
+        case .emptyData: return String(localized: .networkErrorEmptyData)
+        case .decodingError: return String(localized: .networkErrorDecoding)
+        case .unknown: return String(localized: .unknownError)
         }
     }
 }

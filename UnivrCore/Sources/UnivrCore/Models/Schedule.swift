@@ -30,7 +30,6 @@ public struct LocationInfo: Codable, Equatable, Sendable {
 
 public struct Lesson: Codable, Equatable, Sendable, Identifiable {
     public let id: String
-    // periphery:ignore
     public let code: String?
     public let type: EventType
     public let name: String?

@@ -41,13 +41,6 @@ extension NoticeLevel {
     }
 }
 
-extension Color {
-    init?(hex: String) {
-        guard let components = HexColorParser.parse(hex) else { return nil }
-        self.init(red: components.red, green: components.green, blue: components.blue, opacity: components.opacity)
-    }
-}
-
 extension Lesson {
     var uiColor: Color {
         guard let components = HexColorParser.parse(color) else { return .secondary }
@@ -59,18 +52,26 @@ struct ShimmeringGradient: View {
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
-        PhaseAnimator([false, true]) { phase in
-            LinearGradient(
-                colors: [
-                    .black.opacity(0),
-                    colorScheme == .light ? .black.opacity(0.3) : .white.opacity(0.05),
-                    .black.opacity(0)
-                ],
-                startPoint: phase ? UnitPoint(x: 1, y: 0.5) : UnitPoint(x: -1, y: 0.5),
-                endPoint: phase ? UnitPoint(x: 2, y: 0.5) : UnitPoint(x: 0, y: 0.5)
-            )
-        } animation: { _ in
-            .linear(duration: 1.5).repeatForever(autoreverses: false)
+        GeometryReader { geometry in
+            let width = max(geometry.size.width, 1)
+            TimelineView(.animation) { timeline in
+                let time = timeline.date.timeIntervalSinceReferenceDate
+                let duration: Double = 1.5
+                let progress = (time.truncatingRemainder(dividingBy: duration)) / duration
+                let xOffset = -width + (progress * width * 2)
+                
+                LinearGradient(
+                    colors: [
+                        .black.opacity(0),
+                        colorScheme == .light ? .black.opacity(0.3) : .white.opacity(0.05),
+                        .black.opacity(0)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                .frame(width: width, height: geometry.size.height)
+                .offset(x: xOffset)
+            }
         }
     }
 }
@@ -85,14 +86,12 @@ extension View {
                 .opacity(opacity)
                 .colorMultiply(Color(.tertiarySystemGroupedBackground))
                 .overlay {
-                    ZStack {
-                        ShimmeringGradient()
-                            .mask {
-                                self
-                                    .redacted(reason: .placeholder)
-                            }
-                    }
-                    .opacity(opacity)
+                    ShimmeringGradient()
+                        .mask {
+                            self
+                                .redacted(reason: .placeholder)
+                        }
+                        .opacity(opacity)
                 }
         } else {
             self
@@ -131,11 +130,6 @@ extension View {
                     .rotationEffect(.degrees(rotation))
                     .offset(offset)
             }
-    }
-    
-    func keyboardPadding(_ value: CGFloat) -> some View {
-        self.safeAreaPadding(.bottom, value)
-            .ignoresSafeArea(.keyboard, edges: .bottom)
     }
     
     // MARK: Fallback iOS 18
@@ -190,7 +184,17 @@ extension View {
     }
 }
 
-extension ToolbarItem {
+extension SearchFieldPlacement {
+    static var automaticPlacement: SearchFieldPlacement {
+        if #available(iOS 26, *) {
+            .automatic
+        } else {
+            .navigationBarDrawer(displayMode: .always)
+        }
+    }
+}
+
+extension ToolbarContent {
     @ToolbarContentBuilder
     func toolbarBackgroundVisibility(_ visibility: Visibility) -> some ToolbarContent {
         if #available(iOS 26, *) {
@@ -199,31 +203,65 @@ extension ToolbarItem {
             self
         }
     }
+    
+    @ToolbarContentBuilder
+    func modify<Content: ToolbarContent>(@ToolbarContentBuilder _ transform: (Self) -> Content) -> some ToolbarContent {
+        transform(self)
+    }
 }
 
 extension EnvironmentValues {
     @Entry var safeAreaInsets: UIEdgeInsets = .zero
 }
 
+private struct WindowInsetsReader: UIViewRepresentable {
+    let onChange: (UIEdgeInsets) -> Void
+
+    func makeUIView(context: Context) -> ReaderView {
+        let view = ReaderView()
+        view.isUserInteractionEnabled = false
+        view.onChange = onChange
+        return view
+    }
+
+    func updateUIView(_ uiView: ReaderView, context: Context) {
+        uiView.onChange = onChange
+        uiView.report()
+    }
+
+    final class ReaderView: UIView {
+        var onChange: ((UIEdgeInsets) -> Void)?
+        private var last: UIEdgeInsets?
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            report()
+        }
+
+        override func layoutSubviews() {
+            super.layoutSubviews()
+            report()
+        }
+
+        func report() {
+            guard let insets = window?.safeAreaInsets, insets != last else { return }
+            last = insets
+            DispatchQueue.main.async { [weak self] in
+                self?.onChange?(insets)
+            }
+        }
+    }
+}
+
 private struct SafeAreaInsetsReader: ViewModifier {
     @State private var insets: UIEdgeInsets = .zero
-    
+
     func body(content: Content) -> some View {
         content
             .environment(\.safeAreaInsets, insets)
             .background {
-                Color.clear
-                    .ignoresSafeArea(.keyboard)
-                    .onGeometryChange(for: EdgeInsets.self) { proxy in
-                        proxy.safeAreaInsets
-                    } action: { new in
-                        insets = UIEdgeInsets(
-                            top: new.top,
-                            left: new.leading,
-                            bottom: new.bottom,
-                            right: new.trailing
-                        )
-                    }
+                WindowInsetsReader { insets = $0 }
+                    .allowsHitTesting(false)
             }
     }
 }
@@ -231,13 +269,6 @@ private struct SafeAreaInsetsReader: ViewModifier {
 extension View {
     func readSafeAreaInsets() -> some View {
         modifier(SafeAreaInsetsReader())
-    }
-}
-
-extension Array where Element == Corso {
-    public func filtered(by searchText: String) -> [Corso] {
-        guard !searchText.isEmpty else { return self }
-        return self.filter { $0.label.localizedCaseInsensitiveContains(searchText) }
     }
 }
 
@@ -265,4 +296,66 @@ extension String {
             return "person.badge.clock"
         }
     }
+    
+    @available(iOSApplicationExtension, unavailable)
+    static var deviceSymbol: String {
+        if UIDevice.isIpad {
+            switch UIDevice.iPadScreenType {
+            case .homeButton: "ipad.gen1"
+            case .noHomeButton: "ipad.gen2"
+            case .unknown : "ipad"
+            }
+        } else {
+            switch UIDevice.iPhoneScreenType {
+            case .homeButton: "iphone.gen1"
+            case .notch: "iphone.gen2"
+            case .dynamicIsland: "iphone.gen3"
+            case .unknown : "iphone"
+            }
+        }
+    }
 }
+
+enum iPhoneScreenType {
+    case homeButton
+    case notch
+    case dynamicIsland
+    case unknown
+}
+
+enum iPadScreenType {
+    case homeButton
+    case noHomeButton
+    case unknown
+}
+
+@available(iOSApplicationExtension, unavailable)
+extension UIDevice {
+    static var iPhoneScreenType: iPhoneScreenType {
+        guard !UIDevice.isIpad else { return .unknown }
+        let safeAreas = UIApplication.shared.safeAreas
+        
+        if safeAreas.bottom == 0 {
+            return .homeButton
+        }
+        
+        let sensorInset = max(safeAreas.top, safeAreas.left, safeAreas.right)
+        
+        if sensorInset >= 51.0 {
+            return .dynamicIsland
+        } else {
+            return .notch
+        }
+    }
+    
+    static var iPadScreenType: iPadScreenType {
+        guard UIDevice.isIpad else { return .unknown }
+        
+        if UIApplication.shared.safeAreas.bottom > 0 {
+            return .noHomeButton
+        } else {
+            return .homeButton
+        }
+    }
+}
+

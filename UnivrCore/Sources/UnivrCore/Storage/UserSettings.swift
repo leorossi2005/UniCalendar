@@ -23,7 +23,7 @@ public class UserSettings {
     private enum Default {
         static let year = "0"
         static let course = "0"
-        static let courseName = "Corso"
+        static let courseName = "Course"
         static let academicYear = "0"
         static let academicYearName = "Year"
         static let matricola = "even"

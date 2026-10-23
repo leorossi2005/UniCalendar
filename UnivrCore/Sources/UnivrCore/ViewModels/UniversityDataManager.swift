@@ -16,9 +16,14 @@ public final class UniversityDataManager {
     private let cacheManager: CacheManager = .shared
     
     private let yearsResource: CachedResource<[AcademicYear]> = CachedResource(cacheFileName: .years, cacheManager: .shared)
-    private var coursesResource: CachedResource<[Corso]>?
+    private var coursesResource: CachedResource<[Course]>?
     private var currentCoursesYear: String = ""
     private var activeResource: Resource = .years
+    
+    private var yearsTask: Task<Void, Error>?
+    private var coursesTask: Task<Void, Error>?
+    private var coursesTaskYear: String?
+    private var locationsTask: Task<Void, Error>?
 
     private enum Resource {
         case years
@@ -26,10 +31,21 @@ public final class UniversityDataManager {
     }
     
     public var years: [AcademicYear] { yearsResource.value ?? [] }
-    public var courses: [Corso] { coursesResource?.value ?? [] }
+    public var coursesYear: String { currentCoursesYear }
+    public var courses: [Course] { coursesResource?.value ?? [] }
     public var academicYears: [AcademicYear] = []
     
-    public var isOffline: Bool { NetworkStatusMonitor.shared.status == .disconnected }
+    public private(set) var isOffline: Bool = NetworkStatusMonitor.shared.status == .disconnected
+    public var isServerUnreachable: Bool {
+        !isOffline && ServerStatusCenter.shared.isUnreachable
+    }
+    public var isLoading: Bool {
+        yearsResource.phase == .loading || coursesResource?.phase == .loading
+    }
+    
+    private let registrationId = UUID()
+    private var lastRetryYear: String? = nil
+    
     public var errorMessage: String? {
         let phase = switch activeResource {
         case .years: yearsResource.phase
@@ -40,7 +56,150 @@ public final class UniversityDataManager {
         return message
     }
     
-    public init() {}
+    public init() {
+        observeNetworkStatus()
+        activate()
+    }
+    
+    public func activate() {
+        ServerStatusCenter.shared.register(id: registrationId) { [weak self] in
+            guard let self else { return }
+            await self.performRetry(year: self.lastRetryYear)
+        }
+    }
+    
+    private func observeNetworkStatus() {
+        withObservationTracking {
+            _ = NetworkStatusMonitor.shared.status
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.isOffline = NetworkStatusMonitor.shared.status == .disconnected
+                self.observeNetworkStatus()
+            }
+        }
+    }
+    
+    @discardableResult
+    public func prefetch(preferredYear: String?) async -> String? {
+        guard !isOffline else { return nil }
+        Task { await prefetchLocations() }
+        do { try await ensureYears() } catch { return nil }
+
+        let year = years.contains(where: { $0.id == preferredYear })
+            ? preferredYear
+            : years.first?.id
+        guard let year, year != "0" else { return nil }
+
+        Task { try? await ensureCourses(year: year) }
+        return year
+    }
+
+    public func prefetchLocations() async {
+        guard locationsTask == nil else { return }
+        let task = Task {
+            defer { locationsTask = nil }
+            let locationsResource = CachedResource<[String: String]>(cacheFileName: .locations, cacheManager: cacheManager)
+            try await locationsResource.refreshStaleWhileRevalidate {
+                try await self.service.getLocations()
+            }
+        }
+        locationsTask = task
+        try? await task.value
+    }
+    
+    public func ensureYears() async throws {
+        if !years.isEmpty { return }
+        if yearsTask == nil {
+            yearsTask = Task {
+                defer { yearsTask = nil }
+                try await loadYears()
+            }
+        }
+        try await yearsTask?.value
+    }
+
+    public func ensureCourses(year: String) async throws {
+        if coursesTaskYear == year, let task = coursesTask {
+            try await task.value
+            return
+        }
+        
+        if currentCoursesYear == year, !courses.isEmpty { return }
+
+        coursesTask?.cancel()
+        resetCourses()
+
+        coursesTaskYear = year
+        let task = Task {
+            defer {
+                if coursesTaskYear == year {
+                    coursesTask = nil
+                    coursesTaskYear = nil
+                }
+            }
+            try await loadCourses(year: year)
+        }
+        coursesTask = task
+        try await task.value
+    }
+
+    public func cancelAll() {
+        ServerStatusCenter.shared.unregister(id: registrationId)
+        yearsTask?.cancel(); yearsTask = nil
+        coursesTask?.cancel(); coursesTask = nil
+        coursesTaskYear = nil
+        locationsTask?.cancel(); locationsTask = nil
+    }
+    
+    public func retry(year: String? = nil) async {
+        if let year, !year.isEmpty, year != "0" {
+            lastRetryYear = year
+        }
+        await ServerStatusCenter.shared.retryNow()
+    }
+    
+    private func performRetry(year: String? = nil) async {
+        if years.isEmpty || yearsResource.phase == .serverUnreachable {
+            do {
+                try await reloadYears()
+            } catch NetworkError.serverUnreachable, NetworkError.timeout {
+                return
+            } catch {
+                // Altri errori non impediscono il tentativo sui corsi
+            }
+        }
+        let targetYear = (year != nil && !year!.isEmpty && year != "0") ? year : (!currentCoursesYear.isEmpty ? currentCoursesYear : years.first?.id)
+        if let targetYear, !targetYear.isEmpty, targetYear != "0", (courses.isEmpty || coursesResource?.phase == .serverUnreachable) {
+            try? await reloadCourses(year: targetYear)
+        }
+    }
+    
+    public func reloadYears() async throws {
+        activeResource = .years
+        if yearsResource.value == nil {
+            await yearsResource.loadFromDisk()
+        }
+        try await yearsResource.refresh { try await self.service.getYears() }
+    }
+    
+    public func reloadCourses(year: String) async throws {
+        guard year != "0", !year.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        lastRetryYear = year
+        activeResource = .courses
+        let resource: CachedResource<[Course]>
+        if year != currentCoursesYear || coursesResource == nil {
+            currentCoursesYear = year
+            resource = CachedResource(cacheFileName: .courses(year: year), cacheManager: cacheManager)
+            coursesResource = resource
+        } else {
+            resource = coursesResource!
+        }
+        if resource.value == nil {
+            await resource.loadFromDisk()
+        }
+        try await resource.refresh { try await self.service.getCourses(year: year) }
+    }
     
     public func resetCourses() {
         currentCoursesYear = ""
@@ -53,13 +212,19 @@ public final class UniversityDataManager {
     }
     
     public func loadCourses(year: String) async throws {
+        guard year != "0", !year.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        lastRetryYear = year
         activeResource = .courses
+        let resource: CachedResource<[Course]>
         if year != currentCoursesYear || coursesResource == nil {
             currentCoursesYear = year
-            coursesResource = CachedResource(cacheFileName: .courses(year: year), cacheManager: cacheManager)
+            resource = CachedResource(cacheFileName: .courses(year: year), cacheManager: cacheManager)
+            coursesResource = resource
+        } else {
+            resource = coursesResource!
         }
         
-        try await coursesResource?.refreshStaleWhileRevalidate(fetch: { try await self.service.getCourses(year: year) })
+        try await resource.refreshStaleWhileRevalidate(fetch: { try await self.service.getCourses(year: year) })
     }
     
     public func updateAcademicYears(for courseValue: String) {

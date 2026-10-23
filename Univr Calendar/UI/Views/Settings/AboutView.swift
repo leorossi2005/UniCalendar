@@ -25,8 +25,7 @@ struct AboutView: View {
                     
                     VStack(spacing: 5) {
                         Text(AppConstants.AppInfo.appName)
-                            .font(.title2)
-                            .bold()
+                            .font(.title2.bold())
                         
                         Text(Bundle.main.appVersion)
                             .font(.footnote)

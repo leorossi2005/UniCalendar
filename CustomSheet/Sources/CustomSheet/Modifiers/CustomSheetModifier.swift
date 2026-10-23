@@ -25,8 +25,6 @@ struct ClampedPadding: ViewModifier, Animatable {
 }
 
 struct CustomSheetModifier<SheetContent: View>: ViewModifier {
-    @Environment(\.self) var completeEnvironment
-    
     @Binding var isPresented: Bool
     var manager: GlobalSheetManager?
     var detents: [CustomSheetDetent]
@@ -37,7 +35,6 @@ struct CustomSheetModifier<SheetContent: View>: ViewModifier {
         content
             .background(
                 OverlayAnchorView(
-                    capturedEnvironment: completeEnvironment,
                     isPresented: $isPresented,
                     manager: manager,
                     detents: detents,

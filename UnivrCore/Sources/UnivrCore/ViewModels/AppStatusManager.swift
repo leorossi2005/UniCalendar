@@ -20,20 +20,31 @@ public final class AppStatusManager {
     private let service = NetworkService()
     private let resource = CachedResource<[AppNotice]>(cacheFileName: .appStatus, cacheManager: .shared)
     
+    public var isOffline: Bool { NetworkStatusMonitor.shared.status == .disconnected }
+    public var isServerUnreachable: Bool { !isOffline && ServerStatusCenter.shared.isUnreachable }
+    
     private var notices: [AppNotice] = []
     private var closedIDs: Set<String>
     private var isFetching = false
     private var lastCheck = Date.distantPast
     public private(set) var lastAttemptFailed = false
     
+    private let registrationId = UUID()
     private static let closedKey = "appStatus_closedIDs"
     
     public init() {
         closedIDs = Set(UserDefaults.standard.stringArray(forKey: Self.closedKey) ?? [])
+        activate()
         
         Task {
             await loadCache()
             evaluateCurrentState()
+        }
+    }
+    
+    private func activate() {
+        ServerStatusCenter.shared.register(id: registrationId) { [weak self] in
+            await self?.refresh()
         }
     }
     
@@ -97,7 +108,7 @@ public final class AppStatusManager {
             saveClosedIDs()
             lastAttemptFailed = false
         } catch {
-            print("AppStatusManager: errore nel recupero dello stato dell'app: \(error)")
+            print("AppStatusManager: Error getting app status: \(error)")
             lastAttemptFailed = true
         }
         
