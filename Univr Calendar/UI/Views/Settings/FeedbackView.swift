@@ -107,7 +107,7 @@ struct FeedbackView: View {
                     if isOffline || isServerDown {
                         Section {
                             Label(
-                                isOffline ? "Sei offline: non puoi inviare feedback." : "Server non raggiungibile, riprova più tardi.",
+                                isOffline ? "Sei offline, non puoi inviare feedback." : "Server non raggiungibile, non puoi inviare feedback.",
                                 systemImage: isOffline ? "wifi.slash" : "network.slash"
                             )
                             .font(.caption2)

@@ -830,6 +830,16 @@
         }
       }
     },
+    "Il server non è raggiungibile, non potrai effettuare nuovamente l'onboarding finché il server non tornerà raggiungibile." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The server is not reachable, you will not be able to complete the onboarding again until the server is reachable again."
+          }
+        }
+      }
+    },
     "Il tuo feedback è stato inviato." : {
       "localizations" : {
         "en" : {
@@ -1600,16 +1610,6 @@
         }
       }
     },
-    "Segnala un problema" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Leave a feedback"
-          }
-        }
-      }
-    },
     "Seguimi" : {
       "localizations" : {
         "en" : {
@@ -1640,12 +1640,22 @@
         }
       }
     },
-    "Sei offline: non puoi inviare feedback." : {
+    "Sei offline, non potrai effettuare nuovamente l'onboarding finché non tornerai online." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You are offline: you cannot send feedback."
+            "value" : "You are offline, you will not be able to complete the onboarding again until you get back online."
+          }
+        }
+      }
+    },
+    "Sei offline, non puoi inviare feedback." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You are offline, you cannot send feedback."
           }
         }
       }
@@ -1686,6 +1696,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Server unreachable"
+          }
+        }
+      }
+    },
+    "Server non raggiungibile, non puoi inviare feedback." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Server unreachable, you cannot send feedback."
           }
         }
       }
@@ -1817,8 +1837,15 @@
         }
       }
     },
-    "Tocca per riprovare." : {
-
+    "Tocca per riprovare" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap to try again"
+          }
+        }
+      }
     },
     "Università non raggiungibile" : {
       "localizations" : {

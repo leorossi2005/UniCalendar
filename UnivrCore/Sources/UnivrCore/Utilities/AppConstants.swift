@@ -15,7 +15,6 @@ public enum AppConstants: Sendable {
         public static let portfolio = URL(string: "https://www.leonardorossi.dev")!
         public static let github = URL(string: "https://github.com/leorossi2005")!
         public static let instagram = URL(string: "https://www.instagram.com/leorossi05")!
-        public static let feedback = URL(string: "mailto:leonardo.rossi1922005@gmail.com?subject=Feedback%20App%20UniCalendar")!
         public static let email = URL(string: "mailto:leonardo.rossi1922005@gmail.com")!
     }
     

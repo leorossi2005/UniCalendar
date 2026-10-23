@@ -230,7 +230,15 @@ struct Settings: View {
                     Button("Conferma", role: .destructive, action: performReset)
                     Button("Annulla", role: .cancel) {}
                 } message: {
-                    Text("Confermando cancellerai le impostazioni e tornerai al benvenuto iniziale.")
+                    let warningText = if viewModel.isOffline {
+                        "\n\n" + String(localized: "Sei offline, non potrai effettuare nuovamente l'onboarding finché non tornerai online.")
+                    } else if viewModel.isServerUnreachable {
+                        "\n\n" + String(localized: "Il server non è raggiungibile, non potrai effettuare nuovamente l'onboarding finché il server non tornerà raggiungibile.")
+                    } else {
+                        ""
+                    }
+                    
+                    Text(String(localized: "Confermando cancellerai le impostazioni e tornerai al benvenuto iniziale.") + warningText)
                 }
             }
             Section {

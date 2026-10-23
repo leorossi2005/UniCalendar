@@ -120,19 +120,21 @@ struct Onboarding: View {
                             Text("I dati potrebbero non essere aggiornati.")
                                 .font(.subheadline.weight(.medium))
                         }
-                        Text("Tocca per riprovare.")
+                        Text("Tocca per riprovare")
                             .font(.caption2.weight(.medium))
+                            .foregroundStyle(.secondary)
                     }
                 } else {
                     VStack {
                         HStack(spacing: 8) {
                             Image(systemName: "network.slash")
                                 .font(.subheadline.weight(.semibold))
-                            Text("Server non raggiungibile, riprova più tardi.")
+                            Text("Server non raggiungibile")
                                 .font(.subheadline.weight(.medium))
                         }
-                        Text("Tocca per riprovare.")
+                        Text("Tocca per riprovare")
                             .font(.caption2.weight(.medium))
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
