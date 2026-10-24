@@ -46,8 +46,11 @@ struct FractionDatePickerView: View {
                 .if(!day.isOutOfBounds) { view in
                     view
                         .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: itemWidth / 2.5, style: .continuous))
+                        .contentShape(RoundedRectangle(cornerRadius: itemWidth / 2.5, style: .continuous))
                         .hoverEffect(.lift)
                 }
+                .accessibilityHidden(day.isOutOfBounds)
+                .accessibilityAddTraits(isSelected ? [.isSelected] : [])
             }
         }
         .frame(maxWidth: 500, maxHeight: .infinity)

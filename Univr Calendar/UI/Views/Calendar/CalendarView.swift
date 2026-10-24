@@ -13,10 +13,11 @@ import CustomSheet
 
 
 struct CalendarView: View {
-    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(UserSettings.self) var settings
-    @Environment(AppStatusManager.self) var statusManager
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    @Environment(UserSettings.self) private var settings
+    @Environment(AppStatusManager.self) private var statusManager
   
     @State private var sheetRouter: CalendarSheetRouter = .init()
     @State private var coordinator = CalendarCoordinator()
@@ -28,6 +29,8 @@ struct CalendarView: View {
             set: { coordinator.selectDate($0) }
         )
     }
+    
+    @AccessibilityFocusState private var focusedDay: Date?
     
     var body: some View {
         NavigationStack {
@@ -58,6 +61,14 @@ struct CalendarView: View {
             .onAppear {
                 inizializeData()
                 checkPendingNotificationTap()
+                
+                focusCurrentDay()
+            }
+            .onChange(of: coordinator.selectedWeek) { _, _ in
+                focusCurrentDay()
+            }
+            .onChange(of: voiceOverEnabled) { _, isEnabled in
+                focusCurrentDay()
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 if newPhase == .active {
@@ -169,9 +180,12 @@ struct CalendarView: View {
             ScrollView(.horizontal) {
                 LazyHStack(spacing: 0) {
                     ForEach(viewModel.academicYearDays, id: \.self) { date in
-                        CalendarViewDay(date: date, viewModel: viewModel, sheetRouter: sheetRouter)
+                        CalendarViewDay(date: date, viewModel: viewModel, sheetRouter: sheetRouter,
+                                        focus: $focusedDay)
                             .containerRelativeFrame(.horizontal)
                             .id(date)
+                            .accessibilityElement(children: .contain)
+                            .accessibilityHidden(!Calendar.current.isDate(date, inSameDayAs: coordinator.selectedWeek))
                     }
                 }
                 .scrollTargetLayout()
@@ -241,6 +255,7 @@ struct CalendarView: View {
                         .padding(.bottom, 8)
                 }
             }
+            .accessibilityHidden(true)
         }
         .toolbarBackgroundVisibility(.hidden)
         
@@ -459,6 +474,15 @@ struct CalendarView: View {
             }
         }
     }
+    
+    private func focusCurrentDay() {
+        guard voiceOverEnabled else { return }
+        focusedDay = nil
+        Task {
+            try? await Task.sleep(for: .milliseconds(250))
+            focusedDay = coordinator.selectedWeek
+        }
+    }
 }
 
 // MARK: - Subviews
@@ -466,29 +490,46 @@ struct CalendarViewDay: View {
     let date: Date
     let viewModel: CalendarViewModel
     var sheetRouter: CalendarSheetRouter
-    
+    var focus: AccessibilityFocusState<Date?>.Binding
+
     var body: some View {
         let items = viewModel.events(for: date) ?? []
-        Group {
-            if items.isEmpty {
-                ContentUnavailableView(
-                    "Giornata Libera",
-                    systemImage: "moon.zzz",
-                    description: Text("Non ci sono lezioni o impegni in programma per oggi.")
-                )
-            } else {
-                ScrollView {
-                    VStack(spacing: 10) {
-                        ForEach(items) { item in
-                            CardItemContainer(item: item, sheetRouter: sheetRouter)
-                        }
+        let dateLabel = date.formatted(.dateTime.weekday(.wide).day().month(.wide))
+
+        if items.isEmpty {
+            let title = String(localized: "Giornata Libera")
+            let description = String(localized: "Non ci sono lezioni o impegni in programma per oggi.")
+
+            ContentUnavailableView(
+                LocalizedStringKey(title),
+                systemImage: "moon.zzz",
+                description: Text(LocalizedStringKey(description))
+            )
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(dateLabel): \(title). \(description)")
+            .accessibilityFocused(focus, equals: date)
+        } else {
+            ScrollView {
+                VStack(spacing: 10) {
+                    ForEach(items) { item in
+                        CardItemContainer(item: item, sheetRouter: sheetRouter)
                     }
                 }
-                .contentMargins(.top, 15, for: .scrollContent)
-                .contentMargins(.top, 15, for: .scrollIndicators)
-                .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
-                .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
+                .overlay(alignment: .top) {
+                    Color.clear
+                        .frame(height: 1)
+                        .allowsHitTesting(false)
+                        .accessibilityElement()
+                        .accessibilityLabel(Text(dateLabel))
+                        .accessibilityAddTraits(.isHeader)
+                        .accessibilitySortPriority(10)
+                        .accessibilityFocused(focus, equals: date)
+                }
             }
+            .contentMargins(.top, 15, for: .scrollContent)
+            .contentMargins(.top, 15, for: .scrollIndicators)
+            .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
+            .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
         }
     }
 }

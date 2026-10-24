@@ -85,6 +85,22 @@
         }
       }
     },
+    "%@: %@. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@. %3$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@. %3$@"
+          }
+        }
+      }
+    },
     "%lld %@" : {
       "localizations" : {
         "en" : {
@@ -316,6 +332,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "Annullata" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Canceled"
           }
         }
       }
@@ -900,6 +926,17 @@
         }
       }
     },
+    "Impegno personale" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personal Commitment"
+          }
+        }
+      }
+    },
     "Impossibile usare questa immagine: non è leggibile o è troppo pesante." : {
       "localizations" : {
         "en" : {
@@ -1410,6 +1447,16 @@
         }
       }
     },
+    "Pausa di %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ break"
+          }
+        }
+      }
+    },
     "Per impostare un promemoria devi abilitare le notifiche nelle Impostazioni." : {
       "localizations" : {
         "en" : {
@@ -1856,6 +1903,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Title"
+          }
+        }
+      }
+    },
+    "Tocca due volte per aprire i dettagli" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap two times to open the details"
           }
         }
       }

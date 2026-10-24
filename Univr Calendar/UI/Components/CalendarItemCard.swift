@@ -25,6 +25,7 @@ struct CalendarItemCard: View {
         .background(backgroundLayer)
         .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
         .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 35, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 35, style: .continuous))
         .hoverEffect(.lift)
         .padding(.horizontal)
     }
@@ -83,6 +84,13 @@ struct CalendarItemCard: View {
             }
         }
         .foregroundStyle(internalItem.isCanceled ? Color.primary : Color.black)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            internalItem.isCanceled
+                ? item.startTime.formatted(date: .omitted, time: .shortened)
+                : (item.startTime..<internalItem.endTime).formatted(date: .omitted, time: .shortened)
+        )
+        .accessibilitySortPriority(3)
     }
     
     private var itemInfo: some View {
@@ -92,6 +100,8 @@ struct CalendarItemCard: View {
                 .font(.headline)
                 .multilineTextAlignment(.leading)
                 .strikethrough(internalItem.isCanceled)
+                .accessibilityValue(internalItem.isCanceled ? Text("Annullata") : Text(""))
+                .accessibilitySortPriority(4)
             
             if !internalItem.isCanceled, let loc = internalItem.displayLocation, !loc.isEmpty {
                 Label(loc, systemImage: "mappin")
@@ -99,10 +109,12 @@ struct CalendarItemCard: View {
                     .font(.subheadline)
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
+                    .accessibilitySortPriority(2)
             }
             
             if !internalItem.tagsItems.isEmpty && !internalItem.isCanceled {
                 tagsList
+                    .accessibilitySortPriority(1)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -138,10 +150,16 @@ struct PauseCard: View {
         HStack(alignment: .bottom) {
             Image(systemName: .cupDynamic)
                 .font(.system(size: 40))
-            Text(Duration.seconds(item.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)))
+            Text(time(width: .narrow))
                 .font(.system(size: 30).bold().italic())
         }
         .foregroundStyle(.secondary)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Pausa di \(time(width: .wide))")
+    }
+    
+    func time(width: Duration.UnitsFormatStyle.UnitWidth) -> String {
+        Duration.seconds(item.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: width))
     }
 }
 
@@ -163,45 +181,19 @@ struct CardItemContainer: View {
             PauseCard(item: internalItem)
         } else {
             CalendarItemCard(item: item, internalItem: internalItem)
+                .accessibilityElement(children: .combine)
+                .accessibilitySortPriority(0)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHint(Text("Tocca due volte per aprire i dettagli"))
+                .accessibilityActions {
+                    contextMenuButtons
+                }
                 .onTapGesture {
                     Haptics.play(.impact(weight: .light, intensity: 0.5))
                     sheetRouter.routeToItem(item)
                 }
                 .contextMenu {
-                    switch item {
-                    case .lesson:
-                        Button(action: {
-                            Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            sheetRouter.routeToItem(item, addToCalendar: true)
-                        }) {
-                            Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
-                        }
-                        Button(action: {
-                            Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            sheetRouter.routeToItem(item)
-                        }) {
-                            Label("Vedi più dettagli", systemImage: "ellipsis")
-                        }
-                    case .personal(let event):
-                        Button(action: {
-                            Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            sheetRouter.routeToAddPersonalEvent(editing: event)
-                        }) {
-                            Label("Modifica", systemImage: "pencil")
-                        }
-                        Button(action: {
-                            Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            sheetRouter.routeToItem(item)
-                        }) {
-                            Label("Vedi più dettagli", systemImage: "ellipsis")
-                        }
-                        Button(role: .destructive, action: {
-                            Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            showDeletePopover = true
-                        }) {
-                            Label("Cancella", systemImage: "trash")
-                        }
-                    }
+                    contextMenuButtons
                 } preview: {
                     CalendarItemPreview(item: item, internalItem: internalItem)
                 }
@@ -218,6 +210,44 @@ struct CardItemContainer: View {
         if case .personal(let event) = item {
             Task {
                 await CommitmentsManager.shared.deleteEvent(id: event.id)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var contextMenuButtons: some View {
+        switch item {
+        case .lesson:
+            Button(action: {
+                Haptics.play(.impact(weight: .light, intensity: 0.5))
+                sheetRouter.routeToItem(item, addToCalendar: true)
+            }) {
+                Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
+            }
+            Button(action: {
+                Haptics.play(.impact(weight: .light, intensity: 0.5))
+                sheetRouter.routeToItem(item)
+            }) {
+                Label("Vedi più dettagli", systemImage: "ellipsis")
+            }
+        case .personal(let event):
+            Button(action: {
+                Haptics.play(.impact(weight: .light, intensity: 0.5))
+                sheetRouter.routeToAddPersonalEvent(editing: event)
+            }) {
+                Label("Modifica", systemImage: "pencil")
+            }
+            Button(action: {
+                Haptics.play(.impact(weight: .light, intensity: 0.5))
+                sheetRouter.routeToItem(item)
+            }) {
+                Label("Vedi più dettagli", systemImage: "ellipsis")
+            }
+            Button(role: .destructive, action: {
+                Haptics.play(.impact(weight: .light, intensity: 0.5))
+                showDeletePopover = true
+            }) {
+                Label("Cancella", systemImage: "trash")
             }
         }
     }

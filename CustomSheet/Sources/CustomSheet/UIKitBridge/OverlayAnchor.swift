@@ -68,10 +68,8 @@ class OverlayAnchorUIView: UIView {
     var pendingRootView: AnyView?
     
     func cleanup() {
-        hostingController?.willMove(toParent: nil)
         containerView?.removeFromSuperview()
         hostingController?.view.removeFromSuperview()
-        hostingController?.removeFromParent()
         containerView = nil
         hostingController = nil
     }
@@ -91,13 +89,13 @@ class OverlayAnchorUIView: UIView {
         container.backgroundColor = .clear
         container.translatesAutoresizingMaskIntoConstraints = false
         container.hostingView = hc.view
+        container.accessibilityViewIsModal = false
         
         container.addSubview(hc.view)
         window.addSubview(container)
         
-        if let rootVC = window.rootViewController {
-            rootVC.addChild(hc)
-            hc.didMove(toParent: rootVC)
+        if let mainWindowView = window.subviews.first(where: { $0 !== container }) {
+            window.accessibilityElements = [mainWindowView, container]
         }
         
         self.hostingController = hc
@@ -180,6 +178,10 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
         
         manager?.onLargeDetentToggle = { [weak uiView] isLarge in
             uiView?.updateNavigationSafeArea(isLarge: isLarge)
+            if uiView?.containerView?.accessibilityViewIsModal != isLarge {
+                uiView?.containerView?.accessibilityViewIsModal = isLarge
+                UIAccessibility.post(notification: .layoutChanged, argument: nil)
+            }
         }
     }
     
