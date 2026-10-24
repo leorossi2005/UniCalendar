@@ -41,6 +41,34 @@ extension NoticeLevel {
     }
 }
 
+import SwiftUI
+
+enum AppState {
+    case offline, serveroffline, unioffline
+    
+    var icon: String {
+        switch self {
+        case .offline:
+            return "wifi.slash"
+        case .serveroffline:
+            return "network.slash"
+        case .unioffline:
+            return "building.columns"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .offline:
+            return .yellow
+        case .serveroffline:
+            return .orange
+        case .unioffline:
+            return .blue
+        }
+    }
+}
+
 extension Lesson {
     var uiColor: Color {
         guard let components = HexColorParser.parse(color) else { return .secondary }

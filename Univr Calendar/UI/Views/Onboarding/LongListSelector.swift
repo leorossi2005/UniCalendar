@@ -35,6 +35,8 @@ struct LongListSelector<Item: SelectableItem>: View {
         )
     }
     
+    @AccessibilityFocusState private var isSelectedRowFocused: Bool
+    
     var body: some View {
         VStack(spacing: 0) {
             searchBar
@@ -77,6 +79,7 @@ struct LongListSelector<Item: SelectableItem>: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
                     .font(.body.weight(.medium))
+                    .accessibility(hidden: true)
                 
                 TextField("", text: $searchText)
                     .keyboardType(.asciiCapable)
@@ -85,6 +88,7 @@ struct LongListSelector<Item: SelectableItem>: View {
                     .submitLabel(.done)
                     .multilineTextAlignment(.leading)
                     .overlay { placeholder }
+                    .accessibilityLabel(searchPrompt)
                 
                 if !searchText.isEmpty {
                     Button {
@@ -99,6 +103,8 @@ struct LongListSelector<Item: SelectableItem>: View {
                             .font(.body)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Cancella testo")
+                    .contentShape(.circle)
                     .transition(.scale(scale: 0.75).combined(with: .opacity))
                 }
             }
@@ -110,20 +116,20 @@ struct LongListSelector<Item: SelectableItem>: View {
             .animation(.snappy(duration: 0.25), value: searchText.isEmpty)
             .onTapGesture { open() }
             
-            Button {
+            Button("Chiudi ricerca", systemImage: "xmark") {
                 Haptics.play(.impact(flexibility: .solid, intensity: 1))
                 close()
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.body.weight(.bold))
-                    .frame(width: 52, height: 52)
-                    .background(Color(.tertiarySystemFill), in: .circle)
             }
+            .font(.body.weight(.bold))
+            .frame(width: 52, height: 52)
+            .background(Color(.tertiarySystemFill), in: .circle)
+            .labelStyle(.iconOnly)
             .buttonStyle(.plain)
             .scaleEffect(isFocused ? 1.0 : 0.6)
             .offset(x: isFocused ? 0 : -20)
             .opacity(isFocused ? 1.0 : 0.0)
             .allowsHitTesting(isFocused)
+            .accessibilityHidden(!isFocused)
         }
         .frame(height: 52)
     }
@@ -135,6 +141,7 @@ struct LongListSelector<Item: SelectableItem>: View {
             .frame(maxWidth: .infinity, alignment: isFocused ? .leading : .center)
             .opacity(searchText.isEmpty ? 1 : 0)
             .allowsHitTesting(false)
+            .accessibilityHidden(true)
     }
     
     private var resultsCard: some View {
@@ -150,6 +157,7 @@ struct LongListSelector<Item: SelectableItem>: View {
             }
         }
         .clipShape(cardShape)
+        .contentShape(cardShape)
         .padding(.top, showsCard ? 12 : 0)
         .animation(.easeOut(duration: 0.15)) { content in
             content.opacity(showsCard ? 1 : 0)
@@ -167,6 +175,9 @@ struct LongListSelector<Item: SelectableItem>: View {
             .buttonStyle(.plain)
             .opacity(isFocused ? 0 : 1)
             .allowsHitTesting(!isFocused)
+            .accessibilityLabel(item.label)
+            .environment(\.locale, Locale(identifier: "it"))
+            .accessibilityFocused($isSelectedRowFocused)
         }
     }
     
@@ -189,11 +200,18 @@ struct LongListSelector<Item: SelectableItem>: View {
                                     Haptics.play(.selection)
                                     selectedItem = item.id
                                     close()
+                                    
+                                    Task {
+                                        try? await Task.sleep(for: .milliseconds(150))
+                                        isSelectedRowFocused = true
+                                    }
                                 } label: {
                                     rowContent(for: item, isSelected: item.id == selectedItem, query: searchText)
                                 }
                                 .buttonStyle(.plain)
                                 .id(item.id)
+                                .accessibilityLabel(item.label)
+                                .environment(\.locale, Locale(identifier: "it"))
                                 
                                 if item.id != results.last?.id {
                                     Divider()

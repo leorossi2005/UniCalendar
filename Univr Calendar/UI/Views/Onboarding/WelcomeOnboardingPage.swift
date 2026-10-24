@@ -71,6 +71,7 @@ struct WelcomeOnboardingPage: View {
                             .blur(radius: showTitle ? 0 : 8)
                             .scaleEffect(showTitle ? 1 : 0.95)
                             .offset(y: showTitle ? 0 : 32)
+                            .accessibilityAddTraits(.isHeader)
                         
                         Text(styledSubtitle)
                             .font(.body)
@@ -80,6 +81,7 @@ struct WelcomeOnboardingPage: View {
                             .offset(y: showSubtitle ? 0 : 26)
                     }
                     .padding(.horizontal, 24)
+                    .accessibilityElement(children: .combine)
                 }
                 .frame(maxWidth: .infinity)
                 .background {
@@ -117,11 +119,11 @@ struct WelcomeOnboardingPage: View {
     @ViewBuilder
     private func iconView(size: CGFloat) -> some View {
         ZStack {
-            Image("InternalIcon")
+            Image(decorative: "InternalIcon")
                 .resizable()
                 .scaledToFit()
             
-            Image("InternalIcon")
+            Image(decorative: "InternalIcon")
                 .resizable()
                 .scaledToFit()
                 .blur(radius: isBlurred ? 28 : 0)
@@ -159,10 +161,12 @@ struct WelcomeOnboardingPage: View {
             )
         )
         .mask {
-            Image("InternalIcon")
+            Image(decorative: "InternalIcon")
                 .resizable()
                 .scaledToFit()
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityHidden(true)
     }
     
     private var opacityStops: [Gradient.Stop] {

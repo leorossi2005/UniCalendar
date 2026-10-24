@@ -11,6 +11,16 @@
         }
       }
     },
+    " " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " "
+          }
+        }
+      }
+    },
     "%@ - %@" : {
       "localizations" : {
         "en" : {
@@ -260,12 +270,12 @@
         }
       }
     },
-    "Al momento sei offline." : {
+    "Al momento sei offline" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You’re offline at the moment."
+            "value" : "You’re offline at the moment"
           }
         }
       }
@@ -410,6 +420,26 @@
         }
       }
     },
+    "Cancella testo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete text"
+          }
+        }
+      }
+    },
+    "Caricamento in corso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading in progress"
+          }
+        }
+      }
+    },
     "Cerca un anno di corso" : {
       "localizations" : {
         "en" : {
@@ -456,6 +486,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Close"
+          }
+        }
+      }
+    },
+    "Chiudi ricerca" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close search"
           }
         }
       }
@@ -800,12 +840,12 @@
         }
       }
     },
-    "I dati potrebbero non essere aggiornati." : {
+    "I dati potrebbero non essere aggiornati" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Data might not be up to date."
+            "value" : "Data might not be up to date"
           }
         }
       }
@@ -1751,18 +1791,11 @@
       }
     },
     "Sto provando a contattare il server..." : {
-      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trying to contact server..."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sto provando a contattare il server..."
           }
         }
       }

@@ -139,18 +139,18 @@ struct CalendarView: View {
             case .offline:
                 ContentUnavailableView(
                     "Sei Offline",
-                    systemImage: "wifi.slash",
+                    systemImage: AppState.offline.icon,
                     description: Text("Connettiti a internet per scaricare le tue lezioni.")
                 )
             case .serverUnreachable:
                 ContentUnavailableView {
-                    Label("Server non raggiungibile", systemImage: "network.slash")
+                    Label("Server non raggiungibile", systemImage: AppState.serveroffline.icon)
                 } description: {
                     Text("Non riusciamo a contattare il server. Riprova più tardi.")
                 }
             case .univrOffline:
                 ContentUnavailableView {
-                    Label("Università non raggiungibile", systemImage: "building.columns")
+                    Label("Università non raggiungibile", systemImage: AppState.unioffline.icon)
                 } description: {
                     Text("Questo corso non è disponibile finché i server dell'università non tornano online. Riprova più tardi.")
                 }
@@ -222,15 +222,15 @@ struct CalendarView: View {
             HStack(spacing: 6) {
                 SelectedDayLabel(coordinator: coordinator)
                 ZStack {
-                    Image(systemName: "wifi.slash")
+                    Image(systemName: AppState.offline.icon)
                         .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isOffline)
-                        .foregroundStyle(.yellow.opacity(0.8))
-                    Image(systemName: "network.slash")
+                        .foregroundStyle(AppState.offline.color)
+                    Image(systemName: AppState.serveroffline.icon)
                         .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isServerUnreachable)
-                        .foregroundStyle(.orange.opacity(0.8))
-                    Image(systemName: "building.columns")
+                        .foregroundStyle(AppState.serveroffline.color)
+                    Image(systemName: AppState.unioffline.icon)
                         .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isUniVROffline)
-                        .foregroundStyle(.blue.opacity(0.8))
+                        .foregroundStyle(AppState.unioffline.color)
                 }
                 .font(.system(size: 12, weight: .bold))
             }
@@ -311,7 +311,7 @@ struct CalendarView: View {
         }
         .allowsHitTesting(!isRetrying)
         .buttonStyle(.borderedProminent)
-        .tint(serverDown ? .orange : .blue)
+        .tint(serverDown ? AppState.serveroffline.color : AppState.unioffline.color)
     }
     
     // MARK: - Logic Methods

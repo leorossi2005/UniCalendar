@@ -48,6 +48,7 @@ struct ShortListSelector<Item: SelectableItem>: View {
                         RoundedRectangle(cornerRadius: 24, style: .continuous)
                             .strokeBorder(Color.accentColor.opacity(isSelected ? 0.6 : 0), lineWidth: 1.5)
                     }
+                    .contentShape(.rect(cornerRadius: 24, style: .continuous))
                 }
                 .buttonStyle(.plain)
             }

@@ -130,18 +130,18 @@ struct Settings: View {
                     
                     if viewModel.isOffline {
                         Text("In modalità offline non puoi modificare queste opzioni.")
-                            .foregroundStyle(.yellow)
+                            .foregroundStyle(AppState.offline.color)
                     } else if ServerStatusCenter.shared.isUnreachable && ServerStatusCenter.shared.isRetrying {
                         HStack(spacing: 8) {
                             ProgressView()
                                 .controlSize(.small)
                             Text("Sto provando a contattare il server...")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(AppState.serveroffline.color)
                         }
                     } else if ServerStatusCenter.shared.isUnreachable {
                         HStack {
                             Text("Server non raggiungibile, riprova più tardi.")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(AppState.serveroffline.color)
                             Spacer()
                             Button("Riprova") {
                                 Haptics.play(.impact(weight: .medium))
@@ -150,7 +150,7 @@ struct Settings: View {
                             .disabled(ServerStatusCenter.shared.isRetrying)
                             .buttonStyle(.bordered)
                             .controlSize(.mini)
-                            .tint(.orange)
+                            .tint(AppState.serveroffline.color)
                             .environment(\.isEnabled, true)
                         }
                     } else if ServerStatusCenter.shared.isUniVROffline && ServerStatusCenter.shared.isUniVRRetrying {
@@ -158,12 +158,12 @@ struct Settings: View {
                             ProgressView()
                                 .controlSize(.small)
                             Text("Sto provando a contattare l'università...")
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(AppState.unioffline.color)
                         }
                     } else if ServerStatusCenter.shared.isUniVROffline {
                         HStack {
-                            Text("I dati potrebbero non essere aggiornati.")
-                                .foregroundStyle(.blue)
+                            Text("I dati potrebbero non essere aggiornati")
+                                .foregroundStyle(AppState.unioffline.color)
                             Spacer()
                             Button("Riprova") {
                                 Haptics.play(.impact(weight: .medium))
@@ -172,7 +172,7 @@ struct Settings: View {
                             .disabled(ServerStatusCenter.shared.isUniVRRetrying)
                             .buttonStyle(.bordered)
                             .controlSize(.mini)
-                            .tint(.blue)
+                            .tint(AppState.unioffline.color)
                             .environment(\.isEnabled, true)
                         }
                     } else if viewModel.isLoading {

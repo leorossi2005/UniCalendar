@@ -101,18 +101,18 @@ struct ClassroomAvailabilityView: View {
         case .offline:
             ContentUnavailableView(
                 "Sei Offline",
-                systemImage: "wifi.slash",
+                systemImage: AppState.offline.icon,
                 description: Text("Connettiti a internet per controllare le disponibilità di oggi.")
             )
         case .serverUnreachable:
             ContentUnavailableView {
-                Label("Server non raggiungibile", systemImage: "network.slash")
+                Label("Server non raggiungibile", systemImage: AppState.serveroffline.icon)
             } description: {
                 Text("Non riusciamo a contattare il server. Riprova più tardi.")
             }
         case .univrOffline:
             ContentUnavailableView {
-                Label("Università non raggiungibile", systemImage: "building.columns")
+                Label("Università non raggiungibile", systemImage: AppState.unioffline.icon)
             } description: {
                 Text("La disponibilità delle aule non è consultabile finché i server dell'università non tornano raggiungibili.")
             }

@@ -41,6 +41,8 @@ struct OnboardingPage<Content: View>: View {
         return attributed
     }
     
+    @AccessibilityFocusState private var isHeaderFocused: Bool
+    
     var body: some View {
         VStack(spacing: 12) {
             Color.clear
@@ -58,6 +60,7 @@ struct OnboardingPage<Content: View>: View {
                                 .blur(radius: isSearching ? 16 : (showTitle ? 0 : 8))
                                 .scaleEffect(isSearching ? 0.94 : (showTitle ? 1 : 0.95))
                                 .offset(y: isSearching ? -36 : (showTitle ? 0 : 28))
+                                .accessibilityAddTraits(.isHeader)
                             
                             Text(styledSubtitle)
                                 .font(.body)
@@ -70,6 +73,9 @@ struct OnboardingPage<Content: View>: View {
                         }
                         .frame(maxHeight: isSearching ? 0 : nil, alignment: .bottom)
                         .allowsHitTesting(!isSearching)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityFocused($isHeaderFocused)
+                        .accessibilityHidden(isSearching)
                         
                         content
                             .opacity(showContent ? 1 : 0)
@@ -104,6 +110,9 @@ struct OnboardingPage<Content: View>: View {
                 withAnimation(.spring(response: 0.80, dampingFraction: 0.84).delay(0.20)) {
                     showContent = true
                 }
+                
+                try? await Task.sleep(for: .milliseconds(150))
+                isHeaderFocused = true
             } else {
                 try? await Task.sleep(for: .milliseconds(250))
                 guard !Task.isCancelled, !isActive else { return }
@@ -114,6 +123,9 @@ struct OnboardingPage<Content: View>: View {
                     showContent = false
                 }
             }
+        }
+        .onChange(of: errorMessage) { _, new in
+            if let new { AccessibilityNotification.Announcement(new).post() }
         }
     }
 }
