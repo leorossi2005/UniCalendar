@@ -35,6 +35,29 @@ enum DraggerValues {
     }
 }
 
+// MARK: - Focus restore
+/// Uscendo da .large col grabber il flag modale cambia e VoiceOver ricostruisce l'albero,
+/// spostando il focus (sul `+` della toolbar). A transizione finita lo riporta sul grabber.
+/// L'@AccessibilityFocusState deve stare nello stesso albero SwiftUI del grabber.
+private struct GrabberFocusRestorer: ViewModifier {
+    let token: Int
+    
+    @AccessibilityFocusState private var isFocused: Bool
+    
+    func body(content: Content) -> some View {
+        content
+            .accessibilityFocused($isFocused)
+            .task(id: token) {
+                guard token > 0, UIAccessibility.isVoiceOverRunning else { return }
+                // Rete di sicurezza: se dopo la transizione il focus non è sul grabber, lo riporta.
+                try? await Task.sleep(for: .milliseconds(600))
+                if Task.isCancelled { return }
+                print("🛟 grabber focused: \(isFocused)")
+                if !isFocused { isFocused = true }
+            }
+    }
+}
+
 struct CustomSheet<Content: View>: View {
     @Binding var isPresented: Bool
     var detents: [CustomSheetDetent]
@@ -50,6 +73,7 @@ struct CustomSheet<Content: View>: View {
     @State private var baseHeight: CGFloat
     @State private var width: CGFloat
     @State private var hasMounted: Bool = false
+    @State private var grabberRestoreToken: Int = 0
     
     @State private var dragY: CGFloat = .zero
     
@@ -257,14 +281,7 @@ struct CustomSheet<Content: View>: View {
                 .frame(width: min(580, width))
                 .frame(maxHeight: CustomSheetDetent.large.value)
                 .overlay(alignment: .top) {
-                    if !manager.locked && activeDetents.count > 1 {
-                        RoundedRectangle(cornerRadius: DraggerValues.height / 2)
-                            .fill(Color(.systemGray2))
-                            .frame(width: DraggerValues.width, height: DraggerValues.height)
-                            .padding(.top, DraggerValues.topPadding)
-                            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: DraggerValues.height / 2))
-                            .hoverEffect(.highlight)
-                    }
+                    sheetHandle
                 }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
@@ -273,6 +290,64 @@ struct CustomSheet<Content: View>: View {
                     baseHeight = CustomSheetDetent.large.value
                 }
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var sheetHandle: some View {
+        if !manager.locked && activeDetents.count > 1 {
+            let sorted = activeDetents.sorted(by: { $0.value < $1.value })
+            let isAtMax = manager.selectedDetent == sorted.last
+            
+            ZStack(alignment: .top) {
+                RoundedRectangle(cornerRadius: DraggerValues.height / 2)
+                    .fill(Color(.systemGray2))
+                    .frame(width: DraggerValues.width, height: DraggerValues.height)
+                    .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: DraggerValues.height / 2))
+                    .hoverEffect(.highlight)
+                    .padding(.top, DraggerValues.topPadding)
+            }
+            .frame(width: max(80, DraggerValues.width + 44), height: 32, alignment: .top)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                handleTap(sorted: sorted)
+            }
+            .accessibilityElement()
+            .accessibilitySortPriority(100)
+            .accessibilityLabel(Text(String(localized: .sheetDragger)))
+            .accessibilityValue(detentAccessibilityValue(for: manager.selectedDetent))
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint(
+                isAtMax
+                    ? Text(String(localized: .sheetTapToCollapse))
+                    : Text(String(localized: .sheetTapToExpand))
+            )
+            .modifier(GrabberFocusRestorer(token: grabberRestoreToken))
+        }
+    }
+
+    // MARK: - Handle Actions
+    private func handleTap(sorted: [CustomSheetDetent]) {
+        guard let currentIndex = sorted.firstIndex(of: manager.selectedDetent) else { return }
+        let nextIndex = (currentIndex + 1) < sorted.count ? (currentIndex + 1) : 0
+        let newDetent = sorted[nextIndex]
+        
+        // Uscendo da .large col grabber, il focus VoiceOver deve restare sul grabber
+        let leavingLarge = manager.selectedDetent == .large
+        manager.keepAccessibilityFocusOnLargeExit = leavingLarge
+        manager.setDetent(newDetent)
+        if leavingLarge { grabberRestoreToken += 1 }
+    }
+
+    private func detentAccessibilityValue(for detent: CustomSheetDetent) -> Text {
+        Text(detentAccessibilityString(for: detent))
+    }
+
+    private func detentAccessibilityString(for detent: CustomSheetDetent) -> String {
+        switch detent {
+        case .small:  return String(localized: .sheetSmall)
+        case .medium: return String(localized: .sheetMedium)
+        case .large:  return String(localized: .sheetLarge)
         }
     }
     

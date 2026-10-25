@@ -926,17 +926,6 @@
         }
       }
     },
-    "Impegno personale" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personal Commitment"
-          }
-        }
-      }
-    },
     "Impossibile usare questa immagine: non è leggibile o è troppo pesante." : {
       "localizations" : {
         "en" : {

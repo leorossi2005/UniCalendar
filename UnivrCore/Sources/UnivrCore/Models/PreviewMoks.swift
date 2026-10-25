@@ -91,3 +91,18 @@ extension Room {
         )
     }
 }
+
+extension AppNotice {
+    public static var sample: AppNotice {
+        AppNotice(
+            id: "SAMPLE-123",
+            level: .info,
+            title: ["en": "Notice sample", "it": "Avviso d'esempio"],
+            message: ["en": "This notice is a sample", "it": "Questo avviso è un esempio"],
+            buttonText: ["en": "I'm a button", "it": "Sono un bottone"],
+            url: nil,
+            startsAt: .now,
+            endsAt: .distantFuture
+        )
+    }
+}

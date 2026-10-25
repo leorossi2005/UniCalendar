@@ -18,6 +18,9 @@ let package = Package(
     targets: [
         .target(
             name: "CustomSheet",
+            resources: [
+                .process("Localizable.xcstrings")
+            ],
             swiftSettings: [
                 .enableUpcomingFeature("ApproachableConcurrency"),
             ]

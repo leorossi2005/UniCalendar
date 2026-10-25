@@ -568,8 +568,8 @@ private struct SelectionFeedback: ViewModifier {
             Haptics.play(.selection, state: "selection")
             
             let isSystemSheetOpen = sheetRouter.openSettings || sheetRouter.openAppNotices != nil || sheetRouter.openWhatsNew
-            if !isSystemSheetOpen { 
-                sheetRouter.manager.setDetent(.small) 
+            if !isSystemSheetOpen {
+                sheetRouter.manager.setDetent(.small)
             }
             
             Task {
