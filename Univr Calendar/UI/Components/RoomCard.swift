@@ -15,6 +15,11 @@ struct RoomCard: View {
     
     var room: Room
     var selectedDate: Date
+    var isPlaceholder: Bool = false
+    
+    private var isCardPlaceholder: Bool {
+        isPlaceholder || room.id == Room.sample(date: selectedDate).id
+    }
         
     var body: some View {
         TimelineView(.everyMinute) { context in
@@ -29,16 +34,20 @@ struct RoomCard: View {
             .background(backgroundLayer)
             .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
             .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 35, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 35, style: .continuous))
             .hoverEffect(.lift)
             .padding(.horizontal)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("\(room.name), \(currentStatus.statusText)"))
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint(Text("Tocca due volte per aprire i dettagli"))
         }
     }
     
     // MARK: - Components
     private var backgroundLayer: some View {
         RoundedRectangle(cornerRadius: 35, style: .continuous)
-            .fill(Color(colorScheme == .dark ? .secondarySystemGroupedBackground : .systemGroupedBackground))
-        
+            .fill(isCardPlaceholder ? Lesson.sample.uiColor : Color(colorScheme == .dark ? .secondarySystemGroupedBackground : .systemGroupedBackground))
     }
 }
 

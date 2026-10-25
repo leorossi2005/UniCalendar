@@ -87,8 +87,8 @@ struct CalendarItemCard: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             internalItem.isCanceled
-                ? item.startTime.formatted(date: .omitted, time: .shortened)
-                : (item.startTime..<internalItem.endTime).formatted(date: .omitted, time: .shortened)
+                ? Text(item.startTime, format: .dateTime.hour().minute())
+                : Text("Dalle \(item.startTime, format: .dateTime.hour().minute()) alle \(internalItem.endTime, format: .dateTime.hour().minute())")
         )
         .accessibilitySortPriority(3)
     }

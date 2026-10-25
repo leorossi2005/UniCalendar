@@ -69,6 +69,22 @@
         }
       }
     },
+    "%@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@"
+          }
+        }
+      }
+    },
     "%@, %lld %@ %@" : {
       "localizations" : {
         "en" : {
@@ -642,6 +658,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "From %@"
+          }
+        }
+      }
+    },
+    "Dalle %@ alle %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ to %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dalle %1$@ alle %2$@"
           }
         }
       }

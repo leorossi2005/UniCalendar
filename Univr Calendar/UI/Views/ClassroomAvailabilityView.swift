@@ -55,6 +55,7 @@ struct ClassroomAvailabilityView: View {
                 .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
                 .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
         }
+        .accessibilityElement(children: .contain)
     }
     
     private var locationPicker: some View {
@@ -130,7 +131,7 @@ struct ClassroomAvailabilityView: View {
         ScrollView {
             VStack {
                 ForEach(0..<6, id: \.self) { _ in
-                    RoomCard(room: .sample, selectedDate: .now)
+                    RoomCard(room: .sample(date: coordinator.selectedWeek), selectedDate: coordinator.selectedWeek, isPlaceholder: true)
                         .shimmeringPlaceholder(opacity: colorScheme == .light ? 0.5 : 0.7)
                 }
             }
@@ -138,6 +139,7 @@ struct ClassroomAvailabilityView: View {
         }
         .cornerRadius(35)
         .scrollIndicators(.never)
+        .accessibilityHidden(true)
     }
 }
 

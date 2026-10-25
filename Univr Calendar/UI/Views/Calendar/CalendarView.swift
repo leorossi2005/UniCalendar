@@ -227,6 +227,7 @@ struct CalendarView: View {
         .contentMargins(.top, 15, for: .scrollIndicators)
         .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
         .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
+        .accessibilityHidden(true)
     }
     
     // MARK: - Toolbar Builder
