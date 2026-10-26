@@ -27,6 +27,9 @@ struct AppNoticeView: View {
         return notices[currentIndex]
     }
     
+    @AccessibilityFocusState private var isToolbarFocused: Bool
+    @AccessibilityFocusState private var isHeaderFocused: Bool
+    
     var body: some View {
         ScrollView(.horizontal) {
             LazyHStack(spacing: 0) {
@@ -54,6 +57,7 @@ struct AppNoticeView: View {
                         .fixedSize()
                         .contentTransition(.numericText())
                         .accessibilityLabel("Avviso \((currentIndex ?? 0) + 1) di \(notices.count)")
+                        .accessibilityFocused($isToolbarFocused)
                 }
             }
             
@@ -66,8 +70,17 @@ struct AppNoticeView: View {
         .animation(.snappy, value: currentIndex)
         .onChange(of: (currentIndex ?? 0), initial: true) { _, newIndex in
             updateLockState(for: newIndex)
+            
+            Task {
+                try? await Task.sleep(for: .milliseconds(150))
+                isHeaderFocused = true
+            }
         }
         .onDisappear { sheetManager?.setLock(false) }
+        .task {
+            try? await Task.sleep(for: .milliseconds(250))
+            isToolbarFocused = true
+        }
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -122,6 +135,7 @@ struct AppNoticeView: View {
                     .font(.title.bold())
                     .accessibilityLabel("\(levelPrefix(notice: notice)): \(notice.localizedTitle)")
                     .accessibilityAddTraits(.isHeader)
+                    .accessibilityFocused($isHeaderFocused)
                 
                 if !notices.isEmpty {
                     let dateText = if let endDate = notice.endsAt {

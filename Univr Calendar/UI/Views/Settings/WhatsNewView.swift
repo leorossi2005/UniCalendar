@@ -40,29 +40,36 @@ struct WhatsNewView: View {
     
     @State var isScrolling: Bool = false
     @State private var scrollUpdateTask: Task<Void, Never>?
+    
+    @AccessibilityFocusState private var isHeaderFocused: Bool
+    
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
                 ForEach(Array(versions.enumerated()), id: \.element.id) { index, version in
-                    if #available(iOS 18, *) {
-                        versionContent(version)
-                            .containerRelativeFrame(.horizontal)
-                            .id(index)
-                    } else {
-                        GeometryReader { geo in
+                    Group {
+                        if #available(iOS 18, *) {
                             versionContent(version)
-                                .onChange(of: geo.frame(in: .global).midX) { _, midX in
-                                    let screenMid = UIScreen.main.bounds.width / 2
-                                    if abs(midX - screenMid) < 50 {
-                                        if index != selectedVersionIndex && !isScrolling {
-                                            selectedVersionIndex = index
+                                .containerRelativeFrame(.horizontal)
+                                .id(index)
+                        } else {
+                            GeometryReader { geo in
+                                versionContent(version)
+                                    .onChange(of: geo.frame(in: .global).midX) { _, midX in
+                                        let screenMid = UIScreen.main.bounds.width / 2
+                                        if abs(midX - screenMid) < 50 {
+                                            if index != selectedVersionIndex && !isScrolling {
+                                                selectedVersionIndex = index
+                                            }
                                         }
                                     }
-                                }
+                            }
+                            .containerRelativeFrame(.horizontal)
+                            .id(index)
                         }
-                        .containerRelativeFrame(.horizontal)
-                        .id(index)
                     }
+                    .accessibilityElement(children: .contain)
+                    .accessibilityHidden(index != selectedVersionIndex)
                 }
             }
             .scrollTargetLayout()
@@ -91,6 +98,11 @@ struct WhatsNewView: View {
                 dotWindowStart = min(selectedVersionIndex - 2, maxStart)
             }
             
+            Task {
+                try? await Task.sleep(for: .milliseconds(150))
+                isHeaderFocused = true
+            }
+            
             if #unavailable(iOS 18) {
                 isScrolling = true
                 scrollUpdateTask?.cancel()
@@ -101,6 +113,10 @@ struct WhatsNewView: View {
                     }
                 }
             }
+        }
+        .task {
+            try? await Task.sleep(for: .milliseconds(250))
+            isHeaderFocused = true
         }
         .toolbar {
             ToolbarItem(placement: .bottomBar) {
@@ -168,6 +184,11 @@ struct WhatsNewView: View {
         }
         .frame(maxWidth: .infinity)
         .contentTransition(.numericText(countsDown: previousVersionIndex < selectedVersionIndex))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Novità della versione \(currentVersion?.version ?? "")")
+        .accessibilityValue(currentVersion?.headline ?? "")
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityFocused($isHeaderFocused)
     }
     
     // MARK: - Version Content
@@ -195,6 +216,7 @@ struct WhatsNewView: View {
                             .font(.caption)
                             .fontWeight(.medium)
                             .contentTransition(.numericText())
+                            .contentShape(.capsule)
                     }
                     .foregroundStyle(.primary)
                     .padding(.vertical, 8)
@@ -241,6 +263,7 @@ struct WhatsNewView: View {
         .opacity(direction == .left ? canGoNewer ? 1 : 0.3 : canGoOlder ? 1 : 0.3)
         .disabled(direction == .left ? !canGoNewer : !canGoOlder)
         .sensoryFeedback(.selection, trigger: selectedVersionIndex)
+        .accessibilityLabel(direction == .left ? "Versione successiva" : "Versione precedente")
     }
     
     @ViewBuilder
@@ -263,7 +286,9 @@ struct WhatsNewView: View {
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText(countsDown: previousVersionIndex < selectedVersionIndex))
                     .animation(animation, value: selectedVersionIndex)
+                    .accessibilityLabel(String(localized: "Rilasciata il \(version.date.formatted(.dateTime.day().month(.abbreviated).year()))"))
             }
+            .accessibilityElement(children: .combine)
         }
     }
     
@@ -302,7 +327,7 @@ struct FeatureCard: View {
                             .foregroundStyle(feature.accentColor.color)
                             .symbolEffect(.bounce, value: isExpanded)
                     case .asset(let name):
-                        Image(name)
+                        Image(decorative: name)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(width: isExpanded ? 48 : 30.4, height: isExpanded ? 48 : 30.4)
@@ -314,12 +339,14 @@ struct FeatureCard: View {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(feature.accentColor.color.opacity(0.12))
                 }
+                .accessibilityHidden(true)
                 
                 // Content
                 VStack(alignment: .leading, spacing: 4) {
                     Text(feature.title)
                         .font(.headline)
                         .fontWeight(.semibold)
+                        .accessibilityAddTraits(.isHeader)
                     
                     if !isExpanded {
                         Text(feature.shortDescription)
@@ -337,6 +364,7 @@ struct FeatureCard: View {
                     .font(.title3)
                     .foregroundStyle(.tertiary)
                     .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                    .accessibilityHidden(true)
             }
             
             // Expanded details
@@ -359,6 +387,8 @@ struct FeatureCard: View {
             onToggle()
         }
         .animation(animation, value: isExpanded)
+        .accessibilityElement(children: .combine)
+        .contentShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
     }
 }
 

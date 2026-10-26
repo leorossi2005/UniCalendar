@@ -119,7 +119,7 @@ class OverlayAnchorUIView: UIView {
             container.leadingAnchor.constraint(equalTo: window.leadingAnchor),
             container.trailingAnchor.constraint(equalTo: window.trailingAnchor),
             container.topAnchor.constraint(equalTo: window.topAnchor, constant: 1),
-            container.bottomAnchor.constraint(equalTo: window.bottomAnchor, constant: 1)
+            container.bottomAnchor.constraint(equalTo: window.bottomAnchor)
         ])
     }
     
@@ -210,12 +210,9 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
             
             if uiView?.containerView?.accessibilityViewIsModal != isLarge {
                 uiView?.containerView?.accessibilityViewIsModal = isLarge
-                // Entrando in .large il focus passa al primo elemento della sheet.
                 if isLarge || !keepFocus {
                     UIAccessibility.post(notification: .layoutChanged, argument: nil)
                 } else {
-                    // Uscita da .large col grabber: indica il container della sheet, così VoiceOver
-                    // atterra sul suo primo elemento (il grabber) invece che sul `+` della toolbar.
                     UIAccessibility.post(notification: .layoutChanged, argument: uiView?.containerView)
                 }
             }

@@ -1569,6 +1569,16 @@
         }
       }
     },
+    "Novità della versione %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What's New in Version %@"
+          }
+        }
+      }
+    },
     "Nuovo Impegno" : {
       "localizations" : {
         "en" : {
@@ -1775,6 +1785,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Reset the app"
+          }
+        }
+      }
+    },
+    "Rilasciata il %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Released on %@"
           }
         }
       }
@@ -2261,6 +2281,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verifica la presenza di nuovi avvisi"
+          }
+        }
+      }
+    },
+    "Versione precedente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous version"
+          }
+        }
+      }
+    },
+    "Versione successiva" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next version"
           }
         }
       }

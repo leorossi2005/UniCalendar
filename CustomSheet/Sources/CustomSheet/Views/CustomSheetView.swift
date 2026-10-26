@@ -147,6 +147,8 @@ struct CustomSheet<Content: View>: View {
                 Color.black
                     .opacity(enableBackground ? 0.37 : 0)
                     .ignoresSafeArea()
+                    .padding(.top, -1)
+                    .accessibilityHidden(true)
                     .allowsHitTesting(enableBackground)
                     .animation(.easeInOut(duration: 0.2), value: enableBackground)
                     .animation(.easeInOut(duration: 0.2), value: isPresented)
