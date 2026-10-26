@@ -477,7 +477,7 @@ struct CalendarView: View {
     }
     
     private func focusCurrentDay() {
-        guard voiceOverEnabled else { return }
+        guard voiceOverEnabled, sheetRouter.manager.selectedDetent != .large else { return }
         focusedDay = nil
         Task {
             try? await Task.sleep(for: .milliseconds(250))

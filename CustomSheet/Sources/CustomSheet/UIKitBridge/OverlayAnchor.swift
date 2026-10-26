@@ -66,8 +66,14 @@ class OverlayAnchorUIView: UIView {
     var hostingController: UIHostingController<AnyView>?
     var containerView: PassthroughContainerView?
     var pendingRootView: AnyView?
+    var isLargeActive: Bool = false
     
     func cleanup() {
+        NotificationCenter.default.removeObserver(
+            self,
+            name: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil
+        )
         containerView?.removeFromSuperview()
         hostingController?.view.removeFromSuperview()
         containerView = nil
@@ -97,6 +103,13 @@ class OverlayAnchorUIView: UIView {
         self.hostingController = hc
         self.containerView = container
         
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(voiceOverStatusChanged),
+            name: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil
+        )
+        
         NSLayoutConstraint.activate([
             hc.view.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             hc.view.trailingAnchor.constraint(equalTo: container.trailingAnchor),
@@ -108,6 +121,22 @@ class OverlayAnchorUIView: UIView {
             container.topAnchor.constraint(equalTo: window.topAnchor, constant: 1),
             container.bottomAnchor.constraint(equalTo: window.bottomAnchor, constant: 1)
         ])
+    }
+    
+    @objc private func voiceOverStatusChanged() {
+        guard UIAccessibility.isVoiceOverRunning,
+              isLargeActive,
+              let container = containerView else { return }
+        
+        container.accessibilityViewIsModal = false
+        hostingController?.view.setNeedsLayout()
+        hostingController?.view.layoutIfNeeded()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self, weak container] in
+            guard let self, let container, self.isLargeActive else { return }
+            container.accessibilityViewIsModal = true
+            UIAccessibility.post(notification: .screenChanged, argument: container)
+        }
     }
     
     func updateNavigationSafeArea(isLarge: Bool) {
@@ -173,6 +202,7 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
         }
         
         manager?.onLargeDetentToggle = { [weak uiView, weak manager] isLarge in
+            uiView?.isLargeActive = isLarge
             uiView?.updateNavigationSafeArea(isLarge: isLarge)
             
             let keepFocus = manager?.keepAccessibilityFocusOnLargeExit ?? false

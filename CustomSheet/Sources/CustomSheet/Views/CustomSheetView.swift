@@ -36,9 +36,6 @@ enum DraggerValues {
 }
 
 // MARK: - Focus restore
-/// Uscendo da .large col grabber il flag modale cambia e VoiceOver ricostruisce l'albero,
-/// spostando il focus (sul `+` della toolbar). A transizione finita lo riporta sul grabber.
-/// L'@AccessibilityFocusState deve stare nello stesso albero SwiftUI del grabber.
 private struct GrabberFocusRestorer: ViewModifier {
     let token: Int
     
@@ -49,10 +46,8 @@ private struct GrabberFocusRestorer: ViewModifier {
             .accessibilityFocused($isFocused)
             .task(id: token) {
                 guard token > 0, UIAccessibility.isVoiceOverRunning else { return }
-                // Rete di sicurezza: se dopo la transizione il focus non è sul grabber, lo riporta.
                 try? await Task.sleep(for: .milliseconds(600))
                 if Task.isCancelled { return }
-                print("🛟 grabber focused: \(isFocused)")
                 if !isFocused { isFocused = true }
             }
     }
