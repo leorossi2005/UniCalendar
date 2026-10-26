@@ -219,13 +219,11 @@ struct Settings: View {
                 }
             }
             Section("DANGER ZONE") {
-                Button {
+                Button("Resetta l'app", systemImage: "trash", role: .destructive) {
                     Haptics.play(.warning)
                     showDeleteAlert.toggle()
-                } label: {
-                    Label("Resetta l'app", systemImage: "trash")
-                        .foregroundStyle(.red)
                 }
+                .foregroundStyle(.red)
                 .alert("Vuoi resettare l'app?", isPresented: $showDeleteAlert) {
                     Button("Conferma", role: .destructive, action: performReset)
                     Button("Annulla", role: .cancel) {}

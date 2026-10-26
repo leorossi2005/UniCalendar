@@ -85,6 +85,22 @@
         }
       }
     },
+    "%@, build numero %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, build number %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, build numero %2$@"
+          }
+        }
+      }
+    },
     "%@: %@" : {
       "localizations" : {
         "en" : {
@@ -129,6 +145,22 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$lld %2$@"
+          }
+        }
+      }
+    },
+    "%lld di %@ caratteri" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$@ characters"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld di %2$@ caratteri"
           }
         }
       }
@@ -404,6 +436,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Opens the update on the App Store"
+          }
+        }
+      }
+    },
+    "Apre la libreria foto per selezionare un'immagine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the photo library to select an image"
           }
         }
       }
@@ -812,6 +854,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Odd"
+          }
+        }
+      }
+    },
+    "Dispositivo: %@, ID: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device: %1$@, ID: %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dispositivo: %1$@, ID: %2$@"
           }
         }
       }
@@ -1799,12 +1857,32 @@
         }
       }
     },
+    "Rimuovi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove"
+          }
+        }
+      }
+    },
     "Rimuovi notifica" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remove notifications"
+          }
+        }
+      }
+    },
+    "Rimuovi screenshot" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove screenshot"
           }
         }
       }
@@ -2239,6 +2317,16 @@
         }
       }
     },
+    "Usa le azioni del rotore per rimuovere" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use the rotor's actions to remove"
+          }
+        }
+      }
+    },
     "Usa Live Activity (Prossimamente)" : {
       "localizations" : {
         "en" : {
@@ -2285,12 +2373,32 @@
         }
       }
     },
+    "Versione applicazione" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Application Version"
+          }
+        }
+      }
+    },
     "Versione precedente" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Previous version"
+          }
+        }
+      }
+    },
+    "Versione sistema operativo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Operating System Version"
           }
         }
       }
