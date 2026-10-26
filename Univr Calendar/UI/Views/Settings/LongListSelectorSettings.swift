@@ -52,6 +52,8 @@ struct LongListSelectorSettings<Item: SelectableItem>: View {
                         .contentShape(.rect)
                     }
                     .id(item.id)
+                    .accessibilityLabel(item.label)
+                    .environment(\.locale, Locale(identifier: "it"))
                 }
             }
             .overlay {

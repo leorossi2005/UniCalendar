@@ -467,7 +467,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Delete text"
+            "value" : "Clear text"
           }
         }
       }
@@ -1314,6 +1314,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No notifications"
+          }
+        }
+      }
+    },
+    "Nessuno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None"
           }
         }
       }

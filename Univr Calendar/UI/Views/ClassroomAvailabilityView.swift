@@ -99,30 +99,35 @@ struct ClassroomAvailabilityView: View {
                 systemImage: "building.2",
                 description: Text("Non ci sono aule disponibili per questa sede.")
             )
+            .accessibilityElement(children: .combine)
         case .offline:
             ContentUnavailableView(
                 "Sei Offline",
                 systemImage: AppState.offline.icon,
                 description: Text("Connettiti a internet per controllare le disponibilità di oggi.")
             )
+            .accessibilityElement(children: .combine)
         case .serverUnreachable:
             ContentUnavailableView {
                 Label("Server non raggiungibile", systemImage: AppState.serveroffline.icon)
             } description: {
                 Text("Non riusciamo a contattare il server. Riprova più tardi.")
             }
+            .accessibilityElement(children: .combine)
         case .univrOffline:
             ContentUnavailableView {
                 Label("Università non raggiungibile", systemImage: AppState.unioffline.icon)
             } description: {
                 Text("La disponibilità delle aule non è consultabile finché i server dell'università non tornano raggiungibili.")
             }
+            .accessibilityElement(children: .combine)
         case .error(let msg):
             ContentUnavailableView(
                 "Si è verificato un errore",
                 systemImage: "exclamationmark.triangle",
                 description: Text(msg)
             )
+            .accessibilityElement(children: .combine)
         }
     }
     

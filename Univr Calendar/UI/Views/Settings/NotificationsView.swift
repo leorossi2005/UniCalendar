@@ -46,6 +46,7 @@ struct NotificationsView: View {
                     systemImage: "bell.slash",
                     description: Text("Non hai ancora programmato alcuna notifica per le tue lezioni.")
                 )
+                .accessibilityElement(children: .combine)
             } else {
                 List {
                     ForEach(sortedCourseIds, id: \.self) { courseId in

@@ -129,12 +129,14 @@ struct CalendarView: View {
                 systemImage: "graduationcap",
                 description: Text("Scegli un corso dalle impostazioni per iniziare.")
             )
+            .accessibilityElement(children: .combine)
         } else if settings.selectedAcademicYear == "0" || settings.selectedAcademicYear.isEmpty {
             ContentUnavailableView(
                 "Nessun anno di corso",
                 systemImage: "calendar.badge.clock",
                 description: Text("Scegli un anno di corso dalle impostazioni per iniziare.")
             )
+            .accessibilityElement(children: .combine)
         } else {
             switch viewModel.state {
             case .idle, .loading:
@@ -147,30 +149,35 @@ struct CalendarView: View {
                     systemImage: "graduationcap",
                     description: Text("Non è stata trovata nessuna lezione per questo corso.")
                 )
+                .accessibilityElement(children: .combine)
             case .offline:
                 ContentUnavailableView(
                     "Sei Offline",
                     systemImage: AppState.offline.icon,
                     description: Text("Connettiti a internet per scaricare le tue lezioni.")
                 )
+                .accessibilityElement(children: .combine)
             case .serverUnreachable:
                 ContentUnavailableView {
                     Label("Server non raggiungibile", systemImage: AppState.serveroffline.icon)
                 } description: {
                     Text("Non riusciamo a contattare il server. Riprova più tardi.")
                 }
+                .accessibilityElement(children: .combine)
             case .univrOffline:
                 ContentUnavailableView {
                     Label("Università non raggiungibile", systemImage: AppState.unioffline.icon)
                 } description: {
                     Text("Questo corso non è disponibile finché i server dell'università non tornano online. Riprova più tardi.")
                 }
+                .accessibilityElement(children: .combine)
             case .error(let msg):
                 ContentUnavailableView(
                     "Si è verificato un errore",
                     systemImage: "exclamationmark.triangle",
                     description: Text(msg)
                 )
+                .accessibilityElement(children: .combine)
             }
         }
     }
