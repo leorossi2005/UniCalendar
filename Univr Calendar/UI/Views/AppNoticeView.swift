@@ -34,6 +34,8 @@ struct AppNoticeView: View {
                     noticePage(notice: notice, index: index)
                         .containerRelativeFrame(.horizontal)
                         .id(index)
+                        .accessibilityElement(children: .contain)
+                        .accessibilityHidden(currentIndex != index)
                 }
             }
             .scrollTargetLayout()
@@ -51,6 +53,7 @@ struct AppNoticeView: View {
                         .padding()
                         .fixedSize()
                         .contentTransition(.numericText())
+                        .accessibilityLabel("Avviso \((currentIndex ?? 0) + 1) di \(notices.count)")
                 }
             }
             
@@ -85,6 +88,24 @@ struct AppNoticeView: View {
         }
     }
     
+    private func levelPrefix(notice: AppNotice) -> String {
+        switch notice.level {
+        case .info: String(localized: .lowPriorityNoticeTag)
+        case .warning: String(localized: "Attenzione")
+        case .blocking: String(localized: "Avviso importante")
+        }
+    }
+
+    private func accessibleDateText(startsAt: Date, endsAt: Date?) -> String {
+        let start = startsAt.formatted(.dateTime.day().month(.wide).year())
+        if let endsAt {
+            let end = endsAt.formatted(.dateTime.day().month(.wide).year())
+            return String(localized: "Dal \(start) al \(end)")
+        } else {
+            return String(localized: "Pubblicato il \(start)")
+        }
+    }
+
     private func noticePage(notice: AppNotice, index: Int) -> some View {
         let isLast = index == notices.count - 1
         
@@ -94,21 +115,25 @@ struct AppNoticeView: View {
             Image(systemName: notice.level.systemImage)
                 .font(.system(size: 64))
                 .foregroundStyle(notice.level.tintColor)
+                .accessibilityHidden(true)
             
             VStack(spacing: 8) {
                 Text(notice.localizedTitle)
                     .font(.title.bold())
+                    .accessibilityLabel("\(levelPrefix(notice: notice)): \(notice.localizedTitle)")
+                    .accessibilityAddTraits(.isHeader)
                 
                 if !notices.isEmpty {
-                    if let endDate = notice.endsAt {
-                        Text("\(formatDate(notice.startsAt)) - \(formatDate(endDate))")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                    let dateText = if let endDate = notice.endsAt {
+                        "\(formatDate(notice.startsAt)) - \(formatDate(endDate))"
                     } else {
-                        Text(formatDate(notice.startsAt))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        formatDate(notice.startsAt)
                     }
+                    
+                    Text(dateText)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel(accessibleDateText(startsAt: notice.startsAt, endsAt: notice.endsAt))
                 }
             }
             
@@ -131,6 +156,7 @@ struct AppNoticeView: View {
                     }
                     .controlSize(.large)
                     .glassIfAvailable(prominent: isLast && (onDismiss == nil || notice.level == .blocking))
+                    .accessibilityHint(notice.level == .blocking ? "Apre l'aggiornamento su App Store" : "Apre il link esterno")
                 }
                 
                 if !isLast {
@@ -145,6 +171,7 @@ struct AppNoticeView: View {
                     }
                     .controlSize(.large)
                     .glassIfAvailable(prominent: true)
+                    .accessibilityHint("Passa all'avviso successivo")
                 } else if onDismiss != nil && notice.level != .blocking {
                     Button {
                         Haptics.play(.impact(weight: .medium))

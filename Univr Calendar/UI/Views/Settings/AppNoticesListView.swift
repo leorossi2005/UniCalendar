@@ -22,6 +22,7 @@ struct AppNoticesListView: View {
                     systemImage: "bell.slash",
                     description: Text("Al momento non ci sono avvisi attivi.")
                 )
+                .accessibilityElement(children: .combine)
             } else {
                 List {
                     ForEach(statusManager.allNotices) { notice in
@@ -46,8 +47,16 @@ struct AppNoticesListView: View {
                         isRefreshing = false
                         if statusManager.lastAttemptFailed {
                             Haptics.play(.error)
+                            Task {
+                                try? await Task.sleep(for: .milliseconds(150))
+                                AccessibilityNotification.Announcement(String(localized: "Errore durante l'aggiornamento")).post()
+                            }
                         } else {
                             Haptics.play(.success)
+                            Task {
+                                try? await Task.sleep(for: .milliseconds(150))
+                                AccessibilityNotification.Announcement(String(localized: "Aggiornamento completato")).post()
+                            }
                         }
                     }
                 } label: {
@@ -59,6 +68,9 @@ struct AppNoticesListView: View {
                             .symbolEffect(.pulse, isActive: isRefreshing)
                     }
                 }
+                .accessibilityLabel("Aggiorna")
+                .accessibilityHint("Verifica la presenza di nuovi avvisi")
+                .contentShape(.circle)
                 .disabled(statusManager.isOffline || statusManager.isServerUnreachable)
             }
         }
@@ -68,16 +80,29 @@ struct AppNoticesListView: View {
 private struct NoticeRow: View {
     let notice: AppNotice
     
+    private var levelPrefix: String {
+        switch notice.level {
+        case .info: String(localized: .lowPriorityNoticeTag)
+        case .warning: String(localized: "Attenzione")
+        case .blocking: String(localized: "Avviso importante")
+        }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Image(systemName: notice.level.systemImage)
                     .foregroundStyle(notice.level.tintColor)
                     .font(.title2)
+                    .accessibilityHidden(true)
+                
                 Text(notice.localizedTitle)
                     .font(.headline)
                     .lineLimit(2)
+                    .accessibilityLabel("\(levelPrefix): \(notice.localizedTitle)")
+                
                 Spacer()
+                
                 VStack(alignment: .trailing) {
                     if let endsAt = notice.endsAt {
                         Text("Dal \(notice.startsAt.formatted(date: .numeric, time: .omitted))")
@@ -90,6 +115,7 @@ private struct NoticeRow: View {
                         Text(notice.startsAt.formatted(date: .numeric, time: .omitted))
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .accessibilityLabel(String(localized: "Pubblicato il \(notice.startsAt.formatted(date: .numeric, time: .omitted))"))
                     }
                 }
             }
