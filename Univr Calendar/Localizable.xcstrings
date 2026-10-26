@@ -1040,6 +1040,16 @@
         }
       }
     },
+    "Grazie di cuore" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thank you very much"
+          }
+        }
+      }
+    },
     "Grazie!" : {
       "localizations" : {
         "en" : {
@@ -1146,6 +1156,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Notification Settings"
+          }
+        }
+      }
+    },
+    "In lavorazione" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Work in progress"
           }
         }
       }

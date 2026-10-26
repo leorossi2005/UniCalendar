@@ -24,7 +24,7 @@ struct DeveloperProfileView: View {
             CGFloat.random(in: 1.5...3.5)
         )
     }
-
+    
     var body: some View {
         ZStack {
             deepBg
@@ -35,6 +35,7 @@ struct DeveloperProfileView: View {
                         .frame(width: 400, height: 400)
                         .blur(radius: 100)
                         .offset(x: 100, y: 100)
+                        .accessibilityHidden(true)
                 }
                 .overlay(alignment: .topLeading) {
                     Circle()
@@ -42,6 +43,7 @@ struct DeveloperProfileView: View {
                         .frame(width: 350, height: 350)
                         .blur(radius: 90)
                         .offset(x: -80, y: -80)
+                        .accessibilityHidden(true)
                 }
             
             GeometryReader { _ in
@@ -53,6 +55,7 @@ struct DeveloperProfileView: View {
                 }
             }
             .ignoresSafeArea()
+            .accessibilityHidden(true)
             
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 30) {
@@ -70,8 +73,9 @@ struct DeveloperProfileView: View {
                                 .rotationEffect(.degrees(rotateRings ? -360 : 0))
                                 .animation(.linear(duration: 60).repeatForever(autoreverses: false), value: rotateRings)
                         }
+                        .accessibilityHidden(true)
                         
-                        Image("DeveloperPhoto")
+                        Image(decorative: "DeveloperPhoto")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 130, height: 130)
@@ -91,6 +95,7 @@ struct DeveloperProfileView: View {
                                 .font(.system(size: 24, weight: .bold, design: .monospaced))
                                 .foregroundStyle(.white)
                                 .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 2)
+                                .accessibilityHidden(true)
                             
                             Text("SVILUPPATORE")
                                 .font(.system(size: 10, weight: .bold, design: .monospaced))
@@ -100,7 +105,9 @@ struct DeveloperProfileView: View {
                                 .padding(.vertical, 4)
                                 .background(Color.black.opacity(0.4))
                                 .clipShape(.capsule)
+                                .accessibilityHidden(true)
                         }
+                        .overlay { SpeechLanguageLabel(text: developerHeaderAttributed) }
                         .offset(y: 120)
                         
                         Text("Questo sono io ↓")
@@ -110,6 +117,7 @@ struct DeveloperProfileView: View {
                             .offset(x: -55, y: -70)
                             .opacity(appear ? 1 : 0)
                             .animation(.spring().delay(0.5), value: appear)
+                            .accessibilityHidden(true)
                     }
 
                     Spacer(minLength: 40)
@@ -124,6 +132,7 @@ struct DeveloperProfileView: View {
                             subtitle: "I miei progetti",
                             overlayText: HandWrittenOverlayText(
                                 text: "WIP",
+                                accessibilityText: "In lavorazione",
                                 rotation: 10,
                                 offset: .init(width: -10, height: 8),
                                 font: "Noteworthy-Bold",
@@ -153,6 +162,7 @@ struct DeveloperProfileView: View {
                             subtitle: "Mandami una mail",
                             overlayText: HandWrittenOverlayText(
                                 text: "Scrivimi!",
+                                accessibilityText: "Scrivimi!",
                                 rotation: -15,
                                 offset: .init(width: 10, height: 5),
                                 alignment: .topLeading,
@@ -175,6 +185,7 @@ struct DeveloperProfileView: View {
                                 subtitle: "Dona qualcosina se vuoi aiutare",
                                 overlayText: HandWrittenOverlayText(
                                     text: "Grazie ❤️",
+                                    accessibilityText: "Grazie di cuore",
                                     rotation: 5,
                                     offset: .init(width: -5, height: 2),
                                     alignment: .topTrailing,
@@ -194,6 +205,22 @@ struct DeveloperProfileView: View {
             appear = true
             rotateRings = true
         }
+    }
+    
+    private var developerHeaderAttributed: NSAttributedString {
+        let full = NSMutableAttributedString()
+        
+        let name = NSAttributedString(
+            string: AppConstants.AppInfo.developerName,
+            attributes: [.accessibilitySpeechLanguage: "it-IT"]
+        )
+        full.append(name)
+        
+        let roleLocalized = String(localized: "SVILUPPATORE")
+        let role = NSAttributedString(string: ", \(roleLocalized)")
+        full.append(role)
+        
+        return full
     }
 }
 
@@ -235,6 +262,7 @@ private struct CustomList: View {
                             Image(systemName: item.icon)
                                 .font(.title3)
                                 .foregroundStyle(.orange)
+                                .accessibilityHidden(true)
                         } else {
                             ZStack {
                                 Circle()
@@ -253,6 +281,7 @@ private struct CustomList: View {
                                 }
                             }
                             .frame(width: 32, height: 32)
+                            .accessibilityHidden(true)
                         }
                         
                         VStack(alignment: .leading, spacing: 2) {
@@ -271,6 +300,7 @@ private struct CustomList: View {
                         Image(systemName: "arrow.up.forward.square")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(Color(.lightGray))
+                            .accessibilityHidden(true)
                     }
                     .padding(16)
                     .contentShape(Rectangle())
@@ -286,6 +316,8 @@ private struct CustomList: View {
                     fontSize: item.overlayText.fontSize,
                     color: item.overlayText.color
                 )
+                .accessibilityValue(item.overlayText.accessibilityText)
+                .contentShape(.accessibility, RoundedRectangle(cornerRadius: 16))
             }
         }
         .background(glassBg)
@@ -312,17 +344,33 @@ private struct CustomListItem: Identifiable {
     let color: Color
     let title: LocalizedStringKey
     let subtitle: LocalizedStringKey
-    var overlayText: HandWrittenOverlayText = HandWrittenOverlayText(text: "", rotation: 0, offset: .init(width: 0, height: 0))
+    var overlayText: HandWrittenOverlayText = HandWrittenOverlayText(text: "", accessibilityText: "", rotation: 0, offset: .init(width: 0, height: 0))
 }
 
 private struct HandWrittenOverlayText {
     let text: LocalizedStringKey
+    let accessibilityText: LocalizedStringKey
     let rotation: Double
     let offset: CGSize
     var alignment: Alignment = .topTrailing
     var font: String = "Noteworthy-Light"
     var fontSize: CGFloat = 14
     var color: Color = Color(red: 1.0, green: 0.9, blue: 0.4)
+}
+
+private struct SpeechLanguageLabel: UIViewRepresentable {
+    let text: NSAttributedString
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.isAccessibilityElement = true
+        view.accessibilityTraits = .header
+        return view
+    }
+
+    func updateUIView(_ view: UIView, context: Context) {
+        view.accessibilityAttributedLabel = text
+    }
 }
 
 #Preview {

@@ -157,6 +157,7 @@ extension View {
                     .foregroundStyle(color)
                     .rotationEffect(.degrees(rotation))
                     .offset(offset)
+                    .accessibilityHidden(true)
             }
     }
     
