@@ -19,6 +19,15 @@ struct FractionDatePickerView: View {
     @Binding var selection: Date
     let week: [FractionDay]
     let width: CGFloat
+    let index: Int
+    var focus: AccessibilityFocusState<Int?>.Binding
+    let goToNextWeek: () -> Void
+    let goToPreviousWeek: () -> Void
+    
+    private var focusTargetID: FractionDay.ID? {
+        week.first(where: { calendar.isDate($0.date, inSameDayAs: selection) && !$0.isOutOfBounds })?.id
+            ?? week.first(where: { !$0.isOutOfBounds })?.id
+    }
         
     private var itemWidth: CGFloat { (min(width, 500) - 70) / 7 }
     
@@ -49,13 +58,33 @@ struct FractionDatePickerView: View {
                         .contentShape(RoundedRectangle(cornerRadius: itemWidth / 2.5, style: .continuous))
                         .hoverEffect(.lift)
                 }
+                .accessibilityElement(children: .combine)
                 .accessibilityHidden(day.isOutOfBounds)
                 .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+                .if(day.id == focusTargetID) { view in
+                    view.accessibilityFocused(focus, equals: index)
+                }
+                .accessibilityLabel(dayAccessibilityLabel(for: day.date))
+                .accessibilityAction(named: "Settimana successiva") {
+                    goToNextWeek()
+                }
+                .accessibilityAction(named: "Settimana precedente") {
+                    goToPreviousWeek()
+                }
             }
         }
         .frame(maxWidth: 500, maxHeight: .infinity)
         .padding(.horizontal, 20)
         .ignoresSafeArea()
+    }
+    
+    private func dayAccessibilityLabel(for date: Date) -> Text {
+        let formattedDate = date.formatted(.dateTime.weekday(.wide).day().month(.wide))
+        if calendar.isDateInToday(date) {
+            return Text("Oggi, \(formattedDate)")
+        } else {
+            return Text(formattedDate)
+        }
     }
 }
 
@@ -65,6 +94,8 @@ struct FractionDatePickerContainer: View {
     @Binding var selectedWeek: Date
     
     @State private var internalIndex: Int = 0
+    
+    @AccessibilityFocusState private var focusedPage: Int?
     
     var body: some View {
         GeometryReader { proxy in
@@ -76,8 +107,9 @@ struct FractionDatePickerContainer: View {
                 }
             )) {
                 ForEach(0..<viewModel.academicWeeks.count, id: \.self) { index in
-                    FractionDatePickerView(selection: $selectedWeek, week: viewModel.academicWeeks[index], width: proxy.size.width)
+                    FractionDatePickerView(selection: $selectedWeek, week: viewModel.academicWeeks[index], width: proxy.size.width, index: index, focus: $focusedPage, goToNextWeek: goToNextWeek, goToPreviousWeek: goToPreviousWeek)
                         .tag(index)
+                        .accessibilitySortPriority(1)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
@@ -91,10 +123,57 @@ struct FractionDatePickerContainer: View {
                     internalIndex = targetIndex(for: newSelection)
                 }
             }
+            // MARK: - Pulsanti accessibili in Overlay
+            .overlay(alignment: .leading) {
+                Button {
+                    goToPreviousWeek()
+                } label: {
+                    Color.clear
+                        .frame(width: 44, height: proxy.size.height)
+                }
+                .allowsHitTesting(false)
+                .disabled(internalIndex == 0)
+                .accessibilityLabel("Settimana precedente")
+                .accessibilityHint(internalIndex > 0 ? "Tocca due volte per andare alla settimana precedente" : "")
+                .accessibilitySortPriority(2)
+            }
+            .overlay(alignment: .trailing) {
+                Button {
+                    goToNextWeek()
+                } label: {
+                    Color.clear
+                        .frame(width: 44, height: proxy.size.height)
+                }
+                .allowsHitTesting(false)
+                .disabled(internalIndex >= viewModel.academicWeeks.count - 1)
+                .accessibilityLabel("Settimana successiva")
+                .accessibilityHint(internalIndex < viewModel.academicWeeks.count - 1 ? "Tocca due volte per andare alla settimana successiva" : "")
+                .accessibilitySortPriority(0)
+            }
         }
     }
     
-    // MARK: - Logic
+    // MARK: - Helper di navigazione
+    private func goToPreviousWeek() {
+        guard internalIndex > 0 else { return }
+        internalIndex -= 1
+        moveAccessibilityFocus(to: internalIndex)
+    }
+
+    private func goToNextWeek() {
+        guard internalIndex < viewModel.academicWeeks.count - 1 else { return }
+        internalIndex += 1
+        moveAccessibilityFocus(to: internalIndex)
+    }
+
+    private func moveAccessibilityFocus(to index: Int) {
+        Task { @MainActor in
+            focusedPage = nil
+            try? await Task.sleep(for: .milliseconds(150))
+            focusedPage = index
+        }
+    }
+    
     private func shiftWeek(diff: Int) {
         guard diff != 0, let year = Int(settings.selectedYear) else { return }
         

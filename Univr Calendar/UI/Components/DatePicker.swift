@@ -19,6 +19,10 @@ struct DatePicker: View, Equatable {
     var viewModel = DatePickerCache.shared
     @Binding var selection: Date
     let date: Date
+    let index: Int
+    var focus: AccessibilityFocusState<Int?>.Binding
+    let goToNextMonth: () -> Void
+    let goToPreviousMonth: () -> Void
     
     private let cellSize: CGFloat = 40
     private let spacing: CGFloat = 8
@@ -45,6 +49,7 @@ struct DatePicker: View, Equatable {
                 }
             }
             .opacity(isEnabled ? 1 : 0.3)
+            .accessibilityHidden(true)
             
             LazyVGrid(columns: columns, spacing: spacing) {
                 if let monthCell = viewModel.monthGrids["\(monthName)-\(date.yearSymbol)"] {
@@ -53,7 +58,9 @@ struct DatePicker: View, Equatable {
                             cell: cell,
                             isSelected: calendar.isDate(selection, inSameDayAs: cell.date),
                             isToday: calendar.isDateInToday(cell.date),
-                            isOutsideBounds: cell.date.isOutOfAcademicBounds(for: Int(settings.selectedYear) ?? 0)
+                            isOutsideBounds: cell.date.isOutOfAcademicBounds(for: Int(settings.selectedYear) ?? 0),
+                            goToNextMonth: goToNextMonth,
+                            goToPreviousMonth: goToPreviousMonth
                         ) {
                             if selection != cell.date && !cell.date.isOutOfAcademicBounds(for: Int(settings.selectedYear) ?? 0) {
                                 selection = cell.date
@@ -78,6 +85,12 @@ struct DatePicker: View, Equatable {
                 Text(date.yearSymbol)
             }
             .opacity(isEnabled ? 1 : 0.3)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(date.formatted(.dateTime.month(.wide).year()))
+            .accessibilityAddTraits(.isHeader)
+            .accessibilityFocused(focus, equals: index)
+            .accessibilityAction(named: "Mese successivo") { goToNextMonth() }
+            .accessibilityAction(named: "Mese precedente") { goToPreviousMonth() }
             
             Spacer()
             
@@ -102,15 +115,24 @@ struct DatePickerContainer: View {
     @Environment(UserSettings.self) var settings
     @Binding var selectedWeek: Date
     @State private var internalIndex: Int = 0
+    @AccessibilityFocusState private var focusedPage: Int?
     
     var body: some View {
         let year = Int(settings.selectedYear) ?? selectedWeek.year
         
         TabView(selection: $internalIndex) {
             ForEach(0..<12, id: \.self) { index in
-                DatePicker(selection: $selectedWeek, date: Date(year: year, month: 10, day: 1).add(type: .month, value: index))
-                    .equatable()
-                    .tag(index)
+                DatePicker(
+                    selection: $selectedWeek,
+                    date: Date(year: year, month: 10, day: 1).add(type: .month, value: index),
+                    index: index,
+                    focus: $focusedPage,
+                    goToNextMonth: goToNextMonth,
+                    goToPreviousMonth: goToPreviousMonth
+                )
+                .equatable()
+                .tag(index)
+                .accessibilitySortPriority(1)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
@@ -124,6 +146,54 @@ struct DatePickerContainer: View {
                 GlobalHaptics.shared.state = ""
             }
         }
+        // MARK: - Pulsanti accessibili in Overlay
+        .overlay(alignment: .leading) {
+            Button {
+                goToPreviousMonth()
+            } label: {
+                Color.clear
+                    .frame(width: 44, height: CustomSheetDetent.medium.value)
+            }
+            .allowsHitTesting(false)
+            .disabled(internalIndex == 0)
+            .accessibilityLabel("Mese precedente")
+            .accessibilityHint(internalIndex > 0 ? "Tocca due volte per andare al mese precedente" : "")
+            .accessibilitySortPriority(2)
+        }
+        .overlay(alignment: .trailing) {
+            Button {
+                goToNextMonth()
+            } label: {
+                Color.clear
+                    .frame(width: 44, height: CustomSheetDetent.medium.value)
+            }
+            .allowsHitTesting(false)
+            .disabled(internalIndex >= 11)
+            .accessibilityLabel("Mese successivo")
+            .accessibilityHint(internalIndex < 11 ? "Tocca due volte per andare al mese successivo" : "")
+            .accessibilitySortPriority(0)
+        }
+    }
+    
+    // MARK: - Helper di navigazione
+    private func goToPreviousMonth() {
+        guard internalIndex > 0 else { return }
+        internalIndex -= 1
+        moveAccessibilityFocus(to: internalIndex)
+    }
+
+    private func goToNextMonth() {
+        guard internalIndex < 11 else { return }
+        internalIndex += 1
+        moveAccessibilityFocus(to: internalIndex)
+    }
+
+    private func moveAccessibilityFocus(to index: Int) {
+        Task { @MainActor in
+            focusedPage = nil
+            try? await Task.sleep(for: .milliseconds(150))
+            focusedPage = index
+        }
     }
 }
 
@@ -131,9 +201,12 @@ struct DatePickerContainer: View {
 private struct DayCellView: View {
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.isEnabled) var isEnabled
+    @Environment(\.calendar) var calendar
     
     let cell: CalendarCell
     let isSelected, isToday, isOutsideBounds: Bool
+    let goToNextMonth: () -> Void
+    let goToPreviousMonth: () -> Void
     let action: () -> Void
     
     var progressColor: Color {
@@ -171,11 +244,32 @@ private struct DayCellView: View {
             }
             .opacity(isEnabled ? (cell.isCurrentMonth ? 1 : 0.3) : (cell.isCurrentMonth ? 0.3 : 0.1))
             .contentShape(.rect)
+            .contentShape(.accessibility, .circle)
             .clipShape(.circle)
             .if(!isOutsideBounds) { view in
                 view.contentShape(.hoverEffect, .circle).hoverEffect(isSelected ? .lift : .highlight)
             }
             .onTapGesture(perform: action)
+            .accessibilityElement(children: .combine)
+            .accessibilityHidden(!cell.isCurrentMonth || isOutsideBounds)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+            .accessibilityLabel(dayAccessibilityLabel(for: cell.date))
+            .accessibilityAction(named: "Mese successivo") {
+                goToNextMonth()
+            }
+            .accessibilityAction(named: "Mese precedente") {
+                goToPreviousMonth()
+            }
+    }
+    
+    private func dayAccessibilityLabel(for date: Date) -> Text {
+        let formattedDate = date.formatted(.dateTime.weekday(.wide).day().month(.wide))
+        if calendar.isDateInToday(date) {
+            return Text("Oggi, \(formattedDate)")
+        } else {
+            return Text(formattedDate)
+        }
     }
 }
 

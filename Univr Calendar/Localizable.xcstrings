@@ -1198,6 +1198,26 @@
         }
       }
     },
+    "Mese precedente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous month"
+          }
+        }
+      }
+    },
+    "Mese successivo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next month"
+          }
+        }
+      }
+    },
     "Modifica" : {
       "localizations" : {
         "en" : {
@@ -1434,6 +1454,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Today"
+          }
+        }
+      }
+    },
+    "Oggi, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today, %@"
           }
         }
       }
@@ -1828,6 +1858,26 @@
         }
       }
     },
+    "Settimana precedente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous week"
+          }
+        }
+      }
+    },
+    "Settimana successiva" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next week"
+          }
+        }
+      }
+    },
     "Si è verificato un errore" : {
       "localizations" : {
         "en" : {
@@ -1924,6 +1974,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Title"
+          }
+        }
+      }
+    },
+    "Tocca due volte per andare al mese precedente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap two times to go to the previous month"
+          }
+        }
+      }
+    },
+    "Tocca due volte per andare al mese successivo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap two times to go to the next month"
+          }
+        }
+      }
+    },
+    "Tocca due volte per andare alla settimana precedente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap two times to go to the previous week"
+          }
+        }
+      }
+    },
+    "Tocca due volte per andare alla settimana successiva" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap two times to go to the next week"
           }
         }
       }
