@@ -388,3 +388,64 @@ extension UIDevice {
     }
 }
 
+struct SpeechLanguageLabel: UIViewRepresentable {
+    let text: NSAttributedString
+    var traits: UIAccessibilityTraits = .none
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.isAccessibilityElement = true
+        view.accessibilityTraits = traits
+        return view
+    }
+    func updateUIView(_ view: UIView, context: Context) {
+        view.accessibilityTraits = traits
+        view.accessibilityAttributedLabel = text
+    }
+}
+
+struct SpeechSegment {
+    let text: String
+    let attributes: [NSAttributedString.Key: Any]
+    
+    init(_ text: String, language: String? = nil) {
+        self.text = text
+        if let language {
+            self.attributes = [.accessibilitySpeechLanguage: language]
+        } else {
+            self.attributes = [:]
+        }
+    }
+    
+    init(_ text: String, attributes: [NSAttributedString.Key: Any]) {
+        self.text = text
+        self.attributes = attributes
+    }
+    
+    static func it(_ text: String) -> SpeechSegment {
+        SpeechSegment(text, language: "it-IT")
+    }
+    
+    static func system(_ text: String) -> SpeechSegment {
+        SpeechSegment(text, language: nil)
+    }
+}
+
+extension NSAttributedString {
+    static func composed(_ segments: SpeechSegment...) -> NSAttributedString {
+        composed(segments)
+    }
+    
+    static func composed(_ segments: [SpeechSegment]) -> NSAttributedString {
+        let full = NSMutableAttributedString()
+        for segment in segments where !segment.text.isEmpty {
+            full.append(NSAttributedString(string: segment.text, attributes: segment.attributes))
+        }
+        return full
+    }
+}
+
+extension SpeechLanguageLabel {
+    init(_ segments: SpeechSegment..., traits: UIAccessibilityTraits = .none) {
+        self.init(text: .composed(segments), traits: traits)
+    }
+}

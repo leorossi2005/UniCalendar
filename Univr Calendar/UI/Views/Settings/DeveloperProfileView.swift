@@ -107,8 +107,14 @@ struct DeveloperProfileView: View {
                                 .clipShape(.capsule)
                                 .accessibilityHidden(true)
                         }
-                        .overlay { SpeechLanguageLabel(text: developerHeaderAttributed) }
                         .offset(y: 120)
+                        .overlay {
+                            SpeechLanguageLabel(
+                                .it(AppConstants.AppInfo.developerName),
+                                .system(", \(String(localized: "SVILUPPATORE"))"),
+                                traits: .header
+                            )
+                        }
                         
                         Text("Questo sono io ↓")
                             .font(.custom("Noteworthy-Light", size: 14))
@@ -205,22 +211,6 @@ struct DeveloperProfileView: View {
             appear = true
             rotateRings = true
         }
-    }
-    
-    private var developerHeaderAttributed: NSAttributedString {
-        let full = NSMutableAttributedString()
-        
-        let name = NSAttributedString(
-            string: AppConstants.AppInfo.developerName,
-            attributes: [.accessibilitySpeechLanguage: "it-IT"]
-        )
-        full.append(name)
-        
-        let roleLocalized = String(localized: "SVILUPPATORE")
-        let role = NSAttributedString(string: ", \(roleLocalized)")
-        full.append(role)
-        
-        return full
     }
 }
 
@@ -356,21 +346,6 @@ private struct HandWrittenOverlayText {
     var font: String = "Noteworthy-Light"
     var fontSize: CGFloat = 14
     var color: Color = Color(red: 1.0, green: 0.9, blue: 0.4)
-}
-
-private struct SpeechLanguageLabel: UIViewRepresentable {
-    let text: NSAttributedString
-
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        view.isAccessibilityElement = true
-        view.accessibilityTraits = .header
-        return view
-    }
-
-    func updateUIView(_ view: UIView, context: Context) {
-        view.accessibilityAttributedLabel = text
-    }
 }
 
 #Preview {

@@ -188,6 +188,7 @@ struct LongListSelector<Item: SelectableItem>: View {
             Group {
                 if results.isEmpty {
                     ContentUnavailableView.search(text: searchText)
+                        .accessibilityElement(children: .combine)
                 } else {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 0) {

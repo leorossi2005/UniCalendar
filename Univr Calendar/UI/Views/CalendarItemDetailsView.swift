@@ -35,6 +35,8 @@ struct CalendarItemDetailsView: View {
     @State private var showDeletePopover: Bool = false
     @State private var editingEvent: PersonalEvent? = nil
     
+    @AccessibilityFocusState private var isTitleFocused: Bool
+    
     var body: some View {
         ZStack {
             if let event = calendarEvent, let eventStore {
@@ -114,7 +116,7 @@ struct CalendarItemDetailsView: View {
                         let activeNotification = notificationManager.activeNotifications.first(where: { $0.id == internalItem.id })
                         let isScheduled = activeNotification != nil
                         
-                        Menu {
+                        Menu("Gestisci notifica", systemImage: isScheduled ? "bell.and.waves.left.and.right.fill" : "bell") {
                             if canSchedule(offset: 0) {
                                 notificationButton(for: 0, activeNotification: activeNotification)
                             }
@@ -137,11 +139,8 @@ struct CalendarItemDetailsView: View {
                                     Task { await notificationManager.removeNotification(id: internalItem.id) }
                                 }
                             }
-                        } label: {
-                            Image(systemName: isScheduled ? "bell.and.waves.left.and.right.fill" : "bell")
-                                .frame(width: 24, height: 24)
-                                .symbolReplace()
                         }
+                        .symbolReplace()
                         .disabled(!isScheduled && !canSchedule(offset: 0))
                     }
                     
@@ -202,6 +201,10 @@ struct CalendarItemDetailsView: View {
                 prepareAndShowEvent(for: lesson)
             }
         }
+        .task {
+            try? await Task.sleep(for: .milliseconds(200))
+            isTitleFocused = true
+        }
         .navigationDestination(item: $editingEvent) { eventToEdit in
             ManagePersonalEventView(selectedDate: eventToEdit.startTime, editingEvent: eventToEdit) { _ in
                 editingEvent = nil
@@ -237,7 +240,15 @@ struct CalendarItemDetailsView: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(internalItem.displayTitle)
                 .font(.title2.bold())
-                .contentShape(.rect)
+                .accessibilityHidden(true)
+                .overlay {
+                    SpeechLanguageLabel(
+                        item.isLesson ? .it(internalItem.displayTitle) : .system(internalItem.displayTitle),
+                        internalItem.isCanceled ? .system(", \(String(localized: "Annullata"))") : .system(""),
+                        traits: .header
+                    )
+                    .accessibilityFocused($isTitleFocused)
+                }
             if !internalItem.tagsItems.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
@@ -257,6 +268,13 @@ struct CalendarItemDetailsView: View {
                         }
                     }
                 }
+                .accessibilityHidden(true)
+                .overlay {
+                    SpeechLanguageLabel(
+                        .system(String(localized: "Tag: ")),
+                        item.isLesson ? .it(internalItem.tagsItems.map(\.name).joined(separator: ", ")) : .system(internalItem.tagsItems.map(\.name).joined(separator: ", "))
+                    )
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -272,22 +290,37 @@ struct CalendarItemDetailsView: View {
                 text: "\(internalItem.startTime.formatted(.dateTime.hour().minute())) - \(internalItem.endTime.formatted(.dateTime.hour().minute())) (\(Duration.seconds(internalItem.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow))))",
                 icon: "clock.fill"
             )
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(Text("Dalle \(item.startTime, format: .dateTime.hour().minute()) alle \(internalItem.endTime, format: .dateTime.hour().minute()), durata \(Duration.seconds(internalItem.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .wide)))"))
             switch item {
             case .lesson(let lesson):
                 rowLabel(
                     text: lesson.teachers.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.teachers.joined(separator: ", ")),
                     icon: !lesson.teachers.isEmpty && lesson.teachers.count > 1 ? "person.2.fill" : "person.fill"
                 )
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(!lesson.teachers.isEmpty && lesson.teachers.count > 1 ? "Docenti" : "Docente")
+                .accessibilityValue(lesson.teachers.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.teachers.joined(separator: ", ")))
                 rowLabel(
                     text: "\(lesson.location?.classroom ?? "") \(lesson.location?.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
                     icon: "mappin"
                 )
+                .accessibilityHidden(true)
+                .overlay {
+                    SpeechLanguageLabel(
+                        .it(lesson.location?.classroom ?? ""),
+                        .system(lesson.location?.capacity.map { ", \($0) \(String(localized: "posti"))" } ?? "")
+                    )
+                }
             case .personal:
                 if let loc = internalItem.displayLocation, !loc.isEmpty {
                     rowLabel(
                         text: LocalizedStringKey(loc),
                         icon: "mappin"
                     )
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Luogo")
+                    .accessibilityValue(LocalizedStringKey(loc))
                 }
             }
         }
@@ -403,14 +436,23 @@ struct StableMapView: View {
     var body: some View {
         ZStack {
             if let coordinate = externalCoordinate {
-                UIKitStaticMap(coordinate: coordinate, padding: corderRadius / 2, altitude: 600)
-                mapAnnotationView
-                VStack {
-                    HStack {
+                ZStack {
+                    UIKitStaticMap(coordinate: coordinate, padding: corderRadius / 2, altitude: 600)
+                    mapAnnotationView
+                    VStack {
+                        HStack {
+                            Spacer()
+                            openInMapsButton(coordinate: coordinate, name: internalItem.displayLocation ?? "", color: uiColor)
+                        }
                         Spacer()
-                        openInMapsButton(coordinate: coordinate, name: internalItem.displayLocation ?? "", color: uiColor)
                     }
-                    Spacer()
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Luogo: \(internalItem.displayAddress ?? "Non Disponibile")")
+                .accessibilityHint("Tocca due volte per aprire la posizione in Apple Maps")
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction {
+                    openMaps(coordinate: coordinate, name: internalItem.displayLocation ?? "")
                 }
             } else if isLoadingMap {
                 ProgressView()
@@ -422,17 +464,20 @@ struct StableMapView: View {
                         systemImage: "mappin.slash",
                         description: Text("Posizione non attualmente presente, siamo già al corrente e il problema verrà risolto.")
                     )
+                    .accessibilityElement(children: .combine)
                 case .personal:
                     ContentUnavailableView(
                         "Posizione non trovata",
                         systemImage: "mappin.slash"
                     )
+                    .accessibilityElement(children: .combine)
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.gray.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: corderRadius))
+        .contentShape(RoundedRectangle(cornerRadius: corderRadius))
         .task(id: item.id) {
             await findLocation()
         }
@@ -466,7 +511,7 @@ struct StableMapView: View {
                 .foregroundStyle(.black)
             }
             
-            Text(internalItem.displayAddress ?? "")
+            Text(internalItem.displayAddress ?? "Non Disponibile")
                 .frame(height: 10)
                 .font(.caption.bold())
                 .foregroundStyle(.primary)

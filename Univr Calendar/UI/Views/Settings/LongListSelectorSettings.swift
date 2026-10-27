@@ -59,6 +59,7 @@ struct LongListSelectorSettings<Item: SelectableItem>: View {
             .overlay {
                 if filteredItems.isEmpty && !searchText.isEmpty {
                     ContentUnavailableView.search(text: searchText)
+                        .accessibilityElement(children: .combine)
                 }
             }
             .onAppear {

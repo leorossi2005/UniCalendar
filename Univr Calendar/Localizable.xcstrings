@@ -237,6 +237,16 @@
         }
       }
     },
+    "1 altro impegno oggi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 more commitment today"
+          }
+        }
+      }
+    },
     "1 ora prima" : {
       "localizations" : {
         "en" : {
@@ -366,6 +376,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Attachments"
+          }
+        }
+      }
+    },
+    "Altri %lld impegni oggi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Other %lld commitments today"
           }
         }
       }
@@ -808,6 +828,22 @@
         }
       }
     },
+    "Dalle %@ alle %@, durata %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ to %2$@, duration %3$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dalle %1$@ alle %2$@, durata %3$@"
+          }
+        }
+      }
+    },
     "DANGER ZONE" : {
       "localizations" : {
         "en" : {
@@ -874,12 +910,32 @@
         }
       }
     },
+    "Docente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teacher"
+          }
+        }
+      }
+    },
     "Docente: %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Teacher: %@"
+          }
+        }
+      }
+    },
+    "Docenti" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teachers"
           }
         }
       }
@@ -996,6 +1052,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "To %@"
+          }
+        }
+      }
+    },
+    "Gestisci notifica" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage Notification"
           }
         }
       }
@@ -1363,6 +1429,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Location"
+          }
+        }
+      }
+    },
+    "Luogo: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location: %@"
           }
         }
       }
@@ -2237,6 +2313,16 @@
         }
       }
     },
+    "Tag: " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag:"
+          }
+        }
+      }
+    },
     "Titolo" : {
       "localizations" : {
         "en" : {
@@ -2252,7 +2338,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap two times to go to the previous month"
+            "value" : "Tap twice to go to the previous month"
           }
         }
       }
@@ -2262,7 +2348,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap two times to go to the next month"
+            "value" : "Tap twice to go to the next month"
           }
         }
       }
@@ -2272,7 +2358,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap two times to go to the previous week"
+            "value" : "Tap twice to go to the previous week"
           }
         }
       }
@@ -2282,7 +2368,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap two times to go to the next week"
+            "value" : "Tap twice to go to the next week"
           }
         }
       }
@@ -2292,7 +2378,17 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap two times to open the details"
+            "value" : "Tap twice to open the details"
+          }
+        }
+      }
+    },
+    "Tocca due volte per aprire la posizione in Apple Maps" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap twice to open the location in Apple Maps"
           }
         }
       }

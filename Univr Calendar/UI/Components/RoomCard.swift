@@ -24,6 +24,7 @@ struct RoomCard: View {
     var body: some View {
         TimelineView(.everyMinute) { context in
             let currentStatus = RoomDailyStatus(room: room, selectedDate: selectedDate, now: context.date)
+            let subsequentEventsCount = subsequentEvents(for: currentStatus)
             
             VStack(spacing: 20) {
                 LessonInfo(room: room, status: currentStatus)
@@ -39,8 +40,30 @@ struct RoomCard: View {
             .padding(.horizontal)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(Text("\(room.name), \(currentStatus.statusText)"))
+            .accessibilityValue(subsequentEventsValue(count: subsequentEventsCount) ?? Text(""))
             .accessibilityAddTraits(.isButton)
             .accessibilityHint(Text("Tocca due volte per aprire i dettagli"))
+        }
+    }
+
+    // MARK: - Helpers
+    private func subsequentEvents(for status: RoomDailyStatus) -> Int {
+        switch status {
+        case .occupiedUntil(_, let index, _),
+             .freeUntil(_, let index),
+             .futureDay(_, let index):
+            return max(0, room.events.count - (index + 1))
+        default:
+            return 0
+        }
+    }
+
+    private func subsequentEventsValue(count: Int) -> Text? {
+        guard count > 0 else { return nil }
+        if count == 1 {
+            return Text("1 altro impegno oggi")
+        } else {
+            return Text("Altri \(count) impegni oggi")
         }
     }
     
