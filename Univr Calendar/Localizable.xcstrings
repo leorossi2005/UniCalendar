@@ -21,6 +21,32 @@
         }
       }
     },
+    ", %lld %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", %1$lld %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : ", %1$lld %2$@"
+          }
+        }
+      }
+    },
+    "%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@"
+          }
+        }
+      }
+    },
     "%@ - %@ (%@)" : {
       "localizations" : {
         "en" : {
@@ -49,22 +75,6 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ %2$@"
-          }
-        }
-      }
-    },
-    "%@, %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$@, %2$@"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@, %2$@"
           }
         }
       }
@@ -490,6 +500,16 @@
         }
       }
     },
+    "Aula libera" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classroom available"
+          }
+        }
+      }
+    },
     "Avvisi di Sistema" : {
       "localizations" : {
         "en" : {
@@ -706,6 +726,16 @@
         }
       }
     },
+    "Conclusa" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concluded"
+          }
+        }
+      }
+    },
     "Conferma" : {
       "localizations" : {
         "en" : {
@@ -808,6 +838,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Dal %1$@ al %2$@"
+          }
+        }
+      }
+    },
+    "Dalle %@ a fine giornata" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From %@ until end of day"
           }
         }
       }
@@ -1226,6 +1266,16 @@
         }
       }
     },
+    "In corso adesso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In progress now"
+          }
+        }
+      }
+    },
     "In lavorazione" : {
       "localizations" : {
         "en" : {
@@ -1553,6 +1603,16 @@
         }
       }
     },
+    "Nessun evento, giornata conclusa" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No events, day ended"
+          }
+        }
+      }
+    },
     "Nessun impegno personale" : {
       "localizations" : {
         "en" : {
@@ -1579,6 +1639,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No classes"
+          }
+        }
+      }
+    },
+    "Nessuna lezione in programma, aula libera per tutta la giornata" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No lessons scheduled, classroom available all day"
           }
         }
       }
@@ -2089,6 +2159,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "If you want to help"
+          }
+        }
+      }
+    },
+    "Sede" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location"
           }
         }
       }

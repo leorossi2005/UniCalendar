@@ -59,7 +59,7 @@ struct ClassroomAvailabilityView: View {
     }
     
     private var locationPicker: some View {
-        Picker("", selection: Bindable(settings).locationKey) {
+        Picker("Sede", selection: Bindable(settings).locationKey) {
             ForEach(availabilityManager.sortedLocations, id: \.key) { location in
                 Text(location.value).tag(location.key)
             }

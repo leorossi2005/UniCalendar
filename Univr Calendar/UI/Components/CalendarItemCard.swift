@@ -25,9 +25,7 @@ struct CalendarItemCard: View {
         .background(backgroundLayer)
         .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
         .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 35, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: 35, style: .continuous))
         .hoverEffect(.lift)
-        .padding(.horizontal)
     }
     
     // MARK: - Components
@@ -84,13 +82,6 @@ struct CalendarItemCard: View {
             }
         }
         .foregroundStyle(internalItem.isCanceled ? Color.primary : Color.black)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(
-            internalItem.isCanceled
-                ? Text(item.startTime, format: .dateTime.hour().minute())
-                : Text("Dalle \(item.startTime, format: .dateTime.hour().minute()) alle \(internalItem.endTime, format: .dateTime.hour().minute())")
-        )
-        .accessibilitySortPriority(3)
     }
     
     private var itemInfo: some View {
@@ -100,8 +91,6 @@ struct CalendarItemCard: View {
                 .font(.headline)
                 .multilineTextAlignment(.leading)
                 .strikethrough(internalItem.isCanceled)
-                .accessibilityValue(internalItem.isCanceled ? Text("Annullata") : Text(""))
-                .accessibilitySortPriority(4)
             
             if !internalItem.isCanceled, let loc = internalItem.displayLocation, !loc.isEmpty {
                 Label(loc, systemImage: "mappin")
@@ -109,12 +98,10 @@ struct CalendarItemCard: View {
                     .font(.subheadline)
                     .multilineTextAlignment(.leading)
                     .lineLimit(2)
-                    .accessibilitySortPriority(2)
             }
             
             if !internalItem.tagsItems.isEmpty && !internalItem.isCanceled {
                 tagsList
-                    .accessibilitySortPriority(1)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -164,6 +151,8 @@ struct PauseCard: View {
 }
 
 struct CardItemContainer: View {
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    
     let item: CalendarItem
     let sheetRouter: CalendarSheetRouter
     let internalItem: any CalendarDisplayable
@@ -181,13 +170,32 @@ struct CardItemContainer: View {
             PauseCard(item: internalItem)
         } else {
             CalendarItemCard(item: item, internalItem: internalItem)
-                .accessibilityElement(children: .combine)
-                .accessibilitySortPriority(0)
-                .accessibilityAddTraits(.isButton)
-                .accessibilityHint(Text("Tocca due volte per aprire i dettagli"))
-                .accessibilityActions {
-                    contextMenuButtons
+                .accessibilityHidden(true)
+                .overlay {
+                    if voiceOverEnabled {
+                        let tagsText = internalItem.tagsItems.prefix(3).map(\.name).joined(separator: ", ")
+                        
+                        SpeechLanguageLabel(
+                            item.isLesson ? .it(internalItem.displayTitle) : .system(internalItem.displayTitle + ", "),
+                            .system(
+                                internalItem.isCanceled
+                                    ? String(localized: "\(item.startTime, format: .dateTime.hour().minute())")
+                                    : String(localized: "Dalle \(item.startTime, format: .dateTime.hour().minute()) alle \(internalItem.endTime, format: .dateTime.hour().minute())")
+                            ),
+                            item.isLesson ? .it(internalItem.displayLocation ?? "") : .system(", \(internalItem.displayLocation ?? ""), "),
+                            internalItem.tagsItems.isEmpty ? .system("") : .system(String(localized: "Tag: ")),
+                            internalItem.tagsItems.isEmpty ? .system("") : item.isLesson ? .it(tagsText) : .system(tagsText),
+                            traits: .button
+                        )
+                        .accessibilityValue(internalItem.isCanceled ? "Annullata" : "")
+                        .accessibilityHint(Text("Tocca due volte per aprire i dettagli"))
+                        .accessibilityActions {
+                            contextMenuButtons
+                        }
+                    }
                 }
+                .contentShape(RoundedRectangle(cornerRadius: 35, style: .continuous))
+                .padding(.horizontal)
                 .onTapGesture {
                     Haptics.play(.impact(weight: .light, intensity: 0.5))
                     sheetRouter.routeToItem(item)

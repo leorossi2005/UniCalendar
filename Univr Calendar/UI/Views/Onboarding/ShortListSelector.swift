@@ -11,7 +11,10 @@ import SwiftUI
 import UnivrCore
 
 struct ShortListSelector<Item: SelectableItem>: View {
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    
     let items: [Item]
+    var lang: String? = nil
     @Binding var selectedItem: String
     
     var body: some View {
@@ -47,6 +50,20 @@ struct ShortListSelector<Item: SelectableItem>: View {
                     .overlay {
                         RoundedRectangle(cornerRadius: 24, style: .continuous)
                             .strokeBorder(Color.accentColor.opacity(isSelected ? 0.6 : 0), lineWidth: 1.5)
+                    }
+                    .accessibilityHidden(true)
+                    .overlay {
+                        if voiceOverEnabled {
+                            SpeechLanguageLabel(
+                                lang != nil ? .it(item.label) : .system(item.label),
+                                traits: isSelected ? [.button, .selected] : .button,
+                                onActivate: {
+                                    Haptics.play(.selection)
+                                    selectedItem = item.id
+                                }
+                            )
+                            .accessibilityAddTraits(isSelected ? .isSelected : [])
+                        }
                     }
                     .contentShape(.rect(cornerRadius: 24, style: .continuous))
                 }

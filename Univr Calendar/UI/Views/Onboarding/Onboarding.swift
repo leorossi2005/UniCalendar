@@ -256,9 +256,9 @@ struct Onboarding: View {
                 if viewModel.academicYears.count <= 5 {
                     ShortListSelector(
                         items: viewModel.academicYears,
+                        lang: "it-IT",
                         selectedItem: $settings.selectedAcademicYear
                     )
-                    .environment(\.locale, Locale(identifier: "it"))
                 } else {
                     LongListSelector(
                         isFocused: $academicYearSearchFocus,

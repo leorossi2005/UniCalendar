@@ -13,6 +13,7 @@ import CustomSheet
 
 struct Settings: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
     @Environment(UserSettings.self) var settings
     @Environment(GlobalSheetManager.self) private var sheetManager
     
@@ -60,13 +61,24 @@ struct Settings: View {
                         }
                     }
                 }
+                .accessibilityHidden(true)
+                .overlay {
+                    if voiceOverEnabled {
+                        let courseName = viewModel.courses.first { $0.id == tempSettings.selectedCourse }?.label
+                        SpeechLanguageLabel(
+                            .system("Corso"),
+                            courseName != nil ? .it(courseName ?? "") : .system("Scegli un corso"),
+                            traits: .button
+                        )
+                    }
+                }
                 .disabled(viewModel.courses.isEmpty)
                 .onChange(of: tempSettings.selectedCourse) {
                     handleCourseChange()
                 }
                 if tempSettings.selectedCourse != "0" {
                     Group {
-                        if viewModel.academicYears.count <= 5 {
+                        if viewModel.academicYears.count <= 5 && !voiceOverEnabled {
                             Picker(selection: $tempSettings.selectedAcademicYear) {
                                 ForEach(viewModel.academicYears) { year in
                                     Text(year.label).tag(year.id)
@@ -95,6 +107,17 @@ struct Settings: View {
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
                                         .truncationMode(.tail)
+                                }
+                            }
+                            .accessibilityHidden(true)
+                            .overlay {
+                                if voiceOverEnabled {
+                                    let courseYearName = viewModel.academicYears.first { $0.id == tempSettings.selectedAcademicYear }?.label
+                                    SpeechLanguageLabel(
+                                        .system("Anno di Corso"),
+                                        courseYearName != nil ? .it(courseYearName ?? "") : .system("Scegli un anno"),
+                                        traits: .button
+                                    )
                                 }
                             }
                         }

@@ -16,6 +16,7 @@ import CustomSheet
 
 struct CalendarItemDetailsView: View {
     @Environment(GlobalSheetManager.self) private var sheetManager
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) var dismiss
     
@@ -242,12 +243,14 @@ struct CalendarItemDetailsView: View {
                 .font(.title2.bold())
                 .accessibilityHidden(true)
                 .overlay {
-                    SpeechLanguageLabel(
-                        item.isLesson ? .it(internalItem.displayTitle) : .system(internalItem.displayTitle),
-                        internalItem.isCanceled ? .system(", \(String(localized: "Annullata"))") : .system(""),
-                        traits: .header
-                    )
-                    .accessibilityFocused($isTitleFocused)
+                    if voiceOverEnabled {
+                        SpeechLanguageLabel(
+                            item.isLesson ? .it(internalItem.displayTitle) : .system(internalItem.displayTitle),
+                            traits: .header
+                        )
+                        .accessibilityValue(internalItem.isCanceled ? "Annullata" : "")
+                        .accessibilityFocused($isTitleFocused)
+                    }
                 }
             if !internalItem.tagsItems.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -270,10 +273,12 @@ struct CalendarItemDetailsView: View {
                 }
                 .accessibilityHidden(true)
                 .overlay {
-                    SpeechLanguageLabel(
-                        .system(String(localized: "Tag: ")),
-                        item.isLesson ? .it(internalItem.tagsItems.map(\.name).joined(separator: ", ")) : .system(internalItem.tagsItems.map(\.name).joined(separator: ", "))
-                    )
+                    if voiceOverEnabled {
+                        SpeechLanguageLabel(
+                            .system(String(localized: "Tag: ")),
+                            item.isLesson ? .it(internalItem.tagsItems.map(\.name).joined(separator: ", ")) : .system(internalItem.tagsItems.map(\.name).joined(separator: ", "))
+                        )
+                    }
                 }
             }
         }
@@ -307,10 +312,10 @@ struct CalendarItemDetailsView: View {
                 )
                 .accessibilityHidden(true)
                 .overlay {
-                    SpeechLanguageLabel(
-                        .it(lesson.location?.classroom ?? ""),
-                        .system(lesson.location?.capacity.map { ", \($0) \(String(localized: "posti"))" } ?? "")
-                    )
+                    if voiceOverEnabled {
+                        SpeechLanguageLabel(.it(lesson.location?.classroom ?? ""))
+                            .accessibilityValue(lesson.location?.capacity.map { ", \($0) \(String(localized: "posti"))" } ?? "")
+                    }
                 }
             case .personal:
                 if let loc = internalItem.displayLocation, !loc.isEmpty {

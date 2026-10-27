@@ -11,6 +11,8 @@ import SwiftUI
 import UnivrCore
 
 struct LongListSelector<Item: SelectableItem>: View {
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    
     @Binding var isFocused: Bool
     @Binding var selectedItem: String
     
@@ -36,6 +38,7 @@ struct LongListSelector<Item: SelectableItem>: View {
     }
     
     @AccessibilityFocusState private var isSelectedRowFocused: Bool
+    @AccessibilityFocusState private var isSearchFieldFocused: Bool
     
     var body: some View {
         VStack(spacing: 0) {
@@ -58,14 +61,21 @@ struct LongListSelector<Item: SelectableItem>: View {
     }
     
     private func open() {
+        isSelectedRowFocused = false
         if !isFocused {
             Haptics.play(.impact(weight: .light))
             isFocused = true
         }
         internalFocus = true
+        
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(150))
+            isSearchFieldFocused = true
+        }
     }
     
     private func close() {
+        isSelectedRowFocused = false
         withAnimation(toggleAnimation) {
             searchText = ""
             internalFocus = false
@@ -89,6 +99,7 @@ struct LongListSelector<Item: SelectableItem>: View {
                     .multilineTextAlignment(.leading)
                     .overlay { placeholder }
                     .accessibilityLabel(searchPrompt)
+                    .accessibilityFocused($isSearchFieldFocused)
                 
                 if !searchText.isEmpty {
                     Button {
@@ -116,19 +127,33 @@ struct LongListSelector<Item: SelectableItem>: View {
             .animation(.snappy(duration: 0.25), value: searchText.isEmpty)
             .onTapGesture { open() }
             
-            Button("Chiudi ricerca", systemImage: "xmark") {
+            Button {
                 Haptics.play(.impact(flexibility: .solid, intensity: 1))
+                isSearchFieldFocused = false
                 close()
+                
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(400))
+                    if selectedObject != nil {
+                        isSelectedRowFocused = true
+                    } else {
+                        isSearchFieldFocused = true
+                    }
+                }
+            } label: {
+                Image(systemName: "xmark")
+                    .accessibilityHidden(true)
             }
             .font(.body.weight(.bold))
             .frame(width: 52, height: 52)
             .background(Color(.tertiarySystemFill), in: .circle)
-            .labelStyle(.iconOnly)
             .buttonStyle(.plain)
             .scaleEffect(isFocused ? 1.0 : 0.6)
             .offset(x: isFocused ? 0 : -20)
             .opacity(isFocused ? 1.0 : 0.0)
             .allowsHitTesting(isFocused)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Chiudi ricerca")
             .accessibilityHidden(!isFocused)
         }
         .frame(height: 52)
@@ -167,17 +192,37 @@ struct LongListSelector<Item: SelectableItem>: View {
     @ViewBuilder
     private var selectedRow: some View {
         if let item = selectedObject {
-            Button {
-                open()
-            } label: {
+            Button { open() } label: {
                 rowContent(for: item, isSelected: true, query: "")
             }
             .buttonStyle(.plain)
             .opacity(isFocused ? 0 : 1)
             .allowsHitTesting(!isFocused)
-            .accessibilityLabel(item.label)
-            .environment(\.locale, Locale(identifier: "it"))
-            .accessibilityFocused($isSelectedRowFocused)
+            .accessibilityHidden(true)
+            .overlay {
+                if voiceOverEnabled && !isFocused {
+                    SpeechLanguageLabel(
+                        .it(item.label),
+                        traits: item.id == selectedItem ? [.button, .selected] : .button,
+                        onActivate: { open() }
+                    )
+                    .accessibilityFocused($isSelectedRowFocused)
+                    .contentShape(cardShape)
+                }
+            }
+        }
+    }
+    
+    private func select(_ item: Item) {
+        Haptics.play(.selection)
+        selectedItem = item.id
+        isSearchFieldFocused = false
+        isSelectedRowFocused = false
+        close()
+        
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(450))
+            isSelectedRowFocused = true
         }
     }
     
@@ -198,21 +243,22 @@ struct LongListSelector<Item: SelectableItem>: View {
                             
                             ForEach(results, id: \.id) { item in
                                 Button {
-                                    Haptics.play(.selection)
-                                    selectedItem = item.id
-                                    close()
-                                    
-                                    Task {
-                                        try? await Task.sleep(for: .milliseconds(150))
-                                        isSelectedRowFocused = true
-                                    }
+                                    select(item)
                                 } label: {
                                     rowContent(for: item, isSelected: item.id == selectedItem, query: searchText)
                                 }
                                 .buttonStyle(.plain)
                                 .id(item.id)
-                                .accessibilityLabel(item.label)
-                                .environment(\.locale, Locale(identifier: "it"))
+                                .accessibilityHidden(true)
+                                .overlay {
+                                    if voiceOverEnabled {
+                                        SpeechLanguageLabel(
+                                            .it(item.label),
+                                            traits: item.id == selectedItem ? [.button, .selected] : .button,
+                                            onActivate: { select(item) }
+                                        )
+                                    }
+                                }
                                 
                                 if item.id != results.last?.id {
                                     Divider()
@@ -223,7 +269,7 @@ struct LongListSelector<Item: SelectableItem>: View {
                     }
                     .scrollDismissesKeyboard(.interactively)
                     .onAppear {
-                        if selectedItem != "0" {
+                        if !voiceOverEnabled, selectedItem != "0" {
                             proxy.scrollTo(selectedItem, anchor: .center)
                         }
                     }
@@ -233,7 +279,7 @@ struct LongListSelector<Item: SelectableItem>: View {
                 var transaction = Transaction()
                 transaction.disablesAnimations = true
                 withTransaction(transaction) {
-                    if newText.isEmpty, selectedItem != "0" {
+                    if newText.isEmpty, selectedItem != "0", !voiceOverEnabled {
                         proxy.scrollTo(selectedItem, anchor: .center)
                     } else {
                         proxy.scrollTo("topListAnchor", anchor: .top)
@@ -253,7 +299,7 @@ struct LongListSelector<Item: SelectableItem>: View {
     }
     
     private func recenter(_ proxy: ScrollViewProxy) {
-        guard isSettling, searchText.isEmpty, selectedItem != "0" else { return }
+        guard !voiceOverEnabled, isSettling, searchText.isEmpty, selectedItem != "0" else { return }
         withAnimation(toggleAnimation) {
             proxy.scrollTo(selectedItem, anchor: .center)
         }

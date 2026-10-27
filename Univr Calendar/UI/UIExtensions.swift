@@ -388,18 +388,35 @@ extension UIDevice {
     }
 }
 
+final class AccessibleSpeechUIView: UIView {
+    var onActivate: (() -> Void)?
+    
+    override func accessibilityActivate() -> Bool {
+        if let onActivate {
+            onActivate()
+            return true
+        }
+        return super.accessibilityActivate()
+    }
+}
+
 struct SpeechLanguageLabel: UIViewRepresentable {
     let text: NSAttributedString
     var traits: UIAccessibilityTraits = .none
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
+    var onActivate: (() -> Void)? = nil
+    
+    func makeUIView(context: Context) -> AccessibleSpeechUIView {
+        let view = AccessibleSpeechUIView()
         view.isAccessibilityElement = true
         view.accessibilityTraits = traits
+        view.onActivate = onActivate
         return view
     }
-    func updateUIView(_ view: UIView, context: Context) {
+    
+    func updateUIView(_ view: AccessibleSpeechUIView, context: Context) {
         view.accessibilityTraits = traits
         view.accessibilityAttributedLabel = text
+        view.onActivate = onActivate
     }
 }
 
@@ -426,7 +443,12 @@ struct SpeechSegment {
     }
     
     static func system(_ text: String) -> SpeechSegment {
-        SpeechSegment(text, language: nil)
+        let localized = text.isEmpty ? "" : String(localized: String.LocalizationValue(text))
+        return SpeechSegment(localized, language: nil)
+    }
+    
+    static func system(localized key: String.LocalizationValue) -> SpeechSegment {
+        SpeechSegment(String(localized: key), language: nil)
     }
 }
 
@@ -445,7 +467,7 @@ extension NSAttributedString {
 }
 
 extension SpeechLanguageLabel {
-    init(_ segments: SpeechSegment..., traits: UIAccessibilityTraits = .none) {
-        self.init(text: .composed(segments), traits: traits)
+    init(_ segments: SpeechSegment..., traits: UIAccessibilityTraits = .none, onActivate: (() -> Void)? = nil) {
+        self.init(text: .composed(segments), traits: traits, onActivate: onActivate)
     }
 }

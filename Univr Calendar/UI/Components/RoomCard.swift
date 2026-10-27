@@ -12,6 +12,7 @@ import UnivrCore
 
 struct RoomCard: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
     
     var room: Room
     var selectedDate: Date
@@ -35,14 +36,21 @@ struct RoomCard: View {
             .background(backgroundLayer)
             .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
             .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 35, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: 35, style: .continuous))
             .hoverEffect(.lift)
+            .accessibilityHidden(true)
+            .overlay {
+                if voiceOverEnabled {
+                    SpeechLanguageLabel(
+                        .it(room.name),
+                        .system(currentStatus.statusText),
+                        traits: .button
+                    )
+                    .accessibilityValue(subsequentEventsValue(count: subsequentEventsCount) ?? Text(""))
+                    .accessibilityHint(Text("Tocca due volte per aprire i dettagli"))
+                }
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 35, style: .continuous))
             .padding(.horizontal)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text("\(room.name), \(currentStatus.statusText)"))
-            .accessibilityValue(subsequentEventsValue(count: subsequentEventsCount) ?? Text(""))
-            .accessibilityAddTraits(.isButton)
-            .accessibilityHint(Text("Tocca due volte per aprire i dettagli"))
         }
     }
 

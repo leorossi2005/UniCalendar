@@ -11,6 +11,8 @@ import SwiftUI
 import UnivrCore
 
 struct DeveloperProfileView: View {
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    
     @State private var appear = false
     @State private var rotateRings = false
     
@@ -109,11 +111,13 @@ struct DeveloperProfileView: View {
                         }
                         .offset(y: 120)
                         .overlay {
-                            SpeechLanguageLabel(
-                                .it(AppConstants.AppInfo.developerName),
-                                .system(", \(String(localized: "SVILUPPATORE"))"),
-                                traits: .header
-                            )
+                            if voiceOverEnabled {
+                                SpeechLanguageLabel(
+                                    .it(AppConstants.AppInfo.developerName),
+                                    traits: .header
+                                )
+                                .accessibilityValue("SVILUPPATORE")
+                            }
                         }
                         
                         Text("Questo sono io ↓")

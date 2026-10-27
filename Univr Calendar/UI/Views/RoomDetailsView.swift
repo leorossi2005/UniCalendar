@@ -14,25 +14,33 @@ import CustomSheet
 struct RoomDetailsView: View {
     var room: Room
     var selectedDate: Date
+    @AccessibilityFocusState private var isHeaderFocused: Bool
     
     var body: some View {
         TimelineView(.everyMinute) { context in
             let currentStatus = RoomDailyStatus(room: room, selectedDate: selectedDate, now: context.date)
             
             VStack(alignment: .leading, spacing: 20) {
-                HeaderInfo(room: room, status: currentStatus)
+                HeaderInfo(room: room, status: currentStatus, isHeaderFocused: $isHeaderFocused)
                 Timeline(room: room, status: currentStatus, now: context.date)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 24)
             .padding(.top, 24)
         }
+        .task {
+            try? await Task.sleep(for: .milliseconds(200))
+            isHeaderFocused = true
+        }
     }
 }
 
 private struct HeaderInfo: View {
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    
     let room: Room
     let status: RoomDailyStatus
+    var isHeaderFocused: AccessibilityFocusState<Bool>.Binding
     
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
@@ -43,10 +51,23 @@ private struct HeaderInfo: View {
                 .font(.title3)
                 .contentShape(.rect)
         }
+        .accessibilityHidden(true)
+        .overlay {
+            if voiceOverEnabled {
+                SpeechLanguageLabel(
+                    .it(room.name),
+                    traits: .header
+                )
+                .accessibilityValue(status.statusText)
+                .accessibilityFocused(isHeaderFocused)
+            }
+        }
     }
 }
 
 private struct Timeline: View {
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    
     let room: Room
     let status: RoomDailyStatus
     let now: Date
@@ -77,6 +98,8 @@ private struct Timeline: View {
                             }
                             Color.clear
                         }
+                        .accessibilityHidden(true)
+                        
                         ForEach(Array(room.events.enumerated()), id: \.element.id) { index, event in
                             GridRow {
                                 if event.startTime == now {
@@ -91,6 +114,8 @@ private struct Timeline: View {
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .foregroundStyle(event.startTime <= now ? Color.primary : Color.red)
                             }
+                            .accessibilityHidden(true)
+                            
                             GridRow {
                                 VStack(spacing: 0) {
                                     if event.endTime <= now {
@@ -107,10 +132,20 @@ private struct Timeline: View {
                                             .frame(minHeight: 48)
                                     }
                                 }
+                                .accessibilityHidden(true)
+                                
                                 Text(event.cleanName ?? event.name)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.vertical, 16)
+                                    .accessibilityHidden(true)
+                                    .overlay {
+                                        if voiceOverEnabled {
+                                            SpeechLanguageLabel(.it(event.cleanName ?? event.name))
+                                                .accessibilityValue(eventValue(event: event))
+                                        }
+                                    }
                             }
+                            
                             let isLast = index == room.events.count - 1
                             let hasGap = !isLast && event.endTime != room.events[index + 1].startTime
                             if isLast || hasGap {
@@ -127,6 +162,8 @@ private struct Timeline: View {
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .foregroundStyle(event.endTime <= now ? Color.primary : Color.green)
                                 }
+                                .accessibilityHidden(true)
+                                
                                 let nextStartTime = isLast ? endOfDay : room.events[index + 1].startTime
                                 
                                 GridRow {
@@ -145,7 +182,11 @@ private struct Timeline: View {
                                                 .frame(height: 48)
                                         }
                                     }
+                                    .accessibilityHidden(true)
                                     Color.clear
+                                        .accessibilityElement(children: .ignore)
+                                        .accessibilityLabel("Aula libera")
+                                        .accessibilityValue(gapValue(start: event.endTime, nextStart: nextStartTime, isLast: isLast))
                                 }
                             }
                         }
@@ -155,6 +196,8 @@ private struct Timeline: View {
             } else if status == .pastDay {
                 VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
                     .frame(maxHeight: .infinity)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Nessun evento, giornata conclusa")
             } else if status == .freeAllDay {
                 Grid(verticalSpacing: 8) {
                     GridRow {
@@ -169,11 +212,49 @@ private struct Timeline: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Nessuna lezione in programma, aula libera per tutta la giornata")
             } else {
                 VerticalLine(color: .green, lineWidth: 4)
                     .frame(maxHeight: .infinity)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Nessuna lezione in programma, aula libera per tutta la giornata")
             }
         }
+    }
+    
+    private func eventValue(event: Event) -> String {
+        let start = event.startTime.formatted(.dateTime.hour().minute())
+        let end = event.endTime.formatted(.dateTime.hour().minute())
+        var value = String(localized: "Dalle \(start) alle \(end)")
+        
+        if event.startTime <= now && event.endTime > now {
+            value += ", " + String(localized: "In corso adesso")
+        } else if event.endTime <= now {
+            value += ", " + String(localized: "Conclusa")
+        }
+        
+        return value
+    }
+    
+    private func gapValue(start: Date, nextStart: Date, isLast: Bool) -> String {
+        let startStr = start.formatted(.dateTime.hour().minute())
+        var value = ""
+        
+        if isLast {
+            value = String(localized: "Dalle \(startStr) a fine giornata")
+        } else {
+            let endStr = nextStart.formatted(.dateTime.hour().minute())
+            value = String(localized: "Dalle \(startStr) alle \(endStr)")
+        }
+        
+        if start <= now && nextStart > now {
+            value += ", " + String(localized: "In corso adesso")
+        } else if nextStart <= now || status == .pastDay {
+            value += ", " + String(localized: "Conclusa")
+        }
+        
+        return value
     }
     
     private var nowIndicator: some View {
@@ -185,6 +266,7 @@ private struct Timeline: View {
                     .frame(height: 10)
             }
             .padding(.vertical, 8)
+            .accessibilityHidden(true)
     }
 }
 
