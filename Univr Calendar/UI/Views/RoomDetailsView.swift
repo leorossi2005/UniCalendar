@@ -187,6 +187,7 @@ private struct Timeline: View {
                                         .accessibilityElement(children: .ignore)
                                         .accessibilityLabel("Aula libera")
                                         .accessibilityValue(gapValue(start: event.endTime, nextStart: nextStartTime, isLast: isLast))
+                                        .accessibilityInputLabels([""])
                                 }
                             }
                         }

@@ -56,6 +56,14 @@ struct NotificationsView: View {
                             ForEach(courseNotifications) { notification in
                                 notificationRow(for: notification)
                             }
+                            .onDelete { indexSet in
+                                for index in indexSet {
+                                    let notification = courseNotifications[index]
+                                    Task {
+                                        await notificationManager.removeNotification(id: notification.id)
+                                    }
+                                }
+                            }
                         } header: {
                             let courseName = groupedNotifications[courseId]?.first?.courseName ?? "Corso Sconosciuto"
                             Text(courseName)
@@ -103,15 +111,6 @@ struct NotificationsView: View {
                 }
             }
             .padding(.vertical, 4)
-        }
-        .swipeActions(edge: .trailing) {
-            Button(role: .destructive) {
-                Task {
-                    await notificationManager.removeNotification(id: notification.id)
-                }
-            } label: {
-                Label("Elimina", systemImage: "trash")
-            }
         }
     }
 }

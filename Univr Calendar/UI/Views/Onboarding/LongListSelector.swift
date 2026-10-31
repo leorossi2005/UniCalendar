@@ -198,7 +198,7 @@ struct LongListSelector<Item: SelectableItem>: View {
             .buttonStyle(.plain)
             .opacity(isFocused ? 0 : 1)
             .allowsHitTesting(!isFocused)
-            .accessibilityHidden(true)
+            .accessibilityHidden(voiceOverEnabled)
             .overlay {
                 if voiceOverEnabled && !isFocused {
                     SpeechLanguageLabel(
@@ -249,7 +249,7 @@ struct LongListSelector<Item: SelectableItem>: View {
                                 }
                                 .buttonStyle(.plain)
                                 .id(item.id)
-                                .accessibilityHidden(true)
+                                .accessibilityHidden(voiceOverEnabled)
                                 .overlay {
                                     if voiceOverEnabled {
                                         SpeechLanguageLabel(

@@ -55,6 +55,8 @@ struct FeedbackView: View {
                             title = String(title.prefix(FeedbackLimits.titleMax))
                         }
                     }
+                    .accessibilityLabel("Titolo")
+                    .accessibilityInputLabels(["Titolo"])
             } header: {
                 Text("Titolo")
             } footer: {
@@ -69,6 +71,8 @@ struct FeedbackView: View {
                             details = String(details.prefix(FeedbackLimits.detailsMax))
                         }
                     }
+                    .accessibilityLabel("Descrizione")
+                    .accessibilityInputLabels(["Descrizione"])
             } header: {
                 Text("Descrizione")
             } footer: {
@@ -188,6 +192,7 @@ struct FeedbackView: View {
             .accessibilityLabel("Screenshot allegato")
             .accessibilityHint("Usa le azioni del rotore per rimuovere")
             .accessibilityAction(named: "Rimuovi screenshot") { pickerItem = nil }
+            .accessibilityInputLabels(["Rimuovi"])
         } else {
             PhotosPicker(selection: $pickerItem, matching: .images) { [isLoadingImage] in
                 HStack {

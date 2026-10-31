@@ -53,7 +53,7 @@ struct LongListSelectorSettings<Item: SelectableItem>: View {
                         .contentShape(.rect)
                     }
                     .id(item.id)
-                    .accessibilityHidden(true)
+                    .accessibilityHidden(voiceOverEnabled)
                     .overlay {
                         if voiceOverEnabled {
                             SpeechLanguageLabel(

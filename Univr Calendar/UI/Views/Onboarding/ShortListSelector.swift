@@ -15,6 +15,7 @@ struct ShortListSelector<Item: SelectableItem>: View {
     
     let items: [Item]
     var lang: String? = nil
+    var inputLabelsProvider: ((Item) -> [String])? = nil
     @Binding var selectedItem: String
     
     var body: some View {
@@ -51,7 +52,7 @@ struct ShortListSelector<Item: SelectableItem>: View {
                         RoundedRectangle(cornerRadius: 24, style: .continuous)
                             .strokeBorder(Color.accentColor.opacity(isSelected ? 0.6 : 0), lineWidth: 1.5)
                     }
-                    .accessibilityHidden(true)
+                    .accessibilityHidden(voiceOverEnabled)
                     .overlay {
                         if voiceOverEnabled {
                             SpeechLanguageLabel(
@@ -66,12 +67,39 @@ struct ShortListSelector<Item: SelectableItem>: View {
                         }
                     }
                     .contentShape(.rect(cornerRadius: 24, style: .continuous))
+                    .accessibilityInputLabels(inputLabels(for: item))
                 }
                 .buttonStyle(.plain)
             }
         }
         .animation(.snappy(duration: 0.25), value: selectedItem)
         .padding(.top, 16)
+    }
+    
+    private func inputLabels(for item: Item) -> [String] {
+        if let custom = inputLabelsProvider?(item), !custom.isEmpty {
+            return custom
+        }
+        
+        let raw = item.label
+        
+        if raw.contains("/") {
+            if let first = raw.components(separatedBy: "/").first?.trimmingCharacters(in: .whitespaces), !first.isEmpty {
+                return [first]
+            }
+        }
+        
+        if item is SelectableOption {
+            let localized = String(localized: String.LocalizationValue(raw))
+            return [localized, raw]
+        }
+        
+        var labels: [String] = [raw]
+        
+        if let firstChar = raw.first, firstChar.isNumber {
+            labels.insert(String(firstChar), at: 0)
+        }
+        return labels
     }
 }
 

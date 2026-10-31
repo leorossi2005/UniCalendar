@@ -716,6 +716,16 @@
         }
       }
     },
+    "Compresso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compressed"
+          }
+        }
+      }
+    },
     "Comprimi tutto" : {
       "localizations" : {
         "en" : {
@@ -1052,6 +1062,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Expand all"
+          }
+        }
+      }
+    },
+    "Espanso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expanded"
           }
         }
       }
@@ -1499,6 +1519,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Send me a mail"
+          }
+        }
+      }
+    },
+    "Mappa" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map"
           }
         }
       }
@@ -2469,6 +2499,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tap twice to open the location in Apple Maps"
+          }
+        }
+      }
+    },
+    "Tocca due volte per espandere o comprimere" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap twice to expand or compress"
           }
         }
       }

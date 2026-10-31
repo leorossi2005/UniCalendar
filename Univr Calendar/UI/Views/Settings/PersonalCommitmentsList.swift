@@ -50,6 +50,7 @@ struct PersonalCommitmentsList: View {
                                     .opacity(0)
                                     
                                     CalendarItemCard(item: .personal(event), internalItem: event)
+                                        .padding(.horizontal)
                                 }
                                 .accessibilityElement(children: .combine)
                                 .accessibilitySortPriority(0)

@@ -170,7 +170,10 @@ struct CardItemContainer: View {
             PauseCard(item: internalItem)
         } else {
             CalendarItemCard(item: item, internalItem: internalItem)
-                .accessibilityHidden(true)
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityInputLabels([internalItem.displayTitle])
+                .accessibilityHidden(voiceOverEnabled)
                 .overlay {
                     if voiceOverEnabled {
                         let tagsText = internalItem.tagsItems.prefix(3).map(\.name).joined(separator: ", ")
@@ -189,10 +192,10 @@ struct CardItemContainer: View {
                         )
                         .accessibilityValue(internalItem.isCanceled ? "Annullata" : "")
                         .accessibilityHint(Text("Tocca due volte per aprire i dettagli"))
-                        .accessibilityActions {
-                            contextMenuButtons
-                        }
                     }
+                }
+                .accessibilityActions {
+                    contextMenuButtons
                 }
                 .contentShape(RoundedRectangle(cornerRadius: 35, style: .continuous))
                 .padding(.horizontal)

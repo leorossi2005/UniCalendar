@@ -61,7 +61,7 @@ struct Settings: View {
                         }
                     }
                 }
-                .accessibilityHidden(true)
+                .accessibilityHidden(voiceOverEnabled)
                 .overlay {
                     if voiceOverEnabled {
                         let courseName = viewModel.courses.first { $0.id == tempSettings.selectedCourse }?.label
@@ -109,7 +109,7 @@ struct Settings: View {
                                         .truncationMode(.tail)
                                 }
                             }
-                            .accessibilityHidden(true)
+                            .accessibilityHidden(voiceOverEnabled)
                             .overlay {
                                 if voiceOverEnabled {
                                     let courseYearName = viewModel.academicYears.first { $0.id == tempSettings.selectedAcademicYear }?.label
@@ -273,6 +273,9 @@ struct Settings: View {
         .navigationTitle("Impostazioni")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
+            let shouldLock = tempSettings.selectedCourse == "0" || tempSettings.selectedAcademicYear == "0"
+            sheetManager.setLock(shouldLock)
+            
             viewModel.activate()
             loadInitialData()
         }

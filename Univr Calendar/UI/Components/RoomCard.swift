@@ -37,7 +37,10 @@ struct RoomCard: View {
             .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
             .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 35, style: .continuous))
             .hoverEffect(.lift)
-            .accessibilityHidden(true)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityInputLabels([room.name])
+            .accessibilityHidden(voiceOverEnabled)
             .overlay {
                 if voiceOverEnabled {
                     SpeechLanguageLabel(

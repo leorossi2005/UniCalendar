@@ -295,17 +295,23 @@ struct CalendarItemDetailsView: View {
                 text: "\(internalItem.startTime.formatted(.dateTime.hour().minute())) - \(internalItem.endTime.formatted(.dateTime.hour().minute())) (\(Duration.seconds(internalItem.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow))))",
                 icon: "clock.fill"
             )
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text("Dalle \(item.startTime, format: .dateTime.hour().minute()) alle \(internalItem.endTime, format: .dateTime.hour().minute()), durata \(Duration.seconds(internalItem.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .wide)))"))
+            .if(voiceOverEnabled) { view in
+                view
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Text("Dalle \(item.startTime, format: .dateTime.hour().minute()) alle \(internalItem.endTime, format: .dateTime.hour().minute()), durata \(Duration.seconds(internalItem.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .wide)))"))
+            }
             switch item {
             case .lesson(let lesson):
                 rowLabel(
                     text: lesson.teachers.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.teachers.joined(separator: ", ")),
                     icon: !lesson.teachers.isEmpty && lesson.teachers.count > 1 ? "person.2.fill" : "person.fill"
                 )
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(!lesson.teachers.isEmpty && lesson.teachers.count > 1 ? "Docenti" : "Docente")
-                .accessibilityValue(lesson.teachers.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.teachers.joined(separator: ", ")))
+                .if(voiceOverEnabled) { view in
+                    view
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(!lesson.teachers.isEmpty && lesson.teachers.count > 1 ? "Docenti" : "Docente")
+                        .accessibilityValue(lesson.teachers.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.teachers.joined(separator: ", ")))
+                }
                 rowLabel(
                     text: "\(lesson.location?.classroom ?? "") \(lesson.location?.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
                     icon: "mappin"
@@ -323,9 +329,12 @@ struct CalendarItemDetailsView: View {
                         text: LocalizedStringKey(loc),
                         icon: "mappin"
                     )
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("Luogo")
-                    .accessibilityValue(LocalizedStringKey(loc))
+                    .if(voiceOverEnabled) { view in
+                        view
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel("Luogo")
+                            .accessibilityValue(LocalizedStringKey(loc))
+                    }
                 }
             }
         }
@@ -453,6 +462,7 @@ struct StableMapView: View {
                     }
                 }
                 .accessibilityElement(children: .ignore)
+                .accessibilityInputLabels(["Mappa"])
                 .accessibilityLabel("Luogo: \(internalItem.displayAddress ?? "Non Disponibile")")
                 .accessibilityHint("Tocca due volte per aprire la posizione in Apple Maps")
                 .accessibilityAddTraits(.isButton)

@@ -388,6 +388,9 @@ struct FeatureCard: View {
         }
         .animation(animation, value: isExpanded)
         .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityValue(isExpanded ? "Espanso" : "Compresso")
+        .accessibilityHint("Tocca due volte per espandere o comprimere")
         .contentShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
     }
 }
