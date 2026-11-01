@@ -78,6 +78,7 @@ struct AppNoticesListView: View {
 }
 
 private struct NoticeRow: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let notice: AppNotice
     
     private var levelPrefix: String {
@@ -89,21 +90,29 @@ private struct NoticeRow: View {
     }
     
     var body: some View {
+        let headerLayout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 8))
+        
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Image(systemName: notice.level.systemImage)
-                    .foregroundStyle(notice.level.tintColor)
-                    .font(.title2)
-                    .accessibilityHidden(true)
+            headerLayout {
+                HStack(spacing: 8) {
+                    Image(systemName: notice.level.systemImage)
+                        .foregroundStyle(notice.level.tintColor)
+                        .font(.title2)
+                        .accessibilityHidden(true)
+                    
+                    Text(notice.localizedTitle)
+                        .font(.headline)
+                        .lineLimit(2)
+                        .accessibilityLabel("\(levelPrefix): \(notice.localizedTitle)")
+                }
                 
-                Text(notice.localizedTitle)
-                    .font(.headline)
-                    .lineLimit(2)
-                    .accessibilityLabel("\(levelPrefix): \(notice.localizedTitle)")
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Spacer(minLength: 8)
+                }
                 
-                Spacer()
-                
-                VStack(alignment: .trailing) {
+                VStack(alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .trailing) {
                     if let endsAt = notice.endsAt {
                         Text("Dal \(notice.startsAt.formatted(date: .numeric, time: .omitted))")
                             .font(.caption)

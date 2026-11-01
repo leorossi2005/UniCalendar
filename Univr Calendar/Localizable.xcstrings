@@ -480,6 +480,16 @@
         }
       }
     },
+    "Apri in Mappe" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in maps"
+          }
+        }
+      }
+    },
     "Area Personale" : {
       "localizations" : {
         "en" : {

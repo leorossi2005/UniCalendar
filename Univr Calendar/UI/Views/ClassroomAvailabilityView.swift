@@ -66,8 +66,8 @@ struct ClassroomAvailabilityView: View {
         }
         .disabled(availabilityManager.state == .offline || availabilityManager.state == .serverUnreachable || availabilityManager.state == .univrOffline)
         .tint(.primary)
+        .padding(.vertical)
         .frame(maxWidth: .infinity)
-        .frame(height: 48)
         .background(Color(.secondarySystemBackground))
         .cornerRadius(35)
         .padding(.horizontal)

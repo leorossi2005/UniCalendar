@@ -139,6 +139,7 @@ private struct Timeline: View {
                 .gridCellColumns(3)
             }
         }
+        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
     }
     
     private var nowIndicator: some View {
@@ -161,33 +162,33 @@ private struct Timeline: View {
                 Circle()
                     .fill(.red)
                     .frame(height: 12)
-                    .overlay {
+                    .overlay(alignment: .bottom) {
                         Text(event.startTime, format: .dateTime.hour().minute())
                             .foregroundStyle(.red)
                             .fixedSize()
                             .font(.caption)
-                            .offset(y: -16)
+                            .padding(.bottom, 16)
                     }
             }
             HorizontalLine(color: .red.opacity(0.9), lineWidth: 4)
             Circle()
                 .fill(after ? .red : .green)
                 .frame(height: 12)
-                .overlay {
+                .overlay(alignment: .bottom) {
                     Text(event.endTime, format: .dateTime.hour().minute())
                         .foregroundStyle(after ? .red : .green)
                         .fixedSize()
                         .font(.caption)
-                        .offset(y: -16)
+                        .padding(.bottom, 16)
                 }
             HorizontalLine(color: after ? .red : .green, lineWidth: 4)
-                .overlay(alignment: .trailing) {
+                .overlay(alignment: .bottomTrailing) {
                     if subsequentEventsCount > 0 {
                         Text("+\(subsequentEventsCount)")
                             .foregroundStyle(Color(.lightGray))
                             .fixedSize()
                             .font(.caption)
-                            .offset(y: -16)
+                            .padding(.bottom, 12)
                     }
                 }
         }

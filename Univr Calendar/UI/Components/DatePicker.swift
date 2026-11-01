@@ -173,6 +173,7 @@ struct DatePickerContainer: View {
             .accessibilityHint(internalIndex < 11 ? "Tocca due volte per andare al mese successivo" : "")
             .accessibilitySortPriority(0)
         }
+        .dynamicTypeSize(.large)
     }
     
     // MARK: - Helper di navigazione

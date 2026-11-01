@@ -17,6 +17,7 @@ import CustomSheet
 struct CalendarItemDetailsView: View {
     @Environment(GlobalSheetManager.self) private var sheetManager
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.dismiss) var dismiss
     
@@ -56,60 +57,21 @@ struct CalendarItemDetailsView: View {
                 )
                 .ignoresSafeArea()
             } else {
-                VStack(alignment: .leading, spacing: 20) {
-                    headerInfo
-                    detailRows
-                    
-                    if case .personal(let event) = item, let notes = event.notes, !notes.isEmpty {
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("Note")
-                                .font(.headline.bold())
-                                .foregroundStyle(.secondary)
-                                .padding(.leading)
-                            Text(notes)
-                                .font(.body)
-                                .lineLimit(5)
-                                .padding(16)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .opacity(0)
-                                .accessibilityHidden(true)
-                                .background(
-                                    Color(colorScheme == .dark ? .secondarySystemGroupedBackground : .tertiarySystemGroupedBackground),
-                                    in: RoundedRectangle(cornerRadius: .deviceCornerRadius - 16)
-                                )
-                                .overlay {
-                                    ScrollView {
-                                        Text(notes)
-                                            .font(.body)
-                                            .foregroundColor(.secondary)
-                                            .padding(16)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                    }
-                                    .scrollBounceBehavior(.basedOnSize)
-                                }
-                                .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 16))
+                Group {
+                    if dynamicTypeSize >= .accessibility2 {
+                        ScrollView {
+                            mainContent
+                                .padding(.horizontal, 24)
+                                .padding(.bottom, 24)
                         }
-                    }
-                    
-                    if case .lesson = item {
-                        StableMapView(
-                            item: item,
-                            internalItem: internalItem,
-                            corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
-                        )
-                    } else if case .personal = item, internalItem.displayCoordinates != nil {
-                        StableMapView(
-                            item: item,
-                            internalItem: internalItem,
-                            corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
-                        )
+                        .scrollBounceBehavior(.basedOnSize)
                     } else {
-                        Spacer()
+                        mainContent
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 24)
+                            .ignoresSafeArea(edges: .bottom)
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 24)
-                .ignoresSafeArea(edges: .bottom)
                 .navigationTitle("")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -237,6 +199,74 @@ struct CalendarItemDetailsView: View {
     }
     
     // MARK: - Subviews
+    @ViewBuilder
+    private var mainContent: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            headerInfo
+            detailRows
+            
+            if case .personal(let event) = item, let notes = event.notes, !notes.isEmpty {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Note")
+                        .font(.headline.bold())
+                        .foregroundStyle(.secondary)
+                        .padding(.leading)
+                    
+                    if dynamicTypeSize >= .accessibility2 {
+                        Text(notes)
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                Color(colorScheme == .dark ? .secondarySystemGroupedBackground : .tertiarySystemGroupedBackground),
+                                in: RoundedRectangle(cornerRadius: .deviceCornerRadius - 16 <= 0 ? 10 : .deviceCornerRadius - 16)
+                            )
+                    } else {
+                        Text(notes)
+                            .font(.body)
+                            .lineLimit(5)
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .opacity(0)
+                            .accessibilityHidden(true)
+                            .background(
+                                Color(colorScheme == .dark ? .secondarySystemGroupedBackground : .tertiarySystemGroupedBackground),
+                                in: RoundedRectangle(cornerRadius: .deviceCornerRadius - 16 <= 0 ? 10 : .deviceCornerRadius - 16)
+                            )
+                            .overlay {
+                                ScrollView {
+                                    Text(notes)
+                                        .font(.body)
+                                        .foregroundColor(.secondary)
+                                        .padding(16)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+                                .scrollBounceBehavior(.basedOnSize)
+                            }
+                            .clipShape(RoundedRectangle(cornerRadius: .deviceCornerRadius - 16 <= 0 ? 10 : .deviceCornerRadius - 16))
+                    }
+                }
+            }
+            
+            if case .lesson = item {
+                StableMapView(
+                    item: item,
+                    internalItem: internalItem,
+                    corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
+                )
+            } else if case .personal = item, internalItem.displayCoordinates != nil {
+                StableMapView(
+                    item: item,
+                    internalItem: internalItem,
+                    corderRadius: .deviceCornerRadius - 24 <= 0 ? 10 : .deviceCornerRadius - 24
+                )
+            } else if dynamicTypeSize < .accessibility2 {
+                Spacer()
+            }
+        }
+    }
+    
     private var headerInfo: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(internalItem.displayTitle)
@@ -441,13 +471,97 @@ struct CalendarItemDetailsView: View {
 
 // MARK: - Subviews
 struct StableMapView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    
     let item: CalendarItem
     let internalItem: any CalendarDisplayable
     @State var externalCoordinate: CLLocationCoordinate2D?
     @State var corderRadius: CGFloat
     @State private var isLoadingMap: Bool = false
     
+    private var isCompactMode: Bool {
+        dynamicTypeSize >= .accessibility2
+    }
+    
     var body: some View {
+        if isCompactMode {
+            compactView
+                .task(id: item.id) {
+                    await findLocation()
+                }
+        } else {
+            fullMapView
+                .task(id: item.id) {
+                    await findLocation()
+                }
+        }
+    }
+    
+    @ViewBuilder
+    private var compactView: some View {
+        if let coordinate = externalCoordinate {
+            Button {
+                Haptics.play(.impact(weight: .light))
+                openMaps(coordinate: coordinate, name: internalItem.displayLocation ?? "")
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: "map.fill")
+                        .font(.headline)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Apri in Mappe")
+                            .font(.headline)
+                        if let address = internalItem.displayAddress, !address.isEmpty {
+                            Text(address)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .multilineTextAlignment(.leading)
+                    
+                    Image(systemName: "arrow.up.right.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(16)
+                .background(
+                    uiColor.opacity(0.25),
+                    in: RoundedRectangle(cornerRadius: corderRadius, style: .continuous)
+                )
+                .contentShape(RoundedRectangle(cornerRadius: corderRadius, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .accessibilityElement(children: .ignore)
+            .accessibilityInputLabels(["Mappa", "Apri in Mappe"])
+            .accessibilityLabel("Luogo: \(internalItem.displayAddress ?? "Non Disponibile")")
+            .accessibilityHint("Tocca due volte per aprire la posizione in Apple Maps")
+            .accessibilityAddTraits(.isButton)
+        } else if isLoadingMap {
+            ProgressView()
+                .frame(maxWidth: .infinity)
+                .padding()
+        } else {
+            HStack(spacing: 12) {
+                Image(systemName: "mappin.slash")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                Text(item.isLesson ? "Posizione non disponibile" : "Posizione non trovata")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(16)
+            .background(
+                Color.gray.opacity(0.1),
+                in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+            )
+            .accessibilityElement(children: .combine)
+        }
+    }
+    
+    @ViewBuilder
+    private var fullMapView: some View {
         ZStack {
             if let coordinate = externalCoordinate {
                 ZStack {
@@ -493,9 +607,6 @@ struct StableMapView: View {
         .background(Color.gray.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: corderRadius))
         .contentShape(RoundedRectangle(cornerRadius: corderRadius))
-        .task(id: item.id) {
-            await findLocation()
-        }
     }
     
     private var uiColor: Color {
@@ -527,8 +638,8 @@ struct StableMapView: View {
             }
             
             Text(internalItem.displayAddress ?? "Non Disponibile")
-                .frame(height: 10)
                 .font(.caption.bold())
+                .multilineTextAlignment(.center)
                 .foregroundStyle(.primary)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)

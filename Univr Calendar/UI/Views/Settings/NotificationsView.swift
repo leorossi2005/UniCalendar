@@ -12,6 +12,8 @@ import SwiftData
 import UnivrCore
 
 struct NotificationsView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    
     private var notificationManager = NotificationManager.shared
     
     var groupedNotifications: [String: [SavedNotification]] {
@@ -82,8 +84,12 @@ struct NotificationsView: View {
     }
     
     private func notificationRow(for notification: SavedNotification) -> some View {
-        NavigationLink(destination: EditNotificationView(notification: notification)) {
-            HStack(alignment: .top) {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+        
+        return NavigationLink(destination: EditNotificationView(notification: notification)) {
+            layout {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(notification.lessonName)
                         .font(.headline)
@@ -92,14 +98,14 @@ struct NotificationsView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     
-                    HStack(spacing: 6) {
-                        Image(systemName: "clock")
-                        Text(notification.offsetMinutes == 0 ? "Suona all'inizio della lezione" : "Suona \(notification.offsetMinutes) minuti prima")
-                    }
+                    Label(
+                        notification.offsetMinutes == 0 ? "Suona all'inizio della lezione" : "Suona \(notification.offsetMinutes) minuti prima",
+                        systemImage: "clock"
+                    )
                     .font(.caption)
                     .foregroundStyle(.blue)
                 }
-                Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
                 
                 if !notification.courseYear.isEmpty && notification.courseYear != "Year" {
                     Text(notification.courseYear)

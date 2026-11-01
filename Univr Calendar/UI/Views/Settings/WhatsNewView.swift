@@ -307,6 +307,8 @@ struct WhatsNewView: View {
 
 // MARK: - Feature Card
 struct FeatureCard: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    
     @Namespace var namespace
     
     let feature: WhatsNewFeature
@@ -315,6 +317,8 @@ struct FeatureCard: View {
     let onToggle: () -> Void
     
     var body: some View {
+        let isAX = dynamicTypeSize.isAccessibilitySize
+        
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: isExpanded ? .center : .top, spacing: 14) {
                 // Icon
@@ -322,8 +326,7 @@ struct FeatureCard: View {
                     switch feature.icon {
                     case .system(let name):
                         Image(systemName: name)
-                            .font(.title3)
-                            .fontWeight(.semibold)
+                            .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(feature.accentColor.color)
                             .symbolEffect(.bounce, value: isExpanded)
                     case .asset(let name):
@@ -348,7 +351,7 @@ struct FeatureCard: View {
                         .fontWeight(.semibold)
                         .accessibilityAddTraits(.isHeader)
                     
-                    if !isExpanded {
+                    if !isExpanded && !isAX {
                         Text(feature.shortDescription)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -357,9 +360,8 @@ struct FeatureCard: View {
                     }
                 }
                 
-                Spacer(minLength: 0)
+                Spacer(minLength: 8)
                 
-                // Expand indicator
                 Image(systemName: "chevron.down.circle")
                     .font(.title3)
                     .foregroundStyle(.tertiary)
@@ -367,7 +369,14 @@ struct FeatureCard: View {
                     .accessibilityHidden(true)
             }
             
-            // Expanded details
+            if !isExpanded && isAX {
+                Text(feature.shortDescription)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .matchedGeometryEffect(id: "text", in: namespace, properties: .position, anchor: .topLeading)
+                    .transition(.blurReplace.combined(with: .scale(2)))
+            }
+            
             if isExpanded {
                 Text(feature.detailedDescription)
                     .font(.subheadline)

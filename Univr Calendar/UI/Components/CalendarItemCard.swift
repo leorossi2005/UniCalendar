@@ -11,11 +11,16 @@ import SwiftUI
 import UnivrCore
 
 struct CalendarItemCard: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    
     let item: CalendarItem
     let internalItem: any CalendarDisplayable
     
     var body: some View {
-        HStack(alignment: .top, spacing: 20) {
+        let isExtremeAX = dynamicTypeSize >= .accessibility4
+        let layout = isExtremeAX ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12)) : AnyLayout(HStackLayout(alignment: .top, spacing: 20))
+        
+        layout {
             timeInfo
             itemInfo
         }
@@ -136,9 +141,9 @@ struct PauseCard: View {
     var body: some View {
         HStack(alignment: .bottom) {
             Image(systemName: .cupDynamic)
-                .font(.system(size: 40))
+                .font(.largeTitle)
             Text(time(width: .narrow))
-                .font(.system(size: 30).bold().italic())
+                .font(.title.bold().italic())
         }
         .foregroundStyle(.secondary)
         .accessibilityElement(children: .combine)
