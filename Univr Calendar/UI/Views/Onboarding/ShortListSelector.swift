@@ -18,7 +18,21 @@ struct ShortListSelector<Item: SelectableItem>: View {
     var inputLabelsProvider: ((Item) -> [String])? = nil
     @Binding var selectedItem: String
     
+    @State private var listHeight: CGFloat?
+
     var body: some View {
+        ScrollView {
+            list
+                .onGeometryChange(for: CGFloat.self, of: \.size.height) { listHeight = $0 + 24 }
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .frame(maxHeight: listHeight ?? .infinity)
+        .clipped()
+        .animation(.snappy(duration: 0.25), value: selectedItem)
+        .padding(.top, 16)
+    }
+    
+    private var list: some View {
         VStack(spacing: 12) {
             ForEach(items) { item in
                 let isSelected = selectedItem == item.id
@@ -42,8 +56,7 @@ struct ShortListSelector<Item: SelectableItem>: View {
                             .foregroundStyle(isSelected ? Color.accentColor : .secondary.opacity(0.3))
                             .symbolReplace()
                     }
-                    .padding(.horizontal, 16)
-                    .frame(height: 56)
+                    .padding(16)
                     .background(
                         isSelected ? Color(.secondarySystemFill) : Color(.tertiarySystemFill),
                         in: .rect(cornerRadius: 24, style: .continuous)
@@ -72,8 +85,6 @@ struct ShortListSelector<Item: SelectableItem>: View {
                 .buttonStyle(.plain)
             }
         }
-        .animation(.snappy(duration: 0.25), value: selectedItem)
-        .padding(.top, 16)
     }
     
     private func inputLabels(for item: Item) -> [String] {

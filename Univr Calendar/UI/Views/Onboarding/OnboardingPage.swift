@@ -52,30 +52,21 @@ struct OnboardingPage<Content: View>: View {
                             Spacer(minLength: 0)
                         }
                         
-                        VStack(spacing: 12) {
-                            Text(title)
-                                .font(.largeTitle.bold())
-                                .fixedSize(horizontal: false, vertical: true)
-                                .opacity(isSearching ? 0 : (showTitle ? 1 : 0))
-                                .blur(radius: isSearching ? 16 : (showTitle ? 0 : 8))
-                                .scaleEffect(isSearching ? 0.94 : (showTitle ? 1 : 0.95))
-                                .offset(y: isSearching ? -36 : (showTitle ? 0 : 28))
-                                .accessibilityAddTraits(.isHeader)
-                            
-                            Text(styledSubtitle)
-                                .font(.body)
-                                .lineSpacing(2)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .opacity(isSearching ? 0 : (showSubtitle ? 1 : 0))
-                                .blur(radius: isSearching ? 16 : (showSubtitle ? 0 : 8))
-                                .scaleEffect(isSearching ? 0.94 : (showSubtitle ? 1 : 0.95))
-                                .offset(y: isSearching ? -28 : (showSubtitle ? 0 : 22))
-                        }
-                        .frame(maxHeight: isSearching ? 0 : nil, alignment: .bottom)
-                        .allowsHitTesting(!isSearching)
-                        .accessibilityElement(children: .combine)
-                        .accessibilityFocused($isHeaderFocused)
-                        .accessibilityHidden(isSearching)
+                        textBlock
+                            .hidden()
+                            .overlay {
+                                ScrollView {
+                                    textBlock
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .scrollBounceBehavior(.basedOnSize)
+                            }
+                            .frame(maxHeight: isSearching ? 0 : nil, alignment: .bottom)
+                            .clipped()
+                            .allowsHitTesting(!isSearching)
+                            .accessibilityElement(children: .combine)
+                            .accessibilityFocused($isHeaderFocused)
+                            .accessibilityHidden(isSearching)
                         
                         content
                             .opacity(showContent ? 1 : 0)
@@ -127,5 +118,29 @@ struct OnboardingPage<Content: View>: View {
         .onChange(of: errorMessage) { _, new in
             if let new { AccessibilityNotification.Announcement(new).post() }
         }
+    }
+    
+    @ViewBuilder
+    private var textBlock: some View {
+        VStack(spacing: 12) {
+            Text(title)
+                .font(.largeTitle.bold())
+                .multilineTextAlignment(.center)
+                .opacity(isSearching ? 0 : (showTitle ? 1 : 0))
+                .blur(radius: isSearching ? 16 : (showTitle ? 0 : 8))
+                .scaleEffect(isSearching ? 0.94 : (showTitle ? 1 : 0.95))
+                .offset(y: isSearching ? -36 : (showTitle ? 0 : 28))
+                .accessibilityAddTraits(.isHeader)
+
+            Text(styledSubtitle)
+                .font(.body)
+                .lineSpacing(2)
+                .multilineTextAlignment(.center)
+                .opacity(isSearching ? 0 : (showSubtitle ? 1 : 0))
+                .blur(radius: isSearching ? 16 : (showSubtitle ? 0 : 8))
+                .scaleEffect(isSearching ? 0.94 : (showSubtitle ? 1 : 0.95))
+                .offset(y: isSearching ? -28 : (showSubtitle ? 0 : 22))
+        }
+        .padding(.horizontal, 24)
     }
 }

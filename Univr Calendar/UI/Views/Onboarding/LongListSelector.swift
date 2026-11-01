@@ -12,6 +12,7 @@ import UnivrCore
 
 struct LongListSelector<Item: SelectableItem>: View {
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    @ScaledMetric(relativeTo: .body) private var closeSize: CGFloat = 52
     
     @Binding var isFocused: Bool
     @Binding var selectedItem: String
@@ -120,10 +121,10 @@ struct LongListSelector<Item: SelectableItem>: View {
                 }
             }
             .padding(.horizontal, 16)
-            .frame(height: 52)
+            .frame(height: closeSize)
             .background(Color(.tertiarySystemFill), in: cardShape)
             .contentShape(cardShape)
-            .padding(.trailing, isFocused ? 62 : 0)
+            .padding(.trailing, isFocused ? closeSize + 10 : 0)
             .animation(.snappy(duration: 0.25), value: searchText.isEmpty)
             .onTapGesture { open() }
             
@@ -142,11 +143,11 @@ struct LongListSelector<Item: SelectableItem>: View {
                 }
             } label: {
                 Image(systemName: "xmark")
+                    .frame(width: closeSize, height: closeSize)
                     .accessibilityHidden(true)
             }
             .font(.body.weight(.bold))
-            .frame(width: 52, height: 52)
-            .background(Color(.tertiarySystemFill), in: .circle)
+            .background(Color(.tertiarySystemFill), in: cardShape)
             .buttonStyle(.plain)
             .scaleEffect(isFocused ? 1.0 : 0.6)
             .offset(x: isFocused ? 0 : -20)
@@ -156,7 +157,6 @@ struct LongListSelector<Item: SelectableItem>: View {
             .accessibilityLabel("Chiudi ricerca")
             .accessibilityHidden(!isFocused)
         }
-        .frame(height: 52)
     }
     
     private var placeholder: some View {
@@ -170,10 +170,10 @@ struct LongListSelector<Item: SelectableItem>: View {
     }
     
     private var resultsCard: some View {
-        ZStack(alignment: .top) {
+        ZStack(alignment: .center) {
             selectedRow
         }
-        .frame(maxWidth: .infinity, maxHeight: isFocused ? .infinity : nil, alignment: .top)
+        .frame(maxWidth: .infinity, maxHeight: isFocused ? .infinity : nil, alignment: .center)
         .background(Color(.tertiarySystemFill), in: cardShape)
         .overlay {
             if isFocused {
@@ -317,8 +317,7 @@ struct LongListSelector<Item: SelectableItem>: View {
                 .foregroundStyle(isSelected ? Color.accentColor : Color.secondary.opacity(0.3))
                 .symbolReplace()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(16)
         .contentShape(.rect)
     }
     

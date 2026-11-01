@@ -64,23 +64,33 @@ struct WelcomeOnboardingPage: View {
                     iconView(size: currentSize)
                         .offset(y: currentOffset)
                     
-                    VStack(spacing: 12) {
-                        Text(title)
-                            .font(.largeTitle.bold())
-                            .opacity(showTitle ? 1 : 0)
-                            .blur(radius: showTitle ? 0 : 8)
-                            .scaleEffect(showTitle ? 1 : 0.95)
-                            .offset(y: showTitle ? 0 : 32)
-                            .accessibilityAddTraits(.isHeader)
-                        
-                        Text(styledSubtitle)
-                            .font(.body)
-                            .lineSpacing(2)
-                            .opacity(showSubtitle ? 1 : 0)
-                            .blur(radius: showSubtitle ? 0 : 8)
-                            .offset(y: showSubtitle ? 0 : 26)
+                    ScrollView {
+                        ZStack {
+                            Color.clear
+                                .containerRelativeFrame(.vertical)
+
+                            VStack(spacing: 12) {
+                                Text(title)
+                                    .font(.largeTitle.bold())
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .opacity(showTitle ? 1 : 0)
+                                    .blur(radius: showTitle ? 0 : 8)
+                                    .scaleEffect(showTitle ? 1 : 0.95)
+                                    .offset(y: showTitle ? 0 : 32)
+                                    .accessibilityAddTraits(.isHeader)
+
+                                Text(styledSubtitle)
+                                    .font(.body)
+                                    .lineSpacing(2)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .opacity(showSubtitle ? 1 : 0)
+                                    .blur(radius: showSubtitle ? 0 : 8)
+                                    .offset(y: showSubtitle ? 0 : 26)
+                            }
+                            .padding(.horizontal, 24)
+                        }
                     }
-                    .padding(.horizontal, 24)
+                    .scrollBounceBehavior(.basedOnSize)
                     .accessibilityElement(children: .combine)
                 }
                 .frame(maxWidth: .infinity)
