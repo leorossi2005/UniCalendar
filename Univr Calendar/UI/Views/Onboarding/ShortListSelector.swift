@@ -11,10 +11,28 @@ import SwiftUI
 import UnivrCore
 
 struct ShortListSelector<Item: SelectableItem>: View {
-    let items: [Item]
-    @Binding var selectedItem: String
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
+    let items: [Item]
+    var lang: String? = nil
+    var inputLabelsProvider: ((Item) -> [String])? = nil
+    @Binding var selectedItem: String
+
     var body: some View {
+        ViewThatFits(in: .vertical) {
+            list
+            
+            ScrollView {
+                list
+            }
+            .scrollBounceBehavior(.basedOnSize)
+        }
+        .animation(.snappy(duration: 0.25), value: selectedItem)
+        .padding(.top, 16)
+    }
+    
+    private var list: some View {
         VStack(spacing: 12) {
             ForEach(items) { item in
                 let isSelected = selectedItem == item.id
@@ -38,8 +56,7 @@ struct ShortListSelector<Item: SelectableItem>: View {
                             .foregroundStyle(isSelected ? Color.accentColor : .secondary.opacity(0.3))
                             .symbolReplace()
                     }
-                    .padding(.horizontal, 16)
-                    .frame(height: 56)
+                    .padding(16)
                     .background(
                         isSelected ? Color(.secondarySystemFill) : Color(.tertiarySystemFill),
                         in: .rect(cornerRadius: 24, style: .continuous)
@@ -48,12 +65,52 @@ struct ShortListSelector<Item: SelectableItem>: View {
                         RoundedRectangle(cornerRadius: 24, style: .continuous)
                             .strokeBorder(Color.accentColor.opacity(isSelected ? 0.6 : 0), lineWidth: 1.5)
                     }
+                    .accessibilityHidden(voiceOverEnabled)
+                    .overlay {
+                        if voiceOverEnabled {
+                            SpeechLanguageLabel(
+                                lang != nil ? .it(item.label) : .system(item.label),
+                                traits: isSelected ? [.button, .selected] : .button,
+                                onActivate: {
+                                    Haptics.play(.selection)
+                                    selectedItem = item.id
+                                }
+                            )
+                            .accessibilityAddTraits(isSelected ? .isSelected : [])
+                        }
+                    }
+                    .contentShape(.rect(cornerRadius: 24, style: .continuous))
+                    .accessibilityInputLabels(inputLabels(for: item))
                 }
                 .buttonStyle(.plain)
             }
         }
-        .animation(.snappy(duration: 0.25), value: selectedItem)
-        .padding(.top, 16)
+    }
+    
+    private func inputLabels(for item: Item) -> [String] {
+        if let custom = inputLabelsProvider?(item), !custom.isEmpty {
+            return custom
+        }
+        
+        let raw = item.label
+        
+        if raw.contains("/") {
+            if let first = raw.components(separatedBy: "/").first?.trimmingCharacters(in: .whitespaces), !first.isEmpty {
+                return [first]
+            }
+        }
+        
+        if item is SelectableOption {
+            let localized = String(localized: String.LocalizationValue(raw))
+            return [localized, raw]
+        }
+        
+        var labels: [String] = [raw]
+        
+        if let firstChar = raw.first, firstChar.isNumber {
+            labels.insert(String(firstChar), at: 0)
+        }
+        return labels
     }
 }
 

@@ -11,11 +11,16 @@ import SwiftUI
 import UnivrCore
 
 struct CalendarItemCard: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    
     let item: CalendarItem
     let internalItem: any CalendarDisplayable
     
     var body: some View {
-        HStack(alignment: .top, spacing: 20) {
+        let isExtremeAX = dynamicTypeSize >= .accessibility4
+        let layout = isExtremeAX ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12)) : AnyLayout(HStackLayout(alignment: .top, spacing: 20))
+        
+        layout {
             timeInfo
             itemInfo
         }
@@ -26,7 +31,6 @@ struct CalendarItemCard: View {
         .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
         .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 35, style: .continuous))
         .hoverEffect(.lift)
-        .padding(.horizontal)
     }
     
     // MARK: - Components
@@ -137,15 +141,23 @@ struct PauseCard: View {
     var body: some View {
         HStack(alignment: .bottom) {
             Image(systemName: .cupDynamic)
-                .font(.system(size: 40))
-            Text(Duration.seconds(item.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: .narrow)))
-                .font(.system(size: 30).bold().italic())
+                .font(.largeTitle)
+            Text(time(width: .narrow))
+                .font(.title.bold().italic())
         }
         .foregroundStyle(.secondary)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Pausa di \(time(width: .wide))")
+    }
+    
+    func time(width: Duration.UnitsFormatStyle.UnitWidth) -> String {
+        Duration.seconds(item.durationMinutes * 60).formatted(.units(allowed: [.hours, .minutes], width: width))
     }
 }
 
 struct CardItemContainer: View {
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    
     let item: CalendarItem
     let sheetRouter: CalendarSheetRouter
     let internalItem: any CalendarDisplayable
@@ -163,45 +175,41 @@ struct CardItemContainer: View {
             PauseCard(item: internalItem)
         } else {
             CalendarItemCard(item: item, internalItem: internalItem)
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityInputLabels([internalItem.displayTitle])
+                .accessibilityHidden(voiceOverEnabled)
+                .overlay {
+                    if voiceOverEnabled {
+                        let tagsText = internalItem.tagsItems.prefix(3).map(\.name).joined(separator: ", ")
+                        
+                        SpeechLanguageLabel(
+                            item.isLesson ? .it(internalItem.displayTitle) : .system(internalItem.displayTitle + ", "),
+                            .system(
+                                internalItem.isCanceled
+                                    ? String(localized: "\(item.startTime, format: .dateTime.hour().minute())")
+                                    : String(localized: "Dalle \(item.startTime, format: .dateTime.hour().minute()) alle \(internalItem.endTime, format: .dateTime.hour().minute())")
+                            ),
+                            item.isLesson ? .it(internalItem.displayLocation ?? "") : .system(", \(internalItem.displayLocation ?? ""), "),
+                            internalItem.tagsItems.isEmpty ? .system("") : .system(String(localized: "Tag: ")),
+                            internalItem.tagsItems.isEmpty ? .system("") : item.isLesson ? .it(tagsText) : .system(tagsText),
+                            traits: .button
+                        )
+                        .accessibilityValue(internalItem.isCanceled ? "Annullata" : "")
+                        .accessibilityHint(Text("Tocca due volte per aprire i dettagli"))
+                    }
+                }
+                .accessibilityActions {
+                    contextMenuButtons
+                }
+                .contentShape(RoundedRectangle(cornerRadius: 35, style: .continuous))
+                .padding(.horizontal)
                 .onTapGesture {
                     Haptics.play(.impact(weight: .light, intensity: 0.5))
                     sheetRouter.routeToItem(item)
                 }
                 .contextMenu {
-                    switch item {
-                    case .lesson:
-                        Button(action: {
-                            Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            sheetRouter.routeToItem(item, addToCalendar: true)
-                        }) {
-                            Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
-                        }
-                        Button(action: {
-                            Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            sheetRouter.routeToItem(item)
-                        }) {
-                            Label("Vedi più dettagli", systemImage: "ellipsis")
-                        }
-                    case .personal(let event):
-                        Button(action: {
-                            Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            sheetRouter.routeToAddPersonalEvent(editing: event)
-                        }) {
-                            Label("Modifica", systemImage: "pencil")
-                        }
-                        Button(action: {
-                            Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            sheetRouter.routeToItem(item)
-                        }) {
-                            Label("Vedi più dettagli", systemImage: "ellipsis")
-                        }
-                        Button(role: .destructive, action: {
-                            Haptics.play(.impact(weight: .light, intensity: 0.5))
-                            showDeletePopover = true
-                        }) {
-                            Label("Cancella", systemImage: "trash")
-                        }
-                    }
+                    contextMenuButtons
                 } preview: {
                     CalendarItemPreview(item: item, internalItem: internalItem)
                 }
@@ -218,6 +226,44 @@ struct CardItemContainer: View {
         if case .personal(let event) = item {
             Task {
                 await CommitmentsManager.shared.deleteEvent(id: event.id)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var contextMenuButtons: some View {
+        switch item {
+        case .lesson:
+            Button(action: {
+                Haptics.play(.impact(weight: .light, intensity: 0.5))
+                sheetRouter.routeToItem(item, addToCalendar: true)
+            }) {
+                Label("Aggiungi al calendario", systemImage: "calendar.badge.plus")
+            }
+            Button(action: {
+                Haptics.play(.impact(weight: .light, intensity: 0.5))
+                sheetRouter.routeToItem(item)
+            }) {
+                Label("Vedi più dettagli", systemImage: "ellipsis")
+            }
+        case .personal(let event):
+            Button(action: {
+                Haptics.play(.impact(weight: .light, intensity: 0.5))
+                sheetRouter.routeToAddPersonalEvent(editing: event)
+            }) {
+                Label("Modifica", systemImage: "pencil")
+            }
+            Button(action: {
+                Haptics.play(.impact(weight: .light, intensity: 0.5))
+                sheetRouter.routeToItem(item)
+            }) {
+                Label("Vedi più dettagli", systemImage: "ellipsis")
+            }
+            Button(role: .destructive, action: {
+                Haptics.play(.impact(weight: .light, intensity: 0.5))
+                showDeletePopover = true
+            }) {
+                Label("Cancella", systemImage: "trash")
             }
         }
     }

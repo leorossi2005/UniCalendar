@@ -13,6 +13,11 @@ public enum CalendarItem: Identifiable, Equatable, Codable {
     case lesson(Lesson)
     case personal(PersonalEvent)
     
+    public var isLesson: Bool {
+        if case .lesson = self { return true }
+        return false
+    }
+    
     public var id: String {
         switch self {
         case .lesson(let lesson): return "lesson_\(lesson.id)"

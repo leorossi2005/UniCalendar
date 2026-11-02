@@ -11,18 +11,38 @@
         }
       }
     },
-    "%@ - %@" : {
+    " " : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ - %2$@"
+            "value" : " "
+          }
+        }
+      }
+    },
+    ", %lld %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : ", %1$lld %2$@"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "%1$@ - %2$@"
+            "value" : ", %1$lld %2$@"
+          }
+        }
+      }
+    },
+    "%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@"
           }
         }
       }
@@ -75,6 +95,54 @@
         }
       }
     },
+    "%@, build numero %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, build number %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, build numero %2$@"
+          }
+        }
+      }
+    },
+    "%@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        }
+      }
+    },
+    "%@: %@. %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@. %3$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@. %3$@"
+          }
+        }
+      }
+    },
     "%lld %@" : {
       "localizations" : {
         "en" : {
@@ -87,6 +155,22 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$lld %2$@"
+          }
+        }
+      }
+    },
+    "%lld di %@ caratteri" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld of %2$@ characters"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld di %2$@ caratteri"
           }
         }
       }
@@ -163,6 +247,16 @@
         }
       }
     },
+    "1 altro impegno oggi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 more commitment today"
+          }
+        }
+      }
+    },
     "1 ora prima" : {
       "localizations" : {
         "en" : {
@@ -189,6 +283,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Update"
+          }
+        }
+      }
+    },
+    "Aggiornamento completato" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Update completed"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiornamento completato"
           }
         }
       }
@@ -260,12 +370,12 @@
         }
       }
     },
-    "Al momento sei offline." : {
+    "Al momento sei offline" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "You’re offline at the moment."
+            "value" : "You’re offline at the moment"
           }
         }
       }
@@ -276,6 +386,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Attachments"
+          }
+        }
+      }
+    },
+    "Altri %lld impegni oggi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Other %lld commitments today"
           }
         }
       }
@@ -310,6 +430,16 @@
         }
       }
     },
+    "Annullata" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Canceled"
+          }
+        }
+      }
+    },
     "App" : {
       "localizations" : {
         "en" : {
@@ -320,12 +450,72 @@
         }
       }
     },
+    "Apre il link esterno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens external link"
+          }
+        }
+      }
+    },
+    "Apre l'aggiornamento su App Store" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the update on the App Store"
+          }
+        }
+      }
+    },
+    "Apre la libreria foto per selezionare un'immagine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the photo library to select an image"
+          }
+        }
+      }
+    },
+    "Apri in Mappe" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open in maps"
+          }
+        }
+      }
+    },
     "Area Personale" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Personal Area"
+          }
+        }
+      }
+    },
+    "Attenzione" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warning"
+          }
+        }
+      }
+    },
+    "Aula libera" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classroom available"
           }
         }
       }
@@ -346,6 +536,32 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alert"
+          }
+        }
+      }
+    },
+    "Avviso %lld di %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notice %1$lld of %2$lld"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Avviso %1$lld di %2$lld"
+          }
+        }
+      }
+    },
+    "Avviso importante" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Important Notice"
           }
         }
       }
@@ -410,6 +626,26 @@
         }
       }
     },
+    "Cancella testo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear text"
+          }
+        }
+      }
+    },
+    "Caricamento in corso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading in progress"
+          }
+        }
+      }
+    },
     "Cerca un anno di corso" : {
       "localizations" : {
         "en" : {
@@ -460,6 +696,16 @@
         }
       }
     },
+    "Chiudi ricerca" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close search"
+          }
+        }
+      }
+    },
     "Ci tengo a ringraziare immensamente tutte le persone che hanno collaborato in un qualsiasi modo alla creazione e allo sviluppo di questo progetto." : {
       "localizations" : {
         "en" : {
@@ -480,12 +726,32 @@
         }
       }
     },
+    "Compresso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compressed"
+          }
+        }
+      }
+    },
     "Comprimi tutto" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Collapse all"
+          }
+        }
+      }
+    },
+    "Conclusa" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Concluded"
           }
         }
       }
@@ -580,6 +846,64 @@
         }
       }
     },
+    "Dal %@ al %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From %1$@ to %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dal %1$@ al %2$@"
+          }
+        }
+      }
+    },
+    "Dalle %@ a fine giornata" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From %@ until end of day"
+          }
+        }
+      }
+    },
+    "Dalle %@ alle %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ to %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dalle %1$@ alle %2$@"
+          }
+        }
+      }
+    },
+    "Dalle %@ alle %@, durata %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ to %2$@, duration %3$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dalle %1$@ alle %2$@, durata %3$@"
+          }
+        }
+      }
+    },
     "DANGER ZONE" : {
       "localizations" : {
         "en" : {
@@ -630,12 +954,48 @@
         }
       }
     },
+    "Dispositivo: %@, ID: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device: %1$@, ID: %2$@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dispositivo: %1$@, ID: %2$@"
+          }
+        }
+      }
+    },
+    "Docente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teacher"
+          }
+        }
+      }
+    },
     "Docente: %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Teacher: %@"
+          }
+        }
+      }
+    },
+    "Docenti" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teachers"
           }
         }
       }
@@ -680,6 +1040,22 @@
         }
       }
     },
+    "Errore durante l'aggiornamento" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Error while updating"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Errore durante l'aggiornamento"
+          }
+        }
+      }
+    },
     "Es. Le aule non si aggiornano" : {
       "localizations" : {
         "en" : {
@@ -696,6 +1072,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Expand all"
+          }
+        }
+      }
+    },
+    "Espanso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expanded"
           }
         }
       }
@@ -740,6 +1126,16 @@
         }
       }
     },
+    "Gestisci notifica" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage Notification"
+          }
+        }
+      }
+    },
     "Giornata Libera" : {
       "localizations" : {
         "en" : {
@@ -780,6 +1176,16 @@
         }
       }
     },
+    "Grazie di cuore" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thank you very much"
+          }
+        }
+      }
+    },
     "Grazie!" : {
       "localizations" : {
         "en" : {
@@ -800,12 +1206,12 @@
         }
       }
     },
-    "I dati potrebbero non essere aggiornati." : {
+    "I dati potrebbero non essere aggiornati" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Data might not be up to date."
+            "value" : "Data might not be up to date"
           }
         }
       }
@@ -886,6 +1292,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Notification Settings"
+          }
+        }
+      }
+    },
+    "In corso adesso" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In progress now"
+          }
+        }
+      }
+    },
+    "In lavorazione" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Work in progress"
           }
         }
       }
@@ -1060,6 +1486,23 @@
         }
       }
     },
+    "lowPriorityNoticeTag" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notice"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Avviso"
+          }
+        }
+      }
+    },
     "Luogo" : {
       "localizations" : {
         "en" : {
@@ -1070,12 +1513,32 @@
         }
       }
     },
+    "Luogo: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location: %@"
+          }
+        }
+      }
+    },
     "Mandami una mail" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Send me a mail"
+          }
+        }
+      }
+    },
+    "Mappa" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Map"
           }
         }
       }
@@ -1096,6 +1559,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wednesday"
+          }
+        }
+      }
+    },
+    "Mese precedente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous month"
+          }
+        }
+      }
+    },
+    "Mese successivo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next month"
           }
         }
       }
@@ -1160,6 +1643,16 @@
         }
       }
     },
+    "Nessun evento, giornata conclusa" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No events, day ended"
+          }
+        }
+      }
+    },
     "Nessun impegno personale" : {
       "localizations" : {
         "en" : {
@@ -1190,12 +1683,32 @@
         }
       }
     },
+    "Nessuna lezione in programma, aula libera per tutta la giornata" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No lessons scheduled, classroom available all day"
+          }
+        }
+      }
+    },
     "Nessuna notifica" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "No notifications"
+          }
+        }
+      }
+    },
+    "Nessuno" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None"
           }
         }
       }
@@ -1320,6 +1833,16 @@
         }
       }
     },
+    "Novità della versione %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What's New in Version %@"
+          }
+        }
+      }
+    },
     "Nuovo Impegno" : {
       "localizations" : {
         "en" : {
@@ -1336,6 +1859,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Today"
+          }
+        }
+      }
+    },
+    "Oggi, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today, %@"
           }
         }
       }
@@ -1366,6 +1899,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Even"
+          }
+        }
+      }
+    },
+    "Passa all'avviso successivo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Go to the next notice"
+          }
+        }
+      }
+    },
+    "Pausa di %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ break"
           }
         }
       }
@@ -1440,6 +1993,16 @@
         }
       }
     },
+    "Pubblicato il %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Published on %@"
+          }
+        }
+      }
+    },
     "Questa azione non può essere annullata." : {
       "localizations" : {
         "en" : {
@@ -1490,12 +2053,42 @@
         }
       }
     },
+    "Rilasciata il %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Released on %@"
+          }
+        }
+      }
+    },
+    "Rimuovi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove"
+          }
+        }
+      }
+    },
     "Rimuovi notifica" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Remove notifications"
+          }
+        }
+      }
+    },
+    "Rimuovi screenshot" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove screenshot"
           }
         }
       }
@@ -1610,6 +2203,16 @@
         }
       }
     },
+    "Sede" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location"
+          }
+        }
+      }
+    },
     "Seguimi" : {
       "localizations" : {
         "en" : {
@@ -1720,6 +2323,26 @@
         }
       }
     },
+    "Settimana precedente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous week"
+          }
+        }
+      }
+    },
+    "Settimana successiva" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next week"
+          }
+        }
+      }
+    },
     "Si è verificato un errore" : {
       "localizations" : {
         "en" : {
@@ -1751,18 +2374,11 @@
       }
     },
     "Sto provando a contattare il server..." : {
-      "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Trying to contact server..."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sto provando a contattare il server..."
           }
         }
       }
@@ -1817,12 +2433,92 @@
         }
       }
     },
+    "Tag: " : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag:"
+          }
+        }
+      }
+    },
     "Titolo" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Title"
+          }
+        }
+      }
+    },
+    "Tocca due volte per andare al mese precedente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap twice to go to the previous month"
+          }
+        }
+      }
+    },
+    "Tocca due volte per andare al mese successivo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap twice to go to the next month"
+          }
+        }
+      }
+    },
+    "Tocca due volte per andare alla settimana precedente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap twice to go to the previous week"
+          }
+        }
+      }
+    },
+    "Tocca due volte per andare alla settimana successiva" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap twice to go to the next week"
+          }
+        }
+      }
+    },
+    "Tocca due volte per aprire i dettagli" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap twice to open the details"
+          }
+        }
+      }
+    },
+    "Tocca due volte per aprire la posizione in Apple Maps" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap twice to open the location in Apple Maps"
+          }
+        }
+      }
+    },
+    "Tocca due volte per espandere o comprimere" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tap twice to expand or compress"
           }
         }
       }
@@ -1867,6 +2563,16 @@
         }
       }
     },
+    "Usa le azioni del rotore per rimuovere" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use the rotor's actions to remove"
+          }
+        }
+      }
+    },
     "Usa Live Activity (Prossimamente)" : {
       "localizations" : {
         "en" : {
@@ -1893,6 +2599,62 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show more details"
+          }
+        }
+      }
+    },
+    "Verifica la presenza di nuovi avvisi" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Checks for new notices"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifica la presenza di nuovi avvisi"
+          }
+        }
+      }
+    },
+    "Versione applicazione" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Application Version"
+          }
+        }
+      }
+    },
+    "Versione precedente" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Previous version"
+          }
+        }
+      }
+    },
+    "Versione sistema operativo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Operating System Version"
+          }
+        }
+      }
+    },
+    "Versione successiva" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next version"
           }
         }
       }

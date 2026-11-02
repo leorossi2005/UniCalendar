@@ -13,6 +13,7 @@ import CustomSheet
 
 struct AppNoticeView: View {
     @Environment(\.safeAreaInsets) private var safeAreas
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(GlobalSheetManager.self) private var sheetManager: GlobalSheetManager?
     
     let notices: [AppNotice]
@@ -27,6 +28,9 @@ struct AppNoticeView: View {
         return notices[currentIndex]
     }
     
+    @AccessibilityFocusState private var isToolbarFocused: Bool
+    @AccessibilityFocusState private var isHeaderFocused: Bool
+    
     var body: some View {
         ScrollView(.horizontal) {
             LazyHStack(spacing: 0) {
@@ -34,6 +38,8 @@ struct AppNoticeView: View {
                     noticePage(notice: notice, index: index)
                         .containerRelativeFrame(.horizontal)
                         .id(index)
+                        .accessibilityElement(children: .contain)
+                        .accessibilityHidden(currentIndex != index)
                 }
             }
             .scrollTargetLayout()
@@ -51,6 +57,8 @@ struct AppNoticeView: View {
                         .padding()
                         .fixedSize()
                         .contentTransition(.numericText())
+                        .accessibilityLabel("Avviso \((currentIndex ?? 0) + 1) di \(notices.count)")
+                        .accessibilityFocused($isToolbarFocused)
                 }
             }
             
@@ -63,8 +71,17 @@ struct AppNoticeView: View {
         .animation(.snappy, value: currentIndex)
         .onChange(of: (currentIndex ?? 0), initial: true) { _, newIndex in
             updateLockState(for: newIndex)
+            
+            Task {
+                try? await Task.sleep(for: .milliseconds(150))
+                isHeaderFocused = true
+            }
         }
         .onDisappear { sheetManager?.setLock(false) }
+        .task {
+            try? await Task.sleep(for: .milliseconds(250))
+            isToolbarFocused = true
+        }
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -85,82 +102,121 @@ struct AppNoticeView: View {
         }
     }
     
+    private func levelPrefix(notice: AppNotice) -> String {
+        switch notice.level {
+        case .info: String(localized: .lowPriorityNoticeTag)
+        case .warning: String(localized: "Attenzione")
+        case .blocking: String(localized: "Avviso importante")
+        }
+    }
+
+    private func accessibleDateText(startsAt: Date, endsAt: Date?) -> String {
+        let start = startsAt.formatted(.dateTime.day().month(.wide).year())
+        if let endsAt {
+            let end = endsAt.formatted(.dateTime.day().month(.wide).year())
+            return String(localized: "Dal \(start) al \(end)")
+        } else {
+            return String(localized: "Pubblicato il \(start)")
+        }
+    }
+
     private func noticePage(notice: AppNotice, index: Int) -> some View {
         let isLast = index == notices.count - 1
+        let hasButtons = (notice.actionURL != nil) || (!isLast) || (onDismiss != nil && notice.level != .blocking)
         
-        return VStack(spacing: 24) {
-            Spacer()
-            
-            Image(systemName: notice.level.systemImage)
-                .font(.system(size: 64))
-                .foregroundStyle(notice.level.tintColor)
-            
-            VStack(spacing: 8) {
-                Text(notice.localizedTitle)
-                    .font(.title.bold())
-                
-                if !notices.isEmpty {
-                    if let endDate = notice.endsAt {
-                        Text("\(formatDate(notice.startsAt)) - \(formatDate(endDate))")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        Text(formatDate(notice.startsAt))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+        return VStack(spacing: hasButtons ? 16 : 0) {
+            GeometryReader { geo in
+                ScrollView(.vertical) {
+                    VStack(spacing: 20) {
+                        Spacer(minLength: 0)
+                        
+                        Image(systemName: notice.level.systemImage)
+                            .font(.system(size: dynamicTypeSize.isAccessibilitySize ? 48 : 64))
+                            .foregroundStyle(notice.level.tintColor)
+                            .accessibilityHidden(true)
+                        
+                        VStack(spacing: 8) {
+                            Text(notice.localizedTitle)
+                                .font(.title.bold())
+                                .multilineTextAlignment(.center)
+                                .accessibilityLabel("\(levelPrefix(notice: notice)): \(notice.localizedTitle)")
+                                .accessibilityAddTraits(.isHeader)
+                                .accessibilityFocused($isHeaderFocused)
+                            
+                            if !notices.isEmpty {
+                                let dateText = if let endDate = notice.endsAt {
+                                    "\(formatDate(notice.startsAt)) - \(formatDate(endDate))"
+                                } else {
+                                    formatDate(notice.startsAt)
+                                }
+                                
+                                Text(dateText)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .accessibilityLabel(accessibleDateText(startsAt: notice.startsAt, endsAt: notice.endsAt))
+                            }
+                        }
+                        
+                        Text(notice.localizedMessage)
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                        
+                        Spacer(minLength: 0)
                     }
+                    .frame(maxWidth: .infinity, minHeight: geo.size.height)
                 }
+                .scrollDisabled(false)
+                .scrollBounceBehavior(.basedOnSize)
             }
             
-            Text(notice.localizedMessage)
-                .font(.body)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-            
-            Spacer()
-            
-            VStack(spacing: 12) {
-                if let url = notice.actionURL {
-                    Button {
-                        Haptics.play(.impact(weight: .medium))
-                        UIApplication.shared.open(url)
-                    } label: {
-                        Text(notice.localizedButtonText ?? String(localized: "Aggiorna"))
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity)
+            if hasButtons {
+                VStack(spacing: 12) {
+                    if let url = notice.actionURL {
+                        Button {
+                            Haptics.play(.impact(weight: .medium))
+                            UIApplication.shared.open(url)
+                        } label: {
+                            Text(notice.localizedButtonText ?? String(localized: "Aggiorna"))
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity)
+                        }
+                        .controlSize(.large)
+                        .glassIfAvailable(prominent: isLast && (onDismiss == nil || notice.level == .blocking))
+                        .accessibilityHint(notice.level == .blocking ? "Apre l'aggiornamento su App Store" : "Apre il link esterno")
                     }
-                    .controlSize(.large)
-                    .glassIfAvailable(prominent: isLast && (onDismiss == nil || notice.level == .blocking))
-                }
-                
-                if !isLast {
-                    Button {
-                        Haptics.play(.impact(weight: .light))
-                        let nextIndex = (currentIndex ?? 0) + 1
-                        currentIndex = min(nextIndex, notices.count - 1)
-                    } label: {
-                        Text("Continua")
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity)
+                    
+                    if !isLast {
+                        Button {
+                            Haptics.play(.impact(weight: .light))
+                            let nextIndex = (currentIndex ?? 0) + 1
+                            currentIndex = min(nextIndex, notices.count - 1)
+                        } label: {
+                            Text("Continua")
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity)
+                        }
+                        .controlSize(.large)
+                        .glassIfAvailable(prominent: true)
+                        .accessibilityHint("Passa all'avviso successivo")
+                    } else if onDismiss != nil && notice.level != .blocking {
+                        Button {
+                            Haptics.play(.impact(weight: .medium))
+                            onDismiss?()
+                        } label: {
+                            let buttonLabel = (notice.actionURL == nil ? notice.localizedButtonText : nil) ?? String(localized: "Chiudi")
+                            Text(buttonLabel)
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity)
+                        }
+                        .controlSize(.large)
+                        .glassIfAvailable(prominent: true)
                     }
-                    .controlSize(.large)
-                    .glassIfAvailable(prominent: true)
-                } else if onDismiss != nil && notice.level != .blocking {
-                    Button {
-                        Haptics.play(.impact(weight: .medium))
-                        onDismiss?()
-                    } label: {
-                        let buttonLabel = (notice.actionURL == nil ? notice.localizedButtonText : nil) ?? String(localized: "Chiudi")
-                        Text(buttonLabel)
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .controlSize(.large)
-                    .glassIfAvailable(prominent: true)
                 }
             }
         }
         .padding(.horizontal, max(safeAreas.bottom, 16))
-        .safeAreaPadding(.bottom, safeAreas.bottom == 0 ? 16 : 0)
+        .safeAreaPadding(.bottom, hasButtons ? (safeAreas.bottom == 0 ? 16 : 0) : 0)
     }
 }

@@ -66,12 +66,16 @@ class OverlayAnchorUIView: UIView {
     var hostingController: UIHostingController<AnyView>?
     var containerView: PassthroughContainerView?
     var pendingRootView: AnyView?
+    var isLargeActive: Bool = false
     
     func cleanup() {
-        hostingController?.willMove(toParent: nil)
+        NotificationCenter.default.removeObserver(
+            self,
+            name: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil
+        )
         containerView?.removeFromSuperview()
         hostingController?.view.removeFromSuperview()
-        hostingController?.removeFromParent()
         containerView = nil
         hostingController = nil
     }
@@ -91,17 +95,20 @@ class OverlayAnchorUIView: UIView {
         container.backgroundColor = .clear
         container.translatesAutoresizingMaskIntoConstraints = false
         container.hostingView = hc.view
+        container.accessibilityViewIsModal = false
         
         container.addSubview(hc.view)
         window.addSubview(container)
         
-        if let rootVC = window.rootViewController {
-            rootVC.addChild(hc)
-            hc.didMove(toParent: rootVC)
-        }
-        
         self.hostingController = hc
         self.containerView = container
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(voiceOverStatusChanged),
+            name: UIAccessibility.voiceOverStatusDidChangeNotification,
+            object: nil
+        )
         
         NSLayoutConstraint.activate([
             hc.view.leadingAnchor.constraint(equalTo: container.leadingAnchor),
@@ -111,9 +118,25 @@ class OverlayAnchorUIView: UIView {
             
             container.leadingAnchor.constraint(equalTo: window.leadingAnchor),
             container.trailingAnchor.constraint(equalTo: window.trailingAnchor),
-            container.topAnchor.constraint(equalTo: window.topAnchor),
+            container.topAnchor.constraint(equalTo: window.topAnchor, constant: 1),
             container.bottomAnchor.constraint(equalTo: window.bottomAnchor)
         ])
+    }
+    
+    @objc private func voiceOverStatusChanged() {
+        guard UIAccessibility.isVoiceOverRunning,
+              isLargeActive,
+              let container = containerView else { return }
+        
+        container.accessibilityViewIsModal = false
+        hostingController?.view.setNeedsLayout()
+        hostingController?.view.layoutIfNeeded()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self, weak container] in
+            guard let self, let container, self.isLargeActive else { return }
+            container.accessibilityViewIsModal = true
+            UIAccessibility.post(notification: .screenChanged, argument: container)
+        }
     }
     
     func updateNavigationSafeArea(isLarge: Bool) {
@@ -178,8 +201,21 @@ struct OverlayAnchorView<SheetContent: View>: UIViewRepresentable {
             uiView?.containerView?.shouldPassThrough = !isEnabled
         }
         
-        manager?.onLargeDetentToggle = { [weak uiView] isLarge in
+        manager?.onLargeDetentToggle = { [weak uiView, weak manager] isLarge in
+            uiView?.isLargeActive = isLarge
             uiView?.updateNavigationSafeArea(isLarge: isLarge)
+            
+            let keepFocus = manager?.keepAccessibilityFocusOnLargeExit ?? false
+            manager?.keepAccessibilityFocusOnLargeExit = false
+            
+            if uiView?.containerView?.accessibilityViewIsModal != isLarge {
+                uiView?.containerView?.accessibilityViewIsModal = isLarge
+                if isLarge || !keepFocus {
+                    UIAccessibility.post(notification: .layoutChanged, argument: nil)
+                } else {
+                    UIAccessibility.post(notification: .layoutChanged, argument: uiView?.containerView)
+                }
+            }
         }
     }
     

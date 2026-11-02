@@ -55,18 +55,19 @@ struct ClassroomAvailabilityView: View {
                 .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
                 .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
         }
+        .accessibilityElement(children: .contain)
     }
     
     private var locationPicker: some View {
-        Picker("", selection: Bindable(settings).locationKey) {
+        Picker("Sede", selection: Bindable(settings).locationKey) {
             ForEach(availabilityManager.sortedLocations, id: \.key) { location in
                 Text(location.value).tag(location.key)
             }
         }
         .disabled(availabilityManager.state == .offline || availabilityManager.state == .serverUnreachable || availabilityManager.state == .univrOffline)
         .tint(.primary)
+        .padding(.vertical)
         .frame(maxWidth: .infinity)
-        .frame(height: 48)
         .background(Color(.secondarySystemBackground))
         .cornerRadius(35)
         .padding(.horizontal)
@@ -92,36 +93,42 @@ struct ClassroomAvailabilityView: View {
                 }
             }
             .cornerRadius(35)
+            .padding(.horizontal)
         case .empty:
             ContentUnavailableView(
                 "Nessuna aula disponibile",
                 systemImage: "building.2",
                 description: Text("Non ci sono aule disponibili per questa sede.")
             )
+            .accessibilityElement(children: .combine)
         case .offline:
             ContentUnavailableView(
                 "Sei Offline",
-                systemImage: "wifi.slash",
+                systemImage: AppState.offline.icon,
                 description: Text("Connettiti a internet per controllare le disponibilità di oggi.")
             )
+            .accessibilityElement(children: .combine)
         case .serverUnreachable:
             ContentUnavailableView {
-                Label("Server non raggiungibile", systemImage: "network.slash")
+                Label("Server non raggiungibile", systemImage: AppState.serveroffline.icon)
             } description: {
                 Text("Non riusciamo a contattare il server. Riprova più tardi.")
             }
+            .accessibilityElement(children: .combine)
         case .univrOffline:
             ContentUnavailableView {
-                Label("Università non raggiungibile", systemImage: "building.columns")
+                Label("Università non raggiungibile", systemImage: AppState.unioffline.icon)
             } description: {
                 Text("La disponibilità delle aule non è consultabile finché i server dell'università non tornano raggiungibili.")
             }
+            .accessibilityElement(children: .combine)
         case .error(let msg):
             ContentUnavailableView(
                 "Si è verificato un errore",
                 systemImage: "exclamationmark.triangle",
                 description: Text(msg)
             )
+            .accessibilityElement(children: .combine)
         }
     }
     
@@ -130,14 +137,16 @@ struct ClassroomAvailabilityView: View {
         ScrollView {
             VStack {
                 ForEach(0..<6, id: \.self) { _ in
-                    RoomCard(room: .sample, selectedDate: .now)
+                    RoomCard(room: .sample(date: coordinator.selectedWeek), selectedDate: coordinator.selectedWeek, isPlaceholder: true)
                         .shimmeringPlaceholder(opacity: colorScheme == .light ? 0.5 : 0.7)
                 }
             }
             .allowsHitTesting(false)
         }
         .cornerRadius(35)
+        .padding(.horizontal)
         .scrollIndicators(.never)
+        .accessibilityHidden(true)
     }
 }
 

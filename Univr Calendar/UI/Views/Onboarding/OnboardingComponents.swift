@@ -13,17 +13,25 @@ struct OnboardingErrorLabel: View {
     @Binding var message: String?
 
     var body: some View {
-        Text(message ?? " ")
-            .font(.caption)
-            .foregroundStyle(.red)
-            .lineLimit(1)
-            .opacity(message == nil ? 0 : 1)
-            .animation(.easeOut(duration: 0.2), value: message)
-            .task(id: message) {
-                guard message != nil else { return }
-                try? await Task.sleep(for: .seconds(3))
-                if !Task.isCancelled { message = nil }
+        ZStack {
+            Text(" ")
+                .font(.caption)
+                .hidden()
+
+            if let message {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .lineLimit(1)
+                    .transition(.opacity)
             }
+        }
+        .animation(.easeOut(duration: 0.2), value: message)
+        .task(id: message) {
+            guard message != nil else { return }
+            try? await Task.sleep(for: .seconds(3))
+            if !Task.isCancelled { message = nil }
+        }
     }
 }
 
@@ -40,6 +48,7 @@ struct OnboardingButton: View {
         } label: {
             if isLoading {
                 RotatingSemicircleLoader()
+                    .accessibilityLabel("Caricamento in corso")
             } else {
                 Text(title)
                     .fontWeight(.semibold)
@@ -49,6 +58,7 @@ struct OnboardingButton: View {
         .controlSize(.large)
         .glassIfAvailable(prominent: true)
         .disabled(isDisabled || isLoading)
+        .accessibilityRemoveTraits(isLoading ? [.isButton] : [])
     }
 }
 

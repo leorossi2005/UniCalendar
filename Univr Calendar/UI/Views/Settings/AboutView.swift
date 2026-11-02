@@ -17,11 +17,12 @@ struct AboutView: View {
         List {
             Section {
                 VStack(spacing: 15) {
-                    Image("InternalIcon")
+                    Image(decorative: "InternalIcon")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: Self.iconSize, height: Self.iconSize)
                         .clipShape(RoundedRectangle(cornerRadius: Self.iconSize * 0.225, style: .continuous))
+                        .accessibilityIgnoresInvertColors(true)
                     
                     VStack(spacing: 5) {
                         Text(AppConstants.AppInfo.appName)
@@ -30,6 +31,8 @@ struct AboutView: View {
                         Text(Bundle.main.appVersion)
                             .font(.footnote)
                             .foregroundStyle(.secondary)
+                            .accessibilityLabel("Versione applicazione")
+                            .accessibilityValue("\(Bundle.main.clearAppVersion), build numero \(Bundle.main.clearBuildNumber)")
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -77,19 +80,22 @@ struct AboutView: View {
                     Image(systemName: "person.crop.circle.fill")
                         .resizable()
                 } else {
-                    Image(image)
+                    Image(decorative: image)
                         .resizable()
+                        .accessibilityIgnoresInvertColors(true)
                 }
             }
             .scaledToFit()
             .clipShape(.circle)
             .frame(width: 40, height: 40)
+            .accessibilityHidden(true)
         }
         .onTapGesture {
             if let link {
                 UIApplication.shared.open(link)
             }
         }
+        .accessibilityElement(children: .combine)
     }
 }
 

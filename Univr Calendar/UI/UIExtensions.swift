@@ -41,36 +41,67 @@ extension NoticeLevel {
     }
 }
 
+import SwiftUI
+
+enum AppState {
+    case offline, serveroffline, unioffline
+    
+    var icon: String {
+        switch self {
+        case .offline:
+            return "wifi.slash"
+        case .serveroffline:
+            return "network.slash"
+        case .unioffline:
+            return "building.columns"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .offline:
+            return .yellow
+        case .serveroffline:
+            return .orange
+        case .unioffline:
+            return .blue
+        }
+    }
+}
+
 extension Lesson {
     var uiColor: Color {
-        guard let components = HexColorParser.parse(color) else { return .secondary }
+        guard let components = HexColorParser.parse(color) else { return Color(white: 0.8) }
         return Color(red: components.red, green: components.green, blue: components.blue, opacity: components.opacity)
     }
 }
 
 struct ShimmeringGradient: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     var body: some View {
-        GeometryReader { geometry in
-            let width = max(geometry.size.width, 1)
-            TimelineView(.animation) { timeline in
-                let time = timeline.date.timeIntervalSinceReferenceDate
-                let duration: Double = 1.5
-                let progress = (time.truncatingRemainder(dividingBy: duration)) / duration
-                let xOffset = -width + (progress * width * 2)
-                
-                LinearGradient(
-                    colors: [
-                        .black.opacity(0),
-                        colorScheme == .light ? .black.opacity(0.3) : .white.opacity(0.05),
-                        .black.opacity(0)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-                .frame(width: width, height: geometry.size.height)
-                .offset(x: xOffset)
+        if !reduceMotion {
+            GeometryReader { geometry in
+                let width = max(geometry.size.width, 1)
+                TimelineView(.animation) { timeline in
+                    let time = timeline.date.timeIntervalSinceReferenceDate
+                    let duration: Double = 1.5
+                    let progress = (time.truncatingRemainder(dividingBy: duration)) / duration
+                    let xOffset = -width + (progress * width * 2)
+                    
+                    LinearGradient(
+                        colors: [
+                            .black.opacity(0),
+                            colorScheme == .light ? .black.opacity(0.3) : .white.opacity(0.05),
+                            .black.opacity(0)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(width: width, height: geometry.size.height)
+                    .offset(x: xOffset)
+                }
             }
         }
     }
@@ -129,6 +160,7 @@ extension View {
                     .foregroundStyle(color)
                     .rotationEffect(.degrees(rotation))
                     .offset(offset)
+                    .accessibilityHidden(true)
             }
     }
     
@@ -359,3 +391,86 @@ extension UIDevice {
     }
 }
 
+final class AccessibleSpeechUIView: UIView {
+    var onActivate: (() -> Void)?
+    
+    override func accessibilityActivate() -> Bool {
+        if let onActivate {
+            onActivate()
+            return true
+        }
+        return super.accessibilityActivate()
+    }
+}
+
+struct SpeechLanguageLabel: UIViewRepresentable {
+    let text: NSAttributedString
+    var traits: UIAccessibilityTraits = .none
+    var onActivate: (() -> Void)? = nil
+    
+    func makeUIView(context: Context) -> AccessibleSpeechUIView {
+        let view = AccessibleSpeechUIView()
+        view.isAccessibilityElement = true
+        view.accessibilityTraits = traits
+        view.onActivate = onActivate
+        return view
+    }
+    
+    func updateUIView(_ view: AccessibleSpeechUIView, context: Context) {
+        view.accessibilityTraits = traits
+        view.accessibilityAttributedLabel = text
+        view.onActivate = onActivate
+    }
+}
+
+struct SpeechSegment {
+    let text: String
+    let attributes: [NSAttributedString.Key: Any]
+    
+    init(_ text: String, language: String? = nil) {
+        self.text = text
+        if let language {
+            self.attributes = [.accessibilitySpeechLanguage: language]
+        } else {
+            self.attributes = [:]
+        }
+    }
+    
+    init(_ text: String, attributes: [NSAttributedString.Key: Any]) {
+        self.text = text
+        self.attributes = attributes
+    }
+    
+    static func it(_ text: String) -> SpeechSegment {
+        SpeechSegment(text, language: "it-IT")
+    }
+    
+    static func system(_ text: String) -> SpeechSegment {
+        let localized = text.isEmpty ? "" : String(localized: String.LocalizationValue(text))
+        return SpeechSegment(localized, language: nil)
+    }
+    
+    static func system(localized key: String.LocalizationValue) -> SpeechSegment {
+        SpeechSegment(String(localized: key), language: nil)
+    }
+}
+
+extension NSAttributedString {
+    static func composed(_ segments: SpeechSegment...) -> NSAttributedString {
+        composed(segments)
+    }
+    
+    static func composed(_ segments: [SpeechSegment]) -> NSAttributedString {
+        let full = NSMutableAttributedString()
+        for segment in segments where !segment.text.isEmpty {
+            full.append(NSAttributedString(string: segment.text, attributes: segment.attributes))
+        }
+        return full
+    }
+}
+
+extension SpeechLanguageLabel {
+    init(_ segments: SpeechSegment..., traits: UIAccessibilityTraits = .none, onActivate: (() -> Void)? = nil) {
+        self.init(text: .composed(segments), traits: traits, onActivate: onActivate)
+    }
+}

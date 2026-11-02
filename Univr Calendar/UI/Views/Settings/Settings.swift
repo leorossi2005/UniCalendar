@@ -13,6 +13,7 @@ import CustomSheet
 
 struct Settings: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
     @Environment(UserSettings.self) var settings
     @Environment(GlobalSheetManager.self) private var sheetManager
     
@@ -60,13 +61,24 @@ struct Settings: View {
                         }
                     }
                 }
+                .accessibilityHidden(voiceOverEnabled)
+                .overlay {
+                    if voiceOverEnabled {
+                        let courseName = viewModel.courses.first { $0.id == tempSettings.selectedCourse }?.label
+                        SpeechLanguageLabel(
+                            .system("Corso"),
+                            courseName != nil ? .it(courseName ?? "") : .system("Scegli un corso"),
+                            traits: .button
+                        )
+                    }
+                }
                 .disabled(viewModel.courses.isEmpty)
                 .onChange(of: tempSettings.selectedCourse) {
                     handleCourseChange()
                 }
                 if tempSettings.selectedCourse != "0" {
                     Group {
-                        if viewModel.academicYears.count <= 5 {
+                        if viewModel.academicYears.count <= 5 && !voiceOverEnabled {
                             Picker(selection: $tempSettings.selectedAcademicYear) {
                                 ForEach(viewModel.academicYears) { year in
                                     Text(year.label).tag(year.id)
@@ -95,6 +107,17 @@ struct Settings: View {
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
                                         .truncationMode(.tail)
+                                }
+                            }
+                            .accessibilityHidden(voiceOverEnabled)
+                            .overlay {
+                                if voiceOverEnabled {
+                                    let courseYearName = viewModel.academicYears.first { $0.id == tempSettings.selectedAcademicYear }?.label
+                                    SpeechLanguageLabel(
+                                        .system("Anno di Corso"),
+                                        courseYearName != nil ? .it(courseYearName ?? "") : .system("Scegli un anno"),
+                                        traits: .button
+                                    )
                                 }
                             }
                         }
@@ -130,18 +153,18 @@ struct Settings: View {
                     
                     if viewModel.isOffline {
                         Text("In modalità offline non puoi modificare queste opzioni.")
-                            .foregroundStyle(.yellow)
+                            .foregroundStyle(AppState.offline.color)
                     } else if ServerStatusCenter.shared.isUnreachable && ServerStatusCenter.shared.isRetrying {
                         HStack(spacing: 8) {
                             ProgressView()
                                 .controlSize(.small)
                             Text("Sto provando a contattare il server...")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(AppState.serveroffline.color)
                         }
                     } else if ServerStatusCenter.shared.isUnreachable {
                         HStack {
                             Text("Server non raggiungibile, riprova più tardi.")
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(AppState.serveroffline.color)
                             Spacer()
                             Button("Riprova") {
                                 Haptics.play(.impact(weight: .medium))
@@ -150,7 +173,7 @@ struct Settings: View {
                             .disabled(ServerStatusCenter.shared.isRetrying)
                             .buttonStyle(.bordered)
                             .controlSize(.mini)
-                            .tint(.orange)
+                            .tint(AppState.serveroffline.color)
                             .environment(\.isEnabled, true)
                         }
                     } else if ServerStatusCenter.shared.isUniVROffline && ServerStatusCenter.shared.isUniVRRetrying {
@@ -158,12 +181,12 @@ struct Settings: View {
                             ProgressView()
                                 .controlSize(.small)
                             Text("Sto provando a contattare l'università...")
-                                .foregroundStyle(.blue)
+                                .foregroundStyle(AppState.unioffline.color)
                         }
                     } else if ServerStatusCenter.shared.isUniVROffline {
                         HStack {
-                            Text("I dati potrebbero non essere aggiornati.")
-                                .foregroundStyle(.blue)
+                            Text("I dati potrebbero non essere aggiornati")
+                                .foregroundStyle(AppState.unioffline.color)
                             Spacer()
                             Button("Riprova") {
                                 Haptics.play(.impact(weight: .medium))
@@ -172,7 +195,7 @@ struct Settings: View {
                             .disabled(ServerStatusCenter.shared.isUniVRRetrying)
                             .buttonStyle(.bordered)
                             .controlSize(.mini)
-                            .tint(.blue)
+                            .tint(AppState.unioffline.color)
                             .environment(\.isEnabled, true)
                         }
                     } else if viewModel.isLoading {
@@ -219,13 +242,11 @@ struct Settings: View {
                 }
             }
             Section("DANGER ZONE") {
-                Button {
+                Button("Resetta l'app", systemImage: "trash", role: .destructive) {
                     Haptics.play(.warning)
                     showDeleteAlert.toggle()
-                } label: {
-                    Label("Resetta l'app", systemImage: "trash")
-                        .foregroundStyle(.red)
                 }
+                .foregroundStyle(.red)
                 .alert("Vuoi resettare l'app?", isPresented: $showDeleteAlert) {
                     Button("Conferma", role: .destructive, action: performReset)
                     Button("Annulla", role: .cancel) {}
@@ -252,6 +273,9 @@ struct Settings: View {
         .navigationTitle("Impostazioni")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
+            let shouldLock = tempSettings.selectedCourse == "0" || tempSettings.selectedAcademicYear == "0"
+            sheetManager.setLock(shouldLock)
+            
             viewModel.activate()
             loadInitialData()
         }

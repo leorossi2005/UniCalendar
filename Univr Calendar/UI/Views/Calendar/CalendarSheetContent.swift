@@ -45,10 +45,12 @@ struct CalendarSheetContent: View {
                     .frame(height: smallHeight)
                     .opacity(finalSmallOpacity)
                     .allowsHitTesting(sheetManager.selectedDetent == .small)
+                    .accessibilityHidden(sheetManager.selectedDetent != .small)
                 
                 DatePickerContainer(selectedWeek: $selectedWeek)
                     .opacity(finalMediumOpacity)
                     .allowsHitTesting(sheetManager.selectedDetent == .medium)
+                    .accessibilityHidden(sheetManager.selectedDetent != .medium)
                 
                 NavigationStack {
                     if let notices = router.openAppNotices {
@@ -90,6 +92,7 @@ struct CalendarSheetContent: View {
                 .frame(height: largeHeight)
                 .opacity(finalLargeOpacity)
                 .allowsHitTesting(sheetManager.selectedDetent == .large)
+                .accessibilityHidden(sheetManager.selectedDetent != .large)
             }
         }
     }

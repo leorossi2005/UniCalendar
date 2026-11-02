@@ -19,6 +19,7 @@ enum OnboardingStep: Int, CaseIterable, Comparable {
 struct Onboarding: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(UserSettings.self) var settings
     
     @State private var viewModel = UniversityDataManager()
@@ -31,11 +32,18 @@ struct Onboarding: View {
     @State private var searchTextFieldFocus: Bool = false
     @State private var academicYearSearchFocus: Bool = false
     
+    @AccessibilityFocusState private var isBannerFocused: Bool
+    
     var body: some View {
         NavigationStack {
             ScrollView(.horizontal) {
                 LazyHStack(spacing: 0) {
-                    ForEach(OnboardingStep.allCases, id: \.self) { page(for: $0) }
+                    ForEach(OnboardingStep.allCases, id: \.self) { pageStep in
+                        page(for: pageStep)
+                            .accessibilityElement(children: .contain)
+                            .accessibilityHidden(step != pageStep)
+                            .accessibilityAction(.escape) { goBack() }
+                    }
                 }
                 .scrollTargetLayout()
             }
@@ -43,16 +51,9 @@ struct Onboarding: View {
             .toolbar {
                 if let current = step, current > .welcome {
                     ToolbarItem(placement: .navigation) {
-                        Button {
-                            searchTextFieldFocus = false
-                            academicYearSearchFocus = false
-                            if let previous = current.previous {
-                                step = previous
-                                loadingStep = nil
-                            }
-                        } label: {
+                        Button(action: goBack) {
                             if #available(iOS 26, *) {
-                                Image(systemName: "chevron.left")
+                                Label("Indietro", systemImage: "chevron.left")
                                     .fontWeight(.semibold)
                             } else {
                                 HStack(spacing: 6) {
@@ -86,56 +87,30 @@ struct Onboarding: View {
                 }
             }
             .onDisappear { viewModel.cancelAll() }
+            .onChange(of: errorText) { _, new in
+                if let new { AccessibilityNotification.Announcement(new).post() }
+            }
+            .onChange(of: step) { _, newStep in
+                AccessibilityNotification.ScreenChanged().post()
+            }
         }
         .overlay(alignment: .top) {
             let isOffline = viewModel.isOffline
             let isUnreachable = ServerStatusCenter.shared.isUnreachable
-            // UniVR giù: avviso non bloccante (il server proprio giù ha la precedenza)
             let isUniVROffline = !isOffline && !isUnreachable && ServerStatusCenter.shared.isUniVROffline
             let isRetrying = isUniVROffline ? ServerStatusCenter.shared.isUniVRRetrying : ServerStatusCenter.shared.isRetrying
             let isWarningVisible = isOffline || isUnreachable || isUniVROffline
-            let tint: Color = isOffline ? .yellow : (isUniVROffline ? .blue : .orange)
+            let tint: Color = isOffline ? AppState.offline.color : (isUniVROffline ? AppState.unioffline.color : AppState.serveroffline.color)
             
             ZStack {
                 if isOffline {
-                    HStack(spacing: 8) {
-                        Image(systemName: "wifi.slash")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Al momento sei offline.")
-                            .font(.subheadline.weight(.medium))
-                    }
+                    banner(icon: AppState.offline.icon, text: "Al momento sei offline")
                 } else if isRetrying {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .controlSize(.small)
-                            .tint(isUniVROffline ? .white : .black)
-                        Text(isUniVROffline ? "Sto provando a contattare l'università..." : "Sto provando a contattare il server...")
-                            .font(.subheadline.weight(.medium))
-                    }
+                    banner(text: isUniVROffline ? "Sto provando a contattare l'università..." : "Sto provando a contattare il server...", retrying: true)
                 } else if isUniVROffline {
-                    VStack {
-                        HStack(spacing: 8) {
-                            Image(systemName: "building.columns")
-                                .font(.subheadline.weight(.semibold))
-                            Text("I dati potrebbero non essere aggiornati.")
-                                .font(.subheadline.weight(.medium))
-                        }
-                        Text("Tocca per riprovare")
-                            .font(.caption2.weight(.medium))
-                            .foregroundStyle(.secondary)
-                    }
-                } else {
-                    VStack {
-                        HStack(spacing: 8) {
-                            Image(systemName: "network.slash")
-                                .font(.subheadline.weight(.semibold))
-                            Text("Server non raggiungibile")
-                                .font(.subheadline.weight(.medium))
-                        }
-                        Text("Tocca per riprovare")
-                            .font(.caption2.weight(.medium))
-                            .foregroundStyle(.secondary)
-                    }
+                    banner(icon: AppState.unioffline.icon, text: "I dati potrebbero non essere aggiornati", retry: true)
+                } else if isUnreachable {
+                    banner(icon: AppState.serveroffline.icon, text: "Server non raggiungibile", retry: true)
                 }
             }
             .foregroundStyle(isUniVROffline ? .white : .black)
@@ -150,10 +125,11 @@ struct Onboarding: View {
             }
             .contentShape(Capsule())
             .padding(.top, safeAreas.bottom > 0 ? 0 : 8)
-            .blur(radius: isWarningVisible ? 0 : 20)
-            .offset(y: isWarningVisible ? safeAreas.top : safeAreas.top / 2)
-            .scaleEffect(isWarningVisible ? 1 : 0)
-            .animation(.bouncy(extraBounce: 0.1), value: isWarningVisible)
+            .opacity(isWarningVisible ? 1 : 0)
+            .blur(radius: isWarningVisible || reduceMotion ? 0 : 20)
+            .offset(y: isWarningVisible || reduceMotion ? safeAreas.top : safeAreas.top / 2)
+            .scaleEffect(isWarningVisible || reduceMotion ? 1 : 0)
+            .animation(reduceMotion ? .easeInOut(duration: 0.2) : .bouncy(extraBounce: 0.1), value: isWarningVisible)
             .allowsHitTesting(isWarningVisible && !isRetrying)
             .ignoresSafeArea()
             .onTapGesture {
@@ -166,6 +142,16 @@ struct Onboarding: View {
                     }
                     if (settings.selectedYear.isEmpty || settings.selectedYear == "0"), let firstYear = viewModel.years.first {
                         settings.selectedYear = firstYear.id
+                    }
+                }
+            }
+            .accessibilityFocused($isBannerFocused)
+            .accessibilityHidden(!isWarningVisible)
+            .onChange(of: isWarningVisible) { _, isVisible in
+                if isVisible {
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(150))
+                        isBannerFocused = true
                     }
                 }
             }
@@ -272,6 +258,7 @@ struct Onboarding: View {
                 if viewModel.academicYears.count <= 5 {
                     ShortListSelector(
                         items: viewModel.academicYears,
+                        lang: "it-IT",
                         selectedItem: $settings.selectedAcademicYear
                     )
                 } else {
@@ -305,6 +292,36 @@ struct Onboarding: View {
             }
         ) { ShortListSelector<SelectableOption>(items: [.even, .odd], selectedItem: $settings.matricola) }
         }
+    }
+    
+    @ViewBuilder
+    private func banner(icon: String = "", text: LocalizedStringResource, retry: Bool = false, retrying: Bool = false) -> some View {
+        Group {
+            if retrying {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text(text)
+                        .font(.subheadline.weight(.medium))
+                }
+            } else {
+                VStack {
+                    HStack(spacing: 8) {
+                        Image(systemName: icon)
+                            .font(.subheadline.weight(.semibold))
+                        Text(text)
+                            .font(.subheadline.weight(.medium))
+                    }
+                    if retry {
+                        Text("Tocca per riprovare")
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(retry ? [.isButton] : [])
     }
     
     // MARK: - Helpers
@@ -347,6 +364,15 @@ struct Onboarding: View {
     func completeOnboarding() {
         settings.latestVersion = Bundle.main.clearAppVersion
         settings.onboardingCompleted = true
+    }
+    
+    func goBack() {
+        searchTextFieldFocus = false
+        academicYearSearchFocus = false
+        if let previous = step?.previous {
+            step = previous
+            loadingStep = nil
+        }
     }
 }
 

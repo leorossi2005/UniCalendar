@@ -31,6 +31,7 @@ struct PersonalCommitmentsList: View {
                     systemImage: .personalCommitmentsDynamic,
                     description: Text("Non hai ancora aggiunto nessun impegno personale.")
                 )
+                .accessibilityElement(children: .combine)
             } else {
                 List {
                     ForEach(groupedEvents, id: \.0) { date, events in
@@ -49,19 +50,17 @@ struct PersonalCommitmentsList: View {
                                     .opacity(0)
                                     
                                     CalendarItemCard(item: .personal(event), internalItem: event)
+                                        .padding(.horizontal)
+                                }
+                                .accessibilityElement(children: .combine)
+                                .accessibilitySortPriority(0)
+                                .accessibilityAddTraits(.isButton)
+                                .accessibilityHint(Text("Tocca due volte per aprire i dettagli"))
+                                .accessibilityActions {
+                                    contextMenuButtons(event: event)
                                 }
                                 .contextMenu {
-                                    Button {
-                                        editingEvent = event
-                                    } label: {
-                                        Label("Modifica", systemImage: "pencil")
-                                    }
-                                    Button(role: .destructive) {
-                                        eventToDelete = event
-                                        showDeleteAlert = true
-                                    } label: {
-                                        Label("Cancella", systemImage: "trash")
-                                    }
+                                    contextMenuButtons(event: event)
                                 } preview: {
                                     CalendarItemPreview(item: .personal(event), internalItem: event)
                                 }
@@ -101,6 +100,21 @@ struct PersonalCommitmentsList: View {
             }
         } message: {
             Text("Questa azione non può essere annullata.")
+        }
+    }
+    
+    @ViewBuilder
+    private func contextMenuButtons(event: PersonalEvent) -> some View {
+        Button {
+            editingEvent = event
+        } label: {
+            Label("Modifica", systemImage: "pencil")
+        }
+        Button(role: .destructive) {
+            eventToDelete = event
+            showDeleteAlert = true
+        } label: {
+            Label("Cancella", systemImage: "trash")
         }
     }
 }

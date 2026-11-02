@@ -13,10 +13,11 @@ import CustomSheet
 
 
 struct CalendarView: View {
-    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(UserSettings.self) var settings
-    @Environment(AppStatusManager.self) var statusManager
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    @Environment(UserSettings.self) private var settings
+    @Environment(AppStatusManager.self) private var statusManager
   
     @State private var sheetRouter: CalendarSheetRouter = .init()
     @State private var coordinator = CalendarCoordinator()
@@ -28,6 +29,8 @@ struct CalendarView: View {
             set: { coordinator.selectDate($0) }
         )
     }
+    
+    @AccessibilityFocusState private var focusedDay: Date?
     
     var body: some View {
         NavigationStack {
@@ -58,6 +61,14 @@ struct CalendarView: View {
             .onAppear {
                 inizializeData()
                 checkPendingNotificationTap()
+                
+                focusCurrentDay()
+            }
+            .onChange(of: coordinator.selectedWeek) { _, _ in
+                focusCurrentDay()
+            }
+            .onChange(of: voiceOverEnabled) { _, isEnabled in
+                focusCurrentDay()
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 if newPhase == .active {
@@ -118,12 +129,14 @@ struct CalendarView: View {
                 systemImage: "graduationcap",
                 description: Text("Scegli un corso dalle impostazioni per iniziare.")
             )
+            .accessibilityElement(children: .combine)
         } else if settings.selectedAcademicYear == "0" || settings.selectedAcademicYear.isEmpty {
             ContentUnavailableView(
                 "Nessun anno di corso",
                 systemImage: "calendar.badge.clock",
                 description: Text("Scegli un anno di corso dalle impostazioni per iniziare.")
             )
+            .accessibilityElement(children: .combine)
         } else {
             switch viewModel.state {
             case .idle, .loading:
@@ -136,30 +149,35 @@ struct CalendarView: View {
                     systemImage: "graduationcap",
                     description: Text("Non è stata trovata nessuna lezione per questo corso.")
                 )
+                .accessibilityElement(children: .combine)
             case .offline:
                 ContentUnavailableView(
                     "Sei Offline",
-                    systemImage: "wifi.slash",
+                    systemImage: AppState.offline.icon,
                     description: Text("Connettiti a internet per scaricare le tue lezioni.")
                 )
+                .accessibilityElement(children: .combine)
             case .serverUnreachable:
                 ContentUnavailableView {
-                    Label("Server non raggiungibile", systemImage: "network.slash")
+                    Label("Server non raggiungibile", systemImage: AppState.serveroffline.icon)
                 } description: {
                     Text("Non riusciamo a contattare il server. Riprova più tardi.")
                 }
+                .accessibilityElement(children: .combine)
             case .univrOffline:
                 ContentUnavailableView {
-                    Label("Università non raggiungibile", systemImage: "building.columns")
+                    Label("Università non raggiungibile", systemImage: AppState.unioffline.icon)
                 } description: {
                     Text("Questo corso non è disponibile finché i server dell'università non tornano online. Riprova più tardi.")
                 }
+                .accessibilityElement(children: .combine)
             case .error(let msg):
                 ContentUnavailableView(
                     "Si è verificato un errore",
                     systemImage: "exclamationmark.triangle",
                     description: Text(msg)
                 )
+                .accessibilityElement(children: .combine)
             }
         }
     }
@@ -169,9 +187,12 @@ struct CalendarView: View {
             ScrollView(.horizontal) {
                 LazyHStack(spacing: 0) {
                     ForEach(viewModel.academicYearDays, id: \.self) { date in
-                        CalendarViewDay(date: date, viewModel: viewModel, sheetRouter: sheetRouter)
+                        CalendarViewDay(date: date, viewModel: viewModel, sheetRouter: sheetRouter,
+                                        focus: $focusedDay)
                             .containerRelativeFrame(.horizontal)
                             .id(date)
+                            .accessibilityElement(children: .contain)
+                            .accessibilityHidden(!Calendar.current.isDate(date, inSameDayAs: coordinator.selectedWeek))
                     }
                 }
                 .scrollTargetLayout()
@@ -213,6 +234,7 @@ struct CalendarView: View {
         .contentMargins(.top, 15, for: .scrollIndicators)
         .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
         .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
+        .accessibilityHidden(true)
     }
     
     // MARK: - Toolbar Builder
@@ -222,15 +244,15 @@ struct CalendarView: View {
             HStack(spacing: 6) {
                 SelectedDayLabel(coordinator: coordinator)
                 ZStack {
-                    Image(systemName: "wifi.slash")
+                    Image(systemName: AppState.offline.icon)
                         .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isOffline)
-                        .foregroundStyle(.yellow.opacity(0.8))
-                    Image(systemName: "network.slash")
+                        .foregroundStyle(AppState.offline.color)
+                    Image(systemName: AppState.serveroffline.icon)
                         .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isServerUnreachable)
-                        .foregroundStyle(.orange.opacity(0.8))
-                    Image(systemName: "building.columns")
+                        .foregroundStyle(AppState.serveroffline.color)
+                    Image(systemName: AppState.unioffline.icon)
                         .symbolEffect(.appear.up.byLayer, isActive: !viewModel.isUniVROffline)
-                        .foregroundStyle(.blue.opacity(0.8))
+                        .foregroundStyle(AppState.unioffline.color)
                 }
                 .font(.system(size: 12, weight: .bold))
             }
@@ -241,6 +263,7 @@ struct CalendarView: View {
                         .padding(.bottom, 8)
                 }
             }
+            .accessibilityHidden(true)
         }
         .toolbarBackgroundVisibility(.hidden)
         
@@ -311,7 +334,7 @@ struct CalendarView: View {
         }
         .allowsHitTesting(!isRetrying)
         .buttonStyle(.borderedProminent)
-        .tint(serverDown ? .orange : .blue)
+        .tint(serverDown ? AppState.serveroffline.color : AppState.unioffline.color)
     }
     
     // MARK: - Logic Methods
@@ -459,6 +482,15 @@ struct CalendarView: View {
             }
         }
     }
+    
+    private func focusCurrentDay() {
+        guard voiceOverEnabled, sheetRouter.manager.selectedDetent != .large else { return }
+        focusedDay = nil
+        Task {
+            try? await Task.sleep(for: .milliseconds(250))
+            focusedDay = coordinator.selectedWeek
+        }
+    }
 }
 
 // MARK: - Subviews
@@ -466,29 +498,46 @@ struct CalendarViewDay: View {
     let date: Date
     let viewModel: CalendarViewModel
     var sheetRouter: CalendarSheetRouter
-    
+    var focus: AccessibilityFocusState<Date?>.Binding
+
     var body: some View {
         let items = viewModel.events(for: date) ?? []
-        Group {
-            if items.isEmpty {
-                ContentUnavailableView(
-                    "Giornata Libera",
-                    systemImage: "moon.zzz",
-                    description: Text("Non ci sono lezioni o impegni in programma per oggi.")
-                )
-            } else {
-                ScrollView {
-                    VStack(spacing: 10) {
-                        ForEach(items) { item in
-                            CardItemContainer(item: item, sheetRouter: sheetRouter)
-                        }
+        let dateLabel = date.formatted(.dateTime.weekday(.wide).day().month(.wide))
+
+        if items.isEmpty {
+            let title = String(localized: "Giornata Libera")
+            let description = String(localized: "Non ci sono lezioni o impegni in programma per oggi.")
+
+            ContentUnavailableView(
+                LocalizedStringKey(title),
+                systemImage: "moon.zzz",
+                description: Text(LocalizedStringKey(description))
+            )
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(dateLabel): \(title). \(description)")
+            .accessibilityFocused(focus, equals: date)
+        } else {
+            ScrollView {
+                VStack(spacing: 10) {
+                    ForEach(items) { item in
+                        CardItemContainer(item: item, sheetRouter: sheetRouter)
                     }
                 }
-                .contentMargins(.top, 15, for: .scrollContent)
-                .contentMargins(.top, 15, for: .scrollIndicators)
-                .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
-                .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
+                .overlay(alignment: .top) {
+                    Color.clear
+                        .frame(height: 1)
+                        .allowsHitTesting(false)
+                        .accessibilityElement()
+                        .accessibilityLabel(Text(dateLabel))
+                        .accessibilityAddTraits(.isHeader)
+                        .accessibilitySortPriority(10)
+                        .accessibilityFocused(focus, equals: date)
+                }
             }
+            .contentMargins(.top, 15, for: .scrollContent)
+            .contentMargins(.top, 15, for: .scrollIndicators)
+            .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollContent)
+            .contentMargins(.bottom, CustomSheetDetent.small.value, for: .scrollIndicators)
         }
     }
 }
@@ -527,8 +576,8 @@ private struct SelectionFeedback: ViewModifier {
             Haptics.play(.selection, state: "selection")
             
             let isSystemSheetOpen = sheetRouter.openSettings || sheetRouter.openAppNotices != nil || sheetRouter.openWhatsNew
-            if !isSystemSheetOpen { 
-                sheetRouter.manager.setDetent(.small) 
+            if !isSystemSheetOpen {
+                sheetRouter.manager.setDetent(.small)
             }
             
             Task {

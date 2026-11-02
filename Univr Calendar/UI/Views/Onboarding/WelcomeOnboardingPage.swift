@@ -10,6 +10,9 @@
 import SwiftUI
 
 struct WelcomeOnboardingPage: View {
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
     let title: LocalizedStringKey
     let subtitle: LocalizedStringResource
     @Binding var errorMessage: String?
@@ -19,8 +22,6 @@ struct WelcomeOnboardingPage: View {
     let isLoading: Bool
     let isButtonDisabled: Bool
     let buttonAction: () -> Void
-    
-    @Environment(\.colorScheme) private var colorScheme
     
     @State private var isExpanded: Bool = false
     @State private var isBlurred: Bool = false
@@ -64,22 +65,34 @@ struct WelcomeOnboardingPage: View {
                     iconView(size: currentSize)
                         .offset(y: currentOffset)
                     
-                    VStack(spacing: 12) {
-                        Text(title)
-                            .font(.largeTitle.bold())
-                            .opacity(showTitle ? 1 : 0)
-                            .blur(radius: showTitle ? 0 : 8)
-                            .scaleEffect(showTitle ? 1 : 0.95)
-                            .offset(y: showTitle ? 0 : 32)
-                        
-                        Text(styledSubtitle)
-                            .font(.body)
-                            .lineSpacing(2)
-                            .opacity(showSubtitle ? 1 : 0)
-                            .blur(radius: showSubtitle ? 0 : 8)
-                            .offset(y: showSubtitle ? 0 : 26)
+                    ScrollView {
+                        ZStack {
+                            Color.clear
+                                .containerRelativeFrame(.vertical)
+
+                            VStack(spacing: 12) {
+                                Text(title)
+                                    .font(.largeTitle.bold())
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .opacity(showTitle ? 1 : 0)
+                                    .blur(radius: showTitle || reduceMotion ? 0 : 8)
+                                    .scaleEffect(showTitle || reduceMotion ? 1 : 0.95)
+                                    .offset(y: showTitle || reduceMotion ? 0 : 32)
+                                    .accessibilityAddTraits(.isHeader)
+
+                                Text(styledSubtitle)
+                                    .font(.body)
+                                    .lineSpacing(2)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .opacity(showSubtitle ? 1 : 0)
+                                    .blur(radius: showSubtitle || reduceMotion ? 0 : 8)
+                                    .offset(y: showSubtitle || reduceMotion ? 0 : 26)
+                            }
+                            .padding(.horizontal, 24)
+                        }
                     }
-                    .padding(.horizontal, 24)
+                    .scrollBounceBehavior(.basedOnSize)
+                    .accessibilityElement(children: .combine)
                 }
                 .frame(maxWidth: .infinity)
                 .background {
@@ -103,7 +116,7 @@ struct WelcomeOnboardingPage: View {
                 .padding(.horizontal, max(bottomPadding, 16))
                 .safeAreaPadding(.bottom, bottomPadding == 0 ? 16 : 0)
                 .opacity(showButton ? 1 : 0)
-                .blur(radius: showButton ? 0 : 12)
+                .blur(radius: showButton || reduceMotion ? 0 : 12)
                 .allowsHitTesting(showButton)
             }
             .multilineTextAlignment(.center)
@@ -117,11 +130,12 @@ struct WelcomeOnboardingPage: View {
     @ViewBuilder
     private func iconView(size: CGFloat) -> some View {
         ZStack {
-            Image("InternalIcon")
+            Image(decorative: "InternalIcon")
                 .resizable()
                 .scaledToFit()
+                .accessibilityIgnoresInvertColors(true)
             
-            Image("InternalIcon")
+            Image(decorative: "InternalIcon")
                 .resizable()
                 .scaledToFit()
                 .blur(radius: isBlurred ? 28 : 0)
@@ -136,6 +150,7 @@ struct WelcomeOnboardingPage: View {
                     )
                 )
                 .opacity(isBlurred ? 1 : 0)
+                .accessibilityIgnoresInvertColors(true)
             
             if colorScheme == .light {
                 LinearGradient(
@@ -159,10 +174,13 @@ struct WelcomeOnboardingPage: View {
             )
         )
         .mask {
-            Image("InternalIcon")
+            Image(decorative: "InternalIcon")
                 .resizable()
                 .scaledToFit()
+                .accessibilityIgnoresInvertColors(true)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityHidden(true)
     }
     
     private var opacityStops: [Gradient.Stop] {
@@ -192,6 +210,17 @@ struct WelcomeOnboardingPage: View {
         guard !isExpanded else { return }
         
         Task { @MainActor in
+            if reduceMotion {
+                isExpanded = true
+                isBlurred = true
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    showTitle = true
+                    showSubtitle = true
+                    showButton = true
+                }
+                return
+            }
+            
             withAnimation(.spring(response: 0.85, dampingFraction: 0.78)) {
                 isExpanded = true
             }

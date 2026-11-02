@@ -40,29 +40,36 @@ struct WhatsNewView: View {
     
     @State var isScrolling: Bool = false
     @State private var scrollUpdateTask: Task<Void, Never>?
+    
+    @AccessibilityFocusState private var isHeaderFocused: Bool
+    
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 0) {
                 ForEach(Array(versions.enumerated()), id: \.element.id) { index, version in
-                    if #available(iOS 18, *) {
-                        versionContent(version)
-                            .containerRelativeFrame(.horizontal)
-                            .id(index)
-                    } else {
-                        GeometryReader { geo in
+                    Group {
+                        if #available(iOS 18, *) {
                             versionContent(version)
-                                .onChange(of: geo.frame(in: .global).midX) { _, midX in
-                                    let screenMid = UIScreen.main.bounds.width / 2
-                                    if abs(midX - screenMid) < 50 {
-                                        if index != selectedVersionIndex && !isScrolling {
-                                            selectedVersionIndex = index
+                                .containerRelativeFrame(.horizontal)
+                                .id(index)
+                        } else {
+                            GeometryReader { geo in
+                                versionContent(version)
+                                    .onChange(of: geo.frame(in: .global).midX) { _, midX in
+                                        let screenMid = UIScreen.main.bounds.width / 2
+                                        if abs(midX - screenMid) < 50 {
+                                            if index != selectedVersionIndex && !isScrolling {
+                                                selectedVersionIndex = index
+                                            }
                                         }
                                     }
-                                }
+                            }
+                            .containerRelativeFrame(.horizontal)
+                            .id(index)
                         }
-                        .containerRelativeFrame(.horizontal)
-                        .id(index)
                     }
+                    .accessibilityElement(children: .contain)
+                    .accessibilityHidden(index != selectedVersionIndex)
                 }
             }
             .scrollTargetLayout()
@@ -91,6 +98,11 @@ struct WhatsNewView: View {
                 dotWindowStart = min(selectedVersionIndex - 2, maxStart)
             }
             
+            Task {
+                try? await Task.sleep(for: .milliseconds(150))
+                isHeaderFocused = true
+            }
+            
             if #unavailable(iOS 18) {
                 isScrolling = true
                 scrollUpdateTask?.cancel()
@@ -101,6 +113,10 @@ struct WhatsNewView: View {
                     }
                 }
             }
+        }
+        .task {
+            try? await Task.sleep(for: .milliseconds(250))
+            isHeaderFocused = true
         }
         .toolbar {
             ToolbarItem(placement: .bottomBar) {
@@ -168,6 +184,11 @@ struct WhatsNewView: View {
         }
         .frame(maxWidth: .infinity)
         .contentTransition(.numericText(countsDown: previousVersionIndex < selectedVersionIndex))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Novità della versione \(currentVersion?.version ?? "")")
+        .accessibilityValue(currentVersion?.headline ?? "")
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityFocused($isHeaderFocused)
     }
     
     // MARK: - Version Content
@@ -195,6 +216,7 @@ struct WhatsNewView: View {
                             .font(.caption)
                             .fontWeight(.medium)
                             .contentTransition(.numericText())
+                            .contentShape(.capsule)
                     }
                     .foregroundStyle(.primary)
                     .padding(.vertical, 8)
@@ -241,6 +263,7 @@ struct WhatsNewView: View {
         .opacity(direction == .left ? canGoNewer ? 1 : 0.3 : canGoOlder ? 1 : 0.3)
         .disabled(direction == .left ? !canGoNewer : !canGoOlder)
         .sensoryFeedback(.selection, trigger: selectedVersionIndex)
+        .accessibilityLabel(direction == .left ? "Versione successiva" : "Versione precedente")
     }
     
     @ViewBuilder
@@ -263,7 +286,9 @@ struct WhatsNewView: View {
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText(countsDown: previousVersionIndex < selectedVersionIndex))
                     .animation(animation, value: selectedVersionIndex)
+                    .accessibilityLabel(String(localized: "Rilasciata il \(version.date.formatted(.dateTime.day().month(.abbreviated).year()))"))
             }
+            .accessibilityElement(children: .combine)
         }
     }
     
@@ -281,15 +306,21 @@ struct WhatsNewView: View {
 }
 
 // MARK: - Feature Card
-struct FeatureCard: View {
-    @Namespace var namespace
-    
+private struct FeatureCard: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let feature: WhatsNewFeature
     let isExpanded: Bool
     let animation: Animation
     let onToggle: () -> Void
     
+    @Namespace private var namespace
+    
     var body: some View {
+        let isAX = dynamicTypeSize.isAccessibilitySize
+        let collapsedTransition: AnyTransition = reduceMotion ? .opacity : AnyTransition(.blurReplace.combined(with: .scale(2)))
+        let expandedTransition: AnyTransition = reduceMotion ? .opacity : AnyTransition(.blurReplace.combined(with: .scale(0.6)))
+        
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: isExpanded ? .center : .top, spacing: 14) {
                 // Icon
@@ -297,16 +328,16 @@ struct FeatureCard: View {
                     switch feature.icon {
                     case .system(let name):
                         Image(systemName: name)
-                            .font(.title3)
-                            .fontWeight(.semibold)
+                            .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(feature.accentColor.color)
                             .symbolEffect(.bounce, value: isExpanded)
                     case .asset(let name):
-                        Image(name)
+                        Image(decorative: name)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(width: isExpanded ? 48 : 30.4, height: isExpanded ? 48 : 30.4)
                             .clipShape(RoundedRectangle(cornerRadius: 32 * 0.225, style: .continuous))
+                            .accessibilityIgnoresInvertColors(true)
                     }
                 }
                 .frame(width: 48, height: 48)
@@ -314,38 +345,47 @@ struct FeatureCard: View {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(feature.accentColor.color.opacity(0.12))
                 }
+                .accessibilityHidden(true)
                 
                 // Content
                 VStack(alignment: .leading, spacing: 4) {
                     Text(feature.title)
                         .font(.headline)
                         .fontWeight(.semibold)
+                        .accessibilityAddTraits(.isHeader)
                     
-                    if !isExpanded {
+                    if !isExpanded && !isAX {
                         Text(feature.shortDescription)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .matchedGeometryEffect(id: "text", in: namespace, properties: .position, anchor: .topLeading)
-                            .transition(.blurReplace.combined(with: .scale(2)))
+                            .transition(collapsedTransition)
                     }
                 }
                 
-                Spacer(minLength: 0)
+                Spacer(minLength: 8)
                 
-                // Expand indicator
                 Image(systemName: "chevron.down.circle")
                     .font(.title3)
                     .foregroundStyle(.tertiary)
                     .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                    .accessibilityHidden(true)
             }
             
-            // Expanded details
+            if !isExpanded && isAX {
+                Text(feature.shortDescription)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .matchedGeometryEffect(id: "text", in: namespace, properties: .position, anchor: .topLeading)
+                    .transition(collapsedTransition)
+            }
+            
             if isExpanded {
                 Text(feature.detailedDescription)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .matchedGeometryEffect(id: "text", in: namespace, properties: .position, anchor: .topLeading)
-                    .transition(.blurReplace.combined(with: .scale(0.6)))
+                    .transition(expandedTransition)
             }
         }
         .padding(16)
@@ -358,7 +398,12 @@ struct FeatureCard: View {
             Haptics.play(.impact(flexibility: .soft, intensity: 0.6))
             onToggle()
         }
-        .animation(animation, value: isExpanded)
+        .animation(reduceMotion ? .easeInOut(duration: 0.2) : animation, value: isExpanded)
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityValue(isExpanded ? "Espanso" : "Compresso")
+        .accessibilityHint("Tocca due volte per espandere o comprimere")
+        .contentShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
     }
 }
 

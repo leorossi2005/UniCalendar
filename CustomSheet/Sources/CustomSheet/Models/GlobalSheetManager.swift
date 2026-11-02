@@ -43,6 +43,8 @@ public class GlobalSheetManager {
     var onLargeDetentToggle: ((Bool) -> Void)?
     var actionDismiss: (() -> Void)?
     
+    var keepAccessibilityFocusOnLargeExit: Bool = false
+    
     // periphery:ignore
     public func dismiss() {
         actionDismiss?()

@@ -13,9 +13,19 @@ struct HorizontalLine: View {
     var color: Color
     var lineWidth: CGFloat
     var dash: [CGFloat] = []
+    var isStriped: Bool = false
     
     var body: some View {
-        if dash.isEmpty {
+        if isStriped {
+            Capsule()
+                .fill(color)
+                .overlay {
+                    DiagonalStripesShape(step: 4.5)
+                        .stroke(.black.opacity(0.35), lineWidth: 1.5)
+                }
+                .clipShape(Capsule())
+                .frame(height: lineWidth)
+        } else if dash.isEmpty {
             LineShape(lineWidth: lineWidth)
                 .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .frame(height: lineWidth)
@@ -49,9 +59,19 @@ struct VerticalLine: View {
     var color: Color
     var lineWidth: CGFloat
     var dash: [CGFloat] = []
+    var isStriped: Bool = false
     
     var body: some View {
-        if dash.isEmpty {
+        if isStriped {
+            Capsule()
+                .fill(color)
+                .overlay {
+                    DiagonalStripesShape(step: 4.5)
+                        .stroke(.black.opacity(0.35), lineWidth: 1.5)
+                }
+                .clipShape(Capsule())
+                .frame(width: lineWidth)
+        } else if dash.isEmpty {
             LineShape(lineWidth: lineWidth)
                 .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .frame(width: lineWidth)
@@ -125,6 +145,25 @@ private struct AdaptiveDashedLineShape: Shape {
             }
         }
         
+        return path
+    }
+}
+
+struct DiagonalStripesShape: Shape {
+    var step: CGFloat = 4.5
+    
+    nonisolated func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+        guard w > 0, h > 0 else { return path }
+        
+        var c: CGFloat = 0
+        while c <= w + h {
+            path.move(to: CGPoint(x: c - h, y: h))
+            path.addLine(to: CGPoint(x: c, y: 0))
+            c += step
+        }
         return path
     }
 }

@@ -96,7 +96,7 @@ struct CalendarItemPreview: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
                             badgeColor.opacity(0.2),
-                            in: RoundedRectangle(cornerRadius: .deviceCornerRadius - 16)
+                            in: RoundedRectangle(cornerRadius: .deviceCornerRadius - 16 <= 0 ? 10 : .deviceCornerRadius - 16)
                         )
                 }
             }
@@ -130,6 +130,7 @@ struct CalendarItemPreview: View {
                 .opacity(colorScheme == .dark ? 0.15 : 0.4)
             }
         }
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }
     
     private func rowLabel(text: LocalizedStringKey, icon: String) -> some View {

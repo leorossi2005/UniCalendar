@@ -12,13 +12,20 @@ import UnivrCore
 
 struct RoomCard: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
     
     var room: Room
     var selectedDate: Date
+    var isPlaceholder: Bool = false
+    
+    private var isCardPlaceholder: Bool {
+        isPlaceholder || room.id == Room.sample(date: selectedDate).id
+    }
         
     var body: some View {
         TimelineView(.everyMinute) { context in
             let currentStatus = RoomDailyStatus(room: room, selectedDate: selectedDate, now: context.date)
+            let subsequentEventsCount = subsequentEvents(for: currentStatus)
             
             VStack(spacing: 20) {
                 LessonInfo(room: room, status: currentStatus)
@@ -30,15 +37,50 @@ struct RoomCard: View {
             .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
             .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 35, style: .continuous))
             .hoverEffect(.lift)
-            .padding(.horizontal)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityInputLabels([room.name])
+            .accessibilityHidden(voiceOverEnabled)
+            .overlay {
+                if voiceOverEnabled {
+                    SpeechLanguageLabel(
+                        .it(room.name),
+                        .system(currentStatus.statusText),
+                        traits: .button
+                    )
+                    .accessibilityValue(subsequentEventsValue(count: subsequentEventsCount) ?? Text(""))
+                    .accessibilityHint(Text("Tocca due volte per aprire i dettagli"))
+                }
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 35, style: .continuous))
+        }
+    }
+
+    // MARK: - Helpers
+    private func subsequentEvents(for status: RoomDailyStatus) -> Int {
+        switch status {
+        case .occupiedUntil(_, let index, _),
+             .freeUntil(_, let index),
+             .futureDay(_, let index):
+            return max(0, room.events.count - (index + 1))
+        default:
+            return 0
+        }
+    }
+
+    private func subsequentEventsValue(count: Int) -> Text? {
+        guard count > 0 else { return nil }
+        if count == 1 {
+            return Text("1 altro impegno oggi")
+        } else {
+            return Text("Altri \(count) impegni oggi")
         }
     }
     
     // MARK: - Components
     private var backgroundLayer: some View {
         RoundedRectangle(cornerRadius: 35, style: .continuous)
-            .fill(Color(colorScheme == .dark ? .secondarySystemGroupedBackground : .systemGroupedBackground))
-        
+            .fill(isCardPlaceholder ? Lesson.sample.uiColor : Color(colorScheme == .dark ? .secondarySystemGroupedBackground : .systemGroupedBackground))
     }
 }
 
@@ -96,6 +138,7 @@ private struct Timeline: View {
                 .gridCellColumns(3)
             }
         }
+        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
     }
     
     private var nowIndicator: some View {
@@ -117,34 +160,46 @@ private struct Timeline: View {
                 HorizontalLine(color: .green, lineWidth: 4)
                 Circle()
                     .fill(.red)
-                    .frame(height: 12)
                     .overlay {
+                        DiagonalStripesShape(step: 4.5)
+                            .stroke(.black.opacity(0.35), lineWidth: 1.5)
+                    }
+                    .clipShape(Circle())
+                    .frame(width: 12, height: 12)
+                    .overlay(alignment: .bottom) {
                         Text(event.startTime, format: .dateTime.hour().minute())
                             .foregroundStyle(.red)
                             .fixedSize()
                             .font(.caption)
-                            .offset(y: -16)
+                            .padding(.bottom, 16)
                     }
             }
-            HorizontalLine(color: .red.opacity(0.9), lineWidth: 4)
+            HorizontalLine(color: .red.opacity(0.9), lineWidth: 4, isStriped: true)
             Circle()
                 .fill(after ? .red : .green)
-                .frame(height: 12)
                 .overlay {
+                    if after {
+                        DiagonalStripesShape(step: 4.5)
+                            .stroke(.black.opacity(0.35), lineWidth: 1.5)
+                    }
+                }
+                .clipShape(Circle())
+                .frame(width: 12, height: 12)
+                .overlay(alignment: .bottom) {
                     Text(event.endTime, format: .dateTime.hour().minute())
                         .foregroundStyle(after ? .red : .green)
                         .fixedSize()
                         .font(.caption)
-                        .offset(y: -16)
+                        .padding(.bottom, 16)
                 }
-            HorizontalLine(color: after ? .red : .green, lineWidth: 4)
-                .overlay(alignment: .trailing) {
+            HorizontalLine(color: after ? .red : .green, lineWidth: 4, isStriped: after)
+                .overlay(alignment: .bottomTrailing) {
                     if subsequentEventsCount > 0 {
                         Text("+\(subsequentEventsCount)")
-                            .foregroundStyle(Color(.lightGray))
+                            .foregroundStyle(.secondary)
                             .fixedSize()
                             .font(.caption)
-                            .offset(y: -16)
+                            .padding(.bottom, 12)
                     }
                 }
         }

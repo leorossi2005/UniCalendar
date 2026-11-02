@@ -64,7 +64,7 @@ struct ManagePersonalEventView: View {
                         HStack {
                             Text("Luogo")
                             Spacer()
-                            Text(location?.name ?? "Nessuno")
+                            Text(location?.name ?? String(localized: "Nessuno"))
                                 .foregroundColor(.secondary)
                         }
                     }

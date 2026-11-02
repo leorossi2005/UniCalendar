@@ -73,6 +73,7 @@ struct RootView: View {
             Image("InternalIcon")
                 .resizable()
                 .frame(width: Self.iconSize, height: Self.iconSize)
+                .accessibilityIgnoresInvertColors(true)
         }
         .ignoresSafeArea()
     }

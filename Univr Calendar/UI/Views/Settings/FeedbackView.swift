@@ -55,6 +55,8 @@ struct FeedbackView: View {
                             title = String(title.prefix(FeedbackLimits.titleMax))
                         }
                     }
+                    .accessibilityLabel("Titolo")
+                    .accessibilityInputLabels(["Titolo"])
             } header: {
                 Text("Titolo")
             } footer: {
@@ -69,6 +71,8 @@ struct FeedbackView: View {
                             details = String(details.prefix(FeedbackLimits.detailsMax))
                         }
                     }
+                    .accessibilityLabel("Descrizione")
+                    .accessibilityInputLabels(["Descrizione"])
             } header: {
                 Text("Descrizione")
             } footer: {
@@ -80,6 +84,7 @@ struct FeedbackView: View {
                     Image(systemName: .deviceSymbol)
                         .font(.title2)
                         .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(device.deviceName)
                         Text(device.deviceIdentifier)
@@ -87,8 +92,14 @@ struct FeedbackView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Dispositivo: \(device.deviceName), ID: \(device.deviceIdentifier)")
                 LabeledContent("App", value: "\(device.appVersion) (\(device.build))")
+                    .accessibilityLabel("Versione applicazione")
+                    .accessibilityValue("\(device.appVersion), build numero \(device.build)")
                 LabeledContent("Sistema", value: "\(device.osName) \(device.osVersion)")
+                    .accessibilityLabel("Versione sistema operativo")
+                    .accessibilityValue("\(device.osName) \(device.osVersion)")
                 attachmentRow
             } header: {
                 Text("Allegati")
@@ -108,10 +119,10 @@ struct FeedbackView: View {
                         Section {
                             Label(
                                 isOffline ? "Sei offline, non puoi inviare feedback." : "Server non raggiungibile, non puoi inviare feedback.",
-                                systemImage: isOffline ? "wifi.slash" : "network.slash"
+                                systemImage: isOffline ? AppState.offline.icon : AppState.serveroffline.icon
                             )
                             .font(.caption2)
-                            .foregroundStyle(isOffline ? .yellow : .orange)
+                            .foregroundStyle(isOffline ? AppState.offline.color : AppState.serveroffline.color)
                             .labelStyle(.titleAndIcon)
                         }
                     }
@@ -167,16 +178,22 @@ struct FeedbackView: View {
                     .scaledToFill()
                     .frame(width: 64, height: 64)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .accessibilityHidden(true)
+                    .accessibilityIgnoresInvertColors(true)
                 Text("Screenshot allegato")
                     .foregroundStyle(.secondary)
                 Spacer()
-                Button(role: .destructive) {
-                    pickerItem = nil
-                } label: {
-                    Image(systemName: "trash")
-                }
-                .buttonStyle(.borderless)
+                Button("Rimuovi", systemImage: "trash", role: .destructive) { pickerItem = nil }
+                    .buttonStyle(.borderless)
+                    .labelStyle(.iconOnly)
+                    .foregroundStyle(.red)
+                    .accessibilityHidden(true)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Screenshot allegato")
+            .accessibilityHint("Usa le azioni del rotore per rimuovere")
+            .accessibilityAction(named: "Rimuovi screenshot") { pickerItem = nil }
+            .accessibilityInputLabels(["Rimuovi"])
         } else {
             PhotosPicker(selection: $pickerItem, matching: .images) { [isLoadingImage] in
                 HStack {
@@ -186,13 +203,17 @@ struct FeedbackView: View {
                     if isLoadingImage { ProgressView() }
                 }
             }
+            .accessibilityHint("Apre la libreria foto per selezionare un'immagine")
         }
     }
     
     private func counter(_ count: Int, max: Int) -> some View {
-        Text("\(count)/\(max)")
+        let maxString = max.formatted(.number.grouping(.never))
+        
+        return Text("\(count)/\(max)")
             .monospacedDigit()
             .frame(maxWidth: .infinity, alignment: .trailing)
+            .accessibilityLabel("\(count) di \(maxString) caratteri")
     }
     
     // MARK: - Logic
@@ -210,7 +231,6 @@ struct FeedbackView: View {
             Haptics.play(.success)
             showSuccess = true
         } catch is CancellationError {
-            // niente da mostrare
         } catch let error as FeedbackError {
             Haptics.play(.error)
             switch error {
@@ -249,8 +269,6 @@ struct FeedbackView: View {
         attachment = Attachment(data: jpeg, preview: Image(uiImage: uiImage))
     }
     
-    /// Ridimensiona (orientamento corretto) e comprime in JPEG, riducendo prima la qualità e poi
-    /// la risoluzione finché non rientra in `FeedbackLimits.attachmentMaxBytes`.
     private nonisolated static func makeJPEG(from data: Data) -> Data? {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
         for maxPixel in [1600, 1280, 1024, 800] {

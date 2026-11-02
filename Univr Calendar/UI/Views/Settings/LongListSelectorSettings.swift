@@ -12,6 +12,7 @@ import UnivrCore
 import CustomSheet
 
 struct LongListSelectorSettings<Item: SelectableItem>: View {
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
     @Environment(GlobalSheetManager.self) private var sheetManager
     @Environment(\.dismiss) private var dismiss
     
@@ -52,11 +53,21 @@ struct LongListSelectorSettings<Item: SelectableItem>: View {
                         .contentShape(.rect)
                     }
                     .id(item.id)
+                    .accessibilityHidden(voiceOverEnabled)
+                    .overlay {
+                        if voiceOverEnabled {
+                            SpeechLanguageLabel(
+                                .it(item.label),
+                                traits: isSelected ? [.button, .selected] : .button
+                            )
+                        }
+                    }
                 }
             }
             .overlay {
                 if filteredItems.isEmpty && !searchText.isEmpty {
                     ContentUnavailableView.search(text: searchText)
+                        .accessibilityElement(children: .combine)
                 }
             }
             .onAppear {
