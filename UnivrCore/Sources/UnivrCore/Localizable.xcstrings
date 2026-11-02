@@ -2475,6 +2475,737 @@
           }
         }
       }
+    },
+    "v1_0_0-00-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A new screen accessible from the top bar lets you check daily classroom status for any university location. Each card shows the status updated every minute along with a horizontal timeline of the day's events. Tapping a classroom opens the full detail view."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Una nuova schermata accessibile dalla barra in alto ti permette di consultare lo stato giornaliero delle aule per qualsiasi sede universitaria. Ogni scheda mostra lo stato aggiornato di minuto in minuto e una timeline orizzontale con gli impegni della giornata. Toccando un'aula si apre il dettaglio completo."
+          }
+        }
+      }
+    },
+    "v1_0_0-00-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check in real time which classrooms are available."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Controlla in tempo reale quali aule sono disponibili."
+          }
+        }
+      }
+    },
+    "v1_0_0-00-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classroom Availability"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Disponibilità Aule"
+          }
+        }
+      }
+    },
+    "v1_0_0-01-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can now manage yor personal commitments directly from the calendar or from the dedicated section in settings. Add a title, time, custom tags, notes and search for a real address with map autocomplete. Personal commitments stand out with a dedicated Mesh Gradient background and are dynamically inserted between lessons."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ora puoi gestire i tuoi impegni personali direttamente dal calendario o dalla sezione dedicata nelle impostazioni. Puoi inserire titolo, orario, tag personalizzati, note e cercare un indirizzo reale con autocompletamento su mappa. Gli impegni si distinguono grazie a uno sfondo Mesh Gradient dedicato e si inseriscono dinamicamente tra le lezioni."
+          }
+        }
+      }
+    },
+    "v1_0_0-01-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add your own commitments to the calendar alongside university classes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Aggiungi i tuoi impegni al calendario insieme alle lezioni universitarie."
+          }
+        }
+      }
+    },
+    "v1_0_0-01-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Personal Commitments"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Impegni Personali"
+          }
+        }
+      }
+    },
+    "v1_0_0-02-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From details screen of any lesson or personal commitment you can schedule a notification at the start of the event or 5, 15, 30 minutes or 1 hour before. Long-pressing a received notification shows a full commitment or lesson preview, while tapping it opens the details directly in the app. All active alerts are manageable in the new section in settings."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dai dettagli di qualsiasi lezione o impegno personale puoi programmare una notifica all'inizio dell'evento oppure 5, 15, 30 minuti o 1 ora prima. Tenendo premuto sulla notifica ricevuta viene mostrata un'anteprima dell'impegno o lezione, mentre toccandola si aprono direttamente i dettagli nell'app. Tutti gli avvisi attivi sono gestibili nella nuova sezione nelle impostazioni."
+          }
+        }
+      }
+    },
+    "v1_0_0-02-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Set custom reminders for classes and personal commitments."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Imposta promemoria personalizzati per lezioni e impegni personali."
+          }
+        }
+      }
+    },
+    "v1_0_0-02-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications and Reminders"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Notifiche e Promemoria"
+          }
+        }
+      }
+    },
+    "v1_0_0-03-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Now you can export any class to your calendar with a single tap, complete with the time, instructors, classroom, and GPS coordinates. Plus, if you press and hold a class or personal event, a new preview opens with quick actions to add the event to your calendar, view details, edit it, or delete it."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ora puoi esportare qualsiasi lezione nel tuo calendario con un tocco, completa di orario, docenti, aula e coordinate GPS. Inoltre, tenendo premuto su una lezione o su un impegno personale, si apre una nuova anteprima con azioni rapide per aggiungere l'evento al calendario, aprire i dettagli, modificarlo o eliminarlo."
+          }
+        }
+      }
+    },
+    "v1_0_0-03-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save classes to the system calendar and use the context menu."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Salva le lezioni nel calendario di sistema e usa il menu contestuale."
+          }
+        }
+      }
+    },
+    "v1_0_0-03-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System Calendar and Quick Actions"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Calendario e Azioni Rapide"
+          }
+        }
+      }
+    },
+    "v1_0_0-04-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "For the 1.0.0 release, the app needed a new icon designed with meticulous attention to detail, created to give it a unique and recognizable look on the Home screen."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Per il rilascio della 1.0.0, l'app aveva bisogno di una nuova icona curata nei minimi dettagli, pensata per offrire un aspetto unico e riconoscibile sulla schermata Home."
+          }
+        }
+      }
+    },
+    "v1_0_0-04-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A completely redesigned icon to give the app a unique identity."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Un'icona completamente ridisegnata per dare un'indentità unica all'app."
+          }
+        }
+      }
+    },
+    "v1_0_0-04-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New App Icon"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nuova Icona dell'App"
+          }
+        }
+      }
+    },
+    "v1_0_0-05-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The app now communicates with a new dedicated server that handles the processing of all data coming from the university, ensuring that the app continues to function even if the university becomes unreachable. There are already many benefits you'll notice, but this is a major new feature that can only lead to future improvements."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "L'app ora comunica con un nuovo server dedicato che gestisce l'elaborazione di tutti i dati provenienti dall'università, garantendo il funzionamento dell'app anche se l'università diventa irraggiungibile. Ci sono già tanti vantaggi che noterai, ma questa è una grande novità che può solo portare a miglioramenti futuri."
+          }
+        }
+      }
+    },
+    "v1_0_0-05-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faster loading times, offline functionality, and much more, thanks to the new dedicated server."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Caricamenti più rapidi, funzionamento offline e molto altro grazie al nuovo server dedicato."
+          }
+        }
+      }
+    },
+    "v1_0_0-05-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New Server and Connectivity"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nuovo Server e Connessione"
+          }
+        }
+      }
+    },
+    "v1_0_0-06-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A new system that lets you receive notifications, problem reports, or important updates directly in the app, with support for quick links and sharing. You can view and update all active notifications at any time from the new dedicated section in Settings."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Un nuovo sistema che permette di ricevere avvisi informativi, segnalazioni di problemi o aggiornamenti importanti direttamente in app, con supporto a link rapidi e condivisione. Puoi consultare e aggiornare tutti gli avvisi attivi in qualsiasi momento dalla nuova sezione dedicata nelle impostazioni."
+          }
+        }
+      }
+    },
+    "v1_0_0-06-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Receive important communications and updates."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ricevi comunicazioni importanti e aggiornamenti."
+          }
+        }
+      }
+    },
+    "v1_0_0-06-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "System Notices"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Avvisi di Sistema"
+          }
+        }
+      }
+    },
+    "v1_0_0-07-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In the settings, you'll find a section where you can submit feedback without having to send an email. You can enter a title and description, and attach an optional screenshot from your photo library to help me resolve any issues quickly."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nelle impostazioni trovi una sezione per inviare un feedback senza dover passare per le mail. Puoi inserire un titolo e descrizione, allegare uno screenshot opzionale dalla libreria foto per aiutarmi a risolvere rapidamente ogni problema."
+          }
+        }
+      }
+    },
+    "v1_0_0-07-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Report issues or send suggestions directly from the app with an optional screenshot."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Segnala problemi o invia consigli direttamente dall'app con uno screenshot opzionale."
+          }
+        }
+      }
+    },
+    "v1_0_0-07-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Built-in Feedback"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Feedback Integrato"
+          }
+        }
+      }
+    },
+    "v1_0_0-08-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every screen in the app has been redesigned to be fully accessible, including, full VoiceOver support with correct Italian pronunciation of courses and classrooms, even when the device is set to other languages. Dynamic Type support has been improved up to AX5 with adaptive layouts. Voice Control, Reduce Motion, Invert Colors, and so on."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ogni schermata dell'app è stata ripensata per essere pienamente accessibile, incluso, flusso VoiceOver completo con pronuncia corretta in italiano dei corsi e delle aule anche con il dispositivo in altre lingue. Migliorato il supporto al Dynamic Type fino a AX5 con layout adattivi. Controllo Vocale, Riduci Movimento, Inverti Colori e così via."
+          }
+        }
+      }
+    },
+    "v1_0_0-08-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full support for all accessibility features."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Supporto completo a tutte le feature di accessibilità."
+          }
+        }
+      }
+    },
+    "v1_0_0-08-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full Accessibility"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Accessibilità Completa"
+          }
+        }
+      }
+    },
+    "v1_0_0-09-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In the monthly calendar, each day with activities now displays a progress bar at the bottom, its length and color show at a glance how busy the day is based on the scheduled classes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nel calendario mensile ogni giorno con attività mostra ora una barra di progresso nella parte inferiore, la lunghezza e il colore indicano a colpo d'occhio quanto è impegnativa la giornata in base alle lezioni attive."
+          }
+        }
+      }
+    },
+    "v1_0_0-09-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A colored bar under each day shows dinamically how busy it will be."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Una barra colorata sotto ogni giorno mostra dinamicamente quanto sarà impegnativo."
+          }
+        }
+      }
+    },
+    "v1_0_0-09-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily Workload"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Carico Giornaliero"
+          }
+        }
+      }
+    },
+    "v1_0_0-10-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The welcome page opens with a new animation. In addition, the text is now formatted, a button has been added to go back through the steps, and smart data preloading has been implemented. The year, academic year, and academic year selector now automatically switch between compact list view and searchable list view in both the onboarding process and the settings."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "La pagina di benvenuto si apre con una nuova animazione, in più ora i testi sono formattati, è stato aggiunto il pulsante per tornare indietro tra i passaggi e un precaricamento intelligente dei dati. Ora i selettori di anno, corso e anno di corso si adattano automaticamente tra lista compatta e lista con ricerca sia nell'onboarding che nelle impostazioni."
+          }
+        }
+      }
+    },
+    "v1_0_0-10-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New welcome animation, new graphics, and fewer worries."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nuova animazione di benvenuto, nuova grafica e meno pensieri."
+          }
+        }
+      }
+    },
+    "v1_0_0-10-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redesigned Onboarding and Selectors"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Onboarding e Selettori Rinnovati"
+          }
+        }
+      }
+    },
+    "v1_0_0-11-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In the settings, you'll find the new “What's New” section, which displays updates for all versions of the app. To view everything, simply swipe horizontally or use the navigation bar at the bottom. You can open and close individual updates to read their details, or use the dedicated button to expand them all at once."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nelle impostazioni puoi trovare la nuova sezione Novità, la quale mostrerà le novità di tutte le versioni dell'app. Per vedere tutto ti basta scorrere orizzontalmente o usare la navigazione in basso. Puoi aprire e chiudere le singole novità per leggerne i dettagli o usare il pulsante dedicato per espanderle tutte contemporaneamente."
+          }
+        }
+      }
+    },
+    "v1_0_0-11-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explore all updates and the history of the app from the first version to today."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Ripercorri tutte le novità e la storia dell'app dalla prima versione a oggi."
+          }
+        }
+      }
+    },
+    "v1_0_0-11-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What's New Screen"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pagina Novità"
+          }
+        }
+      }
+    },
+    "v1_0_0-12-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In the settings, you'll find a section dedicated to the developer (me). With a space-themed animated background, it offers an easy way to discover my other projects, follow me on social media, email me about anything, or support the development with a donation."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Nelle impostazioni trovi una sezione dedicata allo sviluppatore (io). Con uno sfondo animato a tema spaziale, offre un modo facile per scoprire gli altri miei progetti, seguirmi sui social, scrivermi via email per qualsiasi cosa o supportare lo sviluppo con una donazione."
+          }
+        }
+      }
+    },
+    "v1_0_0-12-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A section featuring my projects, social media, contact information, and the chance to make me a little gift 🙂"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Una sezione con i miei progetti, social, contatti e la possibilità di farmi un regalino 🙂"
+          }
+        }
+      }
+    },
+    "v1_0_0-12-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Developer"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Lo Sviluppatore"
+          }
+        }
+      }
+    },
+    "v1_0_0-13-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Added haptic feedback throughout the app to make interactions more engaging\n• Lesson and event cards now also display the end time and a counter when there are more than 3 tags\n• The custom sheet now features improved scrolling, an interactive grabber, and numerous compatibility and performance enhancements\n• Updated corner radii and model names for all the latest iPhone and iPad models, with a way for me to generate them dynamically\n• Automatic checking for schedule updates when reopening the app after at least an hour in the background, not just at startup\n• Reduced the size of images and resources by over %@ without any loss of visual quality\n• Updated the Core to Swift 6.4 with an automatic migration system for user settings\n• Fixed numerous navigation, layout, cache, and compatibility bugs on iOS 17, 18, 26, 27, and iPadOS"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "• Introdotto il feedback aptico in tutta l'app per rendere le interazioni più interattive\n• Le card delle lezioni e degli impegni mostrano ora anche l'orario di fine e un contatore quando sono presenti più di 3 tag\n• La sheet custom ha ora una gestione dello scroll migliorata, un grabber interattivo e molti miglioramenti di compatibilità e prestazioni\n• Aggiornati i raggi degli angoli e i nomi commerciali per tutti i modelli di iPhone e iPad più recenti, con un modo per me di generarli dinamicamente\n• Controllo automatico degli aggiornamenti dell'orario quando si riapre l'app dopo almeno un'ora in background, non solo più all'avvio\n• Ridotto il peso delle immagini e delle risorse di oltre il %@ senza perdita di qualità visiva\n• Aggiornato il Core a Swift 6.4 con sistema di migrazione automatica per le impostazioni utente\n• Risolti numerosi bug di navigazione, layout, cache e compatibilità su iOS 17, 18, 26, 27 e iPadOS"
+          }
+        }
+      }
+    },
+    "v1_0_0-13-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haptic feedback, improvements to the custom sheet, optimizations, and lots of bug fixes."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Feedback aptico, miglioramenti alla sheet custom, ottimizzazioni e tantissimi bug fix."
+          }
+        }
+      }
+    },
+    "v1_0_0-13-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Improvements and Fixes"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Miglioramenti e Correzioni"
+          }
+        }
+      }
+    },
+    "v1_0_0-headline" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "rooms, commitments and much more"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aule libere, impegni e tante novità"
+          }
+        }
+      }
     }
   },
   "version" : "1.1"

@@ -19,9 +19,7 @@ struct AboutView: View {
                 VStack(spacing: 15) {
                     Image(decorative: "InternalIcon")
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
                         .frame(width: Self.iconSize, height: Self.iconSize)
-                        .clipShape(RoundedRectangle(cornerRadius: Self.iconSize * 0.225, style: .continuous))
                         .accessibilityIgnoresInvertColors(true)
                     
                     VStack(spacing: 5) {

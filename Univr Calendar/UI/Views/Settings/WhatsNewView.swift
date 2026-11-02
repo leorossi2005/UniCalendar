@@ -172,10 +172,10 @@ struct WhatsNewView: View {
                 Text(" " + (currentVersion?.version ?? ""))
                     .monospacedDigit()
                     .foregroundStyle(.secondary)
-                    .animation(animation, value: selectedVersionIndex)
             }
             .font(.largeTitle)
             .fontWeight(.bold)
+            .animation(animation, value: selectedVersionIndex)
             
             Text(currentVersion?.headline ?? "")
                 .font(.subheadline)
@@ -334,9 +334,7 @@ private struct FeatureCard: View {
                     case .asset(let name):
                         Image(decorative: name)
                             .resizable()
-                            .aspectRatio(contentMode: .fit)
                             .frame(width: isExpanded ? 48 : 30.4, height: isExpanded ? 48 : 30.4)
-                            .clipShape(RoundedRectangle(cornerRadius: 32 * 0.225, style: .continuous))
                             .accessibilityIgnoresInvertColors(true)
                     }
                 }

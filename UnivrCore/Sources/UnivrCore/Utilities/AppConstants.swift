@@ -34,6 +34,111 @@ public enum AppConstants: Sendable {
     public enum WhatsNewData {
         public static let versions: [WhatsNewVersion] = [
             WhatsNewVersion(
+                version: "1.0.0",
+                date: Date(year: 2026, month: 11, day: 2),
+                headline: .v100Headline,
+                features: [
+                    WhatsNewFeature(
+                        icon: .system("clock"),
+                        accentColor: .blue,
+                        title: .v10000Title,
+                        shortDescription: .v10000Short,
+                        detailedDescription: .v10000Long
+                    ),
+                    WhatsNewFeature(
+                        icon: .system("calendar.and.person"),
+                        accentColor: .purple,
+                        title: .v10001Title,
+                        shortDescription: .v10001Short,
+                        detailedDescription: .v10001Long
+                    ),
+                    WhatsNewFeature(
+                        icon: .system("bell.badge"),
+                        accentColor: .red,
+                        title: .v10002Title,
+                        shortDescription: .v10002Short,
+                        detailedDescription: .v10002Long
+                    ),
+                    WhatsNewFeature(
+                        icon: .system("calendar.badge.plus"),
+                        accentColor: .green,
+                        title: .v10003Title,
+                        shortDescription: .v10003Short,
+                        detailedDescription: .v10003Long
+                    ),
+                    WhatsNewFeature(
+                        icon: .asset("InternalIcon"),
+                        accentColor: .orange,
+                        title: .v10004Title,
+                        shortDescription: .v10004Short,
+                        detailedDescription: .v10004Long
+                    ),
+                    WhatsNewFeature(
+                        icon: .system("server.rack"),
+                        accentColor: .indigo,
+                        title: .v10005Title,
+                        shortDescription: .v10005Short,
+                        detailedDescription: .v10005Long
+                    ),
+                    WhatsNewFeature(
+                        icon: .system("megaphone"),
+                        accentColor: .yellow,
+                        title: .v10006Title,
+                        shortDescription: .v10006Short,
+                        detailedDescription: .v10006Long
+                    ),
+                    WhatsNewFeature(
+                        icon: .system("text.bubble"),
+                        accentColor: .teal,
+                        title: .v10007Title,
+                        shortDescription: .v10007Short,
+                        detailedDescription: .v10007Long
+                    ),
+                    WhatsNewFeature(
+                        icon: .system("accessibility"),
+                        accentColor: .cyan,
+                        title: .v10008Title,
+                        shortDescription: .v10008Short,
+                        detailedDescription: .v10008Long
+                    ),
+                    WhatsNewFeature(
+                        icon: .system("chart.bar.fill"),
+                        accentColor: .mint,
+                        title: .v10009Title,
+                        shortDescription: .v10009Short,
+                        detailedDescription: .v10009Long
+                    ),
+                    WhatsNewFeature(
+                        icon: .system("sparkles.rectangle.stack"),
+                        accentColor: .pink,
+                        title: .v10010Title,
+                        shortDescription: .v10010Short,
+                        detailedDescription: .v10010Long
+                    ),
+                    WhatsNewFeature(
+                        icon: .system("sparkles"),
+                        accentColor: .purple,
+                        title: .v10011Title,
+                        shortDescription: .v10011Short,
+                        detailedDescription: .v10011Long
+                    ),
+                    WhatsNewFeature(
+                        icon: .system("chevron.left.forwardslash.chevron.right"),
+                        accentColor: .brown,
+                        title: .v10012Title,
+                        shortDescription: .v10012Short,
+                        detailedDescription: .v10012Long
+                    ),
+                    WhatsNewFeature(
+                        icon: .system("wrench.and.screwdriver"),
+                        accentColor: .gray,
+                        title: .v10013Title,
+                        shortDescription: .v10013Short,
+                        detailedDescription: .v10013Long(0.95.formatted(.percent))
+                    )
+                ]
+            ),
+            WhatsNewVersion(
                 version: "0.9",
                 date: Date(year: 2026, month: 1, day: 6),
                 headline: .v09Headline,
