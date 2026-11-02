@@ -12,22 +12,22 @@ import UnivrCore
 
 struct ShortListSelector<Item: SelectableItem>: View {
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     let items: [Item]
     var lang: String? = nil
     var inputLabelsProvider: ((Item) -> [String])? = nil
     @Binding var selectedItem: String
-    
-    @State private var listHeight: CGFloat?
 
     var body: some View {
-        ScrollView {
+        ViewThatFits(in: .vertical) {
             list
-                .onGeometryChange(for: CGFloat.self, of: \.size.height) { listHeight = $0 + 24 }
+            
+            ScrollView {
+                list
+            }
+            .scrollBounceBehavior(.basedOnSize)
         }
-        .scrollBounceBehavior(.basedOnSize)
-        .frame(maxHeight: listHeight ?? .infinity)
-        .clipped()
         .animation(.snappy(duration: 0.25), value: selectedItem)
         .padding(.top, 16)
     }

@@ -179,6 +179,7 @@ struct FeedbackView: View {
                     .frame(width: 64, height: 64)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .accessibilityHidden(true)
+                    .accessibilityIgnoresInvertColors(true)
                 Text("Screenshot allegato")
                     .foregroundStyle(.secondary)
                 Spacer()

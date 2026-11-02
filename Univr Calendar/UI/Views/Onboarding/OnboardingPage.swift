@@ -10,6 +10,8 @@
 import SwiftUI
 
 struct OnboardingPage<Content: View>: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
     let title: LocalizedStringKey
     let subtitle: LocalizedStringResource
     let isActive: Bool
@@ -70,8 +72,8 @@ struct OnboardingPage<Content: View>: View {
                         
                         content
                             .opacity(showContent ? 1 : 0)
-                            .blur(radius: showContent ? 0 : 8)
-                            .offset(y: showContent ? 0 : 20)
+                            .blur(radius: showContent || reduceMotion ? 0 : 8)
+                            .offset(y: showContent || reduceMotion ? 0 : 20)
                         Spacer(minLength: 0)
                     }
                     .padding(.top, isSearching ? 8 : 0)
@@ -92,14 +94,22 @@ struct OnboardingPage<Content: View>: View {
         .containerRelativeFrame(.horizontal)
         .task(id: isActive) {
             if isActive {
-                withAnimation(.spring(response: 0.80, dampingFraction: 0.84)) {
-                    showTitle = true
-                }
-                withAnimation(.spring(response: 0.80, dampingFraction: 0.84).delay(0.10)) {
-                    showSubtitle = true
-                }
-                withAnimation(.spring(response: 0.80, dampingFraction: 0.84).delay(0.20)) {
-                    showContent = true
+                if reduceMotion {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        showTitle = true
+                        showSubtitle = true
+                        showContent = true
+                    }
+                } else {
+                    withAnimation(.spring(response: 0.80, dampingFraction: 0.84)) {
+                        showTitle = true
+                    }
+                    withAnimation(.spring(response: 0.80, dampingFraction: 0.84).delay(0.10)) {
+                        showSubtitle = true
+                    }
+                    withAnimation(.spring(response: 0.80, dampingFraction: 0.84).delay(0.20)) {
+                        showContent = true
+                    }
                 }
                 
                 try? await Task.sleep(for: .milliseconds(150))
@@ -127,9 +137,9 @@ struct OnboardingPage<Content: View>: View {
                 .font(.largeTitle.bold())
                 .multilineTextAlignment(.center)
                 .opacity(isSearching ? 0 : (showTitle ? 1 : 0))
-                .blur(radius: isSearching ? 16 : (showTitle ? 0 : 8))
-                .scaleEffect(isSearching ? 0.94 : (showTitle ? 1 : 0.95))
-                .offset(y: isSearching ? -36 : (showTitle ? 0 : 28))
+                .blur(radius: reduceMotion ? 0 : (isSearching ? 16 : (showTitle ? 0 : 8)))
+                .scaleEffect(reduceMotion ? 1 : (isSearching ? 0.94 : (showTitle ? 1 : 0.95)))
+                .offset(y: reduceMotion ? 0 : (isSearching ? -36 : (showTitle ? 0 : 28)))
                 .accessibilityAddTraits(.isHeader)
 
             Text(styledSubtitle)
@@ -137,9 +147,9 @@ struct OnboardingPage<Content: View>: View {
                 .lineSpacing(2)
                 .multilineTextAlignment(.center)
                 .opacity(isSearching ? 0 : (showSubtitle ? 1 : 0))
-                .blur(radius: isSearching ? 16 : (showSubtitle ? 0 : 8))
-                .scaleEffect(isSearching ? 0.94 : (showSubtitle ? 1 : 0.95))
-                .offset(y: isSearching ? -28 : (showSubtitle ? 0 : 22))
+                .blur(radius: reduceMotion ? 0 : (isSearching ? 16 : (showSubtitle ? 0 : 8)))
+                .scaleEffect(reduceMotion ? 1 : (isSearching ? 0.94 : (showSubtitle ? 1 : 0.95)))
+                .offset(y: reduceMotion ? 0 : (isSearching ? -28 : (showSubtitle ? 0 : 22)))
         }
         .padding(.horizontal, 24)
     }

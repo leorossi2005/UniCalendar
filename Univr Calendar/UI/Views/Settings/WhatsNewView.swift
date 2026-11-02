@@ -306,18 +306,20 @@ struct WhatsNewView: View {
 }
 
 // MARK: - Feature Card
-struct FeatureCard: View {
+private struct FeatureCard: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    
-    @Namespace var namespace
-    
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let feature: WhatsNewFeature
     let isExpanded: Bool
     let animation: Animation
     let onToggle: () -> Void
     
+    @Namespace private var namespace
+    
     var body: some View {
         let isAX = dynamicTypeSize.isAccessibilitySize
+        let collapsedTransition: AnyTransition = reduceMotion ? .opacity : AnyTransition(.blurReplace.combined(with: .scale(2)))
+        let expandedTransition: AnyTransition = reduceMotion ? .opacity : AnyTransition(.blurReplace.combined(with: .scale(0.6)))
         
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: isExpanded ? .center : .top, spacing: 14) {
@@ -335,6 +337,7 @@ struct FeatureCard: View {
                             .aspectRatio(contentMode: .fit)
                             .frame(width: isExpanded ? 48 : 30.4, height: isExpanded ? 48 : 30.4)
                             .clipShape(RoundedRectangle(cornerRadius: 32 * 0.225, style: .continuous))
+                            .accessibilityIgnoresInvertColors(true)
                     }
                 }
                 .frame(width: 48, height: 48)
@@ -356,7 +359,7 @@ struct FeatureCard: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .matchedGeometryEffect(id: "text", in: namespace, properties: .position, anchor: .topLeading)
-                            .transition(.blurReplace.combined(with: .scale(2)))
+                            .transition(collapsedTransition)
                     }
                 }
                 
@@ -374,7 +377,7 @@ struct FeatureCard: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .matchedGeometryEffect(id: "text", in: namespace, properties: .position, anchor: .topLeading)
-                    .transition(.blurReplace.combined(with: .scale(2)))
+                    .transition(collapsedTransition)
             }
             
             if isExpanded {
@@ -382,7 +385,7 @@ struct FeatureCard: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .matchedGeometryEffect(id: "text", in: namespace, properties: .position, anchor: .topLeading)
-                    .transition(.blurReplace.combined(with: .scale(0.6)))
+                    .transition(expandedTransition)
             }
         }
         .padding(16)
@@ -395,7 +398,7 @@ struct FeatureCard: View {
             Haptics.play(.impact(flexibility: .soft, intensity: 0.6))
             onToggle()
         }
-        .animation(animation, value: isExpanded)
+        .animation(reduceMotion ? .easeInOut(duration: 0.2) : animation, value: isExpanded)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
         .accessibilityValue(isExpanded ? "Espanso" : "Compresso")

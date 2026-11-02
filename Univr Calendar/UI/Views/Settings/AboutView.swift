@@ -22,6 +22,7 @@ struct AboutView: View {
                         .aspectRatio(contentMode: .fit)
                         .frame(width: Self.iconSize, height: Self.iconSize)
                         .clipShape(RoundedRectangle(cornerRadius: Self.iconSize * 0.225, style: .continuous))
+                        .accessibilityIgnoresInvertColors(true)
                     
                     VStack(spacing: 5) {
                         Text(AppConstants.AppInfo.appName)
@@ -81,6 +82,7 @@ struct AboutView: View {
                 } else {
                     Image(decorative: image)
                         .resizable()
+                        .accessibilityIgnoresInvertColors(true)
                 }
             }
             .scaledToFit()

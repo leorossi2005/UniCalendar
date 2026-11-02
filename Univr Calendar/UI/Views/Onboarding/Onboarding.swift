@@ -19,6 +19,7 @@ enum OnboardingStep: Int, CaseIterable, Comparable {
 struct Onboarding: View {
     @Environment(\.safeAreaInsets) var safeAreas
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(UserSettings.self) var settings
     
     @State private var viewModel = UniversityDataManager()
@@ -124,10 +125,11 @@ struct Onboarding: View {
             }
             .contentShape(Capsule())
             .padding(.top, safeAreas.bottom > 0 ? 0 : 8)
-            .blur(radius: isWarningVisible ? 0 : 20)
-            .offset(y: isWarningVisible ? safeAreas.top : safeAreas.top / 2)
-            .scaleEffect(isWarningVisible ? 1 : 0)
-            .animation(.bouncy(extraBounce: 0.1), value: isWarningVisible)
+            .opacity(isWarningVisible ? 1 : 0)
+            .blur(radius: isWarningVisible || reduceMotion ? 0 : 20)
+            .offset(y: isWarningVisible || reduceMotion ? safeAreas.top : safeAreas.top / 2)
+            .scaleEffect(isWarningVisible || reduceMotion ? 1 : 0)
+            .animation(reduceMotion ? .easeInOut(duration: 0.2) : .bouncy(extraBounce: 0.1), value: isWarningVisible)
             .allowsHitTesting(isWarningVisible && !isRetrying)
             .ignoresSafeArea()
             .onTapGesture {

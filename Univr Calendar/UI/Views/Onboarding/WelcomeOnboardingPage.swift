@@ -10,6 +10,9 @@
 import SwiftUI
 
 struct WelcomeOnboardingPage: View {
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
     let title: LocalizedStringKey
     let subtitle: LocalizedStringResource
     @Binding var errorMessage: String?
@@ -19,8 +22,6 @@ struct WelcomeOnboardingPage: View {
     let isLoading: Bool
     let isButtonDisabled: Bool
     let buttonAction: () -> Void
-    
-    @Environment(\.colorScheme) private var colorScheme
     
     @State private var isExpanded: Bool = false
     @State private var isBlurred: Bool = false
@@ -74,9 +75,9 @@ struct WelcomeOnboardingPage: View {
                                     .font(.largeTitle.bold())
                                     .fixedSize(horizontal: false, vertical: true)
                                     .opacity(showTitle ? 1 : 0)
-                                    .blur(radius: showTitle ? 0 : 8)
-                                    .scaleEffect(showTitle ? 1 : 0.95)
-                                    .offset(y: showTitle ? 0 : 32)
+                                    .blur(radius: showTitle || reduceMotion ? 0 : 8)
+                                    .scaleEffect(showTitle || reduceMotion ? 1 : 0.95)
+                                    .offset(y: showTitle || reduceMotion ? 0 : 32)
                                     .accessibilityAddTraits(.isHeader)
 
                                 Text(styledSubtitle)
@@ -84,8 +85,8 @@ struct WelcomeOnboardingPage: View {
                                     .lineSpacing(2)
                                     .fixedSize(horizontal: false, vertical: true)
                                     .opacity(showSubtitle ? 1 : 0)
-                                    .blur(radius: showSubtitle ? 0 : 8)
-                                    .offset(y: showSubtitle ? 0 : 26)
+                                    .blur(radius: showSubtitle || reduceMotion ? 0 : 8)
+                                    .offset(y: showSubtitle || reduceMotion ? 0 : 26)
                             }
                             .padding(.horizontal, 24)
                         }
@@ -115,7 +116,7 @@ struct WelcomeOnboardingPage: View {
                 .padding(.horizontal, max(bottomPadding, 16))
                 .safeAreaPadding(.bottom, bottomPadding == 0 ? 16 : 0)
                 .opacity(showButton ? 1 : 0)
-                .blur(radius: showButton ? 0 : 12)
+                .blur(radius: showButton || reduceMotion ? 0 : 12)
                 .allowsHitTesting(showButton)
             }
             .multilineTextAlignment(.center)
@@ -132,6 +133,7 @@ struct WelcomeOnboardingPage: View {
             Image(decorative: "InternalIcon")
                 .resizable()
                 .scaledToFit()
+                .accessibilityIgnoresInvertColors(true)
             
             Image(decorative: "InternalIcon")
                 .resizable()
@@ -148,6 +150,7 @@ struct WelcomeOnboardingPage: View {
                     )
                 )
                 .opacity(isBlurred ? 1 : 0)
+                .accessibilityIgnoresInvertColors(true)
             
             if colorScheme == .light {
                 LinearGradient(
@@ -174,6 +177,7 @@ struct WelcomeOnboardingPage: View {
             Image(decorative: "InternalIcon")
                 .resizable()
                 .scaledToFit()
+                .accessibilityIgnoresInvertColors(true)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityHidden(true)
@@ -206,6 +210,17 @@ struct WelcomeOnboardingPage: View {
         guard !isExpanded else { return }
         
         Task { @MainActor in
+            if reduceMotion {
+                isExpanded = true
+                isBlurred = true
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    showTitle = true
+                    showSubtitle = true
+                    showButton = true
+                }
+                return
+            }
+            
             withAnimation(.spring(response: 0.85, dampingFraction: 0.78)) {
                 isExpanded = true
             }

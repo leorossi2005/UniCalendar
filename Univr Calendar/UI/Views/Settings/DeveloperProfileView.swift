@@ -12,6 +12,7 @@ import UnivrCore
 
 struct DeveloperProfileView: View {
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     @State private var appear = false
     @State private var rotateRings = false
@@ -181,8 +182,8 @@ struct DeveloperProfileView: View {
                         )
                     ])
                     .opacity(appear ? 1 : 0)
-                    .offset(y: appear ? 0 : 50)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.2), value: appear)
+                    .offset(y: appear || reduceMotion ? 0 : 50)
+                    .animation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.6, dampingFraction: 0.7).delay(0.2), value: appear)
                     
                     CustomList(
                         important: true,
@@ -205,20 +206,23 @@ struct DeveloperProfileView: View {
                         ]
                     )
                     .opacity(appear ? 1 : 0)
-                    .offset(y: appear ? 0 : 50)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.3), value: appear)
+                    .offset(y: appear || reduceMotion ? 0 : 50)
+                    .animation(reduceMotion ? .easeInOut(duration: 0.2) : .spring(response: 0.6, dampingFraction: 0.7).delay(0.3), value: appear)
                 }
             }
             .padding(.horizontal, 20)
         }
         .onAppear {
             appear = true
-            rotateRings = true
+            if !reduceMotion {
+                rotateRings = true
+            }
         }
     }
 }
 
 private struct TwinklingStar: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let position: CGPoint
     let size: CGFloat
     @State private var isGlowing = false
@@ -231,6 +235,7 @@ private struct TwinklingStar: View {
             .opacity(isGlowing ? 1.0 : 0.2)
             .shadow(color: .white, radius: isGlowing ? 2 : 0)
             .onAppear {
+                guard !reduceMotion else { return }
                 withAnimation(
                     .easeInOut(duration: Double.random(in: 1.0...3.0))
                     .repeatForever(autoreverses: true)

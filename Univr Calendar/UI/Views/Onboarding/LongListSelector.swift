@@ -12,6 +12,7 @@ import UnivrCore
 
 struct LongListSelector<Item: SelectableItem>: View {
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .body) private var closeSize: CGFloat = 52
     
     @Binding var isFocused: Bool
@@ -25,7 +26,7 @@ struct LongListSelector<Item: SelectableItem>: View {
     @FocusState private var internalFocus: Bool
     
     private let cardShape = RoundedRectangle(cornerRadius: 24, style: .continuous)
-    private let toggleAnimation: Animation = .snappy(duration: 0.35)
+    private var toggleAnimation: Animation { reduceMotion ? .easeInOut(duration: 0.2) : .snappy(duration: 0.35) }
     
     private var filteredItems: [Item] { items.filtered(by: searchText) }
     private var selectedObject: Item? { items.first { $0.id == selectedItem } }
@@ -117,7 +118,7 @@ struct LongListSelector<Item: SelectableItem>: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("Cancella testo")
                     .contentShape(.circle)
-                    .transition(.scale(scale: 0.75).combined(with: .opacity))
+                    .transition(reduceMotion ? .opacity : .scale(scale: 0.75).combined(with: .opacity))
                 }
             }
             .padding(.horizontal, 16)
@@ -149,8 +150,8 @@ struct LongListSelector<Item: SelectableItem>: View {
             .font(.body.weight(.bold))
             .background(Color(.tertiarySystemFill), in: cardShape)
             .buttonStyle(.plain)
-            .scaleEffect(isFocused ? 1.0 : 0.6)
-            .offset(x: isFocused ? 0 : -20)
+            .scaleEffect(isFocused || reduceMotion ? 1.0 : 0.6)
+            .offset(x: isFocused || reduceMotion ? 0 : -20)
             .opacity(isFocused ? 1.0 : 0.0)
             .allowsHitTesting(isFocused)
             .accessibilityElement(children: .ignore)

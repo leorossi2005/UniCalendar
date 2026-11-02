@@ -78,27 +78,30 @@ extension Lesson {
 
 struct ShimmeringGradient: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     var body: some View {
-        GeometryReader { geometry in
-            let width = max(geometry.size.width, 1)
-            TimelineView(.animation) { timeline in
-                let time = timeline.date.timeIntervalSinceReferenceDate
-                let duration: Double = 1.5
-                let progress = (time.truncatingRemainder(dividingBy: duration)) / duration
-                let xOffset = -width + (progress * width * 2)
-                
-                LinearGradient(
-                    colors: [
-                        .black.opacity(0),
-                        colorScheme == .light ? .black.opacity(0.3) : .white.opacity(0.05),
-                        .black.opacity(0)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-                .frame(width: width, height: geometry.size.height)
-                .offset(x: xOffset)
+        if !reduceMotion {
+            GeometryReader { geometry in
+                let width = max(geometry.size.width, 1)
+                TimelineView(.animation) { timeline in
+                    let time = timeline.date.timeIntervalSinceReferenceDate
+                    let duration: Double = 1.5
+                    let progress = (time.truncatingRemainder(dividingBy: duration)) / duration
+                    let xOffset = -width + (progress * width * 2)
+                    
+                    LinearGradient(
+                        colors: [
+                            .black.opacity(0),
+                            colorScheme == .light ? .black.opacity(0.3) : .white.opacity(0.05),
+                            .black.opacity(0)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(width: width, height: geometry.size.height)
+                    .offset(x: xOffset)
+                }
             }
         }
     }
