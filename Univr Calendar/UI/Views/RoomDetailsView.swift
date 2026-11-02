@@ -107,7 +107,14 @@ private struct Timeline: View {
                                 } else {
                                     Circle()
                                         .fill(event.startTime < now ? Color.primary : Color.red)
-                                        .frame(width: 12)
+                                        .overlay {
+                                            if event.startTime >= now {
+                                                DiagonalStripesShape(step: 4.5)
+                                                    .stroke(.black.opacity(0.35), lineWidth: 1.5)
+                                            }
+                                        }
+                                        .clipShape(Circle())
+                                        .frame(width: 12, height: 12)
                                 }
                                 Text(event.startTime, format: .dateTime.hour().minute())
                                     .font(.caption)
@@ -122,13 +129,13 @@ private struct Timeline: View {
                                         VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
                                             .frame(minHeight: 48)
                                     } else if event.startTime >= now {
-                                        VerticalLine(color: .red, lineWidth: 4)
+                                        VerticalLine(color: .red, lineWidth: 4, isStriped: true)
                                             .frame(minHeight: 48)
                                     } else {
                                         VerticalLine(color: .primary, lineWidth: 4, dash: [8, 12])
                                             .frame(minHeight: 48)
                                         nowIndicator
-                                        VerticalLine(color: .red, lineWidth: 4)
+                                        VerticalLine(color: .red, lineWidth: 4, isStriped: true)
                                             .frame(minHeight: 48)
                                     }
                                 }

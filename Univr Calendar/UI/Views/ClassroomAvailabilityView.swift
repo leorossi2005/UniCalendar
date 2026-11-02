@@ -93,6 +93,7 @@ struct ClassroomAvailabilityView: View {
                 }
             }
             .cornerRadius(35)
+            .padding(.horizontal)
         case .empty:
             ContentUnavailableView(
                 "Nessuna aula disponibile",
@@ -143,6 +144,7 @@ struct ClassroomAvailabilityView: View {
             .allowsHitTesting(false)
         }
         .cornerRadius(35)
+        .padding(.horizontal)
         .scrollIndicators(.never)
         .accessibilityHidden(true)
     }

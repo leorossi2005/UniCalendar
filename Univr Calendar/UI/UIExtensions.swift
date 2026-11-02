@@ -71,7 +71,7 @@ enum AppState {
 
 extension Lesson {
     var uiColor: Color {
-        guard let components = HexColorParser.parse(color) else { return .secondary }
+        guard let components = HexColorParser.parse(color) else { return Color(white: 0.8) }
         return Color(red: components.red, green: components.green, blue: components.blue, opacity: components.opacity)
     }
 }

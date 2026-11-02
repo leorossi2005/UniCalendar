@@ -53,7 +53,6 @@ struct RoomCard: View {
                 }
             }
             .contentShape(RoundedRectangle(cornerRadius: 35, style: .continuous))
-            .padding(.horizontal)
         }
     }
 
@@ -161,7 +160,12 @@ private struct Timeline: View {
                 HorizontalLine(color: .green, lineWidth: 4)
                 Circle()
                     .fill(.red)
-                    .frame(height: 12)
+                    .overlay {
+                        DiagonalStripesShape(step: 4.5)
+                            .stroke(.black.opacity(0.35), lineWidth: 1.5)
+                    }
+                    .clipShape(Circle())
+                    .frame(width: 12, height: 12)
                     .overlay(alignment: .bottom) {
                         Text(event.startTime, format: .dateTime.hour().minute())
                             .foregroundStyle(.red)
@@ -170,10 +174,17 @@ private struct Timeline: View {
                             .padding(.bottom, 16)
                     }
             }
-            HorizontalLine(color: .red.opacity(0.9), lineWidth: 4)
+            HorizontalLine(color: .red.opacity(0.9), lineWidth: 4, isStriped: true)
             Circle()
                 .fill(after ? .red : .green)
-                .frame(height: 12)
+                .overlay {
+                    if after {
+                        DiagonalStripesShape(step: 4.5)
+                            .stroke(.black.opacity(0.35), lineWidth: 1.5)
+                    }
+                }
+                .clipShape(Circle())
+                .frame(width: 12, height: 12)
                 .overlay(alignment: .bottom) {
                     Text(event.endTime, format: .dateTime.hour().minute())
                         .foregroundStyle(after ? .red : .green)
@@ -181,11 +192,11 @@ private struct Timeline: View {
                         .font(.caption)
                         .padding(.bottom, 16)
                 }
-            HorizontalLine(color: after ? .red : .green, lineWidth: 4)
+            HorizontalLine(color: after ? .red : .green, lineWidth: 4, isStriped: after)
                 .overlay(alignment: .bottomTrailing) {
                     if subsequentEventsCount > 0 {
                         Text("+\(subsequentEventsCount)")
-                            .foregroundStyle(Color(.lightGray))
+                            .foregroundStyle(.secondary)
                             .fixedSize()
                             .font(.caption)
                             .padding(.bottom, 12)
