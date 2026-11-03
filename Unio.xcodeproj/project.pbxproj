@@ -170,7 +170,7 @@
 				A70C43722FDED6ED002D17EC /* CustomSheet */,
 				A778119B30996D230075A9C0 /* UnioCore */,
 			);
-			productName = "Univr Calendar";
+			productName = Unio;
 			productReference = A74C008D2E960653001AB35D /* Unio.app */;
 			productType = "com.apple.product-type.application";
 		};
