@@ -82,6 +82,12 @@ extension Date {
 }
 
 extension Bundle {
+    public var appName: String {
+        object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+            ?? object(forInfoDictionaryKey: "CFBundleName") as? String
+            ?? "Unio"
+    }
+    
     public var appVersion: String {
         let version = object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "N/A"
         let build = object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "N/A"

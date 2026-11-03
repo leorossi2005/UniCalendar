@@ -30,7 +30,7 @@ final class IOSNotificationService: Sendable {
             schedule: { notification in
                 let content = UNMutableNotificationContent()
                 content.title = notification.lessonName
-                content.categoryIdentifier = "unicalendar.event.reminder"
+                content.categoryIdentifier = "unio.event.reminder"
                 let isPersonal = notification.courseId == "personal"
                 let offset = notification.offsetMinutes
                 let body: String

@@ -60,7 +60,7 @@ struct NetworkService: Sendable {
     let baseURL = "https://alpha.unicalendar.dedyn.io/api/v1"
     
     fileprivate static var userAgent: String {
-        "UniCalendar/\(Bundle.main.clearAppVersion) (\(Device.model); \(Device.os.name) \(Device.os.version))"
+        "Unio/\(Bundle.main.clearAppVersion) (\(Device.model); \(Device.os.name) \(Device.os.version))"
     }
     
     init() {}

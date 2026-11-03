@@ -19,7 +19,7 @@ public enum AppConstants: Sendable {
     }
     
     public enum AppInfo {
-        public static let appName: LocalizedStringResource = .appName
+        public static let appName: String = Bundle.main.appName
         public static let developerName = "Leonardo Rossi"
     }
     
@@ -39,36 +39,36 @@ public enum AppConstants: Sendable {
                 headline: .v100Headline,
                 features: [
                     WhatsNewFeature(
-                        icon: .system("clock"),
+                        icon: .asset("AppIconV1.0.0"),
                         accentColor: .blue,
                         title: .v10000Title,
                         shortDescription: .v10000Short,
                         detailedDescription: .v10000Long
                     ),
                     WhatsNewFeature(
-                        icon: .system("calendar.and.person"),
-                        accentColor: .purple,
+                        icon: .system("clock"),
+                        accentColor: .blue,
                         title: .v10001Title,
                         shortDescription: .v10001Short,
                         detailedDescription: .v10001Long
                     ),
                     WhatsNewFeature(
-                        icon: .system("bell.badge"),
-                        accentColor: .red,
+                        icon: .system("calendar.and.person"),
+                        accentColor: .purple,
                         title: .v10002Title,
                         shortDescription: .v10002Short,
                         detailedDescription: .v10002Long
                     ),
                     WhatsNewFeature(
-                        icon: .system("calendar.badge.plus"),
-                        accentColor: .green,
+                        icon: .system("bell.badge"),
+                        accentColor: .red,
                         title: .v10003Title,
                         shortDescription: .v10003Short,
                         detailedDescription: .v10003Long
                     ),
                     WhatsNewFeature(
-                        icon: .asset("InternalIcon"),
-                        accentColor: .orange,
+                        icon: .system("calendar.badge.plus"),
+                        accentColor: .green,
                         title: .v10004Title,
                         shortDescription: .v10004Short,
                         detailedDescription: .v10004Long

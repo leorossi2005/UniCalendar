@@ -2482,6 +2482,57 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
+            "value" : "For the release of version 1.0.0, the app needed a new identity, so Unio was born: a new name, a new icon, a fresh start."
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Per il rilascio della 1.0.0, l'app aveva bisogno di una nuova identità, così è nata Unio: un nuovo nome, una nuova icona, un nuovo inizio."
+          }
+        }
+      }
+    },
+    "v1_0_0-00-short" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A new, unique identity for the app: Unio"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una nuova identità unica per l’app: Unio"
+          }
+        }
+      }
+    },
+    "v1_0_0-00-title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New App Identity"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuova identità dell'App"
+          }
+        }
+      }
+    },
+    "v1_0_0-01-long" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
             "value" : "A new screen accessible from the top bar lets you check daily classroom status for any university location. Each card shows the status updated every minute along with a horizontal timeline of the day's events. Tapping a classroom opens the full detail view."
           }
         },
@@ -2493,7 +2544,7 @@
         }
       }
     },
-    "v1_0_0-00-short" : {
+    "v1_0_0-01-short" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -2510,7 +2561,7 @@
         }
       }
     },
-    "v1_0_0-00-title" : {
+    "v1_0_0-01-title" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -2527,7 +2578,7 @@
         }
       }
     },
-    "v1_0_0-01-long" : {
+    "v1_0_0-02-long" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -2544,7 +2595,7 @@
         }
       }
     },
-    "v1_0_0-01-short" : {
+    "v1_0_0-02-short" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -2561,7 +2612,7 @@
         }
       }
     },
-    "v1_0_0-01-title" : {
+    "v1_0_0-02-title" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -2578,7 +2629,7 @@
         }
       }
     },
-    "v1_0_0-02-long" : {
+    "v1_0_0-03-long" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -2595,7 +2646,7 @@
         }
       }
     },
-    "v1_0_0-02-short" : {
+    "v1_0_0-03-short" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -2612,7 +2663,7 @@
         }
       }
     },
-    "v1_0_0-02-title" : {
+    "v1_0_0-03-title" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -2629,7 +2680,7 @@
         }
       }
     },
-    "v1_0_0-03-long" : {
+    "v1_0_0-04-long" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -2646,7 +2697,7 @@
         }
       }
     },
-    "v1_0_0-03-short" : {
+    "v1_0_0-04-short" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -2663,7 +2714,7 @@
         }
       }
     },
-    "v1_0_0-03-title" : {
+    "v1_0_0-04-title" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
@@ -2676,57 +2727,6 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Calendario e Azioni Rapide"
-          }
-        }
-      }
-    },
-    "v1_0_0-04-long" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "For the 1.0.0 release, the app needed a new icon designed with meticulous attention to detail, created to give it a unique and recognizable look on the Home screen."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Per il rilascio della 1.0.0, l'app aveva bisogno di una nuova icona curata nei minimi dettagli, pensata per offrire un aspetto unico e riconoscibile sulla schermata Home."
-          }
-        }
-      }
-    },
-    "v1_0_0-04-short" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A completely redesigned icon to give the app a unique identity."
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Un'icona completamente ridisegnata per dare un'indentità unica all'app."
-          }
-        }
-      }
-    },
-    "v1_0_0-04-title" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New App Icon"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Nuova Icona dell'App"
           }
         }
       }
