@@ -10,7 +10,7 @@
 import SwiftUI
 import UserNotifications
 import UserNotificationsUI
-import UnivrCore
+import UnioCore
 
 class NotificationViewController: UIViewController, UNNotificationContentExtension {
     private var hostingController: UIViewController?

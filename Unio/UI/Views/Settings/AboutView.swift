@@ -1,0 +1,104 @@
+//
+//  AboutView.swift
+//  Unio
+//
+//  Created by Leonardo Rossi on 03/12/25.
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
+//
+
+import SwiftUI
+import UnioCore
+
+struct AboutView: View {
+    private static let iconSize: CGFloat = 100
+    
+    var body: some View {
+        List {
+            Section {
+                VStack(spacing: 15) {
+                    Image(decorative: "InternalIcon")
+                        .resizable()
+                        .frame(width: Self.iconSize, height: Self.iconSize)
+                        .accessibilityIgnoresInvertColors(true)
+                    
+                    VStack(spacing: 5) {
+                        Text(AppConstants.AppInfo.appName)
+                            .font(.title2.bold())
+                        
+                        Text(Bundle.main.appVersion)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("Versione applicazione")
+                            .accessibilityValue("\(Bundle.main.clearAppVersion), build numero \(Bundle.main.clearBuildNumber)")
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical)
+            }
+            .listRowBackground(Color.clear)
+            
+            Section {
+                ForEach(AppConstants.Credits.contributors) { credit in
+                    infoRow(
+                        name: credit.name,
+                        role: credit.role,
+                        link: credit.url,
+                        image: credit.image
+                    )
+                }
+            } header: {
+                Text("Crediti")
+            } footer: {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Ci tengo a ringraziare immensamente tutte le persone che hanno collaborato in un qualsiasi modo alla creazione e allo sviluppo di questo progetto.")
+                    Text("Grazie amore mio, ti amo tanto.")
+                        .font(.caption2)
+                        .opacity(0.15)
+                }
+            }
+        }
+        .navigationTitle("Informazioni")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+    
+    // MARK: - Components
+    private func infoRow(name: String, role: LocalizedStringResource, link: URL?, image: String) -> some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(name)
+                    .font(.headline)
+                Text(role)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Group {
+                if image.isEmpty {
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                } else {
+                    Image(decorative: image)
+                        .resizable()
+                        .accessibilityIgnoresInvertColors(true)
+                }
+            }
+            .scaledToFit()
+            .clipShape(.circle)
+            .frame(width: 40, height: 40)
+            .accessibilityHidden(true)
+        }
+        .onTapGesture {
+            if let link {
+                UIApplication.shared.open(link)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+#Preview {
+    NavigationStack {
+        AboutView()
+    }
+}

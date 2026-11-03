@@ -1,0 +1,69 @@
+//
+//  Univr_CalendarApp.swift
+//  Unio
+//
+//  Created by Leonardo Rossi on 08/10/25.
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
+//
+
+import SwiftUI
+import UnioCore
+import CustomSheet
+import SwiftData
+
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        UNUserNotificationCenter.current().delegate = self
+        return true
+    }
+    
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        NotificationManager.shared.handleTappedNotification(userInfo: response.notification.request.content.userInfo)
+        completionHandler()
+    }
+}
+
+@main
+struct Univr_CalendarApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var appStatusManager = AppStatusManager()
+    let container: ModelContainer
+    
+    init() {
+        Device.configure(with: IOSDeviceService.info())
+        do {
+            self.container = try ModelContainer(for: NotificationRecord.self, PersonalEventRecord.self)
+        } catch {
+            fatalError("Impossibile creare il database: \(error)")
+        }
+        let storage = IOSStorageService.createProvider(container: container)
+        NetworkStatusMonitor.shared.start(provider: IOSNetworkMonitor.createProvider())
+        NotificationManager.shared.configure(
+            notificationProvider: IOSNotificationService.createProvider(),
+            storageProvider: storage
+        )
+        CommitmentsManager.shared.configure(storageProvider: storage)
+    }
+    
+    var body: some Scene {
+        WindowGroup {
+            RootView()
+                .environment(UserSettings.shared)
+                .environment(appStatusManager)
+                .modelContainer(container)
+                .readSafeAreaInsets()
+                .enableGlobalHaptics()
+        }
+        .onChange(of: scenePhase) { oldPhase, newPhase in
+            if newPhase == .active {
+                Task {
+                    await NotificationManager.shared.cleanupExpiredNotifications()
+                    await appStatusManager.refreshIfNeeded()
+                }
+                appStatusManager.evaluateCurrentState()
+            }
+        }
+    }
+}
