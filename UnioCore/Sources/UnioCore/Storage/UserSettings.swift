@@ -74,8 +74,7 @@ public class UserSettings {
     }
     
     private init() {
-        let savedVersion = Self.load(.settingsVersion, fallback: 0)
-        if savedVersion < 1 { Self.performV1Migration() }
+        Self.performV1Migration()
         
         self.selectedYear = Self.load(.selectedYear, fallback: Default.year)
         self.selectedCourse = Self.load(.selectedCourse, fallback: Default.course)
@@ -89,11 +88,24 @@ public class UserSettings {
         self.locationKey = Self.load(.locationKey, fallback: Default.locationKey)
     }
     
+    private static let isTestFlightMigrationEnabled = true
+    
     private static func performV1Migration() {
-        let oldMatricola = load(.matricola, fallback: "pari")
+        guard isTestFlightMigrationEnabled else { return }
         
-        save(oldMatricola == "pari" ? "even" : "odd", key: .matricola)
+        let savedVersion = load(.settingsVersion, fallback: 0)
+        guard savedVersion < 1 else { return }
+        
+        save(Default.year, key: .selectedYear)
+        save(Default.course, key: .selectedCourse)
+        save(Default.academicYear, key: .selectedAcademicYear)
+        save(Default.boolFalse, key: .foundMatricola)
+        save(Default.matricola, key: .matricola)
+        save(Default.boolFalse, key: .onboardingCompleted)
+        
+        save("0.9", key: .latestVersion)
         save(Default.currentVersion, key: .settingsVersion)
+        Task { await CacheManager.shared.clearAllDiskCache() }
     }
     
     public func reset() {

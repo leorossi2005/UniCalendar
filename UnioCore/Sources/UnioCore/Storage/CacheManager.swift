@@ -57,4 +57,18 @@ public actor CacheManager: Sendable {
             print("Error clearing cache \(file.fileName): \(error)")
         }
     }
+    
+    public func clearAllDiskCache() async {
+        guard let contents = try? FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil) else { return }
+        
+        do {
+            try await Task.detached(priority: .utility) {
+                for url in contents where url.pathExtension == "json" {
+                    try FileManager.default.removeItem(at: url)
+                }
+            }.value
+        } catch {
+            print("Error clearing cache: \(error)")
+        }
+    }
 }
