@@ -11,23 +11,6 @@
         }
       }
     },
-    "app_name" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Calendar for UniVR"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Calendario per UniVR"
-          }
-        }
-      }
-    },
     "Da remoto" : {
       "localizations" : {
         "en" : {
