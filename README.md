@@ -1,63 +1,67 @@
-# UniCalendar
+# Unio
 
-**UniCalendar** is a native iOS application (SwiftUI + UIKit) designed to simplify the lives of University of Verona (UniVR) students. It offers a modern, fluid, and responsive interface for viewing class schedules, helping students organize themselves better and free their minds for studying.
+**Unio** is a modern, native iOS application (SwiftUI + UIKit) designed to simplify university experience for students. It offers a fluid, responsive interface for viewing class schedules, discovering free classrooms in real time, and keeping track of personal commitments.
 
-> 🚧 **Project Status**: Active development (v0.9)
+> 🚀 **Project Status**: v1.0.0 — Production Ready
 
 ## ✨ Key Features
 
-### 📅 Advanced Schedule Management
-*   **Fluid Weekly View**: Intuitive navigation between weeks with fractional scrolling support.
-*   **Interactive Custom Sheet**: A custom bottom panel (UIKit-based) supporting multiple detents (medium/large) and fluid "liquid glass" transitions.
-*   **Complete Lesson Details**: View time, classroom, and approximate location on the integrated map.
-*   **Offline Support**: Automatically detects connection status and allows viewing of local cache when offline.
+### 📅 Smart Schedule & Timetable
+*   **Fluid Weekly & Daily View**: Intuitive navigation with fractional scrolling and daily workload indicators.
+*   **Apple Calendar Integration**: Export any class directly to Apple Calendar with accurate hours, instructors, and GPS coordinates.
+*   **Quick Actions & Previews**: Haptic Touch context menus on lessons and commitments for fast actions.
+*   **Smart Caching & Offline Support**: Works seamlessly without an active internet connection thanks to local data persistence.
 
-### 🎨 Design & UX
-*   **Adaptive Interface**: Optimized for both iPhone and iPad (with SplitView and rotation support).
-*   **Polished Animations**: "Snappy" transitions, dynamic glass/blur effects, and custom animations for calendar opening.
-*   **Localization**: Fully translated into **Italian** and **English**.
-*   **Dark Mode**: Native support for dark theme with automatic color adaptation.
+### 🏫 Real-Time Classroom Availability
+*   **Find Free Rooms**: Instantly discover which classrooms are currently unoccupied for studying.
+*   **Detailed Room Schedules**: View daily occupancy breakdowns and subsequent events for any classroom.
 
-### ⚙️ Technical Aspects
-*   **Hybrid Architecture**: Shared multi-platform core (ready for Android) and native Apple UI.
-*   **Smart Caching**: Advanced caching system to reduce loading times (from ~500ms to <50ms) and save data.
-*   **Resilient Network**: Robust API call management with background refresh.
+### 📝 Personal Commitments
+*   **Custom Events**: Add personal study sessions, exams, or meetings directly alongside your university timetable.
+*   **Rich Metadata**: Attach locations, custom notes, and distinct colors.
+
+### 🔔 Smart Reminders & Notifications
+*   **Custom Notification Content Extension**: Expand notifications to see an interactive, rich preview of the upcoming class or commitment.
+*   **Configurable Offsets**: Get alerted right on time or minutes before the event starts.
+
+### 🎨 Design & Accessibility
+*   **Apple Design**: Modern materials, custom sheets, and light/dark theme support.
+*   **iPad Optimized**: SplitView and adaptive layouts designed specifically for larger screens.
+*   **Comprehensive Accessibility**: Full VoiceOver integration with natural language labels (`SpeechLanguageLabel`) and Dynamic Type support up to `AX5`.
 
 ## 🛠 Requirements
 *   **iOS**: 17.0+
-*   **Xcode**: 26.0+ (Tested on 26.2)
-*   **Language**: Swift 5.9+
+*   **Xcode**: 27.0+ (Tested on 27.2)
+*   **Language**: Swift 6.4+
 
-## 🚀 Installation
+## 🚀 Installation & Setup
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/leorossi2005/UniCalendar.git
+    git clone https://github.com/leorossi2005/unio.git
     ```
 2.  **Open the project**:
-    Double-click on `Univr Calendar.xcodeproj` in the downloaded folder.
-3.  **Wait for packages**:
-    Let Xcode resolve dependencies via Swift Package Manager.
+    Double-click on `Unio.xcodeproj`.
+3.  **Wait for dependencies**:
+  Xcode will resolve internal local packages (`UnioCore`, `CustomSheet`).
 4.  **Run**:
-    Select a simulator (e.g., iPhone 15 Pro) and press `Cmd + R` to start the app.
+    Select your target device or simulator and press `Cmd + R`.
 
-## 🧩 Project Structure
+## 🧩 Architecture & Modules
 
-The project is divided into two main modules to promote portability and order:
+The project is architected cleanly into modular components:
 
-*   **Univr App** (Apple-specific code):
-    *   `App/`: Base app files.
-    *   `UI/Components/`: Independent SwiftUI components.
-    *   `UI/Helpers/`: UIKit components assisting SwiftUI.
-    *   `UI/UIKit/`: UIKit views and components.
-    *   `UI/Views/`: Main SwiftUI views of the app.
-*   **Univr Core** (Shared logic):
-    *   `ViewModels/`: Computational code for views.
-    *   `/`: General package files.
+*   **Unio (Main App Target)**:
+    *   `App/`: App lifecycle and entry points.
+    *   `UI/Views/`: Feature views (Calendar, Availability, Commitments, Settings, WhatsNew).
+    *   `UI/Components/`: Reusable SwiftUI design elements.
+    *   `UI/Helpers/`: Platform providers (Notifications, Haptics, Device, Network).
+*   **NotificationContent (App Extension Target)**:
+    *   Dedicated interactive UI for expanded lock-screen notifications.
+*   **UnioCore (Local Swift Package)**:
+    *   Shared business logic, models, networking (BFF communication), and local storage.
 
 ## 📄 License
 
-This project is distributed under the **GNU GPLv3** license.
+This project is open source and distributed under the **GNU General Public License v3.0**.
 See the [LICENSE](LICENSE) file for more details.
-
-Free software: you can use it, study it, and modify it, but derivatives must remain open source.

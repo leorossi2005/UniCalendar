@@ -1,0 +1,164 @@
+//
+//  UserSettings.swift
+//  UnioCore
+//
+//  Created by Leonardo Rossi on 21/11/25.
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
+//
+
+import Foundation
+
+@MainActor
+@Observable
+public class UserSettings {
+    public static let shared = UserSettings()
+    
+    private enum Key: String {
+        case selectedYear, selectedCourse, selectedCourseName, selectedAcademicYear, selectedAcademicYearName
+        case foundMatricola, matricola, onboardingCompleted
+        case settingsVersion, latestVersion, locationKey
+    }
+    
+    private enum Default {
+        static let year = "0"
+        static let course = "0"
+        static let courseName = "Course"
+        static let academicYear = "0"
+        static let academicYearName = "Year"
+        static let matricola = "even"
+        static let latestVersion: String = Bundle.main.clearAppVersion
+        static let locationKey = "1"
+        static let boolFalse = false
+        static let currentVersion = 1
+    }
+    
+    public var selectedYear: String {
+        didSet { Self.save(selectedYear, key: .selectedYear) }
+    }
+    
+    public var selectedCourse: String {
+        didSet { Self.save(selectedCourse, key: .selectedCourse) }
+    }
+    
+    public var selectedCourseName: String {
+        didSet { Self.save(selectedCourseName, key: .selectedCourseName) }
+    }
+    
+    public var selectedAcademicYear: String {
+        didSet { Self.save(selectedAcademicYear, key: .selectedAcademicYear) }
+    }
+    
+    public var selectedAcademicYearName: String {
+        didSet { Self.save(selectedAcademicYearName, key: .selectedAcademicYearName) }
+    }
+    
+    public var foundMatricola: Bool {
+        didSet { Self.save(foundMatricola, key: .foundMatricola) }
+    }
+    
+    public var matricola: String {
+        didSet { Self.save(matricola, key: .matricola) }
+    }
+    
+    public var onboardingCompleted: Bool {
+        didSet { Self.save(onboardingCompleted, key: .onboardingCompleted) }
+    }
+    
+    public var latestVersion: String {
+        didSet { Self.save(latestVersion, key: .latestVersion) }
+    }
+    
+    public var locationKey: String {
+        didSet { Self.save(locationKey, key: .locationKey) }
+    }
+    
+    private init() {
+        Self.performV1Migration()
+        
+        self.selectedYear = Self.load(.selectedYear, fallback: Default.year)
+        self.selectedCourse = Self.load(.selectedCourse, fallback: Default.course)
+        self.selectedCourseName = Self.load(.selectedCourseName, fallback: Default.courseName)
+        self.selectedAcademicYear = Self.load(.selectedAcademicYear, fallback: Default.academicYear)
+        self.selectedAcademicYearName = Self.load(.selectedAcademicYearName, fallback: Default.academicYearName)
+        self.foundMatricola = Self.load(.foundMatricola, fallback: Default.boolFalse)
+        self.matricola = Self.load(.matricola, fallback: Default.matricola)
+        self.onboardingCompleted = Self.load(.onboardingCompleted, fallback: Default.boolFalse)
+        self.latestVersion = Self.load(.latestVersion, fallback: Default.latestVersion)
+        self.locationKey = Self.load(.locationKey, fallback: Default.locationKey)
+    }
+    
+    private static let isTestFlightMigrationEnabled = true
+    
+    private static func performV1Migration() {
+        guard isTestFlightMigrationEnabled else { return }
+        
+        let savedVersion = load(.settingsVersion, fallback: 0)
+        guard savedVersion < 1 else { return }
+        
+        save(Default.year, key: .selectedYear)
+        save(Default.course, key: .selectedCourse)
+        save(Default.academicYear, key: .selectedAcademicYear)
+        save(Default.boolFalse, key: .foundMatricola)
+        save(Default.matricola, key: .matricola)
+        save(Default.boolFalse, key: .onboardingCompleted)
+        
+        save("0.9", key: .latestVersion)
+        save(Default.currentVersion, key: .settingsVersion)
+        Task { await CacheManager.shared.clearAllDiskCache() }
+    }
+    
+    public func reset() {
+        selectedYear = Default.year
+        selectedCourse = Default.course
+        selectedCourseName = Default.courseName
+        selectedAcademicYear = Default.academicYear
+        selectedAcademicYearName = Default.academicYearName
+        foundMatricola = Default.boolFalse
+        matricola = Default.matricola
+        onboardingCompleted =  Default.boolFalse
+        latestVersion =  Default.latestVersion
+        locationKey =  Default.locationKey
+    }
+    
+    private static func save(_ value: Any, key: Key) {
+        UserDefaults.standard.set(value, forKey: key.rawValue)
+    }
+    
+    private static func load<T>(_ key: Key, fallback: T) -> T {
+        UserDefaults.standard.object(forKey: key.rawValue) as? T ?? fallback
+    }
+}
+
+@MainActor
+public struct TempSettingsState {
+    public var selectedYear: String = ""
+    public var selectedCourse: String = ""
+    public var selectedCourseName: String = ""
+    public var selectedAcademicYear: String = ""
+    public var matricola: String = ""
+    
+    public init() {}
+    
+    public mutating func sync(with settings: UserSettings) {
+        self.selectedYear = settings.selectedYear
+        self.selectedCourse = settings.selectedCourse
+        self.selectedCourseName = settings.selectedCourseName
+        self.selectedAcademicYear = settings.selectedAcademicYear
+        self.matricola = settings.matricola
+    }
+    
+    public func hasChanged(from settings: UserSettings) -> Bool {
+        selectedCourse != settings.selectedCourse ||
+        selectedYear != settings.selectedYear ||
+        selectedAcademicYear != settings.selectedAcademicYear
+    }
+    
+    public func apply(to settings: UserSettings) {
+        settings.selectedYear = self.selectedYear
+        settings.selectedCourse = self.selectedCourse
+        settings.selectedCourseName = self.selectedCourseName
+        settings.selectedAcademicYear = self.selectedAcademicYear
+        settings.matricola = self.matricola
+    }
+}

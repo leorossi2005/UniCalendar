@@ -1,0 +1,207 @@
+//
+//  RoomCard.swift
+//  Unio
+//
+//  Created by Leonardo Rossi on 19/06/2026.
+//  Copyright (C) 2026 Leonardo Rossi
+//  SPDX-License-Identifier: GPL-3.0-or-later
+//
+
+import SwiftUI
+import UnioCore
+
+struct RoomCard: View {
+    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
+    
+    var room: Room
+    var selectedDate: Date
+    var isPlaceholder: Bool = false
+    
+    private var isCardPlaceholder: Bool {
+        isPlaceholder || room.id == Room.sample(date: selectedDate).id
+    }
+        
+    var body: some View {
+        TimelineView(.everyMinute) { context in
+            let currentStatus = RoomDailyStatus(room: room, selectedDate: selectedDate, now: context.date)
+            let subsequentEventsCount = subsequentEvents(for: currentStatus)
+            
+            VStack(spacing: 20) {
+                LessonInfo(room: room, status: currentStatus)
+                Timeline(room: room, currentStatus: currentStatus)
+            }
+            .padding()
+            .padding(.bottom, 4)
+            .background(backgroundLayer)
+            .contentShape(.hoverEffect, RoundedRectangle(cornerRadius: 35, style: .continuous))
+            .contentShape(.contextMenuPreview, RoundedRectangle(cornerRadius: 35, style: .continuous))
+            .hoverEffect(.lift)
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityInputLabels([room.name])
+            .accessibilityHidden(voiceOverEnabled)
+            .overlay {
+                if voiceOverEnabled {
+                    SpeechLanguageLabel(
+                        .it(room.name),
+                        .system(currentStatus.statusText),
+                        traits: .button
+                    )
+                    .accessibilityValue(subsequentEventsValue(count: subsequentEventsCount) ?? Text(""))
+                    .accessibilityHint(Text("Tocca due volte per aprire i dettagli"))
+                }
+            }
+            .contentShape(RoundedRectangle(cornerRadius: 35, style: .continuous))
+        }
+    }
+
+    // MARK: - Helpers
+    private func subsequentEvents(for status: RoomDailyStatus) -> Int {
+        switch status {
+        case .occupiedUntil(_, let index, _),
+             .freeUntil(_, let index),
+             .futureDay(_, let index):
+            return max(0, room.events.count - (index + 1))
+        default:
+            return 0
+        }
+    }
+
+    private func subsequentEventsValue(count: Int) -> Text? {
+        guard count > 0 else { return nil }
+        if count == 1 {
+            return Text("1 altro impegno oggi")
+        } else {
+            return Text("Altri \(count) impegni oggi")
+        }
+    }
+    
+    // MARK: - Components
+    private var backgroundLayer: some View {
+        RoundedRectangle(cornerRadius: 35, style: .continuous)
+            .fill(isCardPlaceholder ? Lesson.sample.uiColor : Color(colorScheme == .dark ? .secondarySystemGroupedBackground : .systemGroupedBackground))
+    }
+}
+
+private struct LessonInfo: View {
+    var room: Room
+    var status: RoomDailyStatus
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(room.name)
+                .font(.headline)
+                .multilineTextAlignment(.leading)
+            Text(status.statusText)
+                .font(.subheadline)
+                .multilineTextAlignment(.leading)
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct Timeline: View {
+    var room: Room
+    var currentStatus: RoomDailyStatus
+    
+    var body: some View {
+        Grid(horizontalSpacing: 8, verticalSpacing: 0) {
+            GridRow {
+                Color.clear.frame(maxWidth: .infinity, maxHeight: 0)
+                Color.clear.frame(width: 16, height: 0)
+                Color.clear.frame(maxWidth: .infinity, maxHeight: 0)
+            }
+            
+            GridRow {
+                switch currentStatus {
+                case .pastDay, .futureDay, .futureDayFree:
+                    EmptyView()
+                default:
+                    HorizontalLine(color: .primary, lineWidth: 4, dash: [12, 12])
+                    nowIndicator
+                }
+                
+                HStack {
+                    switch currentStatus {
+                    case .occupiedUntil(let event, let index, _):
+                        eventSegment(event: event, index: index, showStartMarker: false)
+                    case .freeUntil(let event, let index), .futureDay(let event, let index):
+                        eventSegment(event: event, index: index, showStartMarker: true)
+                    case .pastDay:
+                        HorizontalLine(color: .primary, lineWidth: 4, dash: [12, 12])
+                    default:
+                        HorizontalLine(color: .green, lineWidth: 4)
+                    }
+                }
+                .gridCellColumns(3)
+            }
+        }
+        .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+    }
+    
+    private var nowIndicator: some View {
+        Circle()
+            .frame(height: 16)
+            .overlay {
+                Circle()
+                    .fill(.blue)
+                    .frame(height: 10)
+            }
+    }
+    
+    private func eventSegment(event: Event, index: Int, showStartMarker: Bool) -> some View {
+        let subsequentEventsCount = room.events.count - (index + 1)
+        let after = subsequentEventsCount > 0 && event.endTime == room.events[index + 1].startTime
+        
+        return Group {
+            if showStartMarker {
+                HorizontalLine(color: .green, lineWidth: 4)
+                Circle()
+                    .fill(.red)
+                    .overlay {
+                        DiagonalStripesShape(step: 4.5)
+                            .stroke(.black.opacity(0.35), lineWidth: 1.5)
+                    }
+                    .clipShape(Circle())
+                    .frame(width: 12, height: 12)
+                    .overlay(alignment: .bottom) {
+                        Text(event.startTime, format: .dateTime.hour().minute())
+                            .foregroundStyle(.red)
+                            .fixedSize()
+                            .font(.caption)
+                            .padding(.bottom, 16)
+                    }
+            }
+            HorizontalLine(color: .red.opacity(0.9), lineWidth: 4, isStriped: true)
+            Circle()
+                .fill(after ? .red : .green)
+                .overlay {
+                    if after {
+                        DiagonalStripesShape(step: 4.5)
+                            .stroke(.black.opacity(0.35), lineWidth: 1.5)
+                    }
+                }
+                .clipShape(Circle())
+                .frame(width: 12, height: 12)
+                .overlay(alignment: .bottom) {
+                    Text(event.endTime, format: .dateTime.hour().minute())
+                        .foregroundStyle(after ? .red : .green)
+                        .fixedSize()
+                        .font(.caption)
+                        .padding(.bottom, 16)
+                }
+            HorizontalLine(color: after ? .red : .green, lineWidth: 4, isStriped: after)
+                .overlay(alignment: .bottomTrailing) {
+                    if subsequentEventsCount > 0 {
+                        Text("+\(subsequentEventsCount)")
+                            .foregroundStyle(.secondary)
+                            .fixedSize()
+                            .font(.caption)
+                            .padding(.bottom, 12)
+                    }
+                }
+        }
+    }
+}

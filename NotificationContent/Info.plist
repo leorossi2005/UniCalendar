@@ -7,7 +7,7 @@
 		<key>NSExtensionAttributes</key>
 		<dict>
 			<key>UNNotificationExtensionCategory</key>
-			<string>unicalendar.event.reminder</string>
+			<string>unio.event.reminder</string>
 			<key>UNNotificationExtensionInitialContentSizeRatio</key>
 			<real>0.4</real>
 			<key>UNNotificationExtensionDefaultContentHidden</key>
