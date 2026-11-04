@@ -436,11 +436,6 @@ struct SpeechSegment {
         }
     }
     
-    init(_ text: String, attributes: [NSAttributedString.Key: Any]) {
-        self.text = text
-        self.attributes = attributes
-    }
-    
     static func it(_ text: String) -> SpeechSegment {
         SpeechSegment(text, language: "it-IT")
     }
@@ -449,17 +444,9 @@ struct SpeechSegment {
         let localized = text.isEmpty ? "" : String(localized: String.LocalizationValue(text))
         return SpeechSegment(localized, language: nil)
     }
-    
-    static func system(localized key: String.LocalizationValue) -> SpeechSegment {
-        SpeechSegment(String(localized: key), language: nil)
-    }
 }
 
 extension NSAttributedString {
-    static func composed(_ segments: SpeechSegment...) -> NSAttributedString {
-        composed(segments)
-    }
-    
     static func composed(_ segments: [SpeechSegment]) -> NSAttributedString {
         let full = NSMutableAttributedString()
         for segment in segments where !segment.text.isEmpty {

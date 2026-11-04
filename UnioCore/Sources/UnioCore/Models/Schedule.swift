@@ -26,6 +26,18 @@ public struct LocationInfo: Codable, Equatable, Sendable {
     public let address: String?
     public let capacity: Int?
     public let coordinates: Coordinates?
+    public let status: LocationStatus
+    
+    public enum LocationStatus: String, Codable, Sendable {
+        case physical, online, unassigned
+        
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.singleValueContainer()
+            let rawValue = try container.decode(String.self)
+            
+            self = LocationStatus(rawValue: rawValue) ?? .physical
+        }
+    }
 }
 
 public struct Lesson: Codable, Equatable, Sendable, Identifiable {

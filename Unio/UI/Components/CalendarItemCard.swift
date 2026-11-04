@@ -98,7 +98,7 @@ struct CalendarItemCard: View {
                 .strikethrough(internalItem.isCanceled)
             
             if !internalItem.isCanceled, let loc = internalItem.displayLocation, !loc.isEmpty {
-                Label(loc, systemImage: "mappin")
+                Label(loc, systemImage: internalItem.displayLocationIcon)
                     .foregroundStyle(Color(white: 0.3))
                     .font(.subheadline)
                     .multilineTextAlignment(.leading)
@@ -182,6 +182,10 @@ struct CardItemContainer: View {
                 .overlay {
                     if voiceOverEnabled {
                         let tagsText = internalItem.tagsItems.prefix(3).map(\.name).joined(separator: ", ")
+                        let isPhysical: Bool = {
+                            if case .lesson(let lesson) = item { return lesson.location?.status == .physical }
+                            return false
+                        }()
                         
                         SpeechLanguageLabel(
                             item.isLesson ? .it(internalItem.displayTitle) : .system(internalItem.displayTitle + ", "),
@@ -190,7 +194,7 @@ struct CardItemContainer: View {
                                     ? String(localized: "\(item.startTime, format: .dateTime.hour().minute())")
                                     : String(localized: "Dalle \(item.startTime, format: .dateTime.hour().minute()) alle \(internalItem.endTime, format: .dateTime.hour().minute())")
                             ),
-                            item.isLesson ? .it(internalItem.displayLocation ?? "") : .system(", \(internalItem.displayLocation ?? ""), "),
+                            isPhysical ? .it(internalItem.displayLocation ?? "") : .system(", \(internalItem.displayLocation ?? ""), "),
                             internalItem.tagsItems.isEmpty ? .system("") : .system(String(localized: "Tag: ")),
                             internalItem.tagsItems.isEmpty ? .system("") : item.isLesson ? .it(tagsText) : .system(tagsText),
                             traits: .button

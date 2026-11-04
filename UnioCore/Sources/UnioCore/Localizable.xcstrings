@@ -28,6 +28,16 @@
         }
       }
     },
+    "Da remoto" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remotely"
+          }
+        }
+      }
+    },
     "day_ended" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -296,6 +306,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "I server dell'università non sono al momento disponibili. Riprova più tardi."
+          }
+        }
+      }
+    },
+    "Non ancora specificata" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not yet specified"
           }
         }
       }

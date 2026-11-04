@@ -29,7 +29,8 @@ extension Lesson {
             building: "Borgo Roma - Ca' Vignal 2",
             address: "Strada Le Grazie, 15 - 37134 Verona",
             capacity: 236,
-            coordinates: Coordinates(latitude: 45.4037, longitude: 10.9991)
+            coordinates: Coordinates(latitude: 45.4037, longitude: 10.9991),
+            status: .physical
         )
     )
     
@@ -92,6 +93,7 @@ extension Room {
 }
 
 extension AppNotice {
+    // periphery:ignore
     public static var sample: AppNotice {
         AppNotice(
             id: "SAMPLE-123",

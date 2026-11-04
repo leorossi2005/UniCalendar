@@ -62,8 +62,10 @@ public enum Device: Sendable {
         storage.withLock { $0 }
     }
     
+    // periphery:ignore
     public static var name: String { current.name }
     public static var model: String { current.model }
+    // periphery:ignore
     public static var isSimulator: Bool { current.isSimulator }
     public static var os: OS { current.os }
     

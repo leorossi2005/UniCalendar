@@ -12,7 +12,6 @@ import UnioCore
 
 struct ShortListSelector<Item: SelectableItem>: View {
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOverEnabled
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     let items: [Item]
     var lang: String? = nil

@@ -520,6 +520,16 @@
         }
       }
     },
+    "Aula non specificata" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classroom not specified"
+          }
+        }
+      }
+    },
     "Avvisi di Sistema" : {
       "localizations" : {
         "en" : {
@@ -1406,6 +1416,16 @@
         }
       }
     },
+    "L'aula per questa lezione non è ancora stata assegnata o è da concordare con il docente." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The classroom for this class has not yet been assigned or is to be determined in consultation with the teacher."
+          }
+        }
+      }
+    },
     "L'impegno inizia tra %lld minuti" : {
       "localizations" : {
         "en" : {
@@ -1472,6 +1492,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Live Activities will allow you to have a screen timer on the lock screen or in the Dynamic Island."
+          }
+        }
+      }
+    },
+    "Lezione da remoto" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remote Class"
           }
         }
       }
@@ -1743,6 +1773,16 @@
         }
       }
     },
+    "Non è possibile raggiungere il server. Riprova più tardi." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It is not possible to reach the server. Try again later."
+          }
+        }
+      }
+    },
     "Non è stata trovata nessuna lezione per questo corso." : {
       "localizations" : {
         "en" : {
@@ -1769,16 +1809,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "You haven’t scheduled any notifications for your classes yet."
-          }
-        }
-      }
-    },
-    "Non riusciamo a contattare il server. Riprova più tardi." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "We are unable to contact the server. Try again later."
           }
         }
       }
@@ -1953,12 +1983,12 @@
         }
       }
     },
-    "Posizione non attualmente presente, siamo già al corrente e il problema verrà risolto." : {
+    "Posizione non attualmente presente, ne sono già al corrente e il problema verrà risolto." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Location currently not available, we are already aware and the issue will be resolved."
+            "value" : "Location currently not available, I’m already aware and the issue will be resolved."
           }
         }
       }
@@ -2009,6 +2039,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "This action cannot be canceled."
+          }
+        }
+      }
+    },
+    "Questa lezione si svolge online. Consulta Moodle o le comunicazioni del docente per la modalità di accesso." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This class is held online. Check Moodle or the teacher’s announcements for access instructions."
           }
         }
       }

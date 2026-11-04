@@ -343,14 +343,17 @@ struct CalendarItemDetailsView: View {
                         .accessibilityValue(lesson.teachers.isEmpty ? "Non specificato" : LocalizedStringKey(lesson.teachers.joined(separator: ", ")))
                 }
                 rowLabel(
-                    text: "\(lesson.location?.classroom ?? "") \(lesson.location?.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
-                    icon: "mappin"
+                    text: "\(internalItem.displayLocation ?? "") \(lesson.location?.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
+                    icon: internalItem.displayLocationIcon
                 )
                 .accessibilityHidden(true)
                 .overlay {
                     if voiceOverEnabled {
-                        SpeechLanguageLabel(.it(lesson.location?.classroom ?? ""))
-                            .accessibilityValue(lesson.location?.capacity.map { ", \($0) \(String(localized: "posti"))" } ?? "")
+                        let isPhysical = lesson.location?.status == .physical
+                        SpeechLanguageLabel(
+                            isPhysical ? .it(lesson.location?.classroom ?? "") : .system(internalItem.displayLocation ?? "")
+                        )
+                        .accessibilityValue(lesson.location?.capacity.map { ", \($0) \(String(localized: "posti"))" } ?? "")
                     }
                 }
             case .personal:
@@ -543,13 +546,43 @@ struct StableMapView: View {
                 .padding()
         } else {
             HStack(spacing: 12) {
-                Image(systemName: "mappin.slash")
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
-                Text(item.isLesson ? "Posizione non disponibile" : "Posizione non trovata")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                switch item {
+                case .lesson(let lesson):
+                    switch lesson.location?.status {
+                    case .online:
+                        Image(systemName: "video.fill")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                        Text("Lezione da remoto")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    case .unassigned:
+                        Image(systemName: "questionmark.circle")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                        Text("Aula non specificata")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    case .physical, .none:
+                        Image(systemName: "mappin.slash")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+                        Text("Posizione non disponibile")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                case .personal:
+                    Image(systemName: "mappin.slash")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                    Text("Posizione non trovata")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
             .padding(16)
             .background(
@@ -587,13 +620,30 @@ struct StableMapView: View {
                 ProgressView()
             } else {
                 switch item {
-                case .lesson:
-                    ContentUnavailableView(
-                        "Posizione non disponibile",
-                        systemImage: "mappin.slash",
-                        description: Text("Posizione non attualmente presente, siamo già al corrente e il problema verrà risolto.")
-                    )
-                    .accessibilityElement(children: .combine)
+                case .lesson(let lesson):
+                    switch lesson.location?.status {
+                    case .online:
+                        ContentUnavailableView(
+                            "Lezione da remoto",
+                            systemImage: "video.fill",
+                            description: Text("Questa lezione si svolge online. Consulta Moodle o le comunicazioni del docente per la modalità di accesso.")
+                        )
+                        .accessibilityElement(children: .combine)
+                    case .unassigned:
+                        ContentUnavailableView(
+                            "Aula non specificata",
+                            systemImage: "questionmark.circle",
+                            description: Text("L'aula per questa lezione non è ancora stata assegnata o è da concordare con il docente.")
+                        )
+                        .accessibilityElement(children: .combine)
+                    case .physical, .none:
+                        ContentUnavailableView(
+                            "Posizione non disponibile",
+                            systemImage: "mappin.slash",
+                            description: Text("Posizione non attualmente presente, ne sono già al corrente e il problema verrà risolto.")
+                        )
+                        .accessibilityElement(children: .combine)
+                    }
                 case .personal:
                     ContentUnavailableView(
                         "Posizione non trovata",

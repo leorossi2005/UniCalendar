@@ -161,7 +161,7 @@ struct CalendarView: View {
                 ContentUnavailableView {
                     Label("Server non raggiungibile", systemImage: AppState.serveroffline.icon)
                 } description: {
-                    Text("Non riusciamo a contattare il server. Riprova più tardi.")
+                    Text("Non è possibile raggiungere il server. Riprova più tardi.")
                 }
                 .accessibilityElement(children: .combine)
             case .univrOffline:

@@ -68,8 +68,8 @@ struct CalendarItemPreview: View {
                         icon: !lesson.teachers.isEmpty && lesson.teachers.count > 1 ? "person.2.fill" : "person.fill"
                     )
                     rowLabel(
-                        text: "\(lesson.location?.classroom ?? "") \(lesson.location?.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
-                        icon: "mappin"
+                        text: "\(internalItem.displayLocation ?? "") \(lesson.location?.capacity.map { "(\($0) \(String(localized: "posti")))" } ?? "")",
+                        icon: internalItem.displayLocationIcon
                     )
                 case .personal:
                     if let loc = internalItem.displayLocation, !loc.isEmpty {

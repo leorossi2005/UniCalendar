@@ -62,15 +62,33 @@ public protocol CalendarDisplayable: Identifiable where ID == String {
     var displayLocation: String? { get }
     var displayAddress: String? { get }
     var displayCoordinates: Coordinates? { get }
+    var displayLocationIcon: String { get }
     var isCanceled: Bool { get }
 }
 
 extension Lesson: CalendarDisplayable {
     public var displayTitle: String { cleanName ?? "" }
     public var tagsItems: [TagItem] { tags.map { TagItem(title: $0) } }
-    public var displayLocation: String? { location?.classroom }
-    public var displayAddress: String? { location?.address ?? location?.classroom }
+    
+    public var displayLocation: String? {
+        guard let location = location else { return nil }
+        switch location.status {
+        case .online: return String(localized: "Da remoto", bundle: .module)
+        case .unassigned: return String(localized: "Non ancora specificata", bundle: .module)
+        case .physical: return location.classroom
+        }
+    }
+    
+    public var displayAddress: String? { location?.address ?? displayLocation }
     public var displayCoordinates: Coordinates? { location?.coordinates }
+    
+    public var displayLocationIcon: String {
+        switch location?.status {
+        case .online: return "video.fill"
+        case .unassigned: return "questionmark.circle"
+        case .physical, .none: return "mappin"
+        }
+    }
 }
 
 extension PersonalEvent: CalendarDisplayable {
@@ -80,4 +98,5 @@ extension PersonalEvent: CalendarDisplayable {
     public var displayAddress: String? { location?.name }
     public var displayCoordinates: Coordinates? { location?.coordinates }
     public var isCanceled: Bool { false }
+    public var displayLocationIcon: String { "mappin" }
 }
