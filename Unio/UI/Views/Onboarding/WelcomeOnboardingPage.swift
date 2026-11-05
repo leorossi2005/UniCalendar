@@ -33,9 +33,19 @@ struct WelcomeOnboardingPage: View {
     
     private let initialSize: CGFloat = 200
     
+    private var screenCenterY: CGFloat {
+        let window = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow)
+        let height = window?.bounds.height
+            ?? (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.screen.bounds.height
+            ?? UIScreen.main.bounds.height
+        return height / 2
+    }
+    
     private var initialOffset: CGFloat {
         guard zStackCenterY > 0 else { return 0 }
-        let screenCenterY = UIScreen.main.bounds.height / 2
         return screenCenterY - zStackCenterY
     }
     
@@ -54,9 +64,11 @@ struct WelcomeOnboardingPage: View {
     
     var body: some View {
         GeometryReader { proxy in
-            let targetSize = max(proxy.size.width - 32, 200)
+            // Vincola l'icona sia in larghezza che in altezza per evitare overflow in orizzontale su iPad
+            let maxDimension = min(proxy.size.width - 32, proxy.size.height * 0.52, 440)
+            let targetSize = max(maxDimension, 200)
             let currentSize = isExpanded ? targetSize : initialSize
-            let currentOffset = isExpanded ? -40 : initialOffset
+            let currentOffset = isExpanded ? (proxy.size.height < 600 ? -24 : -40) : initialOffset
             
             VStack(spacing: 12) {
                 Spacer()
